@@ -13,12 +13,13 @@
 
 (defn display-result [{:keys [value error warnings]}]
   [:div
-   [:.bg-white.b--near-white.bt.br.bb.bw4
-    (cond error (str error)
-          (js/React.isValidElement value) value
-          :else (str value))]
+
+   (cond error [:.pa3.dark-red (str error)]
+         (js/React.isValidElement value) value
+         :else (when value [:.bg-white.pa3.mb3 (str value)]))
    (when (seq warnings)
      [:.bg-light-gray.pa3 {:key "warnings"}
+      "Warning: "
       (str warnings)])])
 
 (defcomponent app
