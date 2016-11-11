@@ -39,9 +39,12 @@
   "Eval string by first reading all top-level forms, then eval'ing them one at a time."
   [src]
   (let [forms (try (read-string (str "[\n" src "]"))
-                   (catch js/Error e
-                     (set! (.-data e) (clj->js (update (.-data e) :line dec)))
-                     {:error e}))]
+                   (catch js/Error e1
+                     (try (read-string src)
+                          {:error    e1
+                           :wrapped? true}
+                          (catch js/Error e2
+                            {:error e2}))))]
     (if (contains? forms :error)
       forms
       (loop [forms forms]
