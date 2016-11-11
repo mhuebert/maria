@@ -1,0 +1,1 @@
+node_modules/stylus/bin/stylus -w src/css/maria.styl -o resources/public/css/maria.css
