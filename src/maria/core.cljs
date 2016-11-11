@@ -1,6 +1,7 @@
 (ns maria.core
   (:require
     [maria.eval :refer [eval-src]]
+    [cljs.pprint :refer [pprint]]
     [maria.codemirror :refer [editor]]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
@@ -18,9 +19,11 @@
          (js/React.isValidElement value) value
          :else (when value [:.bg-white.pa3.mb3 (str value)]))
    (when (seq warnings)
-     [:.bg-light-gray.pa3 {:key "warnings"}
-      "Warning: "
-      (str warnings)])])
+
+     [:.bg-light-gray.pa3.pre
+      [:.dib.dark-red "Warnings: "]
+      (for [warning (distinct (map #(dissoc % :env) warnings))]
+        (str "\n" (with-out-str (pprint warning))))])])
 
 (defcomponent app
               :subscriptions {:source      (subs/db [editor-id :source])
