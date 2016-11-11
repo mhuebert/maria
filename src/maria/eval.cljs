@@ -1,5 +1,6 @@
 (ns maria.eval
   (:require [cljs.js :as cljs]
+            [cljs.analyzer :refer [*cljs-warning-handlers*]]
             [cljs-live.compiler :as c]
             [cljs.tools.reader :as r]
             [cljs.tools.reader.reader-types :as rt]))
@@ -8,14 +9,17 @@
 
 (def c-state (cljs/empty-state))
 (def c-env (atom {}))
+(def ^:dynamic *cljs-warnings* nil)
+
 (defn c-opts
   []
-  {:load          c/load-fn
-   :eval          cljs/js-eval
-   :ns            (:ns @c-env)
-   :context       :expr
-   :source-map    true
-   :def-emits-var true})
+  {:load               c/load-fn
+   :eval               cljs/js-eval
+   :ns                 (:ns @c-env)
+   :context            :expr
+   :source-map         true
+   :def-emits-var      true
+   :warn-on-undeclared true})
 
 (defn read-string-indexed
   "Read string using indexing-push-back-reader, for errors with location information."
@@ -29,10 +33,15 @@
   (let [result (atom)
         ns? (and (seq? form) (#{'ns} (first form)))
         macros-ns? (and (seq? form) (= 'defmacro (first form)))]
-    (cljs/eval c-state form (cond-> (c-opts)
-                                    macros-ns?
-                                    (-> (update :ns #(symbol (str % "$macros")))
-                                        (assoc :macros-ns true))) (partial reset! result))
+    (binding [*cljs-warning-handlers* [(fn [warning-type env extra]
+                                         (swap! *cljs-warnings* conj {:type        warning-type
+                                                                      :env         env
+                                                                      :extra       extra
+                                                                      :source-form form}))]]
+      (cljs/eval c-state form (cond-> (c-opts)
+                                      macros-ns?
+                                      (-> (update :ns #(symbol (str % "$macros")))
+                                          (assoc :macros-ns true))) (partial reset! result)))
     (when (and ns? (contains? @result :value))
       (swap! c-env assoc :ns (second form)))
     @result))
@@ -59,11 +68,12 @@
 (defn eval-src
   "Eval string by first reading all top-level forms, then eval'ing them one at a time."
   [src]
-  (let [{:keys [error] :as result} (read-src src)]
-    (if error result
-              (loop [forms result]
-                (let [{:keys [error] :as result} (eval (first forms))
-                      remaining (rest forms)]
-                  (if (or error (empty? remaining))
-                    result
-                    (recur remaining)))))))
+  (binding [*cljs-warnings* (atom [])]
+    (let [{:keys [error] :as result} (read-src src)]
+      (if error result
+                (loop [forms result]
+                  (let [{:keys [error] :as result} (eval (first forms))
+                        remaining (rest forms)]
+                    (if (or error (empty? remaining))
+                      (assoc result :warnings @*cljs-warnings*)
+                      (recur remaining))))))))
