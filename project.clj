@@ -9,8 +9,10 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
                  [org.clojure/clojurescript "1.9.293"]
 
+                 [cljsjs/codemirror "5.19.0-0"]
+
                  [org.clojars.mhuebert/cljs-live "0.1.1"]
-                 [org.clojars.mhuebert/re-view "0.1.2"]]
+                 [org.clojars.mhuebert/re-view "0.1.3"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]

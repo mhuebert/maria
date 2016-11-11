@@ -1,30 +1,36 @@
 (ns maria.core
   (:require
-    [maria.eval :refer [eval-str]]
+    [maria.eval :refer [eval-src]]
+    [maria.codemirror :refer [editor]]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
     [re-view.core :as v :refer-macros [defcomponent]]))
 
 (enable-console-print!)
-(defonce main-cell-id (str (gensym)))
 
+;; to support multiple editors
+(defonce editor-id 1)
 
-(defcomponent editor
-  :subscriptions {:cell (subs/db [main-cell-id])}
+(defn display-result [{:keys [value error]}]
+  (cond error (str error)
+        (js/React.isValidElement value) value
+        :else (str value)))
+
+(defcomponent app
+  :subscriptions {:source      (subs/db [editor-id :source])
+                  :eval-result (subs/db [editor-id :eval-result])}
   :render
-  (fn [_ _ {{:keys [cell/eval-result cell/source]} :cell}]
-    [:div
-     [:textarea {:on-change   #(d/transact! [[:db/add main-cell-id :cell/source (.-value (.-currentTarget %))]])
-                 :on-key-down #(when (and (= 13 (.-which %)) (.-metaKey %))
-                                (d/transact! [[:db/add main-cell-id :cell/eval-result (eval-str source)]]))
-                 :value       source}]
-     [:div
-      (let [{:keys [value error]} eval-result]
-        (cond error (str error)
-              (js/React.isValidElement value) value
-              :else (str value)))]]))
+  (fn [_ _ {:keys [eval-result source]}]
+    [:.bg-near-white.cf
+     [:.w-50.fl.pa3
+      (editor {:value         source
+               :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                (d/transact! [[:db/add editor-id :eval-result (eval-src (d/get editor-id :source))]]))
+               :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+     [:.w-50.fl.pa3.bg-white.b--near-white.bt.br.bb.bw4
+      (display-result eval-result)]]))
 
 (defn main []
-  (v/render-to-dom (editor) "maria"))
+  (v/render-to-dom (app) "maria"))
 
 (main)

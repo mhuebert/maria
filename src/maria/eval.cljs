@@ -17,12 +17,14 @@
    :source-map    true
    :def-emits-var true})
 
-(defn read-string [s]
+(defn read-string-indexed
+  "Read string using indexing-push-back-reader, for errors with location information."
+  [s]
   (when (and s (not= "" s))
     (r/read {} (rt/indexing-push-back-reader s))))
 
 (defn eval
-  "Eval a single form, keeping track of current ns in fire-env."
+  "Eval a single form, keeping track of current ns in c-env"
   [form]
   (let [result (atom)
         ns? (and (seq? form) (#{'ns} (first form)))
@@ -35,21 +37,33 @@
       (swap! c-env assoc :ns (second form)))
     @result))
 
-(defn eval-str
+(defn wrap-source
+  "Clojure reader only returns the last top-level form in a string,
+  so we wrap user source strings."
+  [src]
+  (str "[\n" src "]"))
+
+(defn read-src
+  "Read src using default tools.reader. If an error is encountered,
+  re-read an unwrapped version of src using indexed reader to return
+  a correct error location."
+  [src]
+  (try (r/read-string (wrap-source src))
+       (catch js/Error e1
+         (try (read-string-indexed src)
+              ;; if no error thrown by indexed reader, return original error
+              {:error e1}
+              (catch js/Error e2
+                {:error e2})))))
+
+(defn eval-src
   "Eval string by first reading all top-level forms, then eval'ing them one at a time."
   [src]
-  (let [forms (try (read-string (str "[\n" src "]"))
-                   (catch js/Error e1
-                     (try (read-string src)
-                          {:error    e1
-                           :wrapped? true}
-                          (catch js/Error e2
-                            {:error e2}))))]
-    (if (contains? forms :error)
-      forms
-      (loop [forms forms]
-        (let [{:keys [error] :as result} (eval (first forms))
-              remaining (rest forms)]
-          (if (or error (empty? remaining))
-            result
-            (recur remaining)))))))
+  (let [{:keys [error] :as result} (read-src src)]
+    (if error result
+              (loop [forms result]
+                (let [{:keys [error] :as result} (eval (first forms))
+                      remaining (rest forms)]
+                  (if (or error (empty? remaining))
+                    result
+                    (recur remaining)))))))
