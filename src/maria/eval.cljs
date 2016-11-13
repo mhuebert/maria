@@ -38,7 +38,6 @@
                                                                       :env         env
                                                                       :extra       extra
                                                                       :source-form form}))]]
-      (cljs/compile-str c-state (str form) nil (c-opts) prn)
       (try (cljs/eval c-state form (cond-> (c-opts)
                                            macros-ns?
                                            (-> (update :ns #(symbol (str % "$macros")))

@@ -19,7 +19,7 @@
       (.setCursor editor cursor-pos))))
 
 (def options
-  {:theme                       "3024-day"
+  {:theme                     "solarized light"
    :styleSelectedText         "cm-selected"
    :highlightSelectionMatches true
    :lineNumbers               false
@@ -29,31 +29,31 @@
    :keyMap                    "macDefault"})
 
 (defcomponent editor
-  :component-did-mount
-  (fn [this {:keys [value on-mount] :as props}]
-    (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
-                                (clj->js options))]
-      (when value (.setValue editor (str value)))
+              :component-did-mount
+              (fn [this {:keys [value on-mount] :as props}]
+                (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
+                                            (clj->js options))]
+                  (when value (.setValue editor (str value)))
 
-      ;; event handlers are passed in as props with keys like :event/mousedown
-      (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
-        (.on editor (name event-key) f))
+                  ;; event handlers are passed in as props with keys like :event/mousedown
+                  (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
+                    (.on editor (name event-key) f))
 
-      (.on editor "beforeChange" ignore-self-op)
+                  (.on editor "beforeChange" ignore-self-op)
 
-      (v/update-state! this assoc :editor editor)
+                  (v/update-state! this assoc :editor editor)
 
-      (when on-mount (on-mount editor this))))
-  :component-will-receive-props
-  (fn [this {:keys [value]} {next-value :value}]
-    (when (and next-value (not= next-value value))
-      (when-let [editor (:editor (v/state this))]
-        (binding [*self-op* true]
-          (set-preserve-cursor editor next-value)))))
-  :should-component-update
-  (fn [_ _ state _ prev-state]
-    (not= (dissoc state :editor) (dissoc prev-state :editor)))
-  :render
-  (fn [this props state]
-    [:.bg-near-white {:ref "editor-container"}]
-    ))
+                  (when on-mount (on-mount editor this))))
+              :component-will-receive-props
+              (fn [this {:keys [value]} {next-value :value}]
+                (when (and next-value (not= next-value value))
+                  (when-let [editor (:editor (v/state this))]
+                    (binding [*self-op* true]
+                      (set-preserve-cursor editor next-value)))))
+              :should-component-update
+              (fn [_ _ state _ prev-state]
+                (not= (dissoc state :editor) (dissoc prev-state :editor)))
+              :render
+              (fn [this props state]
+                [:.h-100 {:ref "editor-container"}]
+                ))
