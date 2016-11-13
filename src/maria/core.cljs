@@ -32,7 +32,7 @@
               :component-did-mount scroll-bottom
               :render
               (fn [this]
-                [:div.h-100.overflow-auto
+                [:div.h-100.overflow-auto.code
                  (map display-result (reverse (first (v/children this))))]))
 
 (defcomponent app
