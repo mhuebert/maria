@@ -2,7 +2,7 @@
   (:require [cljs.js :as cljs]
             [cljs.analyzer :refer [*cljs-warning-handlers*]]
             [cljs-live.compiler :as c]
-            [cljs.tools.reader :as r]
+            [cljs.tools.reader :as r :refer [resolve-symbol]]
             [cljs.tools.reader.reader-types :as rt]))
 
 (defonce _ (c/preloads!))

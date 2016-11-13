@@ -58,20 +58,27 @@
                 (not= (dissoc state :editor) (dissoc prev-state :editor)))
               :render
               (fn [this props state]
-                [:.h-100 {:ref "editor-container"}]
-                ))
+                [:.h-100 {:ref "editor-container"}]))
 
-(defn bracket-range [cm]
-  (when-let [bracket (some->> (.getCursor cm)
-                              (.findMatchingBracket cm))]
-    (let [[from to] (-> (sort-by (fn [pos] [(.-line pos) (.-ch pos)])
-                                 [(.-from bracket) (.-to bracket)])
-                        vec
-                        (update 1 (fn [pos]
-                                    #js {:line (.-line pos)
-                                         :ch   (inc (.-ch pos))})))]
-      (.getRange cm from to))))
+(defn ch+ [pos n]
+  #js {:line (.-line pos)
+       :ch   (+ (.-ch pos) n)})
 
-(defn selection-range [cm]
+(defn bracket-text
+  "Text within nearest bracket range"
+  [cm]
+  (apply str (for [selection (.listSelections cm)
+                   :let [cursor (.-head selection)
+                         bracket (.findMatchingBracket cm cursor)]
+                   :when bracket]
+               (let [[from to] (sort-by (fn [pos] [(.-line pos) (.-ch pos)])
+                                        [(.-from bracket) (.-to bracket)])
+                     token (.getTokenAt cm from)
+                     from (cond-> from
+                                  (#{\' \# "#_" \`} (.-string token))
+                                  (ch+ (- (count (.-string token)))))]
+                 (.getRange cm from (ch+ to 1))))))
+
+(defn selection-text [cm]
   (when (.somethingSelected cm)
     (.getSelection cm)))

@@ -44,8 +44,8 @@
                  [:.w-50.h-100
                   (cm/editor {:value         source
                               :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                               (when-let [source (or (cm/selection-range %1)
-                                                                     (cm/bracket-range %1))]
+                                               (when-let [source (or (cm/selection-text %1)
+                                                                     (cm/bracket-text %1))]
                                                  (d/transact! [[:db/update-attr editor-id :eval-result conj (eval-src source)]])))
                               :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
