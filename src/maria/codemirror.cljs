@@ -60,3 +60,18 @@
               (fn [this props state]
                 [:.h-100 {:ref "editor-container"}]
                 ))
+
+(defn bracket-range [cm]
+  (when-let [bracket (some->> (.getCursor cm)
+                              (.findMatchingBracket cm))]
+    (let [[from to] (-> (sort-by (fn [pos] [(.-line pos) (.-ch pos)])
+                                 [(.-from bracket) (.-to bracket)])
+                        vec
+                        (update 1 (fn [pos]
+                                    #js {:line (.-line pos)
+                                         :ch   (inc (.-ch pos))})))]
+      (.getRange cm from to))))
+
+(defn selection-range [cm]
+  (when (.somethingSelected cm)
+    (.getSelection cm)))

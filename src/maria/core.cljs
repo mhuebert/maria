@@ -2,7 +2,7 @@
   (:require
     [maria.eval :refer [eval-src]]
     [cljs.pprint :refer [pprint]]
-    [maria.codemirror :refer [editor]]
+    [maria.codemirror :as cm]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
     [re-view.core :as v :refer-macros [defcomponent]]))
@@ -42,10 +42,12 @@
               (fn [_ _ {:keys [eval-result source]}]
                 [:.flex.flex-row.h-100
                  [:.w-50.h-100
-                  (editor {:value         source
-                           :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                            (d/transact! [[:db/update-attr editor-id :eval-result conj (eval-src (d/get editor-id :source))]]))
-                           :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+                  (cm/editor {:value         source
+                              :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                               (when-let [source (or (selection-range %1)
+                                                                     (bracket-range %1))]
+                                                 (d/transact! [[:db/update-attr editor-id :eval-result conj (eval-src source)]])))
+                              :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
                   (repl-pane eval-result)]]))
 
