@@ -3,7 +3,8 @@
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.matchbrackets]
             [cljsjs.codemirror.addon.edit.closebrackets]
-            [re-view.core :as v :refer-macros [defcomponent]]))
+            [re-view.core :as v :refer-macros [defcomponent]]
+            [clojure.string :as string]))
 
 (def ^:dynamic *self-op*)
 
@@ -75,7 +76,8 @@
                                         [(.-from bracket) (.-to bracket)])
                      token (.getTokenAt cm from)
                      from (cond-> from
-                                  (#{\' \# "#_" \`} (.-string token))
+                                  (or (#{\' \`} (.-string token))
+                                      (string/starts-with? (.-string token) "#"))
                                   (ch+ (- (count (.-string token)))))]
                  (.getRange cm from (ch+ to 1))))))
 
