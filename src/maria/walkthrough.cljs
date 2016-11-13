@@ -31,6 +31,7 @@
                    [:.w-50.bg-solarized-light (code-view source)]
                    [:.w-50
                     (if evaluate
+                      ;; does not yet differentiate between error and value
                       (code-view (:value (eval-src source)))
                       [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
                        {:on-click #(do (prn 1) (view/update-state! this assoc :evaluate true))} "?"])]])))
@@ -44,27 +45,8 @@
 
      (code-split "\"duck\"")
 
-     (code-split "'(\"duck\" \"Berlin bear\" \"whale\")") 
+     "Now we can explain something else:"
 
-
-
-     "
-;; Introduce String: everything that goes between two double-quotes
-\"duck\"
-
-\"a\"
-
-\"\"
-
-\"Berlin bear\"
-
-;; Introduce lists:
-()
-
-'(\"duck\") ;; TODO (somehow explain that plain lists need quotes. Let them error first?)
-
-(\"duck\") ;; ERROR -- gosh some nice error messages would be swell
-
-'(\"duck\" \"Berlin bear\" \"whale\")"
+     (code-split "'(\"duck\" \"Berlin bear\" \"whale\")")
 
      )])
