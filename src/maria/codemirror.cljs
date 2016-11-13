@@ -34,20 +34,22 @@
 
 (defcomponent editor
               :component-did-mount
-              (fn [this {:keys [value on-mount] :as props}]
+              (fn [this {:keys [value read-only? on-mount] :as props}]
                 (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
                                             (clj->js options))]
                   (when value (.setValue editor (str value)))
 
-                  ;; event handlers are passed in as props with keys like :event/mousedown
-                  (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
-                    (.on editor (name event-key) f))
+                  (when-not read-only?
 
-                  (.on editor "beforeChange" ignore-self-op)
+                    ;; event handlers are passed in as props with keys like :event/mousedown
+                    (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
+                      (.on editor (name event-key) f))
 
-                  (v/update-state! this assoc :editor editor)
+                    (.on editor "beforeChange" ignore-self-op)
 
-                  (when on-mount (on-mount editor this))))
+                    (v/update-state! this assoc :editor editor)
+
+                    (when on-mount (on-mount editor this)))))
               :component-will-receive-props
               (fn [this {:keys [value]} {next-value :value}]
                 (when (and next-value (not= next-value value))
@@ -60,6 +62,10 @@
               :render
               (fn [this props state]
                 [:.h-100 {:ref "editor-container"}]))
+
+(defn viewer [source]
+  (editor {:read-only? true
+           :value      source}))
 
 (defn ch+ [pos n]
   #js {:line (.-line pos)

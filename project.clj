@@ -10,9 +10,10 @@
                  [org.clojure/clojurescript "1.9.293"]
 
                  [cljsjs/codemirror "5.19.0-0"]
+                 [cljsjs/marked "0.3.5-0"]
 
                  [org.clojars.mhuebert/cljs-live "0.1.2"]
-                 [org.clojars.mhuebert/re-view "0.1.3"]]
+                 [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
