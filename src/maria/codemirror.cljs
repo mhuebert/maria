@@ -1,7 +1,7 @@
 (ns maria.codemirror
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
-            [cljsjs.codemirror.addon.edit.matchbrackets]
+            [maria.codemirror.matchbrackets]
             [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer-macros [defcomponent]]
             [clojure.string :as string]))
