@@ -2,6 +2,7 @@
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.matchbrackets]
+            [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer-macros [defcomponent]]))
 
 (def ^:dynamic *self-op*)
@@ -22,6 +23,7 @@
   {:theme                     "solarized light"
    :styleSelectedText         "cm-selected"
    :matchBrackets             true
+   :autoCloseBrackets         "()[]{}\"\""
    :highlightSelectionMatches true
    :lineNumbers               false
    :lineWrapping              true
