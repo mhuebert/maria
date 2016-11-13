@@ -21,6 +21,7 @@
 (def options
   {:theme                     "solarized light"
    :styleSelectedText         "cm-selected"
+   :matchBrackets             true
    :highlightSelectionMatches true
    :lineNumbers               false
    :lineWrapping              true
