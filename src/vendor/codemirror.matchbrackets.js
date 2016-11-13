@@ -14,13 +14,27 @@
 
     var Pos = CodeMirror.Pos;
 
-    var matching = {"(": ")>", ")": "(<", "[": "]>", "]": "[<", "{": "}>", "}": "{<"};
+    var matching = {"(": ")>", ")": "(<", "[": "]>", "]": "[<", "{": "}>", "}": "{<", '"': '"'};
+
+    function charAt (line, pos) {
+        if (pos >= 0) return line.text.charAt(pos)
+    }
 
     function findMatchingBracket(cm, where, strict, config) {
         var line = cm.getLineHandle(where.line), pos = where.ch - 1;
-        var match = (pos >= 0 && matching[line.text.charAt(pos)]) || matching[line.text.charAt(++pos)];
+        var match = (charAt(line, pos - 1) !== '\\' && matching[charAt(line, pos)]) || charAt(line, pos) !== '\\' && matching[charAt(line, ++pos)];
         if (!match) return null;
-        var dir = match.charAt(1) == ">" ? 1 : -1;
+
+        var type = (cm.getTokenAt(where).type)
+        var prevType = (cm.getTokenAt(Pos(where.line, where.ch - 1)).type)
+        isString = (match === '"');
+        var dir = null;
+        if (isString) {
+            dir = ("string" == type && "string" == prevType) ? -1 : 1;
+        } else {
+            dir = match.charAt(1) == ">" ? 1 : -1;
+        }
+
         if (strict && (dir > 0) != (pos == where.ch)) return null;
         var style = cm.getTokenTypeAt(Pos(where.line, pos + 1));
 
@@ -42,7 +56,7 @@
         var maxScanLines = (config && config.maxScanLines) || 1000;
 
         var stack = [];
-        var re = config && config.bracketRegex ? config.bracketRegex : /[(){}[\]]/;
+        var re = config && config.bracketRegex ? config.bracketRegex : /[(){}"[\]]/;
         var lineEnd = dir > 0 ? Math.min(where.line + maxScanLines, cm.lastLine() + 1)
             : Math.max(cm.firstLine() - 1, where.line - maxScanLines);
         for (var lineNo = where.line; lineNo != lineEnd; lineNo += dir) {
@@ -53,9 +67,13 @@
             if (lineNo == where.line) pos = where.ch - (dir < 0 ? 1 : 0);
             for (; pos != end; pos += dir) {
                 var ch = line.charAt(pos);
+
                 if (re.test(ch) && (style === undefined || cm.getTokenTypeAt(Pos(lineNo, pos + 1)) == style)) {
                     var match = matching[ch];
-                    if ((match.charAt(1) == ">") == (dir > 0)) stack.push(ch);
+                    if (match == '"' && style == 'string') {
+                        if (line.charAt(pos - 1) === '\\') continue;
+                        return {pos: Pos(lineNo, pos), ch: ch};
+                    } else if ((match.charAt(1) == ">") == (dir > 0)) stack.push(ch);
                     else if (!stack.length) return {pos: Pos(lineNo, pos), ch: ch};
                     else stack.pop();
                 }
