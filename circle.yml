@@ -1,0 +1,8 @@
+machine:
+  java:
+    version: oraclejdk8
+dependencies:
+  post:
+    - lein npm install
+    - script/style.sh
+    - lein cljsbuild once prod

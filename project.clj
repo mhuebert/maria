@@ -13,7 +13,8 @@
                  [cljsjs/marked "0.3.5-0"]
 
                  [org.clojars.mhuebert/cljs-live "0.1.3-SNAPSHOT"]
-                 [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]]
+                 [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]
+                 [firebase-tools "3.1.0"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
@@ -26,8 +27,7 @@
 
   :source-paths ["src"]
 
-  :cljsbuild {
-              :builds [{:id           "dev"
+  :cljsbuild {:builds [{:id           "dev"
                         :source-paths ["src"]
                         :figwheel     true
                         :compiler     {:main                 "maria.core"
