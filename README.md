@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/mhuebert/maria.svg?style=svg)](https://circleci.com/gh/mhuebert/maria)
+
 ## Development
 
 First, compile stylesheets:
