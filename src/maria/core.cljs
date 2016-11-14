@@ -16,7 +16,7 @@
 ;; to support multiple editors
 (defonce editor-id 1)
 ;(d/transact! [[:db/add editor-id :source ";;;; Explore basic data types: String, list, nil\n;; Introduce String: everything that goes between two double-quotes\n\"duck\"\n\n\"a\"\n\n\"\"\n\n\"Berlin bear\"\n\n;; Introduce lists: \n()\n\n'(\"duck\") ;; TODO (somehow explain that plain lists need quotes. Let them error first?)\n\n(\"duck\") ;; ERROR -- gosh some nice error messages would be swell\n\n'(\"duck\" \"Berlin bear\" \"whale\")"]])
-(d/transact! [[:db/add editor-id :source "(require '[cljs.spec :include-macros true])"]])
+(d/transact! [[:db/add editor-id :source "(require '[cljs.spec :as s :include-macros true])"]])
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    (cond error [:.pa3.dark-red.mv2 (str error)]
