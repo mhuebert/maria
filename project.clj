@@ -12,7 +12,7 @@
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
 
-                 [org.clojars.mhuebert/cljs-live "0.1.2"]
+                 [org.clojars.mhuebert/cljs-live "0.1.3-SNAPSHOT"]
                  [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]

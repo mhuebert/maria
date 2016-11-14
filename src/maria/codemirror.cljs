@@ -36,7 +36,9 @@
               :component-did-mount
               (fn [this {:keys [value read-only? on-mount] :as props}]
                 (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
-                                            (clj->js options))]
+                                            (clj->js (cond-> options
+                                                             read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                            (assoc :readOnly "nocursor")))))]
                   (when value (.setValue editor (str value)))
 
                   (when-not read-only?

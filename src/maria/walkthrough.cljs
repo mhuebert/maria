@@ -32,7 +32,7 @@
                    [:.w-50
                     (if evaluate
                       ;; does not yet differentiate between error and value
-                      (code-view (:value (eval-src source)))
+                      (code-view (with-out-str (prn (:value (eval-src source)))))
                       [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
                        {:on-click #(do (prn 1) (view/update-state! this assoc :evaluate true))} "?"])]])))
 

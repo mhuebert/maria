@@ -13,7 +13,11 @@
 
 (defn c-opts
   []
-  {:load               c/load-fn
+  {:load               (fn [opts cb]
+                         (println :load opts)
+                         (let [r (c/load-fn opts cb)]
+                           (println r)
+                           r))
    :eval               cljs/js-eval
    :ns                 (:ns @c-env)
    :context            :expr
@@ -40,9 +44,10 @@
                                                                       :source-form form}))]]
       (try (cljs/eval c-state form (cond-> (c-opts)
                                            macros-ns?
-                                           (-> (update :ns #(symbol (str % "$macros")))
-                                               (assoc :macros-ns true))) (partial swap! result merge))
+                                           (-> #_(update :ns #(symbol (str % "$macros")))
+                                             (assoc :macros-ns true))) (partial swap! result merge))
            (catch js/Error e
+             (.error js/console (.-cause e))
              (swap! result assoc :error e))))
     (when (and ns? (contains? @result :value))
       (swap! c-env assoc :ns (second form)))
