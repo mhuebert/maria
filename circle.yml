@@ -4,5 +4,5 @@ machine:
 dependencies:
   post:
     - lein npm install
-    - script/style.sh
+    - script/styles.sh
     - lein cljsbuild once prod
