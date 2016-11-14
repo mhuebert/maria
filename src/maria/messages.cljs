@@ -2,7 +2,7 @@
 
 ;; TODO use context to show where the error happened
  
-(defn what-is? [x]
+(defn what-is [x]
   (cond 
     (string? x) "a string"
     (char? x) "a character"
@@ -35,11 +35,11 @@
 
 (comment
 
-  (what-is? 1)       ;"a number"
-  (what-is? "bob")   ;"a string"
-  (what-is? 'a)      ;"a symbol"
-  (what-is? :b)      ;"a keyword"
-  (what-is? (fn [_])) ;"a function"
+  (what-is 1)       ;"a number"
+  (what-is "bob")   ;"a string"
+  (what-is 'a)      ;"a symbol"
+  (what-is :b)      ;"a keyword"
+  (what-is (fn [_])) ;"a function"
 
   (reformat-exception "Error: 1 is not ISeqable")
   ;;=>"It looks like the computer was expecting a sequence where it found “1”!"
