@@ -19,7 +19,8 @@
             [lein-npm "0.6.2"]
             [lein-cljsbuild "1.1.4" :exclusions [org.clojure/clojure]]]
 
-  :npm {:dependencies [[stylus "0.54.5"]]}
+  :npm {:dependencies [[stylus "0.54.5"]
+                       [firebase-tools "3.1.0"]]}
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
