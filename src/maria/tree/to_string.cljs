@@ -7,16 +7,17 @@
 
 (defn to-string [{:keys [tag children string value] :as node}]
   (case tag
-    (:token :space :linebreak :comma) string
+    (:token :space :newline :comma) string
     :symbol value
     :vector (wrap-children \[ \] children)
     :list (wrap-children \( \) children)
     :map (wrap-children \{ \} children)
     :set (wrap-children "#{" \} children)
     :string (str \" value \")
-    :meta (#(apply str (cons "^" (map to-string value))))
+    :meta (apply str (cons "^" (map to-string value)))
     :keyword (str (cond->> value
                            (:namespaced? node) (str ":")))
+    :base (apply str (map to-string children))
     nil ""
     ))
 

@@ -231,7 +231,8 @@
     (r/string-push-back-reader s)))
 
 (defn clj-tree [s]
-  (rd/read-with-meta (indexing-reader s) parse-next*))
+  {:tag      :base
+   :children (rest (:children (rd/read-with-meta (indexing-reader (str "[\n" s "]")) parse-next*)))})
 
 
 (println "\nTree Examples:\n")
@@ -241,7 +242,7 @@
                 ""
                 ":hello"
                 "::wha"
-                "[1 2 3]"
+                "[1 2 3]\n3 4  5, 9"
                 "^:dynamic *thing*"
                 "(f x)"
                 ]]
