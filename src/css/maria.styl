@@ -1,9 +1,12 @@
 @import "vendor/et-book.styl"
 @import "vendor/tachyons.styl"
 @import "vendor/codemirror.styl"
+@import "vendor/theme/solarized.styl"
 
 html, body, #maria
   height 100%
+.serif
+  font-family "et-book", Georgia, Times New Roman, serif
 div.CodeMirror
   height 100%
   padding 1rem
@@ -17,3 +20,11 @@ div.CodeMirror
 .CodeMirror, .code, code, pre
   font-family 'Source Code Pro', monospace
   font-size 14px
+.CodeMirror
+  background transparent  !important
+  box-shadow none !important
+  text-shadow none !important
+.bg-solarized-light
+  background #fdf6e3
+  box-shadow  inset 0px 0 2px 0px rgba(172, 126, 0, 0.36)
+  text-shadow #eee8d5 0 1px

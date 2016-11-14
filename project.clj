@@ -10,9 +10,10 @@
                  [org.clojure/clojurescript "1.9.293"]
 
                  [cljsjs/codemirror "5.19.0-0"]
+                 [cljsjs/marked "0.3.5-0"]
 
-                 [org.clojars.mhuebert/cljs-live "0.1.1"]
-                 [org.clojars.mhuebert/re-view "0.1.3"]]
+                 [org.clojars.mhuebert/cljs-live "0.1.2"]
+                 [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
@@ -41,6 +42,7 @@
                         :compiler     {:main          "maria.core"
                                        :asset-path    "js/compiled/out"
                                        :output-to     "resources/public/js/compiled/maria.js"
+                                       :dump-core     false
                                        :optimizations :simple}}]}
 
   :figwheel {:css-dirs ["resources/public/css"]}
@@ -51,7 +53,7 @@
                    ;; need to add dev source path here to get user.clj loaded
                    :source-paths ["src" "dev"]
                    ;; for CIDER
-                   :plugins [[cider/cider-nrepl "0.14.0"]]
+                   :plugins      [[cider/cider-nrepl "0.14.0"]]
                    :repl-options {; for nREPL dev you really need to limit output
                                   :init             (set! *print-length* 50)
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})
