@@ -3,7 +3,7 @@
     [maria.codemirror :as cm]
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
-    [maria.tree]
+    [maria.tree.parse]
     [cljs.spec :include-macros true]
     [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
