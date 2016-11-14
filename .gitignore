@@ -6,3 +6,5 @@ node_modules
 resources/public/js/compiled
 resources/public/css
 checkouts
+.lein-repl-history
+.nrepl-port
