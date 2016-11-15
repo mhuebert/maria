@@ -59,6 +59,11 @@
   (r/read-char reader)
   nil)
 
+(defn unread
+  "Unreads a char. Puts the char back on the reader."
+  [reader ch]
+  (r/unread reader ch))
+
 (defn read-repeatedly
   "Call the given function on the given reader until it returns
    a non-truthy value."

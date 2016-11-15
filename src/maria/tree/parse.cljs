@@ -11,28 +11,18 @@
 
 (enable-console-print!)
 
-(def ^:dynamic ^:private *delimiter*
-  nil)
-
-(defn comma? [c] (= \, c))
-(defn space? [c] (= " " c))
-(defn linebreak?
-  [c]
-  (contains? #{\newline \return} c))
+(def ^:dynamic ^:private *delimiter* nil)
+(declare parse-next)
 
 (defn whitespace?
   [c]
-  (and c (or (comma? c)
-             (space? c)
-             (linebreak? c))))
+  (and c (#{\, " " \newline \return} c)))
 
 (defn boundary?
   [c]
   "Check whether a given char is a token boundary."
   (contains?
-    #{\" \: \; \' \@ \^ \` \~
-      \( \) \[ \] \{ \} \\ nil}
-    c))
+    #{\" \: \; \' \@ \^ \` \~ \( \) \[ \] \{ \} \\ nil} c))
 
 (defn- read-to-boundary
   [reader & [allowed]]
@@ -54,31 +44,27 @@
 (defn- dispatch
   [c]
   (cond (nil? c) :eof
-        (whitespace? c) :whitespace
         (= c *delimiter*) :delimiter
-        :else (get {\^ :meta
-                    \# :sharp
-                    \( :list
-                    \[ :vector
-                    \{ :map
-                    \} :unmatched
-                    \] :unmatched
-                    \) :unmatched
-                    \~ :unquote
-                    \' :quote
-                    \` :syntax-quote
-                    \; :comment
-                    \@ :deref
-                    \" :string
-                    \: :keyword}
+        :else (get {\,       :comma
+                    " "      :space
+                    \newline :newline
+                    \return  :newline
+                    \^       :meta
+                    \#       :sharp
+                    \(       :list
+                    \[       :vector
+                    \{       :map
+                    \}       :unmatched
+                    \]       :unmatched
+                    \)       :unmatched
+                    \~       :unquote
+                    \'       :quote
+                    \`       :syntax-quote
+                    \;       :comment
+                    \@       :deref
+                    \"       :string
+                    \:       :keyword}
                    c :token)))
-
-(defmulti ^:private parse-next*
-          (comp dispatch rd/peek))
-
-(defn parse-next
-  [reader]
-  (rd/read-with-meta reader parse-next*))
 
 (defn- parse-delim
   [reader delimiter]
@@ -102,54 +88,9 @@
     (complement printable-only?)
     n))
 
-#_(defn parse-next [reader]
-    (case (dispatch (rd/peek reader))
-      :meta nil
-      :whitespace nil))
-(defmethod parse-next* :whitespace
-  #_"Parse as much whitespace as possible. The created node can either contain
-     only linebreaks or only space/tabs."
-  [reader]
-  (let [c (rd/peek reader)]
-    (cond (linebreak? c)
-          {:tag    :newline
-           :string (rd/read-while reader linebreak?)}
-
-          (comma? c)
-          {:tag    :comma
-           :string (rd/read-while reader comma?)}
-
-          :else
-          {:tag    :space
-           :string (rd/read-while reader space?)})))
-
-(defmethod parse-next* :comment
-  [reader]
-  (rd/ignore reader)
-  {:tag   :comment
-   :value (rd/read-until reader
-                         #(or (nil? %) (linebreak? %))
-                         true)})
-
-(defmethod parse-next* :list
-  [reader]
-  {:tag      :list
-   :children (parse-delim reader \))})
-
-(defmethod parse-next* :vector
-  [reader]
-  {:tag      :vector
-   :children (parse-delim reader \])})
-
-(defmethod parse-next* :map
-  [reader]
-  {:tag      :map
-   :children (parse-delim reader \})})
-
-(defmethod parse-next* :string
-  [reader]
-  {:tag   :string
-   :value (rd/read-string-data reader)})
+(def brackets {\( \)
+               \[ \]
+               \{ \}})
 
 (defn string->edn
   "Convert string to EDN value."
@@ -185,44 +126,93 @@
        :value  v
        :string s})))
 
-(defmethod parse-next* :token
-  [reader]
-  (parse-token reader))
-
-(defmethod parse-next* :keyword
+(defn parse-keyword
   [reader]
   (rd/ignore reader)
   (if-let [c (rd/peek reader)]
     (if (= c \:)
-      {:tag         :keyword
-       :value       (edn/read reader)
+      {:value       (edn/read reader)
        :namespaced? true}
       (do (r/unread reader \:)
-          {:tag   :keyword
-           :value (edn/read reader)}))
+          {:value (edn/read reader)}))
     (rd/throw-reader reader "unexpected EOF while reading keyword.")))
 
-(defmethod parse-next* :delimiter
-  [reader]
-  (rd/ignore reader))
-
-(defmethod parse-next* :unmatched
-  [reader]
-  (rd/throw-reader
-    reader
-    "Unmatched delimiter: %s"
-    (rd/peek reader)))
-
-(defmethod parse-next* :eof
-  [reader]
-  (when *delimiter*
-    (rd/throw-reader reader "Unexpected EOF.")))
-
-(defmethod parse-next* :meta
+(defn parse-sharp
   [reader]
   (rd/ignore reader)
-  {:tag   :meta
-   :value (parse-printables reader :meta 2)})
+  (case (rd/peek reader)
+    nil (rd/throw-reader reader "Unexpected EOF.")
+    \{ {:tag      :set
+        :children (parse-delim reader \})}
+    \( {:tag      :fn
+        :children (parse-delim reader \))}
+    \" {:tag   :regex
+        :value (rd/read-string-data reader)}
+    \^ {:tag      :meta
+        :children (parse-printables reader :meta 2 true)
+        :prefix   "#^"}
+    \' {:tag      :var
+        :children (parse-printables reader :var 1 true)}
+    \_ {:tag      :uneval
+        :children (parse-printables reader :uneval 1 true)}
+    \? (do
+         (rd/next reader)
+         {:tag :reader-macro
+          :children
+               (let [read1 (fn [] (parse-printables reader :reader-macro 1))]
+                 (cons (case (rd/peek reader)
+                         ;; the easy case, just emit a token
+                         \( {:tag    :token
+                             :string "?"}
+
+                         ;; the harder case, match \@, consume it and emit the token
+                         \@ (do (rd/next reader)
+                                {:tag    :token
+                                 :string "?@"})
+                         ;; otherwise no idea what we're reading but its \? prefixed
+                         (do (rd/unread reader \?)
+                             (read1)))
+                       (read1)))})
+    {:tag      :reader-macro
+     :children (parse-printables reader :reader-macro 2)}))
+
+(defn parse-next*
+  [reader]
+  (let [c (rd/peek reader)
+        tag (dispatch c)
+        node-f (case tag
+
+                 :token parse-token
+                 :keyword parse-keyword
+                 :sharp parse-sharp
+
+                 :comment (do (rd/ignore reader)
+                              {:value (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))) true)})
+                 (:newline
+                   :comma
+                   :space) {:string (rd/read-while reader (partial = c))}
+                 (:list
+                   :vector
+                   :map) {:children (parse-delim reader (get brackets c))}
+                 :delimiter rd/ignore
+                 :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
+                 :eof (when *delimiter*
+                        (rd/throw-reader reader "Unexpected EOF (end of file)"))
+                 :meta (do (rd/ignore reader)
+                           {:prefix   "^"
+                            :children (parse-printables reader :meta 2)})
+                 :string {:value (rd/read-string-data reader)}
+
+                 )
+        node (if (fn? node-f) (node-f reader) node-f)
+
+        node (cond-> node
+                     (and node (not (contains? node :tag))) (merge {:tag tag}))]
+    node))
+
+(defn parse-next
+  [reader]
+  (rd/read-with-meta reader parse-next*))
 
 (defn indexing-reader
   "Create reader for strings."
@@ -235,7 +225,6 @@
    :children (rest (:children (rd/read-with-meta (indexing-reader (str "[\n" s "]")) parse-next*)))})
 
 
-
 (doseq [string ["1"
                 "prn"
                 "\"hello\""
@@ -245,9 +234,17 @@
                 "[1 2 3]\n3 4  5, 9"
                 "^:dynamic *thing*"
                 "(f x)"
+                "#{1}"
+                "#(+)"
+                "#\"[]\""
+                "#^ :a {}"
+                "#'a"
+                "#_()"
+                "#?(:cljs)"
+                "#?@(:cljs)"
                 ]]
   (let [tree (clj-tree string)
         emitted-string (to-string tree)]
     (is (= string emitted-string))
     #_(println "String: " (with-out-str (pprint string)) "\n"
-             (with-out-str (pprint tree)) "\n--\n")))
+               (with-out-str (pprint tree)) "\n--\n")))
