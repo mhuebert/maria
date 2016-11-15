@@ -1,5 +1,6 @@
 {:require        [[cljs.spec :include-macros true]
-                  [cljs.spec.impl.gen :include-macros true]]
+                  [cljs.spec.impl.gen :include-macros true]
+                  [maria.user :include-macros true]]
  :require-macros [cljs.spec
                   cljs.spec.impl.gen]
  :precompiled    [cljs.spec

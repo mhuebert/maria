@@ -5,8 +5,6 @@
             [cljs.tools.reader :as r :refer [resolve-symbol]]
             [cljs.tools.reader.reader-types :as rt]))
 
-(defonce _ (c/preloads!))
-
 (def c-state (cljs/empty-state))
 (def c-env (atom {}))
 (def ^:dynamic *cljs-warnings* nil)
@@ -31,27 +29,35 @@
   (when (and s (not= "" s))
     (r/read {} (rt/indexing-push-back-reader s))))
 
+(def ns-utils
+  {'in-ns (fn [n] (swap! c-env assoc :ns n)
+            {:value nil
+             :ns    n})})
+
 (defn eval
   "Eval a single form, keeping track of current ns in c-env"
   [form]
-  (let [result (atom)
-        ns? (and (seq? form) (#{'ns} (first form)))
-        macros-ns? (and (seq? form) (= 'defmacro (first form)))]
-    (binding [*cljs-warning-handlers* [(fn [warning-type env extra]
-                                         (swap! *cljs-warnings* conj {:type        warning-type
-                                                                      :env         env
-                                                                      :extra       extra
-                                                                      :source-form form}))]]
-      (try (cljs/eval c-state form (cond-> (c-opts)
-                                           macros-ns?
-                                           (-> #_(update :ns #(symbol (str % "$macros")))
-                                             (assoc :macros-ns true))) (partial swap! result merge))
-           (catch js/Error e
-             (.error js/console (.-cause e))
-             (swap! result assoc :error e))))
-    (when (and ns? (contains? @result :value))
-      (swap! c-env assoc :ns (second form)))
-    @result))
+  (if-let [f (and (seq? form) (get ns-utils (first form)))]
+    (apply f (rest form))
+    (let [result (atom)
+          ns? (and (seq? form) (#{'ns} (first form)))
+          macros-ns? (and (seq? form) (= 'defmacro (first form)))]
+      (println :eval form (when (seq? form) (first form)) ns?)
+      (binding [*cljs-warning-handlers* [(fn [warning-type env extra]
+                                           (swap! *cljs-warnings* conj {:type        warning-type
+                                                                        :env         env
+                                                                        :extra       extra
+                                                                        :source-form form}))]]
+        (try (cljs/eval c-state form (cond-> (c-opts)
+                                             macros-ns?
+                                             (-> #_(update :ns #(symbol (str % "$macros")))
+                                               (assoc :macros-ns true))) (partial swap! result merge))
+             (catch js/Error e
+               (.error js/console (.-cause e))
+               (swap! result assoc :error e))))
+      (when (and ns? (contains? @result :value))
+        (swap! c-env assoc :ns (second form)))
+      @result)))
 
 (defn wrap-source
   "Clojure reader only returns the last top-level form in a string,
@@ -84,3 +90,8 @@
                     (if (or error (empty? remaining))
                       (assoc result :warnings @*cljs-warnings*)
                       (recur remaining))))))))
+
+(defonce _
+         (do (c/preloads!)
+             (eval '(require '[maria.user :include-macros true]))
+             (eval '(in-ns maria.user))))
