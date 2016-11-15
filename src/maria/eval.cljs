@@ -11,11 +11,7 @@
 
 (defn c-opts
   []
-  {:load               (fn [opts cb]
-                         (println :load opts)
-                         (let [r (c/load-fn opts cb)]
-                           (println r)
-                           r))
+  {:load               c/load-fn
    :eval               cljs/js-eval
    :ns                 (:ns @c-env)
    :context            :expr
@@ -42,7 +38,6 @@
     (let [result (atom)
           ns? (and (seq? form) (#{'ns} (first form)))
           macros-ns? (and (seq? form) (= 'defmacro (first form)))]
-      (println :eval form (when (seq? form) (first form)) ns?)
       (binding [*cljs-warning-handlers* [(fn [warning-type env extra]
                                            (swap! *cljs-warnings* conj {:type        warning-type
                                                                         :env         env

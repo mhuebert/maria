@@ -1,8 +1,6 @@
 {:require        [[cljs.spec :include-macros true]
                   [cljs.spec.impl.gen :include-macros true]
                   [maria.user :include-macros true]]
- :require-macros [cljs.spec
-                  cljs.spec.impl.gen]
  :precompiled    [cljs.spec
                   cljs.js
                   clojure.set
@@ -12,5 +10,5 @@
                   cljs.tools.reader.reader-types
                   cljs.tools.reader
                   cljs.analyzer]
- :output-to      "resources/public/js/cljs_live_cache_core.js"
+ :output-to      "resources/public/js/cljs_live_cache.js"
  :cljsbuild-out  "resources/public/js/compiled/out"}
