@@ -6,31 +6,22 @@
     [maria.tree.parse]
 
     [clojure.set]
-    [clojure.string]
+    [clojure.string :as string]
     [clojure.walk]
 
     [cljs.spec :include-macros true]
     [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
-    [re-view.routing :refer [router]]
+    [re-view.routing :as routing :refer [router]]
     [re-view.core :as v :refer-macros [defcomponent]]
-    [goog.object :as gobj]
-    [goog.Uri :as uri]))
+    [goog.object :as gobj]))
 
 (enable-console-print!)
-
-(def clear-repl? (-> (uri/parse (gobj/getValueByKeys js/window "location" "href"))
-                     (.getQueryData)
-                     (.get "clear")
-                     (= "true")))
 
 ;; to support multiple editors
 (defonce editor-id "maria-repl-left-pane")
 
-(when-not clear-repl?
-  (d/transact! [[:db/add editor-id :source
-                 (gobj/getValueByKeys js/window #js ["localStorage" editor-id])]]))
 
 (defonce _ (d/listen! [editor-id :source] #(gobj/set (.-localStorage js/window) editor-id %)))
 
@@ -60,6 +51,8 @@
 (defcomponent repl
               :subscriptions {:source      (subs/db [editor-id :source])
                               :eval-result (subs/db [editor-id :eval-result])}
+              :component-will-mount
+              #(d/transact! [[:db/add editor-id :source (gobj/getValueByKeys js/window #js ["localStorage" editor-id])]])
               :render
               (fn [_ _ {:keys [eval-result source]}]
                 [:.flex.flex-row.h-100
