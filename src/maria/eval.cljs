@@ -5,8 +5,8 @@
             [cljs.tools.reader :as r :refer [resolve-symbol]]
             [cljs.tools.reader.reader-types :as rt]))
 
-(def c-state (cljs/empty-state))
-(def c-env (atom {}))
+(defonce c-state (cljs/empty-state))
+(defonce c-env (atom {}))
 (def ^:dynamic *cljs-warnings* nil)
 
 (defn c-opts
@@ -26,7 +26,10 @@
     (r/read {} (rt/indexing-push-back-reader s))))
 
 (def ns-utils
-  {'in-ns (fn [n] (swap! c-env assoc :ns n)
+  {'in-ns (fn [n]
+            (let [n (symbol (cond (list? n) (str (second n))
+                                  :else (name n)))]
+              (swap! c-env assoc :ns n))
             {:value nil
              :ns    n})})
 
@@ -89,4 +92,5 @@
 (defonce _
          (do (c/preloads!)
              (eval '(require '[maria.user :include-macros true]))
-             (eval '(in-ns maria.user))))
+             (eval '(in-ns maria.user))
+             (eval '(require '[maria.html :refer [html]]))))

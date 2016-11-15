@@ -4,6 +4,7 @@
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
     [maria.tree.parse]
+    [maria.html]
 
     [clojure.set]
     [clojure.string :as string]
@@ -22,14 +23,16 @@
 ;; to support multiple editors
 (defonce editor-id "maria-repl-left-pane")
 
-
 (defonce _ (d/listen! [editor-id :source] #(gobj/set (.-localStorage js/window) editor-id %)))
 
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    (cond error [:.pa3.dark-red.mv2 (str error)]
          (js/React.isValidElement value) value
-         :else [:.bg-white.pv2.mv2 (if (nil? value) "nil" (with-out-str (prn value)))])
+         (fn? value) (value)
+         :else [:.bg-white.pv2.mv2 (if (nil? value) "nil" (try (with-out-str (prn value))
+                                                               (catch js/Error e "error printing result")
+                                                               ))])
    (when (seq warnings)
      [:.bg-near-white.pa2.pre.mv2
       [:.dib.dark-red "Warnings: "]
@@ -84,6 +87,6 @@
                  (main-view)]))
 
 (defn main []
-  (v/render-to-dom (layout) "maria"))
+  (v/render-to-dom (layout) "maria-main"))
 
 (main)
