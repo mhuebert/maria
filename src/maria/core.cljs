@@ -41,13 +41,16 @@
   (let [el (js/ReactDOM.findDOMNode component)]
     (set! (.-scrollTop el) (.-scrollHeight el))))
 
+(defn last-n [n v]
+  (subvec v (max 0 (- (count v) n))))
+
 (defcomponent result-pane
               :component-did-update scroll-bottom
               :component-did-mount scroll-bottom
               :render
               (fn [this]
                 [:div.h-100.overflow-auto.code
-                 (map display-result (reverse (first (v/children this))))]))
+                 (map display-result (last-n 50 (first (v/children this))))]))
 
 (defcomponent repl
               :subscriptions {:source      (subs/db [editor-id :source])
@@ -62,7 +65,7 @@
                               :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
                                                (when-let [source (or (cm/selection-text %1)
                                                                      (cm/bracket-text %1))]
-                                                 (d/transact! [[:db/update-attr editor-id :eval-result conj (eval-src source)]])))
+                                                 (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
                               :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
                   (result-pane eval-result)]]))
