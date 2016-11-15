@@ -14,14 +14,26 @@
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
     [re-view.routing :refer [router]]
-    [re-view.core :as v :refer-macros [defcomponent]]))
+    [re-view.core :as v :refer-macros [defcomponent]]
+    [goog.object :as gobj]
+    [goog.Uri :as uri]))
 
 (enable-console-print!)
 
+(def clear-repl? (-> (uri/parse (gobj/getValueByKeys js/window "location" "href"))
+                     (.getQueryData)
+                     (.get "clear")
+                     (= "true")))
+
 ;; to support multiple editors
-(defonce editor-id 1)
-;(d/transact! [[:db/add editor-id :source ";;;; Explore basic data types: String, list, nil\n;; Introduce String: everything that goes between two double-quotes\n\"duck\"\n\n\"a\"\n\n\"\"\n\n\"Berlin bear\"\n\n;; Introduce lists: \n()\n\n'(\"duck\") ;; TODO (somehow explain that plain lists need quotes. Let them error first?)\n\n(\"duck\") ;; ERROR -- gosh some nice error messages would be swell\n\n'(\"duck\" \"Berlin bear\" \"whale\")"]])
-(d/transact! [[:db/add editor-id :source ";; try spec:\n(require '[cljs.spec :as s :include-macros true])"]])
+(defonce editor-id "maria-repl-left-pane")
+
+(when-not clear-repl?
+  (d/transact! [[:db/add editor-id :source
+                 (gobj/getValueByKeys js/window #js ["localStorage" editor-id])]]))
+
+(defonce _ (d/listen! [editor-id :source] #(gobj/set (.-localStorage js/window) editor-id %)))
+
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    (cond error [:.pa3.dark-red.mv2 (str error)]

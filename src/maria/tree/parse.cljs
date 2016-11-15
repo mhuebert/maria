@@ -235,7 +235,7 @@
    :children (rest (:children (rd/read-with-meta (indexing-reader (str "[\n" s "]")) parse-next*)))})
 
 
-(println "\nTree Examples:\n")
+
 (doseq [string ["1"
                 "prn"
                 "\"hello\""
@@ -249,5 +249,5 @@
   (let [tree (clj-tree string)
         emitted-string (to-string tree)]
     (is (= string emitted-string))
-    (println "String: " (with-out-str (pprint string)) "\n"
+    #_(println "String: " (with-out-str (pprint string)) "\n"
              (with-out-str (pprint tree)) "\n--\n")))
