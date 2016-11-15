@@ -27,9 +27,9 @@
 
 (def ns-utils
   {'in-ns (fn [n]
-            (let [n (symbol (cond (list? n) (str (second n))
-                                  :else (name n)))]
-              (swap! c-env assoc :ns n))
+            (when-not (symbol? n)
+              (throw (js/Error. "`in-ns` must be passed a symbol.")))
+            (swap! c-env assoc :ns n)
             {:value nil
              :ns    n})})
 
@@ -37,7 +37,9 @@
   "Eval a single form, keeping track of current ns in c-env"
   [form]
   (if-let [f (and (seq? form) (get ns-utils (first form)))]
-    (apply f (rest form))
+    (try (apply f (rest form))
+         (catch js/Error e
+           {:error e}))
     (let [result (atom)
           ns? (and (seq? form) (#{'ns} (first form)))
           macros-ns? (and (seq? form) (= 'defmacro (first form)))]
