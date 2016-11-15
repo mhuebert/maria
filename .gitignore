@@ -8,3 +8,5 @@ resources/public/css
 checkouts
 .lein-repl-history
 .nrepl-port
+.planck_cache
+opts.clj

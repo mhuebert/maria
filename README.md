@@ -44,3 +44,8 @@ there:
 At that stage, you should have both a running figwheel and the ability
 to evaluate forms in the browser from emacs.
 
+### cljs-live deps
+
+Dependencies for the self-hosted ClojureScript compiler are compiled using
+[cljs-live](https://www.github.com/mhuebert/cljs-live), with deps specified
+ in `live-deps.clj` and compiled to `resources/public/js/cljs_live_cache_core.js`

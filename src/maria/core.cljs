@@ -4,6 +4,11 @@
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
     [maria.tree.parse]
+
+    [clojure.set]
+    [clojure.string]
+    [clojure.walk]
+
     [cljs.spec :include-macros true]
     [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
