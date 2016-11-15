@@ -6,4 +6,4 @@ dependencies:
     - lein npm install
     - script/styles.sh
     - lein cljsbuild once prod
-    - node_modules/firebase-tools/firebase deploy --only hosting --token $FIREBASE_TOKEN
+    - node_modules/firebase-tools/bin/firebase deploy --only hosting --token $FIREBASE_TOKEN
