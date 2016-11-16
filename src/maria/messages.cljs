@@ -14,6 +14,9 @@
     (list? x) "a list"
     (map? x) "a map"
     (seq? x) "a sequence"
+    (true? x) "Boolean true"
+    (false? x) "Boolean false"
+    (nil? x) "nil (nothing)"
     :else (type x)))
 
 (def exception-fns
