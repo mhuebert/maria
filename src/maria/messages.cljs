@@ -4,19 +4,19 @@
  
 (defn what-is [x]
   (cond 
-    (string? x) "a string"
-    (char? x) "a character"
-    (number? x) "a number"
-    (symbol? x)  "a symbol"
-    (keyword? x) "a keyword"
-    (fn? x) "a function"
-    (vector? x) "a vector"
-    (list? x) "a list"
-    (map? x) "a map"
-    (seq? x) "a sequence"
-    (true? x) "Boolean true"
-    (false? x) "Boolean false"
-    (nil? x) "nil (nothing)"
+    (string? x)   "a string"
+    (char? x)     "a character"
+    (number? x)   "a number"
+    (symbol? x)   "a symbol"
+    (keyword? x)  "a keyword"
+    (fn? x)       "a function"
+    (vector? x)   "a vector"
+    (list? x)     "a list"
+    (map? x)      "a map"
+    (seq? x)      "a sequence"
+    (true? x)     "Boolean true"
+    (false? x)    "Boolean false"
+    (nil? x)      "nil (nothing)"
     :else (type x)))
 
 (def exception-fns
