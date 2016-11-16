@@ -13,4 +13,4 @@
 ;; - introduce drawing fns and let them play with LEGOs
 ;; - word puzzle (re-implement `subs`?)
 ;; - tell an emoji story / make an emoji world on screen
-;; - mathy/CS stuff
+;; - mathy/CS stuff, e.g. fibonnacci or Shannon's entropy
