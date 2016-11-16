@@ -1,8 +1,11 @@
 (ns maria.messages)
 
 ;; TODO use context to show where the error happened
- 
-(defn what-is [x]
+
+(defn what-is
+  "This is `what-is`, a function that takes any sort of element and
+  returns a string describing that that element is."
+  [x]
   (cond 
     (string? x)   "a string"
     (char? x)     "a character"
