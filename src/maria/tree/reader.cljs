@@ -75,17 +75,16 @@
 (defn position
   "Create map of `row-k` and `col-k` representing the current reader position."
   [reader row-k col-k]
-  {row-k (r/get-line-number reader)
+  {row-k (dec (r/get-line-number reader))                   ;; dec row because we always wrap forms in [\n ...]
    col-k (r/get-column-number reader)})
 
 (defn read-with-meta
   "Use the given function to read value, then attach row/col metadata."
   [reader read-fn]
   (let [start-position (position reader :row :col)]
-    (if-let [entry (read-fn reader)]
-      (->> (position reader :end-row :end-col)
-           (merge start-position)
-           (merge entry)))))
+    (some-> (read-fn reader)
+            (merge start-position
+                   (position reader :end-row :end-col)))))
 
 (defn read-n
   "Call the given function on the given reader until `n` values matching `p?` have been

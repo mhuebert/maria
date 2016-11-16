@@ -3,15 +3,22 @@
 
 (ns maria.tree.parse
   (:require [maria.tree.reader :as rd]
-            [maria.tree.to-string :refer [to-string]]
+            [maria.tree.unwrap :as unwrap]
             [cljs.pprint :refer [pprint]]
             [cljs.tools.reader.reader-types :as r]
+            [cljs.tools.reader :as rr]
             [cljs.tools.reader.edn :as edn]
             [cljs.test :refer-macros [is are]]))
 
 (enable-console-print!)
 
+(defn node [tag value options]
+  {:tag     tag
+   :value   value
+   :options options})
+
 (def ^:dynamic ^:private *delimiter* nil)
+(def ^:dynamic *speedup* false)
 (declare parse-next)
 
 (defn whitespace?
@@ -40,6 +47,11 @@
          (if (not= c \\)
            (read-to-boundary reader)
            ""))))
+
+(defn string->edn
+  "Convert string to EDN value."
+  [s]
+  (edn/read-string s))
 
 (defn- dispatch
   [c]
@@ -92,25 +104,6 @@
                \[ \]
                \{ \}})
 
-(defn string->edn
-  "Convert string to EDN value."
-  [s]
-  (edn/read-string s))
-
-(defn- symbol-node
-  "Symbols allow for certain boundary characters that have
-   to be handled explicitly."
-  [reader value value-string]
-  (let [suffix (read-to-boundary reader [\' \:])]
-    (if (empty? suffix)
-      {:tag    :token
-       :value  value
-       :string value-string}
-      (let [s (str value-string suffix)]
-        {:tag    :token
-         :value  (string->edn s)
-         :string s}))))
-
 (defn parse-token
   "Parse a single token."
   [reader]
@@ -118,23 +111,17 @@
         s (->> (if (= first-char \\)
                  (read-to-char-boundary reader)
                  (read-to-boundary reader))
-               (str first-char))
-        v (string->edn s)]
-    (if (symbol? v)
-      (symbol-node reader v s)
-      {:tag    :token
-       :value  v
-       :string s})))
+               (str first-char))]
+    (node :token (str s (when (symbol? (string->edn s)) (read-to-boundary reader [\' \:]))) nil)))
 
 (defn parse-keyword
   [reader]
   (rd/ignore reader)
   (if-let [c (rd/peek reader)]
     (if (= c \:)
-      {:value       (edn/read reader)
-       :namespaced? true}
+      (node :keyword (edn/read reader) {:namespaced? true})
       (do (r/unread reader \:)
-          {:value (edn/read reader)}))
+          (node :keyword (edn/read reader) nil)))
     (rd/throw-reader reader "unexpected EOF while reading keyword.")))
 
 (defn parse-sharp
@@ -142,73 +129,51 @@
   (rd/ignore reader)
   (case (rd/peek reader)
     nil (rd/throw-reader reader "Unexpected EOF.")
-    \{ {:tag      :set
-        :children (parse-delim reader \})}
-    \( {:tag      :fn
-        :children (parse-delim reader \))}
-    \" {:tag   :regex
-        :value (rd/read-string-data reader)}
-    \^ {:tag      :meta
-        :children (parse-printables reader :meta 2 true)
-        :prefix   "#^"}
-    \' {:tag      :var
-        :children (parse-printables reader :var 1 true)}
-    \_ {:tag      :uneval
-        :children (parse-printables reader :uneval 1 true)}
+    \{ (node :set (parse-delim reader \}) nil)
+    \( (node :fn (parse-delim reader \)) nil)
+    \" (node :regex (rd/read-string-data reader) nil)
+    \^ (node :meta (parse-printables reader :meta 2 true) {:prefix "#"})
+    \' (node :var (parse-printables reader :var 1 true) nil)
+    \_ (node :uneval (parse-printables reader :uneval 1 true) nil)
     \? (do
          (rd/next reader)
-         {:tag :reader-macro
-          :children
-               (let [read1 (fn [] (parse-printables reader :reader-macro 1))]
+         (node :reader-macro
+               (let [read-next (partial parse-printables reader :reader-macro 1)]
                  (cons (case (rd/peek reader)
                          ;; the easy case, just emit a token
-                         \( {:tag    :token
-                             :string "?"}
-
+                         \( (node :token "?" nil)
                          ;; the harder case, match \@, consume it and emit the token
                          \@ (do (rd/next reader)
-                                {:tag    :token
-                                 :string "?@"})
+                                (node :token "?@" nil))
                          ;; otherwise no idea what we're reading but its \? prefixed
                          (do (rd/unread reader \?)
-                             (read1)))
-                       (read1)))})
-    {:tag      :reader-macro
-     :children (parse-printables reader :reader-macro 2)}))
+                             (read-next)))
+                       (read-next))) nil))
+    (node :reader-macro (parse-printables reader :reader-macro 2) nil)))
 
 (defn parse-next*
   [reader]
   (let [c (rd/peek reader)
-        tag (dispatch c)
-        node-f (case tag
-
-                 :token parse-token
-                 :keyword parse-keyword
-                 :sharp parse-sharp
-
-                 :comment (do (rd/ignore reader)
-                              {:value (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))) true)})
-                 (:newline
-                   :comma
-                   :space) {:string (rd/read-while reader (partial = c))}
-                 (:list
-                   :vector
-                   :map) {:children (parse-delim reader (get brackets c))}
-                 :delimiter rd/ignore
-                 :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
-                 :eof (when *delimiter*
-                        (rd/throw-reader reader "Unexpected EOF (end of file)"))
-                 :meta (do (rd/ignore reader)
-                           {:prefix   "^"
-                            :children (parse-printables reader :meta 2)})
-                 :string {:value (rd/read-string-data reader)}
-
-                 )
-        node (if (fn? node-f) (node-f reader) node-f)
-
-        node (cond-> node
-                     (and node (not (contains? node :tag))) (merge {:tag tag}))]
-    node))
+        tag (dispatch c)]
+    (case tag
+      :token (parse-token reader)
+      :keyword (parse-keyword reader)
+      :sharp (parse-sharp reader)
+      :comment (do (rd/ignore reader)
+                   (node tag (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))) true) nil))
+      (:newline
+        :comma
+        :space) (node tag (rd/read-while reader (partial = c)) nil)
+      (:list
+        :vector
+        :map) (node tag (parse-delim reader (get brackets c)) nil)
+      :delimiter (rd/ignore reader)
+      :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
+      :eof (when *delimiter*
+             (rd/throw-reader reader "Unexpected EOF (end of file)"))
+      :meta (do (rd/ignore reader)
+                (node tag (parse-printables reader :meta 2) nil))
+      :string (node tag (rd/read-string-data reader) nil))))
 
 (defn parse-next
   [reader]
@@ -220,31 +185,42 @@
   (r/indexing-push-back-reader
     (r/string-push-back-reader s)))
 
-(defn clj-tree [s]
-  {:tag      :base
-   :children (rest (:children (rd/read-with-meta (indexing-reader (str "[\n" s "]")) parse-next*)))})
+(defn ast [s]
+  (-> (rd/read-with-meta (indexing-reader (str "[\n" s "]")) parse-next*)
+      (assoc :tag :base)
+      (update :value rest)
+      (update :end-col dec)))
 
+(doseq [[string sexp] [["1" '[1]]
+                       ["prn" '[prn]]
+                       ["\"hello\"" '["hello"]]
+                       ["" '[]]
+                       [":hello" [:hello]]
+                       ["::wha" [::wha]]
+                       ["#(+)" '[#(+)]]
+                       ["[1 2 3]\n3 4  5, 9" '[[1 2 3] 3 4 5 9]]
+                       ["^:dynamic *thing*" '[^:dynamic *thing*]]
+                       ["(f x)" '[(f x)]]
+                       ["#{1}" '[#{1}]]
+                       ["#\"[a-z]\""]                       ;; two regular expressions can never be equal
+                       ["#^:a {}" '[#^:a {}]]
+                       ["#'a" '[#'a]]
+                       ["#_()" '[#_()]]
+                       #_["#?(:cljs)"]
+                       #_["#?@(:cljs)"]
+                       ["(defn parse-sharp\n  [reader]\n  (rd/ignore reader)\n  (case (rd/peek reader)\n    nil (rd/throw-reader reader \"Unexpected EOF.\")\n    \\{ {:tag      :set\n        :children (parse-delim reader \\})}\n    \\( {:tag      :fn\n        :children (parse-delim reader \\))}\n    \\\" {:tag   :regex\n        :value (rd/read-string-data reader)}\n    \\^ {:tag      :meta\n        :children (parse-printables reader :meta 2 true)\n        :prefix   \"#^\"}\n    \\' {:tag      :var\n        :children (parse-printables reader :var 1 true)}\n    \\_ {:tag      :uneval\n        :children (parse-printables reader :uneval 1 true)}\n    \\? (do\n         (rd/next reader)\n         {:tag :reader-macro\n          :children\n               (let [read1 (fn [] (parse-printables reader :reader-macro 1))]\n                 (cons (case (rd/peek reader)\n                         ;; the easy case, just emit a token\n                         \\( {:tag    :token\n                             :string \"?\"}\n\n                         ;; the harder case, match \\@, consume it and emit the token\n                         \\@ (do (rd/next reader)\n                                {:tag    :token\n                                 :string \"?@\"})\n                         ;; otherwise no idea what we're reading but its \\? prefixed\n                         (do (rd/unread reader \\?)\n                             (read1)))\n                       (read1)))})\n    {:tag      :reader-macro\n     :children (parse-printables reader :reader-macro 2)}))"]
+                       ["(defcomponent editor\n              :component-did-mount\n              (fn [this {:keys [value read-only? on-mount] :as props}]\n                (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this \"editor-container\"))\n                                            (clj->js (cond-> options\n                                                             read-only? (-> (select-keys [:theme :mode :lineWrapping])\n                                                                            (assoc :readOnly \"nocursor\")))))]\n                  (when value (.setValue editor (str value)))\n\n                  (when-not read-only?\n\n                    ;; event handlers are passed in as props with keys like :event/mousedown\n                    (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) \"event\")) props)]\n                      (.on editor (name event-key) f))\n\n                    (.on editor \"beforeChange\" ignore-self-op)\n\n                    (v/update-state! this assoc :editor editor)\n\n                    (when on-mount (on-mount editor this)))))\n              :component-will-receive-props\n              (fn [this {:keys [value]} {next-value :value}]\n                (when (and next-value (not= next-value value))\n                  (when-let [editor (:editor (v/state this))]\n                    (binding [*self-op* true]\n                      (set-preserve-cursor editor next-value)))))\n              :should-component-update\n              (fn [_ _ state _ prev-state]\n                (not= (dissoc state :editor) (dissoc prev-state :editor)))\n              :render\n              (fn [this props state]\n                [:.h-100 {:ref \"editor-container\"}]))"]
+                       ["(list (ns maria.core\n        (:require\n          [maria.codemirror :as cm]\n          [maria.eval :refer [eval-src]]\n          [maria.walkthrough :refer [walkthrough]]\n          [maria.tree.parse]\n          [maria.html]\n\n          [clojure.set]\n          [clojure.string :as string]\n          [clojure.walk]\n\n          [cljs.spec :include-macros true]\n          [cljs.pprint :refer [pprint]]\n          [re-db.d :as d]\n          [re-view.subscriptions :as subs]\n          [re-view.routing :as routing :refer [router]]\n          [re-view.core :as v :refer-macros [defcomponent]]\n          [goog.object :as gobj]))\n\n      (enable-console-print!)\n\n      ;; to support multiple editors\n      (defonce editor-id \"maria-repl-left-pane\")\n\n      (defonce _ (d/listen! [editor-id :source] #(gobj/set (.-localStorage js/window) editor-id %)))\n\n      (defn display-result [{:keys [value error warnings]}]\n        [:div.bb.b--near-white\n         (cond error [:.pa3.dark-red.ph3.mv2 (str error)]\n               (v/is-react-element? value) (value)\n               :else [:.bg-white.pv2.ph3.mv2 (if (nil? value) \"nil\" (try (with-out-str (prn value))\n                                                                         (catch js/Error e \"error printing result\")))])\n         (when (seq warnings)\n           [:.bg-near-white.pa2.pre.mv2\n            [:.dib.dark-red \"Warnings: \"]\n            (for [warning (distinct (map #(dissoc % :env) warnings))]\n              (str \"\\n\" (with-out-str (pprint warning))))])])\n\n      (defn scroll-bottom [component]\n        (let [el (js/ReactDOM.findDOMNode component)]\n          (set! (.-scrollTop el) (.-scrollHeight el))))\n\n      (defn last-n [n v]\n        (subvec v (max 0 (- (count v) n))))\n\n      (defcomponent result-pane\n                    :component-did-update scroll-bottom\n                    :component-did-mount scroll-bottom\n                    :render\n                    (fn [this]\n                      [:div.h-100.overflow-auto.code\n                       (map display-result (last-n 50 (first (v/children this))))]))\n\n      (defcomponent repl\n                    :subscriptions {:source      (subs/db [editor-id :source])\n                                    :eval-result (subs/db [editor-id :eval-result])}\n                    :component-will-mount\n                    #(d/transact! [[:db/add editor-id :source (gobj/getValueByKeys js/window #js [\"localStorage\" editor-id])]])\n                    :render\n                    (fn [_ _ {:keys [eval-result source]}]\n                      [:.flex.flex-row.h-100\n                       [:.w-50.h-100.bg-solarized-light\n                        (cm/editor {:value         source\n                                    :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))\n                                                     (when-let [source (or (cm/selection-text %1)\n                                                                           (cm/bracket-text %1))]\n                                                       (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))\n                                    :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]\n                       [:.w-50.h-100\n                        (result-pane eval-result)]]))\n\n      (defcomponent not-found\n                    :render\n                    (fn [] [:div \"We couldn't find this page!\"]))\n\n      (defcomponent layout\n                    :subscriptions {:main-view (router \"/\" repl\n                                                       \"/walkthrough\" walkthrough\n                                                       not-found)}\n                    :render\n                    (fn [_ _ {:keys [main-view]}]\n                      [:div.h-100\n                       [:.w-100.fixed.bottom-0.z-3\n                        [:.dib.center\n                         [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href \"/\"} \"REPL\"]\n                         [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href \"/walkthrough\"} \"Walkthrough\"]]]\n                       (main-view)]))\n\n      (defn main []\n        (v/render-to-dom (layout) \"maria-main\"))\n\n      (main))"]
+                       ["my:symbol" '[my:symbol]]
+                       ["my::symbol" '[my::symbol]]]]
 
-(doseq [string ["1"
-                "prn"
-                "\"hello\""
-                ""
-                ":hello"
-                "::wha"
-                "[1 2 3]\n3 4  5, 9"
-                "^:dynamic *thing*"
-                "(f x)"
-                "#{1}"
-                "#(+)"
-                "#\"[]\""
-                "#^ :a {}"
-                "#'a"
-                "#_()"
-                "#?(:cljs)"
-                "#?@(:cljs)"
-                ]]
-  (let [tree (clj-tree string)
-        emitted-string (to-string tree)]
-    (is (= string emitted-string))
-    #_(println "String: " (with-out-str (pprint string)) "\n"
-               (with-out-str (pprint tree)) "\n--\n")))
+  (binding [maria.tree.unwrap/*ns* (symbol "maria.tree.parse")]
+    (let [wrapped-str (str "[" string "]")
+          tree (ast wrapped-str)
+          emitted-string (unwrap/string tree)
+          emitted-sexp (unwrap/sexp tree)]
+      (when sexp
+        (is (= emitted-sexp sexp)
+            (str "Correct sexp for: " (subs string 0 30))))
+      (is (= wrapped-str emitted-string)
+          (str "Correct emitted string for: " string)))))
