@@ -22,3 +22,27 @@
 
 (reduce eat '(🍔🍟🍗🍿))
 ;; => 💩
+
+
+
+;; from
+;; https://qph.ec.quoracdn.net/main-qimg-7a03304c6e80dd28c3a66e3ece50bceb-c?convert_to_webp=true
+
+(map prepare ingredients)
+
+(reduce (fn [sandwich ingredient]
+          (conj sandwich ingredient))
+        []
+        ingredients)
+
+;; or
+
+(let [slice #(str "sliced " %)
+      ingredients (map slice ["bread" "lettuce" "tomato" "onion" "pepper" "turkey"])
+      empty-sandwich []]
+  (reduce (fn [sandwich ingredient]
+            (conj sandwich ingredient))
+          empty-sandwich
+          ingredients))
+
+["sliced bread" "sliced lettuce" "sliced tomato" "sliced onion" "sliced pepper" "sliced turkey"]
