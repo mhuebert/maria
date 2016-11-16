@@ -54,19 +54,6 @@
                             tree/string))]
     (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
 
-(defn highlight-cursor-form [cm e]
-  (let [this (.-view cm)
-        {{node :node}                     :cursor-state
-         {prev-node :node handle :handle} :highlight-state} (v/state this)]
-    (if (.-metaKey e)
-      (when (not= node prev-node)
-        (let [[from to] (cm/parse-range (update node :col dec))]
-          (v/update-state! this assoc :highlight-state
-                           {:node   node
-                            :handle (.markText cm from to #js {:className "CodeMirror-cursor-form"})})))
-      (do (some-> handle (.clear))
-          (v/update-state! this dissoc :highlight-state)))))
-
 (defcomponent result-pane
               :component-did-update scroll-bottom
               :component-did-mount scroll-bottom
@@ -88,8 +75,8 @@
                               :ref           "repl-editor"
                               :event/keydown #(do (when (and (= 13 (.-which %2)) (.-metaKey %2))
                                                     (eval-editor %1))
-                                                  (highlight-cursor-form %1 %2))
-                              :event/keyup   highlight-cursor-form
+                                                  (cm/highlight-cursor-form %1 %2))
+                              :event/keyup   cm/highlight-cursor-form
                               :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
                   (result-pane eval-result)]]))

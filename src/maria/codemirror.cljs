@@ -59,6 +59,22 @@
                      (merge {:node node}
                             (match-brackets cm node cursor-state)))))
 
+(defn highlight-cursor-form [cm e]
+  (let [this (.-view cm)
+        {{node :node edges :edges}          :cursor-state
+         {prev-node :node handles :handles} :highlight-state} (v/state this)]
+    (if (.-metaKey e)
+      (when (and (not= node prev-node))
+        (let [next-handles (doall (for [[from to] (map parse-range (if (not (tree/can-have-children? node))
+                                                                        (list (update node :col dec))
+                                                                        edges))]
+                                    (.markText cm from to #js {:className "CodeMirror-cursor-form"})))]
+          (v/update-state! this assoc :highlight-state
+                           {:node    node
+                            :handles next-handles})))
+      (do (doseq [handle handles] (some-> handle (.clear)))
+          (v/update-state! this dissoc :highlight-state)))))
+
 (defcomponent editor
               :component-did-mount
               (fn [this {:keys [value read-only? on-mount] :as props}]
