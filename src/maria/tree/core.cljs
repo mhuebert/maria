@@ -1,6 +1,6 @@
 (ns maria.tree.core
   (:require [maria.tree.parse :as parse]
-            [maria.tree.unwrap :as unwrap]
+            [maria.tree.emit :as unwrap]
             [cljs.test :refer-macros [is are]]))
 
 (def ast parse/ast)
@@ -9,49 +9,62 @@
 
 (defn comment? [node] (#{:uneval :comment} (get node :tag)))
 (defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
-(defn solid? [node]
+
+(defn terminal-node? [node]
   (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get node :tag))))
-(def container? (complement solid?))
+
+(def can-have-children? (complement terminal-node?))
+
+(defn edge-ranges [node]
+  (when (can-have-children? node)
+    (let [[left right] (get unwrap/edges (get node :tag))]
+      (cond-> []
+              left (conj {:row     (:row node) :end-row (:row node)
+                          :col     (dec (:col node))
+                          :end-col (dec (+ (:col node) (count left)))})
+              right (conj {:row     (:end-row node) :end-row (:end-row node)
+                           :col     (- (:end-col node) (count right))
+                           :end-col (:end-col node)})))))
 
 (def log (atom []))
 
-(defn within? [target-row target-col {:keys [tag row col end-row end-col] :as node}]
-  ;{:pre [(> c1 0) (> r1 0)]}
-  (let [in? (and (>= target-row row)
-                 (<= target-row end-row)
-                 (>= target-col col)
-                 (< target-col end-col))]
-    (swap! log conj {:within? [[target-row target-col] [row col end-row end-col]]
-                     :in?     in?
-                     :solid?  (solid? node)
-                     :tag     (get node :tag)
-                     :sexp    (sexp node)})
-    in?))
+(defn within? [{r :row c :col} {:keys [row col end-row end-col]}]
+  (and (>= r row)
+       (<= r end-row)
+       (if (= r row) (>= c col) true)
+       (if (= r end-row) (<= c end-col) true)))
 
-(defn node-at [{:keys [value] :as node} row col]
-  (when (within? row col node)
-    (if (and (not= (get node :tag) :base)
-             (or (solid? node) (not (seq value))))
+(defn node-at [{:keys [value] :as node} pos]
+  (when (within? pos node)
+    (if
+      (or (terminal-node? node) (not (seq value)))
       node
-      (or (some-> (filter (partial within? row col) value)
+      (or (some-> (filter (partial within? pos) value)
                   first
-                  (node-at row col))
-          node))))
+                  (node-at pos))
+          (when-not (= :base (get node :tag))
+            node)))))
 
-;are [sample result]
-(doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
-                                                          ["[1]" [1 1] [1] "[1]"]
-                                                          ["#{}" [1 1] #{} "#{}"]
-                                                          ["\"\"" [1 1] "" "\"\""]
-                                                          ["(+ 1)" [1 0] nil nil]
-                                                          ["(+ 1)" [1 1] '(+ 1) "(+ 1)"]
-                                                          ["(+ 1)" [1 2] '+ "+"]
-                                                          ["(+ 1)" [1 3] nil " "]
-                                                          ["(+ 1)" [1 4] 1 "1"]
-                                                          ["(+ 1)" [1 5] '(+ 1) "(+ 1)"]
-                                                          ["(+ 1)" [1 6] nil nil]
-                                                          ["\n1" [2 1] 1 "1"]]]
-  (reset! log [])
-  (let [result-node (node-at (ast sample-str) row col)]
-    (is (= (sexp result-node) result-sexp))
-    (is (= (string result-node) result-string))))
+(comment
+
+  (assert (within? {:row 1 :col 1}
+                   {:row     1 :col 1
+                    :end-row 1 :end-col 2}))
+
+  (doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
+                                                            ["[1]" [1 1] [1] "[1]"]
+                                                            ["#{}" [1 1] #{} "#{}"]
+                                                            ["\"\"" [1 1] "" "\"\""]
+                                                            ["(+ 1)" [1 0] nil nil]
+                                                            ["(+ 1)" [1 1] '(+ 1) "(+ 1)"]
+                                                            ["(+ 1)" [1 2] '+ "+"]
+                                                            ["(+ 1)" [1 3] nil " "]
+                                                            ["(+ 1)" [1 4] 1 "1"]
+                                                            ["(+ 1)" [1 5] '(+ 1) "(+ 1)"]
+                                                            ["(+ 1)" [1 6] nil nil]
+                                                            ["\n1" [2 1] 1 "1"]]]
+    (reset! log [])
+    (let [result-node (node-at (ast sample-str) {:row row
+                                                 :col col})]
+      (is (= (sexp result-node) result-sexp))
+      (is (= (string result-node) result-string)))))

@@ -3,7 +3,7 @@
     [maria.codemirror :as cm]
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
-    [maria.tree.core]
+    [maria.tree.core :as tree]
     [maria.html]
 
     [clojure.set]
@@ -44,6 +44,14 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
+(defn eval-editor [cm]
+  (when-let [source (or (cm/selection-text cm)
+                        (-> (v/state (.-view cm))
+                            :cursor-state
+                            :node
+                            tree/string))]
+    (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
+
 (defcomponent result-pane
               :component-did-update scroll-bottom
               :component-did-mount scroll-bottom
@@ -58,16 +66,14 @@
               :component-will-mount
               #(d/transact! [[:db/add editor-id :source (gobj/getValueByKeys js/window #js ["localStorage" editor-id])]])
               :render
-              (fn [_ _ {:keys [eval-result source]}]
+              (fn [this _ {:keys [eval-result source]}]
                 [:.flex.flex-row.h-100
                  [:.w-50.h-100.bg-solarized-light
-                  (cm/editor {:value         source
-                              :event/keyup #(js/setTimeout (fn [] (.log js/console (.getCursor %1))) 10)
-                              :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                               (when-let [source (or (cm/selection-text %1)
-                                                                     (cm/bracket-text %1))]
-                                                 (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
-                              :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+                  (cm/editor {:value                source
+                              :ref                  "repl-editor"
+                              :event/keydown        #(when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                                      (eval-editor %1))
+                              :event/change         #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
                   (result-pane eval-result)]]))
 

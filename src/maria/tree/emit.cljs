@@ -1,4 +1,4 @@
-(ns maria.tree.unwrap
+(ns maria.tree.emit
   (:refer-clojure :exclude [*ns*])
   (:require [cljs.tools.reader.edn :as edn]
             [cljs.tools.reader :as r]
@@ -9,7 +9,7 @@
 
 (declare string)
 
-(def *fixes
+(def edges
   {:deref            ["@"]
    :list             [\( \)]
    :fn               ["#(" \)]
@@ -27,7 +27,10 @@
    :unquote-splicing ["~@"]
    :uneval           ["#_"]
    :var              ["#'"]
-   :vector           [\[ \]]})
+   :vector           [\[ \]]
+   :comment          [";"]})
+
+(def printable-only? #{:comment :uneval :space :newline :comma})
 
 (defn wrap-children [left right children]
   (str left (apply str (map string children)) right))
@@ -37,7 +40,7 @@
 
 (defn string [{:keys [tag value options] :as node}]
   (when node
-    (let [[lbracket rbracket] (get *fixes tag [])]
+    (let [[lbracket rbracket] (get edges tag [])]
       (case tag
         :base (apply str (map string value))
         (:token :space :newline :comma) value
@@ -53,19 +56,17 @@
           :unquote
           :unquote-splicing
           :var
-          :vector
-          ) (wrap-children lbracket rbracket value)
+          :vector) (wrap-children lbracket rbracket value)
         :meta (str (:prefix options) (wrap-children lbracket rbracket value))
         (:string
-          :regex) (str lbracket value rbracket)
+          :regex
+          :comment) (str lbracket value rbracket)
         :keyword (str (cond->> value
                                (:namespaced? options) (str ":")))
-        :comment (str ";" value)
         nil ""))))
 
 (declare sexp)
 
-(def printable-only? #{:comment :uneval :space :newline :comma})
 (defn as-code [forms]
   (map sexp (filter #(not (printable-only? (:tag %))) forms)))
 
@@ -85,7 +86,7 @@
       :vector (vec (as-code value))
       :list (list* (as-code value))
       :fn (fn-walk (as-code value))
-      :map (into {} (as-code value))
+      :map (apply hash-map (as-code value))
       :set (template #{~@(as-code value)})
       :var (template #'~(first (as-code value)))
       (:quote :syntax-quote) (template (quote ~(first (as-code value))))

@@ -3,7 +3,7 @@
 
 (ns maria.tree.parse
   (:require [maria.tree.reader :as rd]
-            [maria.tree.unwrap :as unwrap]
+            [maria.tree.emit :as unwrap]
             [cljs.pprint :refer [pprint]]
             [cljs.tools.reader.reader-types :as r]
             [cljs.tools.reader :as rr]
@@ -23,7 +23,7 @@
 
 (defn whitespace?
   [c]
-  (and c (#{\, " " \newline \return} c)))
+  (and c (#{\, " " "\n" "\r"} c)))
 
 (defn boundary?
   [c]
@@ -57,25 +57,25 @@
   [c]
   (cond (nil? c) :eof
         (= c *delimiter*) :delimiter
-        :else (get {\,       :comma
-                    " "      :space
-                    \newline :newline
-                    \return  :newline
-                    \^       :meta
-                    \#       :sharp
-                    \(       :list
-                    \[       :vector
-                    \{       :map
-                    \}       :unmatched
-                    \]       :unmatched
-                    \)       :unmatched
-                    \~       :unquote
-                    \'       :quote
-                    \`       :syntax-quote
-                    \;       :comment
-                    \@       :deref
-                    \"       :string
-                    \:       :keyword}
+        :else (get {\,   :comma
+                    " "  :space
+                    "\n" :newline
+                    "\r" :newline
+                    \^   :meta
+                    \#   :sharp
+                    \(   :list
+                    \[   :vector
+                    \{   :map
+                    \}   :unmatched
+                    \]   :unmatched
+                    \)   :unmatched
+                    \~   :unquote
+                    \'   :quote
+                    \`   :syntax-quote
+                    \;   :comment
+                    \@   :deref
+                    \"   :string
+                    \:   :keyword}
                    c :token)))
 
 (defn- parse-delim
@@ -233,7 +233,7 @@
                                    ["my:symbol" '[my:symbol]]
                                    ["my::symbol" '[my::symbol]]]]
 
-  (binding [maria.tree.unwrap/*ns* (symbol "maria.tree.parse")]
+  (binding [maria.tree.emit/*ns* (symbol "maria.tree.parse")]
     (let [wrapped-str (str "[" string "]")
           tree (ast wrapped-str)
           emitted-string (unwrap/string tree)
@@ -248,8 +248,8 @@
 
 
 #_(let [cljs-core-str ";...omitted cljs.core source..."
-      ast-result (time (ast cljs-core-str))
-      str-result (time (unwrap/string ast-result))]
-  (println :cljs-core-string-verify (= str-result cljs-core-str))
-  (binding [cljs.tools.reader/*data-readers* (conj cljs.tools.reader/*data-readers* {'js identity})]
-    (time (rr/read-string (str "[" cljs-core-str "]")))))
+        ast-result (time (ast cljs-core-str))
+        str-result (time (unwrap/string ast-result))]
+    (println :cljs-core-string-verify (= str-result cljs-core-str))
+    (binding [cljs.tools.reader/*data-readers* (conj cljs.tools.reader/*data-readers* {'js identity})]
+      (time (rr/read-string (str "[" cljs-core-str "]")))))
