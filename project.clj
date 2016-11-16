@@ -35,7 +35,6 @@
                                        :output-to            "resources/public/js/compiled/maria.js"
                                        :output-dir           "resources/public/js/compiled/out"
                                        :source-map-timestamp true
-                                       :source-map           true
                                        :parallel-build       true}}
                        {:id           "prod"
                         :source-paths ["src"]

@@ -95,5 +95,4 @@
 (defonce _
          (do (c/preloads!)
              (eval '(require '[maria.user :include-macros true]))
-             (eval '(in-ns maria.user))
-             (eval '(require '[maria.html :refer [html]]))))
+             (eval '(in-ns maria.user))))

@@ -1,8 +1,6 @@
 (ns maria.user
+  (:require [maria.html :refer [html]])
   (:require-macros [maria.user :refer [user-macro]]))
-
-(defn user-f [x]
-  (take 10 (repeat x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy

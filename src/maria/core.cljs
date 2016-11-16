@@ -10,6 +10,8 @@
     [clojure.string :as string]
     [clojure.walk]
 
+    [maria.user :include-macros true]
+
     [cljs.spec :include-macros true]
     [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
@@ -52,6 +54,19 @@
                             tree/string))]
     (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
 
+(defn highlight-cursor-form [cm e]
+  (let [this (.-view cm)
+        {{node :node}                     :cursor-state
+         {prev-node :node handle :handle} :highlight-state} (v/state this)]
+    (if (.-metaKey e)
+      (when (not= node prev-node)
+        (let [[from to] (cm/parse-range (update node :col dec))]
+          (v/update-state! this assoc :highlight-state
+                           {:node   node
+                            :handle (.markText cm from to #js {:className "CodeMirror-cursor-form"})})))
+      (do (some-> handle (.clear))
+          (v/update-state! this dissoc :highlight-state)))))
+
 (defcomponent result-pane
               :component-did-update scroll-bottom
               :component-did-mount scroll-bottom
@@ -69,11 +84,13 @@
               (fn [this _ {:keys [eval-result source]}]
                 [:.flex.flex-row.h-100
                  [:.w-50.h-100.bg-solarized-light
-                  (cm/editor {:value                source
-                              :ref                  "repl-editor"
-                              :event/keydown        #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                                      (eval-editor %1))
-                              :event/change         #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+                  (cm/editor {:value         source
+                              :ref           "repl-editor"
+                              :event/keydown #(do (when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                                    (eval-editor %1))
+                                                  (highlight-cursor-form %1 %2))
+                              :event/keyup   highlight-cursor-form
+                              :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
                  [:.w-50.h-100
                   (result-pane eval-result)]]))
 
