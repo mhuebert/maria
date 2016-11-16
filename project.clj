@@ -12,7 +12,7 @@
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
 
-                 [org.clojars.mhuebert/cljs-live "0.1.4"]
+                 [org.clojars.mhuebert/cljs-live "0.1.5-SNAPSHOT"]
                  [org.clojars.mhuebert/re-view "0.1.5-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
@@ -38,11 +38,13 @@
                                        :parallel-build       true}}
                        {:id           "prod"
                         :source-paths ["src"]
-                        :compiler     {:main          "maria.core"
-                                       :asset-path    "js/compiled/out"
-                                       :output-to     "resources/public/js/compiled/maria.js"
-                                       :dump-core     false
-                                       :optimizations :simple}}]}
+                        :compiler     {:main           "maria.core"
+                                       :asset-path     "js/compiled/out"
+                                       :output-to      "resources/public/js/compiled/maria.js"
+                                       :output-dir     "resources/public/js/compiled/out-prod"
+                                       :cache-analysis true
+                                       :dump-core      false
+                                       :optimizations  :simple}}]}
 
   :figwheel {:css-dirs ["resources/public/css"]}
 

@@ -9,7 +9,7 @@
                   cljs.tools.reader.reader-types
                   cljs.tools.reader
                   cljs.analyzer]
- :preload-caches [maria.user]
+ :require-caches [maria.user]
  :require-macros [maria.user]
  :output-to      "resources/public/js/cljs_live_cache.js"
- :cljsbuild-out  "resources/public/js/compiled/out"}
+ :cljsbuild-out  "resources/public/js/compiled/out-prod"}
