@@ -7,36 +7,36 @@
 (def string unwrap/string)
 (def sexp unwrap/sexp)
 
-(defn comment? [n] (#{:uneval :comment} (get n :tag)))
-(defn whitespace? [n] (#{:space :newline :comma} (get n :tag)))
-(defn solid? [n]
-  (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get n :tag))))
+(defn comment? [node] (#{:uneval :comment} (get node :tag)))
+(defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
+(defn solid? [node]
+  (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get node :tag))))
 (def container? (complement solid?))
 
 (def log (atom []))
 
-(defn within? [r1 c1 {:keys [tag row col end-row end-col] :as n}]
+(defn within? [target-row target-col {:keys [tag row col end-row end-col] :as node}]
   ;{:pre [(> c1 0) (> r1 0)]}
-  (let [in? (and (>= r1 row)
-                 (<= r1 end-row)
-                 (>= c1 col)
-                 (< c1 end-col))]
-    (swap! log conj {:within? [[r1 c1] [row col end-row end-col]]
+  (let [in? (and (>= target-row row)
+                 (<= target-row end-row)
+                 (>= target-col col)
+                 (< target-col end-col))]
+    (swap! log conj {:within? [[target-row target-col] [row col end-row end-col]]
                      :in?     in?
-                     :solid?  (solid? n)
-                     :tag     (get n :tag)
-                     :sexp    (sexp n)})
+                     :solid?  (solid? node)
+                     :tag     (get node :tag)
+                     :sexp    (sexp node)})
     in?))
 
-(defn node-at [{:keys [value] :as n} r c]
-  (when (within? r c n)
-    (if (and (not= (get n :tag) :base)
-             (or (solid? n) (not (seq value))))
-      n
-      (or (some-> (filter (partial within? r c) value)
+(defn node-at [{:keys [value] :as node} row col]
+  (when (within? row col node)
+    (if (and (not= (get node :tag) :base)
+             (or (solid? node) (not (seq value))))
+      node
+      (or (some-> (filter (partial within? row col) value)
                   first
-                  (node-at r c))
-          n))))
+                  (node-at row col))
+          node))))
 
 ;are [sample result]
 (doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
