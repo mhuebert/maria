@@ -47,7 +47,8 @@
                                            (swap! *cljs-warnings* conj {:type        warning-type
                                                                         :env         env
                                                                         :extra       extra
-                                                                        :source-form form}))]]
+                                                                        :source-form form}))]
+                r/*data-readers* (conj r/*data-readers* {'js identity})]
         (try (cljs/eval c-state form (cond-> (c-opts)
                                              macros-ns?
                                              (-> #_(update :ns #(symbol (str % "$macros")))

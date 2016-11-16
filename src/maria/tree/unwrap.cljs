@@ -10,19 +10,24 @@
 (declare string)
 
 (def *fixes
-  {:list         [\( \)]
-   :fn           ["#(" \)]
-   :map          [\{ \}]
-   :meta         ["^"]
-   :reader-meta  ["#^"]
-   :raw-meta     ["^"]
-   :reader-macro ["#"]
-   :regex        ["#\"" \"]
-   :set          ["#{" \}]
-   :string       [\" \"]
-   :uneval       ["#_"]
-   :var          ["#'"]
-   :vector       [\[ \]]})
+  {:deref            ["@"]
+   :list             [\( \)]
+   :fn               ["#(" \)]
+   :map              [\{ \}]
+   :meta             ["^"]
+   :quote            ["'"]
+   :reader-meta      ["#^"]
+   :raw-meta         ["^"]
+   :reader-macro     ["#"]
+   :regex            ["#\"" \"]
+   :set              ["#{" \}]
+   :string           [\" \"]
+   :syntax-quote     ["`"]
+   :unquote          ["~"]
+   :unquote-splicing ["~@"]
+   :uneval           ["#_"]
+   :var              ["#'"]
+   :vector           [\[ \]]})
 
 (defn wrap-children [left right children]
   (str left (apply str (map string children)) right))
@@ -36,14 +41,20 @@
       (case tag
         :base (apply str (map string value))
         (:token :space :newline :comma) value
-        (:vector
-          :list
+        (:deref
           :fn
+          :list
           :map
+          :quote
+          :reader-macro
           :set
-          :var
+          :syntax-quote
           :uneval
-          :reader-macro) (wrap-children lbracket rbracket value)
+          :unquote
+          :unquote-splicing
+          :var
+          :vector
+          ) (wrap-children lbracket rbracket value)
         :meta (str (:prefix options) (wrap-children lbracket rbracket value))
         (:string
           :regex) (str lbracket value rbracket)
@@ -68,6 +79,7 @@
         :comma) nil
 
       :string value
+      :deref (template (deref ~(first (as-code value))))
 
       :token (edn/read-string value)
       :vector (vec (as-code value))
@@ -76,6 +88,9 @@
       :map (into {} (as-code value))
       :set (template #{~@(as-code value)})
       :var (template #'~(first (as-code value)))
+      (:quote :syntax-quote) (template (quote ~(first (as-code value))))
+      :unquote (template (~'clojure.core/unquote ~(first (as-code value))))
+      :unquote-splicing (template (~'clojure.core/unquote-splicing ~(first (as-code value))))
       :reader-macro (r/read-string (string node))
       :meta (let [[m data] (as-code value)]
               (with-meta data (if (map? m) m {m true})))
