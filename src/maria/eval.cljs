@@ -44,10 +44,11 @@
           ns? (and (seq? form) (#{'ns} (first form)))
           macros-ns? (and (seq? form) (= 'defmacro (first form)))]
       (binding [*cljs-warning-handlers* [(fn [warning-type env extra]
-                                           (swap! *cljs-warnings* conj {:type        warning-type
-                                                                        :env         env
-                                                                        :extra       extra
-                                                                        :source-form form}))]
+                                           (some-> *cljs-warnings*
+                                                   (swap! conj {:type        warning-type
+                                                                :env         env
+                                                                :extra       extra
+                                                                :source-form form})))]
                 r/*data-readers* (conj r/*data-readers* {'js identity})]
         (try (cljs/eval c-state form (cond-> (c-opts)
                                              macros-ns?
@@ -93,6 +94,6 @@
                       (recur remaining))))))))
 
 (defonce _
-         (do (c/preloads!)
+         (do (c/preloads! c-state)
              (eval '(require '[maria.user :include-macros true]))
              (eval '(in-ns maria.user))))
