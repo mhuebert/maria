@@ -3,7 +3,7 @@
     [maria.codemirror :as cm]
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
-    [maria.tree.parse]
+    [maria.tree.core]
     [maria.html]
 
     [clojure.set]
@@ -62,6 +62,7 @@
                 [:.flex.flex-row.h-100
                  [:.w-50.h-100.bg-solarized-light
                   (cm/editor {:value         source
+                              :event/keyup #(js/setTimeout (fn [] (.log js/console (.getCursor %1))) 10)
                               :event/keydown #(when (and (= 13 (.-which %2)) (.-metaKey %2))
                                                (when-let [source (or (cm/selection-text %1)
                                                                      (cm/bracket-text %1))]
