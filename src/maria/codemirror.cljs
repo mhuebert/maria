@@ -4,6 +4,7 @@
             [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer-macros [defcomponent]]
             [clojure.string :as string]
+            [fast-zip.core :as z]
             [maria.tree.core :as tree]
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]))
@@ -22,24 +23,24 @@
     (if (-> editor (aget "state" "focused"))
       (.setCursor editor cursor-pos))))
 
-(defn get-cursor-pos [editor]
+(defn cursor-pos [editor]
   (let [cm-pos (.getCursor editor)]
     {:row (inc (.-line cm-pos))
      :col (.-ch cm-pos)}))
 
-(defn get-mouse-pos [editor e]
+(defn mouse-pos [editor e]
   (let [cm-pos (.coordsChar editor #js {:left (.-clientX e)
                                         :top  (.-clientY e)})]
     {:row (inc (.-line cm-pos))
      :col (.-ch cm-pos)}))
 
 (def options
-  {:theme                     "solarized light"
-   :autoCloseBrackets         "()[]{}\"\""
-   :lineNumbers               false
-   :lineWrapping              true
-   :mode                      "clojure"
-   :keyMap                    "macDefault"})
+  {:theme             "solarized light"
+   :autoCloseBrackets "()[]{}\"\""
+   :lineNumbers       false
+   :lineWrapping      true
+   :mode              "clojure"
+   :keyMap            "macDefault"})
 
 (defn parse-range [{:keys [row col end-row end-col]}]
   [#js {:line (dec row) :ch col}
@@ -85,18 +86,25 @@
   (let [this (.-view cm)
         {{cursor-node :node} :cursor-state
          ast                 :ast
+         zipper              :zipper
          :as                 state} (v/state this)]
+
     (case [(.-type e) (= 91 (.-which e)) (.-metaKey e)]
-      ["mousemove" false true] (highlight-node! this cm (->> (get-mouse-pos cm e)
-                                                             (tree/node-at ast)))
+      ["mousemove" false true] (highlight-node! this cm (->> (mouse-pos cm e)
+                                                             (tree/get-pos zipper)
+                                                             tree/mouse-eval-region
+                                                             z/node))
       ["keyup" true false] (clear-highlight! this)
       ["keydown" true true] (highlight-node! this cm cursor-node)
       nil)))
 
 (defn update-cursor
   [this cm]
-  (let [{:keys [ast]} (v/state this)
-        node (tree/node-at ast (get-cursor-pos cm))]
+  (let [{:keys [zipper]} (v/state this)
+        node (some->> (cursor-pos cm)
+                      (tree/get-pos zipper)
+                      tree/nearest-bracket-region
+                      z/node)]
     (match-brackets! this cm node)
     (v/update-state! this assoc-in [:cursor-state :node] node)))
 
@@ -104,7 +112,9 @@
   [cm]
   (when-let [ast (try (tree/ast (.getValue cm))
                       (catch js/Error e (.debug js/console e)))]
-    (v/update-state! (.-view cm) assoc :ast ast)))
+    (v/update-state! (.-view cm) assoc
+                     :ast ast
+                     :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
   :component-did-mount
