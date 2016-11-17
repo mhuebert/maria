@@ -9,6 +9,8 @@
 
 (defn comment? [node] (#{:uneval :comment} (get node :tag)))
 (defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
+(def sexp? (every-pred (complement comment?)
+                       (complement whitespace?)))
 
 (defn terminal-node? [node]
   (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get node :tag))))

@@ -75,7 +75,7 @@
 (defn highlight-node! [this cm node]
   (when (and (not= node (get-in (v/state this) [:highlight-state :node]))
              (not (.somethingSelected cm))
-             (not (tree/whitespace? node)))
+             (tree/sexp? node))
     (clear-highlight! this)
     (v/update-state! this assoc :highlight-state
                      {:node    node
