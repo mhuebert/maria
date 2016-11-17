@@ -65,7 +65,7 @@
   "Clojure reader only returns the last top-level form in a string,
   so we wrap user source strings."
   [src]
-  (str "[\n" src "]"))
+  (str "[\n" src "\n]"))
 
 (defn read-src
   "Read src using default tools.reader. If an error is encountered,
