@@ -49,9 +49,10 @@
 (defn eval-editor [cm]
   (when-let [source (or (cm/selection-text cm)
                         (-> (v/state (.-view cm))
-                            :cursor-state
+                            :highlight-state
                             :node
                             tree/string))]
+
     (d/transact! [[:db/update-attr editor-id :eval-result (fnil conj []) (eval-src source)]])))
 
 (defcomponent result-pane
@@ -67,17 +68,25 @@
                   :eval-result (subs/db [editor-id :eval-result])}
   :component-will-mount
   #(d/transact! [[:db/add editor-id :source (gobj/getValueByKeys js/window #js ["localStorage" editor-id])]])
+  :get-editor
+  #(-> %1 (v/react-ref "repl-editor") v/state :editor)
   :render
   (fn [this _ {:keys [eval-result source]}]
     [:.flex.flex-row.h-100
      [:.w-50.h-100.bg-solarized-light
-      (cm/editor {:value         source
-                  :ref           "repl-editor"
-                  :event/keydown #(do (when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                        (eval-editor %1))
-                                      (cm/highlight-cursor-form %1 %2))
-                  :event/keyup   cm/highlight-cursor-form
-                  :event/change  #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+      {:on-mouse-move #(when-let [editor (.getEditor this)]
+                        (cm/update-highlights editor %))}
+      (cm/editor {:value           source
+                  :ref             "repl-editor"
+                  :event/mousedown #(when (.-metaKey %)
+                                     (.preventDefault %)
+                                     (eval-editor (.getEditor this)))
+                  :event/keyup     cm/update-highlights
+                  :event/keydown   #(do (cm/update-highlights %1 %2)
+                                        (when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                          (eval-editor %1)))
+
+                  :event/change    #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
      [:.w-50.h-100
       (result-pane eval-result)]]))
 
