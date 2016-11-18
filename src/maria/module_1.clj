@@ -105,12 +105,18 @@
 
 
 
-;; FIXME TODO drawing shapes goes here
+;; FIXME TODO (drawing shapes goes here)
 (circle 20)
 
 (colorize "blue" (circle 20))
 
 (colorize "yellow" (rectangle 500))
+
+
+
+
+;; FIXME TODO (introduce example that lends itself to (let) -- doing multiple things? doing a single thing after building "state", like a poor man's threading?)
+;; (the bindings vector is OK to use for a short while before formally introducing vectors, because it's just The Way Things Are Done...and then we introduce vectors by reminding them they already know it.)
 
 
 
