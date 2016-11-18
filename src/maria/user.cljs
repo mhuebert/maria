@@ -98,11 +98,11 @@
   [[x y] shape]
   (if (= :circle (:kind shape))
     (-> shape
-        (assoc-in [1 :cx] x)
-        (assoc-in [1 :cy] y))
+        (assoc :cx x)
+        (assoc :cy y))
     (-> shape
-        (assoc-in [1 :x] x)
-        (assoc-in [1 :y] y))))
+        (assoc :x x)
+        (assoc :y y))))
 
 (defn group
   "Returns a group containing `shapes` that can be treated as a single shape."
