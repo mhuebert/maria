@@ -9,18 +9,19 @@ html, body, #maria-main
   font-family "et-book", Georgia, Times New Roman, serif
 div.CodeMirror
   height 100%
-  padding 1rem
+  padding 1.5rem
   pre
     padding 0
   span.CodeMirror-matchingbracket
     font-weight bold
     color black
+    cursor pointer
   .CodeMirror-evalRegion
     background rgba(0,0,0,0.1)
   .cm-comment
     color #a27b11
     font-family 'et book', Georgia, Times New Roman, serif
-    font-size 16px
+    font-size 15px
 .CodeMirror, .code, code, pre
   font-family 'Source Code Pro', monospace
   font-size 14px
@@ -32,5 +33,6 @@ div.CodeMirror
   background #fdf6e3
   box-shadow  inset 0px 0 2px 0px rgba(172, 126, 0, 0.36)
   text-shadow #eee8d5 0 1px
-.CodeMirror-cursor-form
+.CodeMirror-eval-highlight
   background rgba(0,0,0,0.07)
+  cursor pointer

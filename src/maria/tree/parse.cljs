@@ -12,13 +12,13 @@
 
 (enable-console-print!)
 
-(defn node [tag value options]
+(defn make-node
+  [tag value options]
   {:tag     tag
    :value   value
    :options options})
 
 (def ^:dynamic ^:private *delimiter* nil)
-(def ^:dynamic *speedup* false)
 (declare parse-next)
 
 (defn whitespace?
@@ -112,16 +112,16 @@
                  (read-to-char-boundary reader)
                  (read-to-boundary reader))
                (str first-char))]
-    (node :token (str s (when (symbol? (string->edn s)) (read-to-boundary reader [\' \:]))) nil)))
+    (make-node :token (str s (when (symbol? (string->edn s)) (read-to-boundary reader [\' \:]))) nil)))
 
 (defn parse-keyword
   [reader]
   (rd/ignore reader)
   (if-let [c (rd/peek reader)]
     (if (= c \:)
-      (node :keyword (edn/read reader) {:namespaced? true})
+      (make-node :keyword (edn/read reader) {:namespaced? true})
       (do (r/unread reader \:)
-          (node :keyword (edn/read reader) nil)))
+          (make-node :keyword (edn/read reader) nil)))
     (rd/throw-reader reader "unexpected EOF while reading keyword.")))
 
 (defn parse-sharp
@@ -129,35 +129,35 @@
   (rd/ignore reader)
   (case (rd/peek reader)
     nil (rd/throw-reader reader "Unexpected EOF.")
-    \{ (node :set (parse-delim reader \}) nil)
-    \( (node :fn (parse-delim reader \)) nil)
-    \" (node :regex (rd/read-string-data reader) nil)
-    \^ (node :meta (parse-printables reader :meta 2 true) {:prefix "#"})
-    \' (node :var (parse-printables reader :var 1 true) nil)
-    \_ (node :uneval (parse-printables reader :uneval 1 true) nil)
+    \{ (make-node :set (parse-delim reader \}) nil)
+    \( (make-node :fn (parse-delim reader \)) nil)
+    \" (make-node :regex (rd/read-string-data reader) nil)
+    \^ (make-node :meta (parse-printables reader :meta 2 true) {:prefix "#"})
+    \' (make-node :var (parse-printables reader :var 1 true) nil)
+    \_ (make-node :uneval (parse-printables reader :uneval 1 true) nil)
     \? (do
          (rd/next reader)
-         (node :reader-macro
-               (let [read-next (partial parse-printables reader :reader-macro 1)]
-                 (cons (case (rd/peek reader)
-                         ;; the easy case, just emit a token
-                         \( (node :token "?" nil)
-                         ;; the harder case, match \@, consume it and emit the token
-                         \@ (do (rd/next reader)
-                                (node :token "?@" nil))
-                         ;; otherwise no idea what we're reading but its \? prefixed
-                         (do (rd/unread reader \?)
-                             (read-next)))
-                       (read-next))) nil))
-    (node :reader-macro (parse-printables reader :reader-macro 2) nil)))
+         (make-node :reader-macro
+                    (let [read-next (partial parse-printables reader :reader-macro 1)]
+                      (cons (case (rd/peek reader)
+                              ;; the easy case, just emit a token
+                              \( (make-node :token "?" nil)
+                              ;; the harder case, match \@, consume it and emit the token
+                              \@ (do (rd/next reader)
+                                     (make-node :token "?@" nil))
+                              ;; otherwise no idea what we're reading but its \? prefixed
+                              (do (rd/unread reader \?)
+                                  (read-next)))
+                            (read-next))) nil))
+    (make-node :reader-macro (parse-printables reader :reader-macro 2) nil)))
 
 (defn- parse-unquote
   [^not-native reader]
   (rd/ignore reader)
   (let [c (rd/peek reader)]
     (if (= c \@)
-      (node :unquote-splicing (parse-printables reader :unquote 1 true) nil)
-      (node :unquote (parse-printables reader :unquote 1) nil))))
+      (make-node :unquote-splicing (parse-printables reader :unquote 1 true) nil)
+      (make-node :unquote (parse-printables reader :unquote 1) nil))))
 
 (defn parse-next*
   [reader]
@@ -168,26 +168,26 @@
       :keyword (parse-keyword reader)
       :sharp (parse-sharp reader)
       :comment (do (rd/ignore reader)
-                   (node tag (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))) true) nil))
+                   (make-node tag (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))) true) nil))
       (:deref
         :quote
-        :syntax-quote) (node tag (parse-printables reader tag 1 true) nil)
+        :syntax-quote) (make-node tag (parse-printables reader tag 1 true) nil)
 
       :unquote (parse-unquote reader)
 
       (:newline
         :comma
-        :space) (node tag (rd/read-while reader (partial = c)) nil)
+        :space) (make-node tag (rd/read-while reader (partial = c)) nil)
       (:list
         :vector
-        :map) (node tag (parse-delim reader (get brackets c)) nil)
+        :map) (make-node tag (parse-delim reader (get brackets c)) nil)
       :delimiter (rd/ignore reader)
       :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
       :eof (when *delimiter*
              (rd/throw-reader reader "Unexpected EOF (end of file)"))
       :meta (do (rd/ignore reader)
-                (node tag (parse-printables reader :meta 2) nil))
-      :string (node tag (rd/read-string-data reader) nil))))
+                (make-node tag (parse-printables reader :meta 2) nil))
+      :string (make-node tag (rd/read-string-data reader) nil))))
 
 (defn parse-next
   [reader]
@@ -246,10 +246,3 @@
       (is (= wrapped-str emitted-string)
           (str "Correct emitted string for: " string)))))
 
-
-#_(let [cljs-core-str ";...omitted cljs.core source..."
-        ast-result (time (ast cljs-core-str))
-        str-result (time (unwrap/string ast-result))]
-    (println :cljs-core-string-verify (= str-result cljs-core-str))
-    (binding [cljs.tools.reader/*data-readers* (conj cljs.tools.reader/*data-readers* {'js identity})]
-      (time (rr/read-string (str "[" cljs-core-str "]")))))

@@ -1,55 +1,90 @@
 (ns maria.tree.core
   (:require [maria.tree.parse :as parse]
             [maria.tree.emit :as unwrap]
+            [maria.tree.node :as n]
+            [fast-zip.core :as z]
             [cljs.test :refer-macros [is are]]))
 
 (def ast parse/ast)
+(defn ast-zip [ast]
+  (z/zipper
+    n/can-have-children?
+    :value
+    (fn [node children] (assoc node :value children))
+    ast))
+(def string-zip (comp ast-zip parse/ast))
 (def string unwrap/string)
 (def sexp unwrap/sexp)
 
-(defn comment? [node] (#{:uneval :comment} (get node :tag)))
-(defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
-
-(defn terminal-node? [node]
-  (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get node :tag))))
-
-(def can-have-children? (complement terminal-node?))
-
-(defn edge-ranges [node]
-  (when (can-have-children? node)
-    (let [[left right] (get unwrap/edges (get node :tag))]
-      (cond-> []
-              left (conj {:row     (:row node) :end-row (:row node)
-                          :col     (dec (:col node))
-                          :end-col (dec (+ (:col node) (count left)))})
-              right (conj {:row     (:end-row node) :end-row (:end-row node)
-                           :col     (- (:end-col node) (count right))
-                           :end-col (:end-col node)})))))
+(def comment? n/comment?)
+(def whitespace? n/whitespace?)
+(def newline? n/newline?)
+(def sexp? n/sexp?)
+(def can-have-children? n/can-have-children?)
+(def terminal-node? n/terminal-node?)
+(def edge-ranges n/edge-ranges)
 
 (def log (atom []))
 
-(defn within? [{r :row c :col} {:keys [row col end-row end-col]}]
-  (and (>= r row)
-       (<= r end-row)
-       (if (= r row) (>= c col) true)
-       (if (= r end-row) (<= c end-col) true)))
+(defn child-locs [loc]
+  (take-while identity (iterate z/right (z/down loc))))
+(defn right-locs [loc]
+  (take-while identity (iterate z/right (z/right loc))))
+(defn left-locs [loc]
+  (take-while identity (iterate z/left (z/left loc))))
 
-(defn node-at [{:keys [value] :as node} pos]
-  (when (within? pos node)
-    (if
-      (or (terminal-node? node) (not (seq value)))
-      node
-      (or (some-> (filter (partial within? pos) value)
-                  first
-                  (node-at pos))
-          (when-not (= :base (get node :tag))
-            node)))))
+(defn get-pos [node pos]
+  (condp = (type node)
+    z/ZipperLocation
+    (let [loc node
+          node (z/node loc)
+          found (when (n/within? pos node)
+                  (if
+                    (or (terminal-node? node) (not (seq (get node :value))))
+                    loc
+                    (or
+                      (some-> (filter (partial n/within? pos) (child-locs loc))
+                              first
+                              (get-pos pos))
+                      (when-not (= :base (get node :tag))
+                        loc))))]
+      (if (let [found-node (some-> found z/node)]
+            (and (whitespace? found-node)
+                 (= (get pos :row) (get found-node :end-row))
+                 (= (get pos :col) (get found-node :end-col))))
+        (or (z/right found) found)
+        found))
+
+    PersistentArrayMap
+    (when (n/within? pos node)
+      (if
+        (or (terminal-node? node) (not (seq (get node :value))))
+        node
+        (or (some-> (filter (partial n/within? pos) (get node :value))
+                    first
+                    (get-pos pos))
+            (when-not (= :base (get node :tag))
+              node))))))
+
+(defn mouse-eval-region
+  "Select sexp under the mouse. Whitespace defers to parent."
+  [loc]
+  (or (and (sexp? (z/node loc)) loc)
+      (z/up loc)))
+
+(defn nearest-bracket-region
+  "Highlight brackets for specified sexp, or nearest sexp to the left, or parent."
+  [loc]
+  (or (->> (cons loc (left-locs loc))
+           (filter (comp sexp? z/node))
+           first)
+      (z/up loc)))
 
 (comment
 
-  (assert (within? {:row 1 :col 1}
-                   {:row     1 :col 1
-                    :end-row 1 :end-col 2}))
+  (assert (n/within? {:row 1 :col 1}
+                     {:row     1 :col 1
+                      :end-row 1 :end-col 2}))
 
   (doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
                                                             ["[1]" [1 1] [1] "[1]"]
@@ -64,7 +99,16 @@
                                                             ["(+ 1)" [1 6] nil nil]
                                                             ["\n1" [2 1] 1 "1"]]]
     (reset! log [])
-    (let [result-node (node-at (ast sample-str) {:row row
+    (let [result-node (get-pos (ast sample-str) {:row row
                                                  :col col})]
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))
+
+
+#(let [cljs-core-str "[1 2 3]"
+       ast-result (time (ast cljs-core-str))
+       loc (time (ast-zip ast-result))
+       str-result (time (string ast-result))]
+  (println :cljs-core-string-verify (= str-result cljs-core-str))
+  (binding [cljs.tools.reader/*data-readers* (conj cljs.tools.reader/*data-readers* {'js identity})]
+    (time (cljs.tools.reader/read-string (str "[" cljs-core-str "]")))))

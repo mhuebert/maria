@@ -4,7 +4,9 @@
             [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer-macros [defcomponent]]
             [clojure.string :as string]
+            [fast-zip.core :as z]
             [maria.tree.core :as tree]
+            [goog.events :as events]
             [cljs.pprint :refer [pprint]]))
 
 (def ^:dynamic *self-op*)
@@ -21,67 +23,104 @@
     (if (-> editor (aget "state" "focused"))
       (.setCursor editor cursor-pos))))
 
-(defn get-cursor [editor]
-  (let [cursor (.getCursor editor)]
-    {:row (inc (.-line cursor))
-     :col (.-ch cursor)}))
+(defn cursor-pos [editor]
+  (let [cm-pos (.getCursor editor)]
+    {:row (inc (.-line cm-pos))
+     :col (.-ch cm-pos)}))
+
+(defn mouse-pos [editor e]
+  (let [cm-pos (.coordsChar editor #js {:left (.-clientX e)
+                                        :top  (.-clientY e)})]
+    {:row (inc (.-line cm-pos))
+     :col (.-ch cm-pos)}))
 
 (def options
-  {:theme                     "solarized light"
-   :styleSelectedText         "cm-selected"
-   :match-brackets            true
-   :autoCloseBrackets         "()[]{}\"\""
-   :highlightSelectionMatches true
-   :lineNumbers               false
-   :lineWrapping              true
-   :styleActiveLine           true
-   :mode                      "clojure"
-   :keyMap                    "macDefault"})
+  {:theme             "solarized light"
+   :autoCloseBrackets "()[]{}\"\""
+   :lineNumbers       false
+   :lineWrapping      true
+   :mode              "clojure"
+   :keyMap            "macDefault"})
 
 (defn parse-range [{:keys [row col end-row end-col]}]
   [#js {:line (dec row) :ch col}
    #js {:line (dec end-row) :ch end-col}])
 
-(defn match-brackets [cm node {:keys [edges handles]}]
-  (let [next-edges (tree/edge-ranges node)]
-    (when-not (= edges next-edges)
-      (doseq [handle handles] (.clear handle))
+(defn highlights [node]
+  (if (tree/can-have-children? node)
+    (tree/edge-ranges node)
+    [(update node :col dec)]))
+
+(defn mark-ranges! [cm ranges payload]
+  (doall (for [[from to] (map parse-range ranges)]
+           (.markText cm from to payload))))
+
+(defn clear-brackets! [this]
+  (doseq [handle (get-in (v/state this) [:cursor-state :handles])]
+    (.clear handle))
+  (v/update-state! this update :cursor-state dissoc :handles))
+
+(defn match-brackets! [this cm node]
+  (let [prev-node (get-in (v/state this) [:cursor-state :node])]
+    (when (not= prev-node node)
+      (clear-brackets! this)
       (when (tree/can-have-children? node)
-        {:edges   next-edges
-         :handles (doall (for [[from to] (map parse-range next-edges)]
-                           (.markText cm from to #js {:className "CodeMirror-matchingbracket"})))}))))
+        (v/update-state! this assoc-in [:cursor-state :handles]
+                         (mark-ranges! cm (highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
-(defn track-cursor
+(defn clear-highlight! [this]
+  (doseq [handle (get-in (v/state this) [:highlight-state :handles])]
+    (.clear handle))
+  (v/update-state! this dissoc :highlight-state))
+
+(defn highlight-node! [this cm node]
+  (when (and (not= node (get-in (v/state this) [:highlight-state :node]))
+             (not (.somethingSelected cm))
+             (tree/sexp? node))
+    (clear-highlight! this)
+    (v/update-state! this assoc :highlight-state
+                     {:node    node
+                      :handles (mark-ranges! cm (highlights node) #js {:className "CodeMirror-eval-highlight"})})))
+
+(defn update-highlights [cm e]
+  (let [this (.-view cm)
+        {{cursor-node :node} :cursor-state
+         ast                 :ast
+         zipper              :zipper
+         :as                 state} (v/state this)]
+
+    (case [(.-type e) (= 91 (.-which e)) (.-metaKey e)]
+      ["mousemove" false true] (highlight-node! this cm (->> (mouse-pos cm e)
+                                                             (tree/get-pos zipper)
+                                                             tree/mouse-eval-region
+                                                             z/node))
+      ["keyup" true false] (clear-highlight! this)
+      ["keydown" true true] (highlight-node! this cm cursor-node)
+      nil)))
+
+(defn update-cursor
   [this cm]
-  (let [{:keys [ast cursor-state]} (v/state this)
-        node (tree/node-at ast (get-cursor cm))]
-    (v/update-state! this assoc :cursor-state
-                     (merge {:node node}
-                            (match-brackets cm node cursor-state)))))
+  (let [{:keys [zipper]} (v/state this)
+        node (some->> (cursor-pos cm)
+                      (tree/get-pos zipper)
+                      tree/nearest-bracket-region
+                      z/node)]
+    (match-brackets! this cm node)
+    (v/update-state! this assoc-in [:cursor-state :node] node)))
 
-(defn highlight-cursor-form [cm e]
-  (when (= 91 (.-which e))
-    (let [this (.-view cm)
-          {{node :node edges :edges} :cursor-state :as state} (v/state this)]
-      (doseq [handle (:highlight-handles state)] (some-> handle (.clear)))
-      (when (.-metaKey e)
-        (when (and (not (.somethingSelected cm))
-                   (not (tree/whitespace? node)))
-          (v/update-state! this assoc :highlight-handles
-                           (doall (for [edges (if (tree/can-have-children? node)
-                                                edges (list (update node :col dec)))
-                                        :let [[from to] (parse-range edges)]]
-                                    (.markText cm from to #js {:className "CodeMirror-cursor-form"})))))))))
-
-(def update-ast (fn [cm]
-                  (when-let [ast (try (tree/ast (.getValue cm))
-                                      (catch js/Error e (.debug js/console e)))]
-                    (v/update-state! (.-view cm) assoc :ast ast))))
+(defn update-ast
+  [cm]
+  (when-let [ast (try (tree/ast (.getValue cm))
+                      (catch js/Error e (.debug js/console e)))]
+    (v/update-state! (.-view cm) assoc
+                     :ast ast
+                     :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
   :component-did-mount
   (fn [this {:keys [value read-only? on-mount] :as props}]
-    (let [editor (js/CodeMirror (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
+    (let [dom-node (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
+          editor (js/CodeMirror dom-node
                                 (clj->js (cond-> options
                                                  read-only? (-> (select-keys [:theme :mode :lineWrapping])
                                                                 (assoc :readOnly "nocursor")))))]
@@ -90,16 +129,22 @@
 
         ;; event handlers are passed in as props with keys like :event/mousedown
         (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
-          (.on editor (name event-key) f))
+          (let [event-key (name event-key)]
+            (if (#{"mousedown" "click" "mouseup"} event-key)
+              ;; use goog.events to attach mouse handlers to dom node at capture phase
+              ;; (which lets us stopPropagation and prevent CodeMirror selections)
+              (events/listen dom-node event-key f true)
+              (.on editor event-key f))))
 
         (.on editor "beforeChange" ignore-self-op)
-        (.on editor "cursorActivity" (partial track-cursor this))
+        (.on editor "cursorActivity" (partial update-cursor this))
         (.on editor "change" update-ast)
 
         (v/update-state! this assoc :editor editor)
 
-        (when on-mount (on-mount editor this)))
 
+        (when on-mount (on-mount editor this)))
+      (aset js/window "cm" editor)
       (when value (.setValue editor (str value)))))
   :component-will-receive-props
   (fn [this {:keys [value]} {next-value :value}]
