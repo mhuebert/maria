@@ -105,7 +105,13 @@
 
 
 
-;; FIXME TODO 
+;; FIXME TODO drawing shapes goes here
+(circle 20)
+
+(colorize "blue" (circle 20))
+
+(colorize "yellow" (rectangle 500))
+
 
 
 
