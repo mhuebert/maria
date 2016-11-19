@@ -1,5 +1,8 @@
 [![CircleCI](https://circleci.com/gh/mhuebert/maria.svg?style=svg)](https://circleci.com/gh/mhuebert/maria)
 
+>Our work is not to teach, but to help the absorbent mind in its work of development.
+–Maria Montessori
+
 ## Development
 
 First, compile stylesheets:
