@@ -37,7 +37,7 @@
   [reader]
   (let [c (rd/next reader)]
     (str c
-         (if (not (identical? c \\))
+         (if ^:boolean (not (identical? c \\))
            (read-to-boundary reader #js [])
            ""))))
 
@@ -82,7 +82,7 @@
 
 (defn- parse-printables
   [reader node-tag n & [ignore?]]
-  (when ignore?
+  (when-not (nil? ignore?)
     (rd/ignore reader))
   (rd/read-n
     reader
@@ -99,17 +99,18 @@
   "Parse a single token."
   [reader]
   (let [first-char (rd/next reader)
-        s (->> (if (identical? first-char \\)
+        s (->> (if ^:boolean (identical? first-char \\)
                  (read-to-char-boundary reader)
                  (read-to-boundary reader #js []))
                (str first-char))]
-    [:token (str s (when (symbol? (string->edn s)) (read-to-boundary reader #js [\' \:])))]))
+    [:token (str s (when ^:boolean (symbol? (string->edn s))
+                     (read-to-boundary reader #js [\' \:])))]))
 
 (defn parse-keyword
   [reader]
   (rd/ignore reader)
   (if-let [c (rd/peek reader)]
-    (if (identical? c \:)
+    (if ^:boolean (identical? c \:)
       [:namespaced-keyword (edn/read reader)]
       (do (r/unread reader \:)
           [:keyword (edn/read reader)]))
@@ -146,7 +147,7 @@
   [^not-native reader]
   (rd/ignore reader)
   (let [c (rd/peek reader)]
-    (if (identical? c \@)
+    (if ^:boolean (identical? c \@)
       [:unquote-splicing (parse-printables reader :unquote 1 true)]
       [:unquote (parse-printables reader :unquote 1)])))
 
@@ -174,7 +175,7 @@
         :map) [tag (parse-delim reader (get brackets c))]
       :delimiter (rd/ignore reader)
       :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
-      :eof (when *delimiter*
+      :eof (when-not (nil? *delimiter*)
              (rd/throw-reader reader "Unexpected EOF (end of file)"))
       :meta (do (rd/ignore reader)
                 [tag (parse-printables reader :meta 2)])

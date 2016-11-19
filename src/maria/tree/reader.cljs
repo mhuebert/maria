@@ -15,24 +15,26 @@
         (str fmt data
              " [at line " l ", column " c "]")))))
 
+(def buf (StringBuffer.))
+
 (defn read-while
   "Read while the chars fulfill the given condition. Ignores
    the unmatching char."
   [^not-native reader p? & [eof?]]
-  (let [buf (StringBuffer.)
-        eof? (if (nil? eof?)
+  (let [eof? (if ^:boolean (nil? eof?)
                (not (p? nil))
                eof?)]
+    (.clear buf)
     (loop []
       (if-let [c (r/read-char reader)]
-        (if (p? c)
+        (if ^:boolean (p? c)
           (do
             (.append buf c)
             (recur))
           (do
             (r/unread reader c)
             (.toString buf)))
-        (if eof?
+        (if ^:boolean eof?
           (.toString buf)
           (throw-reader reader "Unexpected EOF."))))))
 
@@ -88,7 +90,7 @@
   (let [start-pos (position reader)
         form (read-fn reader)
         end-pos (position reader)]
-    (when form
+    (when-not (nil? form)
       {:tag     (nth form 0)
        :value   (nth form 1)
        :row     (aget start-pos 0)
@@ -103,30 +105,30 @@
   {:pre [(pos? n)]}
   (loop [c 0
          vs []]
-    (if (< c n)
+    (if ^:boolean (< c n)
       (if-let [v (read-fn reader)]
         (recur
-          (if (p? v) (inc c) c)
+          (if ^:boolean (p? v) (inc c) c)
           (conj vs v))
         (throw-reader
           reader
           "%s node expects %d value%s."
           node-tag
           n
-          (if (= n 1) "" "s")))
+          (if ^:boolean (= n 1) "" "s")))
       vs)))
 
 (defn- read-string-data
   [^not-native reader]
   (ignore reader)
-  (let [buf (StringBuffer.)]
-    (loop [escape? false]
-      (if-let [c (r/read-char reader)]
-        (cond (and (not escape?) (identical? c \"))
-              (.toString buf)
-              :else
-              (do
-                (.append buf c)
-                (recur (and (not escape?) (identical? c \\)))))
-        (throw-reader reader "Unexpected EOF while reading string.")))))
+  (.clear buf)
+  (loop [escape? false]
+    (if-let [c (r/read-char reader)]
+      (cond (and (not escape?) (identical? c \"))
+            (.toString buf)
+            :else
+            (do
+              (.append buf c)
+              (recur (and (not escape?) (identical? c \\)))))
+      (throw-reader reader "Unexpected EOF while reading string."))))
 
