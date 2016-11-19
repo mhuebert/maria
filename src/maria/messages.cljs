@@ -34,7 +34,9 @@
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [e]
   (match [(tokenize e)]
-         [["invalid" "arity" the-value]] ;; TODO this is better in warning form
+         [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
+         (str "It looks like you're trying to call a function that hasn't been defined.")
+         [["invalid" "arity" the-value]] ;; TODO warning is better
          (str the-value " is too many arguments!")
          [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]]
          (str "The " the-type " `" the-value "` can't be used as a collection.")
@@ -90,7 +92,14 @@
                                (name (-> w :extra :js-op))
                                "` can't be used on non-numbers, like "
                                (humanize-sequence bad-types) ".")
+      :undeclared-var (str "The expression `"
+                           (:source-form w)
+                           "`contains `"
+                           (-> w :extra :suffix)
+                           "`, but it hasn't been defined!")
       (with-out-str (pprint (dissoc w :env))))))
+
+;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :source-form (what-is "foo")}
 
 (comment
 
