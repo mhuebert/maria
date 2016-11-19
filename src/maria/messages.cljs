@@ -58,7 +58,7 @@
     (true? thing)                               "the Boolean value true"
     (false? thing)                              "the Boolean value false"
     (nil? thing)                                "the special value nil (nothing)"
-    :else (type thing)))
+    :else thing))
 
 (defn humanize-sequence [sq]
   (case (count sq)
@@ -73,7 +73,6 @@
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
 (defn reformat-warning [w]
-<<<<<<< HEAD
   (str
    (case (:type w)
      :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
