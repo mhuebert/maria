@@ -57,12 +57,12 @@
           :unquote-splicing
           :var
           :vector) (wrap-children lbracket rbracket value)
-        :meta (str (:prefix options) (wrap-children lbracket rbracket value))
+        (:meta :reader-meta) (str (:prefix options) (wrap-children lbracket rbracket value))
         (:string
           :regex
           :comment) (str lbracket value rbracket)
-        :keyword (str (cond->> value
-                               (:namespaced? options) (str ":")))
+        :keyword value
+        :namespaced-keyword (str ":" value)
         nil ""))))
 
 (declare sexp)
@@ -93,12 +93,12 @@
       :unquote (template (~'clojure.core/unquote ~(first (as-code value))))
       :unquote-splicing (template (~'clojure.core/unquote-splicing ~(first (as-code value))))
       :reader-macro (r/read-string (string node))
-      :meta (let [[m data] (as-code value)]
-              (with-meta data (if (map? m) m {m true})))
+      (:meta
+        :reader-meta) (let [[m data] (as-code value)]
+                        (with-meta data (if (map? m) m {m true})))
       :regex (re-pattern value)
-      :keyword (if (:namespaced? options)
-                 (keyword *ns* (name value))
-                 value)
+      :namespaced-keyword (keyword *ns* (name value))
+      :keyword value
 
       (:comment
         :uneval) nil)))
