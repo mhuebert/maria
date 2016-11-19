@@ -10,6 +10,7 @@
                  [org.clojure/clojurescript "1.9.293"]
 
                  [fast-zip "0.7.0"]
+                 [org.clojure/core.match "0.3.0-alpha4"]
 
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
