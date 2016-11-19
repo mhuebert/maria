@@ -42,11 +42,13 @@
          (str "The value `" the-value "` isn't a function, but it's being called like one.")
          :else e))
 
-;; TODO example warning:
-;;
-;; {:type :invalid-arithmetic,
-;;  :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
-;;  :source-form (+ [] 5)}
+(defn reformat-warning [w]
+  ;; TODO example warning:
+  ;;
+  ;; {:type :invalid-arithmetic,
+  ;;  :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
+  ;;  :source-form (+ [] 5)}
+  )
 
 (comment
 

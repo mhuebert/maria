@@ -4,6 +4,7 @@
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
     [maria.tree.core :as tree]
+    [maria.messages :refer [reformat-error]]
     [maria.html]
 
     [clojure.set]
@@ -48,7 +49,7 @@
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    [:.mv2 (if error
-            [:.pa3.dark-red (str error)]
+            [:.pa3.dark-red (reformat-error (str error))]
             (format-result value))]
    (when (seq warnings)
      [:.bg-near-white.pa2.pre.mv2
