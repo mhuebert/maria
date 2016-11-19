@@ -69,7 +69,7 @@
                                                (remove (partial = 'number)
                                                        (:types (:extra w))))]
                             (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
-      (with-out-str (pprint w))))
+      (with-out-str (pprint (dissoc w :env)))))
 
 (comment
 
