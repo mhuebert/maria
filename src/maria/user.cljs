@@ -5,128 +5,179 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
 
-(defn shape-bounds
-  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this shape."
-  [shape]
-  (let [attrs (second shape)]
-    {:width  (+ (or (:x attrs) 0)
-                (or (:cx attrs) 0)
-                (or (:width attrs) 0)
-                (or (:r attrs) 0))
-     :height (+ (or (:y attrs) 0)
-                (or (:cy attrs) 0)
-                (or (:height attrs) 0)
-                (or (:r attrs) 0))}))
+;; TODO we should have a protocol something like this:
 
-(defn bounds
-  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this group of shapes."
-  [shapes]
-  (let [shapes (if (keyword? (first shapes)) [shapes] shapes)
-        bounds (map shape-bounds shapes)]
-    {:width  (:width (apply max-key :width bounds))
-     :height (:height (apply max-key :height bounds))}))
+;; (defprotocol ToComponent
+;;   "Records that satisfy this protocol know how to turn themselves into React components."
+;;   (to-component [this] nil))
+
+;; TODO implemented something like this for shapes:
+
+;; (defrecord Shape []
+;;   ToComponent
+;;   (to-component [this]
+;;     (let [shapes (assure-shape-seq shapes)]
+;;       (html (into [:svg (assoc (bounds shapes) :x 0 :y 0)]
+;;                   (map shape->vector shapes))))))
+
+;; ... so we can build arbitrary defrecords that know how to format
+;; themselves for output. This can work for all sorts of things
+;; (images, mathematics, and so on) in addition to shapes.
 
 (defn circle
   "Returns a circle of `radius`."
   [radius]
-  [:circle {:r      radius
-            :cx     radius
-            :cy     radius
-            :stroke "none"
-            :fill   "black"}])
+  {:is-a :shape
+   :kind :circle
+   :r      radius
+   :cx     radius
+   :cy     radius
+   :stroke "none"
+   :fill   "black"})
 
 (defn rectangle
   "Returns a rectangle of `width` and `height`."
   [width height]
-  [:rect {:x      0
-          :y      0
-          :width  width
-          :height height
-          :stroke "none"
-          :fill   "black"}])
+  {:is-a :shape
+   :kind :rect
+   :x      0
+   :y      0
+   :width  width
+   :height height
+   :stroke "none"
+   :fill   "black"})
+
+(defn assure-shape-seq
+  "Returns `shape-or-shapes` wrapped in a vector if it appears to be a single shape."
+  [shape-or-shapes]
+  (cond (= :shape (:is-a shape-or-shapes))         [shape-or-shapes]
+        (= :shape (:is-a (first shape-or-shapes))) shape-or-shapes
+        :else (assure-shape-seq (first shape-or-shapes))))
+
+(defn shape-bounds
+  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this shape."
+  [shape]
+  {:width  (+ (or (:x shape) 0)
+              (or (:cx shape) 0)
+              (or (:width shape) 0)
+              (or (:r shape) 0))
+   :height (+ (or (:y shape) 0)
+              (or (:cy shape) 0)
+              (or (:height shape) 0)
+              (or (:r shape) 0))})
+
+(defn bounds
+  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this group of shapes."
+  [shapes]
+  (let [shapes (assure-shape-seq shapes)
+        bounds (map shape-bounds shapes)]
+    {:width  (:width (apply max-key :width bounds))
+     :height (:height (apply max-key :height bounds))}))
+
+(defn shape->vector [shape]
+  [(:kind shape)
+   (-> shape (dissoc :is-a) (dissoc :kind))
+   (when-let [kids (:children shape)]
+     (mapv shape->vector kids))])
+
+;; TODO becomes a method of the shape protocol
+(defn show
+  "Returns a component from this collection of shapes."
+  [shapes]
+  (let [shapes (assure-shape-seq shapes)]
+    (html (into [:svg (assoc (bounds shapes) :x 0 :y 0)]
+                (map shape->vector shapes)))))
 
 (defn colorize
   "Return `shape` with its color changed to `color`."
   [color shape]
-  (assoc-in shape [1 :fill] color))
+  (assoc shape :fill color))
 
 (defn position
   "Return `shape` with its position set to `[x y]`."
   [[x y] shape]
-  (if (= :circle (first shape))
+  (if (= :circle (:kind shape))
     (-> shape
-        (assoc-in [1 :cx] x)
-        (assoc-in [1 :cy] y))
+        (assoc :cx x)
+        (assoc :cy y))
     (-> shape
-        (assoc-in [1 :x] x)
-        (assoc-in [1 :y] y))))
+        (assoc :x x)
+        (assoc :y y))))
 
 (defn group
   "Returns a group containing `shapes` that can be treated as a single shape."
   [& shapes]
-  (into [] (concat [:svg (assoc (bounds shapes) :x 0 :y 0)] shapes)))
+  (assoc (bounds shapes)
+         :is-a :shape
+         :kind :svg
+         :x 0
+         :y 0
+         :children shapes))
 
 (defn line-up
   "Return `shapes` with their positions adjusted so they're lined up horizontally."
   [& shapes]
-  (->> (reduce (fn [state shape]
+  (->> (assure-shape-seq shapes)
+       reverse
+       (reduce (fn [state shape]
                  {:out    (conj (state :out)
-                                (update-in shape [1 :x] + (apply + (:widths state))))
+                                (update shape :x + (apply + (:widths state))))
                   :widths (butlast (state :widths))})
                {:out    '()
-                :widths (map :width (map shape-bounds (butlast shapes)))}
-               (reverse shapes))
+                :widths (map :width (map shape-bounds (butlast shapes)))})
        :out
        (apply group)))
 
 (defn stack
   "Return `shapes` with their positions adjusted so they're stacked vertically."
   [& shapes]
-  (->> (reduce (fn [state shape]
+  (->> (assure-shape-seq shapes)
+       reverse
+       (reduce (fn [state shape]
                  {:out     (conj (state :out)
-                                 (update-in shape [1 :y] + (apply + (:heights state))))
+                                 (update shape :y + (apply + (:heights state))))
                   :heights (butlast (state :heights))})
                {:out     '()
-                :heights (map :height (map shape-bounds (butlast shapes)))}
-               (reverse shapes))
+                :heights (map :height (map shape-bounds (butlast shapes)))})
        :out
        (apply group)))
 
-(defn show
-  "Returns SVG markup for this collection of shapes."
-  [shapes]
-  (let [shapes (if (keyword? (first shapes)) [shapes] shapes)]
-    (html (into [:svg (assoc (bounds shapes) :x 0 :y 0)] shapes))))
-
 ;; some examples using the above functions
 (comment
+  
+  (stack (colorize "red" (rectangle 20 20))
+         (colorize "blue" (rectangle 20 20)))
+
+  (line-up (colorize "red" (rectangle 20 20))
+           (colorize "blue" (rectangle 20 20))
+           (colorize "green" (rectangle 20 20)))
 
   (stack
-    (stack (colorize "red" (rectangle 10 20))
-           (colorize "blue" (rectangle 10 20)))
-    (line-up (colorize "green" (rectangle 10 20))
-             (colorize "pink" (rectangle 10 20))))
+   (stack (colorize "red" (rectangle 20 20))
+          (colorize "blue" (rectangle 20 20))
+          (colorize "green" (rectangle 20 20)))
+   (line-up (colorize "orange" (rectangle 20 20))
+            (colorize "red" (rectangle 20 20))
+            (colorize "blue" (rectangle 20 20))
+            (colorize "green" (rectangle 20 20))))
 
-  (show
-    (line-up (colorize "red" (rectangle 20 20))
-             (colorize "blue" (rectangle 20 20))
-             (colorize "green" (rectangle 20 20))))
+  ;; vector rainbow
+  (mapv colorize
+        ["red" "orange" "yellow" "green" "blue" "purple"]
+        (repeat (rectangle 20 20)))
 
-  (show
-    (stack
-      (stack (colorize "red" (rectangle 20 20))
-             (colorize "blue" (rectangle 20 20))
-             (colorize "green" (rectangle 20 20)))
-      (line-up (colorize "red" (rectangle 20 20))
-               (colorize "blue" (rectangle 20 20))
-               (colorize "green" (rectangle 20 20)))))
+  ;; combined rainbow, no vector
+  (apply stack
+         (mapv colorize
+               ["red" "orange" "yellow" "green" "blue" "purple"]
+               (repeat (rectangle 20 20))))
 
-  (defn rainbow [shape]
-    (apply line-up
-           (map (fn [color]
-                  (colorize color shape))
-                ["red" "orange" "yellow" "green" "blue" "purple"])))
-
-  (show (rainbow (rectangle 20 20)))
-
-  )                                                         ;/comment
+  [1
+   (stack (colorize "red" (rectangle 20 20))
+          (colorize "blue" (rectangle 20 20)))
+   "2"
+   (line-up (colorize "red" (rectangle 20 20))
+            (colorize "blue" (rectangle 20 20))
+            (colorize "green" (rectangle 20 20)))]
+  
+  ) ;/comment

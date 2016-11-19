@@ -27,12 +27,29 @@
 
 (defonce _ (d/listen! [editor-id :source] #(gobj/set (.-localStorage js/window) editor-id %)))
 
+(defn bracket-type [value]
+  (cond (vector? value) ["[" "]"]
+        :else ["(" ")"])) ; XXX probably wrong
+
+(defn format-result [value]
+  (cond
+    (or (vector? value)
+        (list? value)) (let [[lb rb] (bracket-type value)]
+                         [:span.output-bracket lb
+                          [:span (interpose " " (map format-result value))]
+                          [:span.output-bracket rb]])
+    (= :shape (:is-a value)) ((maria.user/show value)) ; synthesize component for shape
+    (v/is-react-element? value) (value)
+    :else (if (nil? value)
+            "nil"
+            (try (pr-str value)
+                 (catch js/Error e "error printing result")))))
+
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
-   [:.mv2 (cond error [:.pa3.dark-red (str error)]
-                (v/is-react-element? value) (value)
-                :else (if (nil? value) "nil" (try (with-out-str (prn value))
-                                                  (catch js/Error e "error printing result"))))]
+   [:.mv2 (if error
+            [:.pa3.dark-red (str error)]
+            (format-result value))]
    (when (seq warnings)
      [:.bg-near-white.pa2.pre.mv2
       [:.dib.dark-red "Warnings: "]
