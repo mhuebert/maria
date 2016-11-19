@@ -104,11 +104,9 @@
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))
 
-
-#(let [cljs-core-str "[1 2 3]"
-       ast-result (time (ast cljs-core-str))
-       loc (time (ast-zip ast-result))
-       str-result (time (string ast-result))]
-  (println :cljs-core-string-verify (= str-result cljs-core-str))
-  (binding [cljs.tools.reader/*data-readers* (conj cljs.tools.reader/*data-readers* {'js identity})]
-    (time (cljs.tools.reader/read-string (str "[" cljs-core-str "]")))))
+(comment
+  (let [sample-code-string ""]
+    (let [_ (.profile js/console "parse-ast")
+          ast (time (parse/ast sample-code-string))
+          _ (.profileEnd js/console)]
+      (println :cljs-core-string-verify (= (unwrap/string ast) sample-code-string)))))
