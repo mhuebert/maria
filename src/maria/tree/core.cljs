@@ -104,8 +104,9 @@
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))
 
-#_(let [sample-code-string "...put sample code string here..."]
-  (let [_ (.profile js/console "maria")
-        ast (time (parse/ast sample-code-string))
-        _ (.profileEnd js/console)]
-    (println :cljs-core-string-verify (= (unwrap/string ast) sample-code-string))))
+(comment
+  (let [sample-code-string ""]
+    (let [_ (.profile js/console "parse-ast")
+          ast (time (parse/ast sample-code-string))
+          _ (.profileEnd js/console)]
+      (println :cljs-core-string-verify (= (unwrap/string ast) sample-code-string)))))
