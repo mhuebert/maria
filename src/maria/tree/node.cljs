@@ -3,14 +3,14 @@
             [fast-zip.core :as z]))
 
 (defn within? [container pos]
-  (condp = (type pos)
+  (condp = (type container)
     z/ZipperLocation
-    (within? container (z/node pos))
+    (within? (z/node container) pos)
 
     PersistentArrayMap
     #_maria.tree.parse/Node
-    (let [{r :row c :col} container
-          {:keys [row col end-row end-col]} pos]
+    (let [{r :row c :col} pos
+          {:keys [row col end-row end-col]} container]
       (and (>= r row)
            (<= r end-row)
            (if (= r row) (>= c col) true)
@@ -31,8 +31,8 @@
     (let [[left right] (get unwrap/edges (get node :tag))]
       (cond-> []
               left (conj {:row     (:row node) :end-row (:row node)
-                          :col     (dec (:col node))
-                          :end-col (dec (+ (:col node) (count left)))})
+                          :col     (:col node)
+                          :end-col (+ (:col node) (count left))})
               right (conj {:row     (:end-row node) :end-row (:end-row node)
                            :col     (- (:end-col node) (count right))
                            :end-col (:end-col node)})))))

@@ -7,12 +7,7 @@
             [re-view.subscriptions :as subs]
             [maria.tree.core :as tree]))
 
-
-;; to support multiple editors
-(defonce editor-id "maria-repl-left-pane")
-
-;; save all edits to local storage
-(defonce _ (d/listen! [editor-id :source] #(aset js/window "localStorage" editor-id %)))
+(def repl-editor-id "maria-repl-left-pane")
 
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
@@ -59,7 +54,7 @@
                             :node
                             tree/string))]
 
-    (d/transact! [[:db/update-attr editor-id :eval-result-log (fnil conj []) (eval/eval-src source)]])))
+    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (eval/eval-src source)]])))
 
 (defcomponent result-pane
   :component-did-update scroll-bottom
@@ -70,28 +65,26 @@
      (map display-result (last-n 50 results))]))
 
 (defcomponent main
-  :subscriptions {:source          (subs/db [editor-id :source])
-                  :eval-result-log (subs/db [editor-id :eval-result-log])}
-  :component-will-mount
-  #(d/transact! [[:db/add editor-id :source (aget js/window "localStorage" editor-id)]])
+  :subscriptions {:eval-result-log (subs/db [repl-editor-id :eval-result-log])}
   :get-editor
   #(-> %1 (v/react-ref "repl-editor") v/state :editor)
   :render
   (fn [this _ {:keys [eval-result-log source]}]
     [:.flex.flex-row.h-100
-     [:.w-50.h-100.bg-solarized-light
+     [:.w-50.h-100.bg-solarized-light.pa3
       {:on-mouse-move #(when-let [editor (.getEditor this)]
                         (cm/update-highlights editor %))}
       (cm/editor {:value           source
                   :ref             "repl-editor"
+                  :local-storage   [repl-editor-id
+                                    ";; Type code here;
+                                    ;; Press command-enter or command-click to evaluate forms."]
                   :event/mousedown #(when (.-metaKey %)
                                      (.preventDefault %)
                                      (eval-editor (.getEditor this)))
                   :event/keyup     cm/update-highlights
                   :event/keydown   #(do (cm/update-highlights %1 %2)
                                         (when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                          (eval-editor %1)))
-
-                  :event/change    #(d/transact! [[:db/add editor-id :source (.getValue %1)]])})]
+                                          (eval-editor %1)))})]
      [:.w-50.h-100
       (result-pane {:results eval-result-log})]]))

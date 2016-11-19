@@ -33,38 +33,37 @@
 (defn left-locs [loc]
   (take-while identity (iterate z/left (z/left loc))))
 
-(defn get-pos [node pos]
-  (condp = (type node)
+(defn node-at [ast pos]
+  (condp = (type ast)
     z/ZipperLocation
-    (let [loc node
+    (let [loc ast
           node (z/node loc)
-          found (when (n/within? pos node)
+          found (when (n/within? node pos)
                   (if
                     (or (terminal-node? node) (not (seq (get node :value))))
                     loc
                     (or
-                      (some-> (filter (partial n/within? pos) (child-locs loc))
+                      (some-> (filter #(n/within? % pos) (child-locs loc))
                               first
-                              (get-pos pos))
+                              (node-at pos))
                       (when-not (= :base (get node :tag))
                         loc))))]
       (if (let [found-node (some-> found z/node)]
-            (and (whitespace? found-node)
-                 (= (get pos :row) (get found-node :end-row))
+            (and (= (get pos :row) (get found-node :end-row))
                  (= (get pos :col) (get found-node :end-col))))
         (or (z/right found) found)
         found))
 
     PersistentArrayMap
-    (when (n/within? pos node)
+    (when (n/within? ast pos)
       (if
-        (or (terminal-node? node) (not (seq (get node :value))))
-        node
-        (or (some-> (filter (partial n/within? pos) (get node :value))
+        (or (terminal-node? ast) (not (seq (get ast :value))))
+        ast
+        (or (some-> (filter #(n/within? % pos) (get ast :value))
                     first
-                    (get-pos pos))
-            (when-not (= :base (get node :tag))
-              node))))))
+                    (node-at pos))
+            (when-not (= :base (get ast :tag))
+              ast))))))
 
 (defn mouse-eval-region
   "Select sexp under the mouse. Whitespace defers to parent."
@@ -82,9 +81,9 @@
 
 (comment
 
-  (assert (n/within? {:row 1 :col 1}
-                     {:row     1 :col 1
-                      :end-row 1 :end-col 2}))
+  (assert (n/within? {:row     1 :col 1
+                      :end-row 1 :end-col 2}
+                     {:row 1 :col 1}))
 
   (doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
                                                             ["[1]" [1 1] [1] "[1]"]
@@ -99,7 +98,7 @@
                                                             ["(+ 1)" [1 6] nil nil]
                                                             ["\n1" [2 1] 1 "1"]]]
     (reset! log [])
-    (let [result-node (get-pos (ast sample-str) {:row row
+    (let [result-node (node-at (ast sample-str) {:row row
                                                  :col col})]
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))

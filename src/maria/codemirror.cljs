@@ -3,17 +3,20 @@
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer-macros [defcomponent]]
+            [re-view.subscriptions :as subs]
             [clojure.string :as string]
             [fast-zip.core :as z]
             [maria.tree.core :as tree]
             [goog.events :as events]
-            [cljs.pprint :refer [pprint]]))
+            [cljs.pprint :refer [pprint]]
+            [re-db.d :as d]))
 
 (def ^:dynamic *self-op*)
 
 (defn ignore-self-op
   "Editor should not fire 'change' events for self-inflicted operations."
-  [cm change]
+  ;; unsure if this is behaving properly or is necessary
+  [_ change]
   (when *self-op*
     (.cancel change)))
 
@@ -25,14 +28,23 @@
 
 (defn cursor-pos [editor]
   (let [cm-pos (.getCursor editor)]
-    {:row (inc (.-line cm-pos))
+    {:row (.-line cm-pos)
      :col (.-ch cm-pos)}))
 
 (defn mouse-pos [editor e]
   (let [cm-pos (.coordsChar editor #js {:left (.-clientX e)
                                         :top  (.-clientY e)})]
-    {:row (inc (.-line cm-pos))
+    {:row (.-line cm-pos)
      :col (.-ch cm-pos)}))
+
+
+;; to support multiple editors
+(defn init-local-storage
+  "Given a unique id, initialize a local-storage backed source"
+  [uid default-src]
+  (d/transact! [[:db/add uid :source (or (aget js/window "localStorage" uid) default-src)]])
+  (d/listen! [uid :source] #(aset js/window "localStorage" uid %))
+  uid)
 
 (def options
   {:theme             "solarized light"
@@ -42,14 +54,18 @@
    :mode              "clojure"
    :keyMap            "macDefault"})
 
-(defn parse-range [{:keys [row col end-row end-col]}]
-  [#js {:line (dec row) :ch col}
-   #js {:line (dec end-row) :ch end-col}])
+(defn parse-range
+  "Return Codemirror-compatible `from` and `to` positions from a row/col range."
+  [{:keys [row col end-row end-col]}]
+  [#js {:line row :ch col}
+   #js {:line end-row :ch end-col}])
 
-(defn highlights [node]
+(defn node-highlights
+  "Get range(s) to highlight for a node. For a collection, only highlight brackets."
+  [node]
   (if (tree/can-have-children? node)
     (tree/edge-ranges node)
-    [(update node :col dec)]))
+    [node]))
 
 (defn mark-ranges! [cm ranges payload]
   (doall (for [[from to] (map parse-range ranges)]
@@ -66,7 +82,7 @@
       (clear-brackets! this)
       (when (tree/can-have-children? node)
         (v/update-state! this assoc-in [:cursor-state :handles]
-                         (mark-ranges! cm (highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
+                         (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
 (defn clear-highlight! [this]
   (doseq [handle (get-in (v/state this) [:highlight-state :handles])]
@@ -80,7 +96,7 @@
     (clear-highlight! this)
     (v/update-state! this assoc :highlight-state
                      {:node    node
-                      :handles (mark-ranges! cm (highlights node) #js {:className "CodeMirror-eval-highlight"})})))
+                      :handles (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
 
 (defn update-highlights [cm e]
   (let [this (.-view cm)
@@ -91,7 +107,7 @@
 
     (case [(.-type e) (= 91 (.-which e)) (.-metaKey e)]
       ["mousemove" false true] (highlight-node! this cm (->> (mouse-pos cm e)
-                                                             (tree/get-pos zipper)
+                                                             (tree/node-at zipper)
                                                              tree/mouse-eval-region
                                                              z/node))
       ["keyup" true false] (clear-highlight! this)
@@ -101,12 +117,14 @@
 (defn update-cursor
   [this cm]
   (let [{:keys [zipper]} (v/state this)
-        node (some->> (cursor-pos cm)
-                      (tree/get-pos zipper)
+        position (cursor-pos cm)
+        node (some->> position
+                      (tree/node-at zipper)
                       tree/nearest-bracket-region
                       z/node)]
     (match-brackets! this cm node)
-    (v/update-state! this assoc-in [:cursor-state :node] node)))
+    (v/update-state! this update :cursor-state merge {:node node
+                                                      :pos  position})))
 
 (defn update-ast
   [cm]
@@ -117,15 +135,25 @@
                      :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
+  :subscriptions {:source (fn [& args]
+                            (when-let [[uid src] (some-> (second args) :local-storage)]
+                              (init-local-storage uid src)
+                              (apply (subs/db [uid :source]) args)))}
   :component-did-mount
-  (fn [this {:keys [value read-only? on-mount] :as props}]
+  (fn [this {:keys [value read-only? on-mount cm-opts local-storage] :as props}]
     (let [dom-node (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
           editor (js/CodeMirror dom-node
-                                (clj->js (cond-> options
-                                                 read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                (assoc :readOnly "nocursor")))))]
+                                (clj->js (merge cm-opts
+                                                (cond-> options
+                                                        read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                       (assoc :readOnly "nocursor"))))))]
       (set! (.-view editor) this)
+      (v/update-state! this assoc :editor editor)
+
       (when-not read-only?
+        (.on editor "beforeChange" ignore-self-op)
+        (.on editor "cursorActivity" (partial update-cursor this))
+        (.on editor "change" update-ast)
 
         ;; event handlers are passed in as props with keys like :event/mousedown
         (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
@@ -135,25 +163,26 @@
               ;; (which lets us stopPropagation and prevent CodeMirror selections)
               (events/listen dom-node event-key f true)
               (.on editor event-key f))))
-
-        (.on editor "beforeChange" ignore-self-op)
-        (.on editor "cursorActivity" (partial update-cursor this))
-        (.on editor "change" update-ast)
-
-        (v/update-state! this assoc :editor editor)
-
-
         (when on-mount (on-mount editor this)))
-      (aset js/window "cm" editor)
-      (when value (.setValue editor (str value)))))
+
+      (when-let [initial-source (or value (:source (v/state this)))]
+        (.setValue editor (str initial-source)))
+      (when-let [local-storage-uid (first local-storage)]
+        (.on editor "change" #(d/transact! [[:db/add local-storage-uid :source (.getValue %1)]])))))
   :component-will-receive-props
-  (fn [this {:keys [value]} {next-value :value}]
-    (when (and next-value (not= next-value value))
+  (fn [this {next-value :value} {:keys [value]}]
+    (when (not= next-value value)
       (when-let [editor (:editor (v/state this))]
-        (binding [*self-op* true]
-          (set-preserve-cursor editor next-value)))))
+        (set-preserve-cursor editor next-value)
+        #_(binding [*self-op* true]))))
+  :component-will-receive-state
+  (fn [this _ {next-source :source} {:keys [source editor]}]
+    (when (not= next-source source)
+      (when editor
+        (set-preserve-cursor editor next-source)
+        #_(binding [*self-op* true]))))
   :should-component-update
-  (fn [_ _ state _ prev-state]
+  (fn [_ props state next-props prev-state]
     (not= (dissoc state :editor) (dissoc prev-state :editor)))
   :render
   (fn [this props state]

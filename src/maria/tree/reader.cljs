@@ -79,8 +79,8 @@
 (defn position
   "Create map of `row-k` and `col-k` representing the current reader position."
   [^not-native reader]
-  #js [(dec (r/get-line-number reader))
-       (r/get-column-number reader)])
+  #js [(- (r/get-line-number reader) 2)
+       (dec (r/get-column-number reader))])
 
 (defn read-with-position
   "Use the given function to read value, then attach row/col metadata."
@@ -96,7 +96,7 @@
        :row     (aget start-pos 0)
        :col     (aget start-pos 1)
        :end-row (aget end-pos 0)
-       :end-col (dec (aget end-pos 1))})))
+       :end-col (aget end-pos 1)})))
 
 (defn read-n
   "Call the given function on the given reader until `n` values matching `p?` have been

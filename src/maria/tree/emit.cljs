@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [*ns*])
   (:require [cljs.tools.reader.edn :as edn]
             [cljs.tools.reader :as r]
+            [fast-zip.core :as z]
             [maria.tree.fn :refer [fn-walk]])
   (:require-macros [maria.tree.backtick :refer [template]]))
 
@@ -38,32 +39,35 @@
 #_(defn children? [{:keys [tag]}]
     (#{:list :fn :map :meta :set :vector :uneval} tag))
 
-(defn string [{:keys [tag value options] :as node}]
-  (when node
-    (let [[lbracket rbracket] (get edges tag [])]
-      (case tag
-        :base (apply str (map string value))
-        (:token :space :newline :comma) value
-        (:deref
-          :fn
-          :list
-          :map
-          :quote
-          :reader-macro
-          :set
-          :syntax-quote
-          :uneval
-          :unquote
-          :unquote-splicing
-          :var
-          :vector) (wrap-children lbracket rbracket value)
-        (:meta :reader-meta) (str (:prefix options) (wrap-children lbracket rbracket value))
-        (:string
-          :regex
-          :comment) (str lbracket value rbracket)
-        :keyword value
-        :namespaced-keyword (str ":" value)
-        nil ""))))
+(defn string [node]
+  (when-not (nil? node)
+    (if (map? node)
+      (let [{:keys [tag value options]} node
+            [lbracket rbracket] (get edges tag [])]
+        (case tag
+          :base (apply str (map string value))
+          (:token :space :newline :comma) value
+          (:deref
+            :fn
+            :list
+            :map
+            :quote
+            :reader-macro
+            :set
+            :syntax-quote
+            :uneval
+            :unquote
+            :unquote-splicing
+            :var
+            :vector) (wrap-children lbracket rbracket value)
+          (:meta :reader-meta) (str (:prefix options) (wrap-children lbracket rbracket value))
+          (:string
+            :regex
+            :comment) (str lbracket value rbracket)
+          :keyword value
+          :namespaced-keyword (str ":" value)
+          nil ""))
+      (string (z/node node)))))
 
 (declare sexp)
 
