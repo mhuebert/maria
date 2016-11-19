@@ -11,26 +11,6 @@
 
 (enable-console-print!)
 
-(defn ->Node
-  [tag value]
-  {:tag tag :value value})
-
-;; no speed improvement using the following:
-#_(deftype Node [tag value]
-    ILookup
-    (-lookup [m k]
-      (aget m (name k)))
-    IAssociative
-    (-assoc [m k v]
-      (aset m (name k) v)
-      m)
-    ICollection
-    (-conj [m new-m]
-      (doseq [k (mapv name (keys new-m))]
-        (aset m k (get new-m k)))
-      m))
-
-
 (def ^:dynamic ^:private *delimiter* nil)
 (declare parse-next)
 
@@ -121,16 +101,16 @@
                  (read-to-char-boundary reader)
                  (read-to-boundary reader #js []))
                (str first-char))]
-    (->Node :token (str s (when (symbol? (string->edn s)) (read-to-boundary reader #js [\' \:]))))))
+    [:token (str s (when (symbol? (string->edn s)) (read-to-boundary reader #js [\' \:])))]))
 
 (defn parse-keyword
   [reader]
   (rd/ignore reader)
   (if-let [c (rd/peek reader)]
     (if (identical? c \:)
-      (->Node :namespaced-keyword (edn/read reader))
+      [:namespaced-keyword (edn/read reader)]
       (do (r/unread reader \:)
-          (->Node :keyword (edn/read reader))))
+          [:keyword (edn/read reader)]))
     (rd/throw-reader reader "unexpected EOF while reading keyword.")))
 
 (defn parse-sharp
@@ -138,35 +118,35 @@
   (rd/ignore reader)
   (case (rd/peek reader)
     nil (rd/throw-reader reader "Unexpected EOF.")
-    \{ (->Node :set (parse-delim reader \}))
-    \( (->Node :fn (parse-delim reader \)))
-    \" (->Node :regex (rd/read-string-data reader))
-    \^ (->Node :reader-meta (parse-printables reader :reader-meta 2 true))
-    \' (->Node :var (parse-printables reader :var 1 true))
-    \_ (->Node :uneval (parse-printables reader :uneval 1 true))
+    \{ [:set (parse-delim reader \})]
+    \( [:fn (parse-delim reader \))]
+    \" [:regex (rd/read-string-data reader)]
+    \^ [:reader-meta (parse-printables reader :reader-meta 2 true)]
+    \' [:var (parse-printables reader :var 1 true)]
+    \_ [:uneval (parse-printables reader :uneval 1 true)]
     \? (do
          (rd/next reader)
-         (->Node :reader-macro
-                 (let [read-next (partial parse-printables reader :reader-macro 1)]
-                   (cons (case (rd/peek reader)
-                           ;; the easy case, just emit a token
-                           \( (->Node :token "?")
-                           ;; the harder case, match \@, consume it and emit the token
-                           \@ (do (rd/next reader)
-                                  (->Node :token "?@"))
-                           ;; otherwise no idea what we're reading but its \? prefixed
-                           (do (rd/unread reader \?)
-                               (read-next)))
-                         (read-next)))))
-    (->Node :reader-macro (parse-printables reader :reader-macro 2))))
+         [:reader-macro
+          (let [read-next (partial parse-printables reader :reader-macro 1)]
+            (cons (case (rd/peek reader)
+                    ;; the easy case, just emit a token
+                    \( [:token "?"]
+                    ;; the harder case, match \@, consume it and emit the token
+                    \@ (do (rd/next reader)
+                           [:token "?@"])
+                    ;; otherwise no idea what we're reading but its \? prefixed
+                    (do (rd/unread reader \?)
+                        (read-next)))
+                  (read-next)))])
+    [:reader-macro (parse-printables reader :reader-macro 2)]))
 
 (defn- parse-unquote
   [^not-native reader]
   (rd/ignore reader)
   (let [c (rd/peek reader)]
     (if (identical? c \@)
-      (->Node :unquote-splicing (parse-printables reader :unquote 1 true))
-      (->Node :unquote (parse-printables reader :unquote 1)))))
+      [:unquote-splicing (parse-printables reader :unquote 1 true)]
+      [:unquote (parse-printables reader :unquote 1)])))
 
 (defn parse-next*
   [reader]
@@ -177,26 +157,26 @@
       :keyword (parse-keyword reader)
       :sharp (parse-sharp reader)
       :comment (do (rd/ignore reader)
-                   (->Node tag (rd/read-until-inclusive reader (fn [x] (or (nil? x) (#{\newline \return} x))))))
+                   [tag (rd/read-until-inclusive reader (fn [x] (or (nil? x) (#{\newline \return} x))))])
       (:deref
         :quote
-        :syntax-quote) (->Node tag (parse-printables reader tag 1 true))
+        :syntax-quote) [tag (parse-printables reader tag 1 true)]
 
       :unquote (parse-unquote reader)
 
       (:newline
         :comma
-        :space) (->Node tag (rd/read-while reader (partial = c)))
+        :space) [tag (rd/read-while reader (partial = c))]
       (:list
         :vector
-        :map) (->Node tag (parse-delim reader (get brackets c)))
+        :map) [tag (parse-delim reader (get brackets c))]
       :delimiter (rd/ignore reader)
       :unmatched (rd/throw-reader reader "Unmatched delimiter: %s" c)
       :eof (when *delimiter*
              (rd/throw-reader reader "Unexpected EOF (end of file)"))
       :meta (do (rd/ignore reader)
-                (->Node tag (parse-printables reader :meta 2)))
-      :string (->Node tag (rd/read-string-data reader)))))
+                [tag (parse-printables reader :meta 2)])
+      :string [tag (rd/read-string-data reader)])))
 
 (defn parse-next
   [reader]

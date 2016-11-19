@@ -89,9 +89,13 @@
   (let [start-pos (position reader)
         form (read-fn reader)
         end-pos (position reader)]
-    (some-> form
-            (merge {:row     (aget start-pos 0) :col (aget start-pos 1)
-                    :end-row (aget end-pos 0) :end-col (dec (aget end-pos 1))}))))
+    (when form
+      {:tag     (get form 0)
+       :value   (get form 1)
+       :row     (aget start-pos 0)
+       :col     (aget start-pos 1)
+       :end-row (aget end-pos 0)
+       :end-col (dec (aget end-pos 1))})))
 
 (defn read-n
   "Call the given function on the given reader until `n` values matching `p?` have been

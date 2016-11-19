@@ -104,7 +104,7 @@
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))
 
-#_(let [sample-code-string ""]
+#_(let [sample-code-string "...put sample code string here..."]
   (let [_ (.profile js/console "maria")
         ast (time (parse/ast sample-code-string))
         _ (.profileEnd js/console)]
