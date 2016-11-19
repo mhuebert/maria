@@ -29,16 +29,16 @@
 
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
-        :else ["(" ")"])) ; XXX probably wrong
+        :else ["(" ")"]))                                   ; XXX probably wrong
 
-(defn format-result [value]
+(defn format-value [value]
   (cond
     (or (vector? value)
-        (list? value)) (let [[lb rb] (bracket-type value)]
-                         [:span.output-bracket lb
-                          [:span (interpose " " (map format-result value))]
-                          [:span.output-bracket rb]])
-    (= :shape (:is-a value)) ((maria.user/show value)) ; synthesize component for shape
+        (seq? value)) (let [[lb rb] (bracket-type value)]
+                        [:span.output-bracket lb
+                         [:span (interpose " " (map format-value value))]
+                         [:span.output-bracket rb]])
+    (= :shape (:is-a value)) ((maria.user/show value))      ; synthesize component for shape
     (v/is-react-element? value) (value)
     :else (if (nil? value)
             "nil"
@@ -47,14 +47,13 @@
 
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
-   [:.mv2 (if error
-            [:.pa3.dark-red (reformat-error (str error))]
-            (format-result value))]
-   (when (seq warnings)
-     [:.bg-near-white.pa2.mv2
-      [:.dib.dark-red "Warnings: "]
-      (for [warning (distinct (map #(dissoc % :env) warnings))]
-        (str "\n" (reformat-warning warning)))])])
+   [:.mv2 (if (or error (seq warnings))
+            [:.bg-near-white.ph3.pv2.mv2.ws-prewrap
+             (for [message (cons (some-> error str reformat-error)
+                                 (map reformat-warning (distinct warnings)))
+                   :when message]
+               [:.pv2 message])]
+            (format-value value))]])
 
 (defn scroll-bottom [component]
   (let [el (js/ReactDOM.findDOMNode component)]

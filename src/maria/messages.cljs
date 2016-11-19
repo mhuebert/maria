@@ -4,34 +4,26 @@
             [cljs.core.match :refer-macros [match]]))
 
 (defn what-is
-  "Returns a string describing what kind of thing `x` is."
-  [x]
+  "Returns a string describing what kind of thing `thing` is."
+  [thing]
   (cond 
-    (or (vector? x)
-        (and (symbol? x)
-             (or
-              (= (name x) "PersistentVector")
-              (= (name x) "IVector"))))     "a vector"
-    (or (list? x)
-        (= (name x) "List")
-        (= (name x) "IList")
-        (= (name x) "EmptyList"))           "a list"
-    (string? x)                             "a string"
-    (char? x)                               "a character"
-    (number? x)                             "a number"
-    (symbol? x)                             "a symbol"
-    (keyword? x)                            "a keyword"
-    (fn? x)                                 "a function"
-    (or (map? x)
-        (= x cljs.core/PersistentArrayMap)) "a map"
-    (seq? x)                                "a sequence"
-    (true? x)                               "the Boolean value true"
-    (false? x)                              "the Boolean value false"
-    (nil? x)                                "the special value nil (nothing)"
-    :else (type x)))
+    (vector? thing)  "a vector"
+    (list? thing)    "a list"
+    (string? thing)  "a string"
+    (char? thing)    "a character"
+    (number? thing)  "a number"
+    (keyword? thing) "a keyword"
+    (symbol? thing)  "a symbol"
+    (fn? thing)      "a function"
+    (map? thing)     "a map"
+    (seq? thing)     "a sequence"
+    (true? thing)    "the Boolean value true"
+    (false? thing)   "the Boolean value false"
+    (nil? thing)     "the special value nil (nothing)"
+    :else (type thing)))
 
 (defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]"
+  "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
   [s]
   (->> (cs/split (cs/lower-case s) #"[^a-z0-9]")
        (remove empty?)
@@ -42,6 +34,8 @@
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [e]
   (match [(tokenize e)]
+         [["invalid" "arity" the-value]] ;; TODO this is better in warning form
+         (str the-value " is too many arguments!")
          [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]]
          (str "The " the-type " `" the-value "` can't be used as a collection.")
          [[the-value "is" "not" "iseqable"]]
@@ -50,7 +44,21 @@
          (str "The value `" the-value "` isn't a function, but it's being called like one.")
          :else e))
 
-(defn humanize-sequence [sq]
+(defn type-to-name
+  "Return a string representation of the type indicated by the symbol `thing`."
+  [thing]
+  (cond 
+    (= 'string thing)                                "a string"
+    (= 'number thing)                                "a number"
+    (cs/includes? (name thing) "Vector")             "a vector"
+    (cs/includes? (name thing) "List")               "a list"
+    (cs/includes? (name thing) "Keyword")            "a keyword"
+    (cs/includes? (name thing) "PersistentArrayMap") "a map"
+    :else thing))
+
+(defn humanize-sequence
+  "Given a sequence of strings, collects them together into a comma separated list with grammatically correct use of `or`."
+  [sq]
   (case (count sq)
     1 (first sq)
     2 (str (first sq) " or " (second sq))
@@ -63,13 +71,26 @@
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
 (defn reformat-warning [w]
-  (case (:type w)
-      :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
-                                bad-types (map what-is
-                                               (remove (partial = 'number)
-                                                       (:types (:extra w))))]
-                            (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
-      (with-out-str (pprint w))))
+  (let [bad-types (map type-to-name
+                       (remove (partial = 'number)
+                               (:types (:extra w))))]
+    (case (:type w)
+      :fn-arity (str "The function `"
+                     (name (-> w :extra :name))
+                     "` in the expression `"
+                     (:source-form w)
+                     "` needs "
+                     (if (= 0 (-> w :extra :argc)) ;; TODO get arity from meta
+                       "more"
+                       "a different number of")
+                     " arguments.")
+      :invalid-arithmetic (str "In the expression `"
+                               (:source-form w)
+                               "`, the arithmetic operaror `"
+                               (name (-> w :extra :js-op))
+                               "` can't be used on non-numbers, like "
+                               (humanize-sequence bad-types) ".")
+      (with-out-str (pprint (dissoc w :env))))))
 
 (comment
 
@@ -94,4 +115,3 @@
                       :source-form (+ [] 5)})
   ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )
-
