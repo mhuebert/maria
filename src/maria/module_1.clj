@@ -60,7 +60,11 @@
 ;; use `first` and similar functions (which we'll explore later). When
 ;; we want to learn what's inside a function, we use `doc`:
 
-(doc function)
+(doc what-is)
+
+(doc doc)
+
+(doc first)
 
 ;; XXX need jump to definition
 ;; XXX need to see arglist
