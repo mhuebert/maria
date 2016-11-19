@@ -7,27 +7,19 @@
   "Returns a string describing what kind of thing `x` is."
   [x]
   (cond 
-    (or (vector? x)
-        (and (symbol? x)
-             (or
-              (= (name x) "PersistentVector")
-              (= (name x) "IVector"))))     "a vector"
-    (or (list? x)
-        (= (name x) "List")
-        (= (name x) "IList")
-        (= (name x) "EmptyList"))           "a list"
-    (string? x)                             "a string"
-    (char? x)                               "a character"
-    (number? x)                             "a number"
-    (symbol? x)                             "a symbol"
-    (keyword? x)                            "a keyword"
-    (fn? x)                                 "a function"
-    (or (map? x)
-        (= x cljs.core/PersistentArrayMap)) "a map"
-    (seq? x)                                "a sequence"
-    (true? x)                               "the Boolean value true"
-    (false? x)                              "the Boolean value false"
-    (nil? x)                                "the special value nil (nothing)"
+    (vector? x)  "a vector"
+    (list? x)    "a list"
+    (string? x)  "a string"
+    (char? x)    "a character"
+    (number? x)  "a number"
+    (keyword? x) "a keyword"
+    (symbol? x)  "a symbol"
+    (fn? x)      "a function"
+    (map? x)     "a map"
+    (seq? x)     "a sequence"
+    (true? x)    "the Boolean value true"
+    (false? x)   "the Boolean value false"
+    (nil? x)     "the special value nil (nothing)"
     :else (type x)))
 
 (defn tokenize
@@ -50,6 +42,24 @@
          (str "The value `" the-value "` isn't a function, but it's being called like one.")
          :else e))
 
+(defn type-to-name [thing]
+  (cond 
+    (= 'string thing)                                "a string"
+    (= 'number thing)                                "a number"
+    (cs/includes? (name thing) "Vector")             "a vector"
+    (cs/includes? (name thing) "List")               "a list"
+    (cs/includes? (name thing) "Keyword")            "a keyword"
+    (cs/includes? (name thing) "PersistentArrayMap") "a map"
+    (symbol? thing)                             "a symbol"
+    (fn? thing)                                 "a function"
+    (string? thing)                             "a string"
+    (char? thing)                               "a character"
+    (seq? thing)                                "a sequence"
+    (true? thing)                               "the Boolean value true"
+    (false? thing)                              "the Boolean value false"
+    (nil? thing)                                "the special value nil (nothing)"
+    :else (type thing)))
+
 (defn humanize-sequence [sq]
   (case (count sq)
     1 (first sq)
@@ -63,13 +73,16 @@
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
 (defn reformat-warning [w]
-  (case (:type w)
-      :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
-                                bad-types (map what-is
-                                               (remove (partial = 'number)
-                                                       (:types (:extra w))))]
-                            (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
-      (with-out-str (pprint w))))
+  (str
+   (case (:type w)
+     :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
+                               bad-types (map what-is
+                                              (remove (partial = 'number)
+                                                      (:types (:extra w))))]
+                           (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
+     "")
+   "\n\n"
+   (with-out-str (pprint w))))
 
 (comment
 
@@ -95,3 +108,9 @@
   ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )
 
+;; (map type-to-name
+;;      (-> '{:type :invalid-arithmetic,
+;;            :extra {:js-op cljs.core$macros/+, :types [cljs.core/IVector number]},
+;;            :source-form (+ [] "foo" 5)}
+;;          :extra
+;;          :types))
