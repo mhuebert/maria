@@ -182,6 +182,13 @@
                ["red" "orange" "yellow" "green" "blue" "purple"]
                (repeat (rectangle 20 20))))
 
+  ;; maybe nice way to talk about naming things?
+  (let [rainbow (fn [shape]
+                  (mapv colorize
+                        ["red" "orange" "yellow" "green" "blue" "purple"]
+                        (repeat shape)))]
+    (rainbow (rectangle 20 20)))
+  
   ;; mixed types
   ["hi!"
    (stack (colorize "red" (rectangle 20 20))
@@ -199,5 +206,16 @@
        (map colorize
             ["red" "orange" "yellow" "green" "blue" "purple"]
             (repeat (rectangle 20 20))))
+
+  ;;... maybe gradually refactor this, by way of let, into:
+
+  (defn rainbow [shape]
+    (map colorize 
+         ["red" "orange" "yellow" "green" "blue" "purple"] 
+         (repeat shape)))
+
+  (map stack
+       (rainbow (circle 10))
+       (rainbow (rectangle 20 30)))
   
   ) ;/comment
