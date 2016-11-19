@@ -14,14 +14,16 @@
 (def ^:dynamic ^:private *delimiter* nil)
 (declare parse-next)
 
+(def whitespace-chars #js [\, " " "\n" "\r"])
 (defn ^:boolean whitespace?
   [c]
-  (and c (< -1 (.indexOf #js [\, " " "\n" "\r"] c))))
+  (< -1 (.indexOf whitespace-chars c)))
 
+(def boundary-chars #js [\" \: \; \' \@ \^ \` \~ \( \) \[ \] \{ \} \\ nil])
 (defn ^:boolean boundary?
   [c]
   "Check whether a given char is a token boundary."
-  (< -1 (.indexOf #js [\" \: \; \' \@ \^ \` \~ \( \) \[ \] \{ \} \\ nil] c)))
+  (< -1 (.indexOf boundary-chars c)))
 
 (defn- read-to-boundary
   [reader allowed]
@@ -127,7 +129,7 @@
     \? (do
          (rd/next reader)
          [:reader-macro
-          (let [read-next (partial parse-printables reader :reader-macro 1)]
+          (let [read-next #(parse-printables reader :reader-macro 1)]
             (cons (case (rd/peek reader)
                     ;; the easy case, just emit a token
                     \( [:token "?"]
@@ -166,7 +168,7 @@
 
       (:newline
         :comma
-        :space) [tag (rd/read-while reader (partial = c))]
+        :space) [tag (rd/read-while reader #(identical? % c))]
       (:list
         :vector
         :map) [tag (parse-delim reader (get brackets c))]

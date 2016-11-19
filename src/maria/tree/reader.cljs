@@ -1,8 +1,7 @@
 (ns maria.tree.reader
   (:refer-clojure :exclude [peek next])
-  (:require [cljs.tools.reader.reader-types :as r]
-            [goog.string :as gstring]
-            [clojure.string :as string]))
+  (:require [cljs.tools.reader.reader-types :as r])
+  (:import [goog.string StringBuffer]))
 
 (def peek r/peek-char)
 
@@ -20,7 +19,7 @@
   "Read while the chars fulfill the given condition. Ignores
    the unmatching char."
   [^not-native reader p? & [eof?]]
-  (let [buf (gstring/StringBuffer.)
+  (let [buf (StringBuffer.)
         eof? (if (nil? eof?)
                (not (p? nil))
                eof?)]
@@ -32,9 +31,9 @@
             (recur))
           (do
             (r/unread reader c)
-            (str buf)))
+            (.toString buf)))
         (if eof?
-          (str buf)
+          (.toString buf)
           (throw-reader reader "Unexpected EOF."))))))
 
 (defn read-until
@@ -90,8 +89,8 @@
         form (read-fn reader)
         end-pos (position reader)]
     (when form
-      {:tag     (get form 0)
-       :value   (get form 1)
+      {:tag     (nth form 0)
+       :value   (nth form 1)
        :row     (aget start-pos 0)
        :col     (aget start-pos 1)
        :end-row (aget end-pos 0)
@@ -120,17 +119,14 @@
 (defn- read-string-data
   [^not-native reader]
   (ignore reader)
-  (let [buf (gstring/StringBuffer.)]
-    (loop [escape? false
-           lines []]
+  (let [buf (StringBuffer.)]
+    (loop [escape? false]
       (if-let [c (r/read-char reader)]
         (cond (and (not escape?) (identical? c \"))
               (.toString buf)
-
               :else
               (do
                 (.append buf c)
-                (recur (and (not escape?) (identical? c \\))
-                       lines)))
+                (recur (and (not escape?) (identical? c \\)))))
         (throw-reader reader "Unexpected EOF while reading string.")))))
 
