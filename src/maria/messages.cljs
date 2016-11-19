@@ -73,16 +73,17 @@
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
 (defn reformat-warning [w]
+<<<<<<< HEAD
   (str
    (case (:type w)
      :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
-                               bad-types (map what-is
+                               bad-types (map type-to-name
                                               (remove (partial = 'number)
                                                       (:types (:extra w))))]
                            (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
      "")
    "\n\n"
-   (with-out-str (pprint w))))
+   (with-out-str (pprint (dissoc w :env)))))
 
 (comment
 
