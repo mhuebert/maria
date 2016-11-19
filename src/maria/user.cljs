@@ -121,10 +121,15 @@
        reverse
        (reduce (fn [state shape]
                  {:out    (conj (state :out)
-                                (update shape :x + (apply + (:widths state))))
+                                (update shape (if (= (:kind shape) :circle)
+                                                :cx
+                                                :x) + (apply + (:widths state))))
                   :widths (butlast (state :widths))})
                {:out    '()
-                :widths (map :width (map shape-bounds (butlast shapes)))})
+                :widths (map #(if (= (:kind %) :circle)
+                                (:r %)
+                                (:width %))
+                             (map shape-bounds (butlast shapes)))})
        :out
        (apply group)))
 
@@ -135,10 +140,15 @@
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
-                                 (update shape :y + (apply + (:heights state))))
+                                 (update shape (if (= (:kind shape) :circle)
+                                                :cy
+                                                :y) + (apply + (:heights state))))
                   :heights (butlast (state :heights))})
                {:out     '()
-                :heights (map :height (map shape-bounds (butlast shapes)))})
+                :heights (map #(if (= (:kind %) :circle)
+                                 (:r %)
+                                 (:height %))
+                              (map shape-bounds (butlast shapes)))})
        :out
        (apply group)))
 
@@ -172,12 +182,22 @@
                ["red" "orange" "yellow" "green" "blue" "purple"]
                (repeat (rectangle 20 20))))
 
-  [1
+  ;; mixed types
+  ["hi!"
    (stack (colorize "red" (rectangle 20 20))
           (colorize "blue" (rectangle 20 20)))
-   "2"
+   '🦄
    (line-up (colorize "red" (rectangle 20 20))
             (colorize "blue" (rectangle 20 20))
             (colorize "green" (rectangle 20 20)))]
+
+  ;; parcheesi pieces!
+  (map stack
+       (map colorize
+            ["red" "orange" "yellow" "green" "blue" "purple"]
+            (repeat (circle 10)))
+       (map colorize
+            ["red" "orange" "yellow" "green" "blue" "purple"]
+            (repeat (rectangle 20 20))))
   
   ) ;/comment
