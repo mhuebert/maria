@@ -23,7 +23,7 @@
 ;; your friend. Clojure would never hurt you. Clojure just wants to be
 ;; loved.
 
-;; We ask clojure questions like this. Go ahead, evaluate it. (Put
+;; We ask Clojure questions like this. Go ahead, evaluate it. (Put
 ;; your cursor at the end of the line and press `command-enter`.)
 
 (what-is "duck")
@@ -32,7 +32,10 @@
 
 (what-is what-is)
 
-;; we just asked Clojure a question by evaluating a function. to call a function, we write the function name and then the expressions we want to pass to the function (the "arguments" or "parameters"), and we wrap the whole thing up nice and tidy with parentheses.
+;; We just asked Clojure a question by evaluating a function. to call
+;; a function, we write the function name and then the expressions we
+;; want to pass to the function (the "arguments" or "parameters"), and
+;; we wrap the whole thing up nice and tidy with parentheses.
 
 ;; so, when we write `(what-is "duck")` we're telling Clojure:
 ;;  1. we're calling a function (because we're using parentheses)
