@@ -4,7 +4,7 @@
     [maria.eval :refer [eval-src]]
     [maria.walkthrough :refer [walkthrough]]
     [maria.tree.core :as tree]
-    [maria.messages :refer [reformat-error]]
+    [maria.messages :refer [reformat-error reformat-warning]]
     [maria.html]
 
     [clojure.set]
@@ -14,7 +14,6 @@
     [maria.user :include-macros true]
 
     [cljs.spec :include-macros true]
-    [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
     [re-view.routing :as routing :refer [router]]
@@ -52,10 +51,10 @@
             [:.pa3.dark-red (reformat-error (str error))]
             (format-result value))]
    (when (seq warnings)
-     [:.bg-near-white.pa2.pre.mv2
+     [:.bg-near-white.pa2.mv2
       [:.dib.dark-red "Warnings: "]
       (for [warning (distinct (map #(dissoc % :env) warnings))]
-        (str "\n" (with-out-str (pprint warning))))])])
+        (str "\n" (reformat-warning warning)))])])
 
 (defn scroll-bottom [component]
   (let [el (js/ReactDOM.findDOMNode component)]
