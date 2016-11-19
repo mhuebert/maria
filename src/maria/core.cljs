@@ -14,7 +14,6 @@
     [maria.user :include-macros true]
 
     [cljs.spec :include-macros true]
-    [cljs.pprint :refer [pprint]]
     [re-db.d :as d]
     [re-view.subscriptions :as subs]
     [re-view.routing :as routing :refer [router]]
@@ -52,7 +51,7 @@
             [:.pa3.dark-red (reformat-error (str error))]
             (format-result value))]
    (when (seq warnings)
-     [:.bg-near-white.pa2.pre.mv2
+     [:.bg-near-white.pa2.mv2
       [:.dib.dark-red "Warnings: "]
       (for [warning (distinct (map #(dissoc % :env) warnings))]
         (str "\n" (reformat-warning warning)))])])
