@@ -1,25 +1,33 @@
 (ns maria.messages
   (:require [clojure.string :as cs]
+            [cljs.pprint :refer [pprint]]
             [cljs.core.match :refer-macros [match]]))
 
 (defn what-is
-  "This is `what-is`, a function that takes any sort of element and
-  returns a string describing that that element is."
+  "Returns a string describing what kind of thing `x` is."
   [x]
   (cond 
-    (string? x)   "a string"
-    (char? x)     "a character"
-    (number? x)   "a number"
-    (symbol? x)   "a symbol"
-    (keyword? x)  "a keyword"
-    (fn? x)       "a function"
-    (vector? x)   "a vector"
-    (list? x)     "a list"
-    (map? x)      "a map"
-    (seq? x)      "a sequence"
-    (true? x)     "the Boolean value true"
-    (false? x)    "the Boolean value false"
-    (nil? x)      "the special value nil (nothing)"
+    (or (vector? x)
+        (and (symbol? x)
+             (or
+              (= (name x) "PersistentVector")
+              (= (name x) "IVector"))))     "a vector"
+    (or (list? x)
+        (= (name x) "List")
+        (= (name x) "IList")
+        (= (name x) "EmptyList"))           "a list"
+    (string? x)                             "a string"
+    (char? x)                               "a character"
+    (number? x)                             "a number"
+    (symbol? x)                             "a symbol"
+    (keyword? x)                            "a keyword"
+    (fn? x)                                 "a function"
+    (or (map? x)
+        (= x cljs.core/PersistentArrayMap)) "a map"
+    (seq? x)                                "a sequence"
+    (true? x)                               "the Boolean value true"
+    (false? x)                              "the Boolean value false"
+    (nil? x)                                "the special value nil (nothing)"
     :else (type x)))
 
 (defn tokenize
@@ -42,13 +50,26 @@
          (str "The value `" the-value "` isn't a function, but it's being called like one.")
          :else e))
 
+(defn humanize-sequence [sq]
+  (case (count sq)
+    1 (first sq)
+    2 (str (first sq) " or " (second sq))
+    (let [chunks (interpose ", " sq)]
+      (str (apply str (butlast chunks)) "or " (last chunks)))))
+
+;;(humanize-sequence (map what-is [1 :a]))
+;;=>"a number or a keyword"
+;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
+;;=> "a number, a number, a symbol, a keyword, or a string"
+
 (defn reformat-warning [w]
-  ;; TODO example warning:
-  ;;
-  ;; {:type :invalid-arithmetic,
-  ;;  :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
-  ;;  :source-form (+ [] 5)}
-  )
+  (case (:type w)
+      :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
+                                bad-types (map what-is
+                                               (remove (partial = 'number)
+                                                       (:types (:extra w))))]
+                            (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
+      (with-out-str (pprint w))))
 
 (comment
 
@@ -67,4 +88,10 @@
 
   (reformat-error "TypeError: 1.call is not a function")
   ;;=> "The value `1` isn't a function, but it's being called like one."  
+
+  (reformat-warning '{:type :invalid-arithmetic,
+                      :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
+                      :source-form (+ [] 5)})
+  ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )
+
