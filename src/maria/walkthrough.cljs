@@ -37,7 +37,7 @@
                        {:on-click #(do (prn 1) (view/update-state! this assoc :evaluate true))} "?"])]])))
 
 (defcomponent
-  walkthrough
+  main
   [:.serif.center.mw7.mt5.f4
    [:.f1.tc "Walkthrough"]
    (mixed
