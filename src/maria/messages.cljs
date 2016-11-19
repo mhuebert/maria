@@ -73,16 +73,26 @@
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
 (defn reformat-warning [w]
-  (str
-   (case (:type w)
-     :invalid-arithmetic (let [op-name (name (-> w :extra :js-op))
-                               bad-types (map type-to-name
-                                              (remove (partial = 'number)
-                                                      (:types (:extra w))))]
-                           (str "In the expression `" (:source-form w) "`, the arithmetic operaror `" op-name "` can't be used on non-numbers, like " (humanize-sequence bad-types) "."))
-     "")
-   "\n\n"
-   (with-out-str (pprint (dissoc w :env)))))
+  (let [bad-types (map type-to-name
+                       (remove (partial = 'number)
+                               (:types (:extra w))))]
+    (case (:type w)
+      :fn-arity (str "The function `"
+                     (name (-> w :extra :name))
+                     "` in the expression `"
+                     (:source-form w)
+                     "` needs "
+                     (if (= 0 (-> w :extra :argc)) ;; TODO get arity from meta
+                       "more"
+                       "a different number of")
+                     " arguments.")
+      :invalid-arithmetic (str "In the expression `"
+                               (:source-form w)
+                               "`, the arithmetic operaror `"
+                               (name (-> w :extra :js-op))
+                               "` can't be used on non-numbers, like "
+                               (humanize-sequence bad-types) ".")
+      (with-out-str (pprint (dissoc w :env))))))
 
 (comment
 
@@ -107,10 +117,3 @@
                       :source-form (+ [] 5)})
   ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )
-
-;; (map type-to-name
-;;      (-> '{:type :invalid-arithmetic,
-;;            :extra {:js-op cljs.core$macros/+, :types [cljs.core/IVector number]},
-;;            :source-form (+ [] "foo" 5)}
-;;          :extra
-;;          :types))
