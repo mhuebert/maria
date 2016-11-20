@@ -8,7 +8,8 @@
                   cljs.pprint
                   cljs.tools.reader.reader-types
                   cljs.tools.reader
-                  cljs.analyzer]
+                  cljs.analyzer
+                  maria.eval]
  :require-caches [maria.user]
  :require-macros [maria.user]
  :output-to      "resources/public/js/cljs_live_cache.js"

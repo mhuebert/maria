@@ -1,5 +1,7 @@
 (ns maria.user
-  (:require [maria.html :refer [html]])
+  (:require [maria.html :refer [html]]
+            [maria.eval]
+            [cljs.repl :as repl :include-macros true])
   (:require-macros [maria.user :refer [user-macro]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -57,6 +57,6 @@ Dependencies for the self-hosted ClojureScript compiler are compiled using
 
  1. Make sure planck is installed
  2. Clone (git@github.com:mhuebert/cljs-live.git) and put a symlink to script/script/bootstrap.cljs on your path
- 3. In this directory, run `bootstrap.cljs --deps live-deps.clj` to generate an updated version of `resources/public/js/cljs_live_cache.js`
+ 3. In this directory (maria), run `bootstrap.cljs --deps live-deps.clj` to generate an updated version of `resources/public/js/cljs_live_cache.js`
 
  (Inspect live-deps.clj to see what is included in the cache)
