@@ -16,7 +16,7 @@
                  [cljsjs/marked "0.3.5-0"]
 
                  [org.clojars.mhuebert/cljs-live "0.1.5-SNAPSHOT"]
-                 [org.clojars.mhuebert/re-view "0.2.0-SNAPSHOT"]]
+                 [org.clojars.mhuebert/re-view "0.2.1-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]

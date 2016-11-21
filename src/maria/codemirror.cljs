@@ -9,7 +9,8 @@
             [maria.tree.core :as tree]
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [cljs.core.match :refer-macros [match]]))
 
 (def ^:dynamic *self-op*)
 
@@ -82,7 +83,7 @@
       (clear-brackets! this)
       (when (tree/can-have-children? node)
         (v/swap-state! this assoc-in [:cursor-state :handles]
-               (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
+                       (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
 (defn clear-highlight! [this]
   (doseq [handle (get-in (:state this) [:highlight-state :handles])]
@@ -91,12 +92,12 @@
 
 (defn highlight-node! [this cm node]
   (when (and (not= node (get-in (:state this) [:highlight-state :node]))
-             (not (.somethingSelected cm))
+             (not  (.somethingSelected cm))
              (tree/sexp? node))
     (clear-highlight! this)
     (v/swap-state! this assoc :highlight-state
-           {:node    node
-            :handles (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
+                   {:node    node
+                    :handles (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
 
 (defn update-highlights [cm e]
   (let [this (.-view cm)
@@ -105,14 +106,14 @@
          zipper              :zipper
          :as                 state} (:state this)]
 
-    (case [(.-type e) (= 91 (.-which e)) (.-metaKey e)]
-      ["mousemove" false true] (highlight-node! this cm (->> (mouse-pos cm e)
-                                                             (tree/node-at zipper)
-                                                             tree/mouse-eval-region
-                                                             z/node))
-      ["keyup" true false] (clear-highlight! this)
-      ["keydown" true true] (highlight-node! this cm cursor-node)
-      nil)))
+    (match [(.-type e) (.-which e) (.-metaKey e)]
+           ["mousemove" 91 true] (highlight-node! this cm (->> (mouse-pos cm e)
+                                                               (tree/node-at zipper)
+                                                               tree/mouse-eval-region
+                                                               z/node))
+           ["keyup" 91 false] (clear-highlight! this)
+           ["keydown" _ true] (highlight-node! this cm cursor-node)
+           :else nil)))
 
 (defn update-cursor
   [{{:keys [zipper]} :state :as this} cm]
@@ -123,7 +124,7 @@
                       z/node)]
     (match-brackets! this cm node)
     (v/swap-state! this update :cursor-state merge {:node node
-                                            :pos  position})))
+                                                    :pos  position})))
 
 (defn update-ast
   [cm]
@@ -134,10 +135,10 @@
            :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
-  :subscriptions {:source (fn [& args]
-                            (when-let [[uid src] (some-> (second args) :local-storage)]
+  :subscriptions {:source (fn [this st-key]
+                            (when-let [[uid src] (get-in this [:props :local-storage])]
                               (init-local-storage uid src)
-                              (apply (subs/db [uid :source]) args)))}
+                              ((subs/db [uid :source]) this st-key)))}
   :did-mount
   (fn [{{:keys [value read-only? on-mount cm-opts local-storage] :as props} :props :as this}]
     (let [dom-node (js/ReactDOM.findDOMNode (v/get-ref this "editor-container"))
