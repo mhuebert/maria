@@ -7,7 +7,7 @@
             [cljs.pprint :refer [pprint]]
             [cljs.tools.reader.reader-types :as r]
             [cljs.tools.reader.edn :as edn]
-            [cljs.test :refer-macros [is are]]))
+            [cljs.test :refer [is are]]))
 
 (enable-console-print!)
 

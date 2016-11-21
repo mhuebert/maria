@@ -15,7 +15,7 @@
     [maria.user :include-macros true]
 
     [re-view.routing :refer [router]]
-    [re-view.core :as v :refer-macros [defcomponent]]))
+    [re-view.core :as v :refer [defcomponent]]))
 
 (enable-console-print!)
 
@@ -29,7 +29,7 @@
                                      "/paredit" paredit/examples
                                      not-found)}
   :render
-  (fn [_ _ {:keys [main-view]}]
+  (fn [{{:keys [main-view]} :state}]
     [:div.h-100
      [:.w-100.fixed.bottom-0.z-3
       [:.dib.center
@@ -37,9 +37,9 @@
                            ["/walkthrough" "Walkthrough"]
                            ["/paredit" "Paredit"]]]
          [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href href} title])]]
-     (main-view)]))
+     (main-view) ]))
 
 (defn main []
-  (v/render-to-dom (layout) "maria-main"))
+  (v/render-to-dom (layout {:x 1}) "maria-main"))
 
 (main)

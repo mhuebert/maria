@@ -5,7 +5,7 @@
             [fast-zip.core :as z]
             [re-db.d :as d]
             [cljs.pprint :refer [pprint]]
-            [re-view.core :as v :refer-macros [defcomponent]]))
+            [re-view.core :as v :refer [defcomponent]]))
 
 
 (defn pretty-str [x]
@@ -13,8 +13,8 @@
 
 (defcomponent track-cursor
   :render
-  (fn [this]
-    (let [{:keys [ast zipper cursor-state] :as state} (some-> this (v/react-ref "editor") v/state)
+    (fn [this]
+    (let [{:keys [ast zipper cursor-state] :as state} (some-> this (v/get-ref "editor") :state)
           {:keys [pos node]} cursor-state
           node (some-> zipper (tree/node-at pos) z/node)]
       [:div.ma4.ph3

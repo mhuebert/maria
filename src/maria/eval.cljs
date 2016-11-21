@@ -55,7 +55,7 @@
                                              (-> #_(update :ns #(symbol (str % "$macros")))
                                                (assoc :macros-ns true))) (partial swap! result merge))
              (catch js/Error e
-               (.error js/console (.-cause e))
+               (.error js/console (or (.-cause e) e))
                (swap! result assoc :error e))))
       (when (and ns? (contains? @result :value))
         (swap! c-env assoc :ns (second form)))

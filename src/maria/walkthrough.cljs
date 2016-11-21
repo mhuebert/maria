@@ -1,8 +1,8 @@
 (ns maria.walkthrough
   (:require [cljsjs.marked]
             [maria.eval :refer [eval-src]]
-            [maria.codemirror :refer [viewer] :rename {viewer code-view}]
-            [re-view.core :as view :refer-macros [defcomponent]]))
+            [maria.codemirror :refer [viewer]]
+            [re-view.core :as v :refer [defcomponent]]))
 
 (def ^:dynamic *depth* 0)
 
@@ -25,16 +25,17 @@
 
 (defcomponent code-split
               :render
-              (fn [this _ {:keys [evaluate]}]
-                (let [source (first (view/children this))]
-                  [:.flex
-                   [:.w-50.bg-solarized-light (code-view source)]
-                   [:.w-50
-                    (if evaluate
-                      ;; does not yet differentiate between error and value
-                      (code-view (with-out-str (prn (:value (eval-src source)))))
-                      [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
-                       {:on-click #(do (prn 1) (view/update-state! this assoc :evaluate true))} "?"])]])))
+              (fn [{{:keys [evaluate]} :state
+                    [source] :children
+                    :as this}]
+                [:.flex
+                 [:.w-50.bg-solarized-light (viewer source)]
+                 [:.w-50
+                  (if evaluate
+                    ;; does not yet differentiate between error and value
+                    (viewer (with-out-str (prn (:value (eval-src source)))))
+                    [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
+                     {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
 
 (defcomponent
   main

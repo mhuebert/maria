@@ -2,7 +2,7 @@
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
-            [re-view.core :as v :refer-macros [defcomponent]]
+            [re-view.core :as v :refer [defcomponent]]
             [re-view.subscriptions :as subs]
             [clojure.string :as string]
             [fast-zip.core :as z]
@@ -72,38 +72,38 @@
            (.markText cm from to payload))))
 
 (defn clear-brackets! [this]
-  (doseq [handle (get-in (v/state this) [:cursor-state :handles])]
+  (doseq [handle (get-in (:state this) [:cursor-state :handles])]
     (.clear handle))
-  (v/update-state! this update :cursor-state dissoc :handles))
+  (v/swap-state! this update :cursor-state dissoc :handles))
 
 (defn match-brackets! [this cm node]
-  (let [prev-node (get-in (v/state this) [:cursor-state :node])]
+  (let [prev-node (get-in (:state this) [:cursor-state :node])]
     (when (not= prev-node node)
       (clear-brackets! this)
       (when (tree/can-have-children? node)
-        (v/update-state! this assoc-in [:cursor-state :handles]
-                         (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
+        (v/swap-state! this assoc-in [:cursor-state :handles]
+               (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
 (defn clear-highlight! [this]
-  (doseq [handle (get-in (v/state this) [:highlight-state :handles])]
+  (doseq [handle (get-in (:state this) [:highlight-state :handles])]
     (.clear handle))
-  (v/update-state! this dissoc :highlight-state))
+  (v/swap-state! this dissoc :highlight-state))
 
 (defn highlight-node! [this cm node]
-  (when (and (not= node (get-in (v/state this) [:highlight-state :node]))
+  (when (and (not= node (get-in (:state this) [:highlight-state :node]))
              (not (.somethingSelected cm))
              (tree/sexp? node))
     (clear-highlight! this)
-    (v/update-state! this assoc :highlight-state
-                     {:node    node
-                      :handles (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
+    (v/swap-state! this assoc :highlight-state
+           {:node    node
+            :handles (mark-ranges! cm (node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
 
 (defn update-highlights [cm e]
   (let [this (.-view cm)
         {{cursor-node :node} :cursor-state
          ast                 :ast
          zipper              :zipper
-         :as                 state} (v/state this)]
+         :as                 state} (:state this)]
 
     (case [(.-type e) (= 91 (.-which e)) (.-metaKey e)]
       ["mousemove" false true] (highlight-node! this cm (->> (mouse-pos cm e)
@@ -115,40 +115,40 @@
       nil)))
 
 (defn update-cursor
-  [this cm]
-  (let [{:keys [zipper]} (v/state this)
-        position (cursor-pos cm)
+  [{{:keys [zipper]} :state :as this} cm]
+  (let [position (cursor-pos cm)
         node (some->> position
                       (tree/node-at zipper)
                       tree/nearest-bracket-region
                       z/node)]
     (match-brackets! this cm node)
-    (v/update-state! this update :cursor-state merge {:node node
-                                                      :pos  position})))
+    (v/swap-state! this update :cursor-state merge {:node node
+                                            :pos  position})))
 
 (defn update-ast
   [cm]
   (when-let [ast (try (tree/ast (.getValue cm))
                       (catch js/Error e (.debug js/console e)))]
-    (v/update-state! (.-view cm) assoc
-                     :ast ast
-                     :zipper (tree/ast-zip ast))))
+    (swap! (.-view cm) assoc
+           :ast ast
+           :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
   :subscriptions {:source (fn [& args]
                             (when-let [[uid src] (some-> (second args) :local-storage)]
                               (init-local-storage uid src)
                               (apply (subs/db [uid :source]) args)))}
-  :component-did-mount
-  (fn [this {:keys [value read-only? on-mount cm-opts local-storage] :as props}]
-    (let [dom-node (js/ReactDOM.findDOMNode (v/react-ref this "editor-container"))
+  :did-mount
+  (fn [{{:keys [value read-only? on-mount cm-opts local-storage] :as props} :props :as this}]
+    (let [dom-node (js/ReactDOM.findDOMNode (v/get-ref this "editor-container"))
           editor (js/CodeMirror dom-node
                                 (clj->js (merge cm-opts
                                                 (cond-> options
                                                         read-only? (-> (select-keys [:theme :mode :lineWrapping])
                                                                        (assoc :readOnly "nocursor"))))))]
       (set! (.-view editor) this)
-      (v/update-state! this assoc :editor editor)
+
+      (v/swap-state! this assoc :editor editor)
 
       (when-not read-only?
         (.on editor "beforeChange" ignore-self-op)
@@ -165,27 +165,30 @@
               (.on editor event-key f))))
         (when on-mount (on-mount editor this)))
 
-      (when-let [initial-source (or value (:source (v/state this)))]
+      (when-let [initial-source (get-in this [:state :source] value)]
         (.setValue editor (str initial-source)))
       (when-let [local-storage-uid (first local-storage)]
         (.on editor "change" #(d/transact! [[:db/add local-storage-uid :source (.getValue %1)]])))))
-  :component-will-receive-props
-  (fn [this {next-value :value} {:keys [value]}]
+  :will-receive-props
+  (fn [{{next-value :value} :props
+        {:keys [value]}     :prev-props
+        :as                 this}]
     (when (not= next-value value)
-      (when-let [editor (:editor (v/state this))]
+      (when-let [editor (get-in this [:state :editor])]
         (set-preserve-cursor editor next-value)
         #_(binding [*self-op* true]))))
-  :component-will-receive-state
-  (fn [this _ {next-source :source} {:keys [source editor]}]
+  :will-receive-state
+  (fn [{{next-source :source}   :state
+        {:keys [source editor]} :prev-state}]
     (when (not= next-source source)
       (when editor
         (set-preserve-cursor editor next-source)
         #_(binding [*self-op* true]))))
-  :should-component-update
-  (fn [_ props state next-props prev-state]
+  :should-update
+  (fn [{:keys [state prev-state]}]
     (not= (dissoc state :editor) (dissoc prev-state :editor)))
   :render
-  (fn [this props state]
+  (fn []
     [:.h-100 {:ref "editor-container"}]))
 
 (defn viewer [source]

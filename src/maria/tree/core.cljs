@@ -3,7 +3,7 @@
             [maria.tree.emit :as unwrap]
             [maria.tree.node :as n]
             [fast-zip.core :as z]
-            [cljs.test :refer-macros [is are]]))
+            [cljs.test :refer [is are]]))
 
 (def ast parse/ast)
 (defn ast-zip [ast]

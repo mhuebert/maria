@@ -1,8 +1,9 @@
 (ns maria.views.repl
-  (:require [re-view.core :as v :refer-macros [defcomponent]]
+  (:require [re-view.core :as v :refer [defcomponent]]
             [re-db.d :as d]
             [maria.codemirror :as cm]
             [maria.eval :as eval]
+            [maria.user :refer [show]]
             [maria.messages :refer [reformat-error reformat-warning]]
             [re-view.subscriptions :as subs]
             [maria.tree.core :as tree]))
@@ -23,7 +24,7 @@
                           [:span.output-bracket lb]
                           [:span (interpose " " (map format-value value))]
                           [:span.output-bracket rb]))
-    (= :shape (:is-a value)) ((maria.user/show value))      ; synthesize component for shape
+    (= :shape (:is-a value)) ((show value))                 ; synthesize component for shape
     (v/is-react-element? value) (value)
     :else (if (nil? value)
             "nil"
@@ -49,7 +50,7 @@
 
 (defn eval-editor [cm]
   (when-let [source (or (cm/selection-text cm)
-                        (-> (v/state (.-view cm))
+                        (-> (:state (.-view cm))
                             :highlight-state
                             :node
                             tree/string))]
@@ -57,19 +58,19 @@
     (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (eval/eval-src source)]])))
 
 (defcomponent result-pane
-  :component-did-update scroll-bottom
-  :component-did-mount scroll-bottom
+  :did-update scroll-bottom
+  :did-mount scroll-bottom
   :render
-  (fn [_ {:keys [results]}]
+  (fn [{{:keys [results]} :props}]
     [:div.h-100.overflow-auto.code
      (map display-result (last-n 50 results))]))
 
 (defcomponent main
   :subscriptions {:eval-result-log (subs/db [repl-editor-id :eval-result-log])}
   :get-editor
-  #(-> %1 (v/react-ref "repl-editor") v/state :editor)
+  #(-> %1 (v/get-ref "repl-editor") :state :editor)
   :render
-  (fn [this _ {:keys [eval-result-log source]}]
+  (fn [{{:keys [eval-result-log source]} :state :as this}]
     [:.flex.flex-row.h-100
      [:.w-50.h-100.bg-solarized-light.pa3
       {:on-mouse-move #(when-let [editor (.getEditor this)]
