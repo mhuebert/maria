@@ -92,7 +92,7 @@
 
 (defn highlight-node! [this cm node]
   (when (and (not= node (get-in (:state this) [:highlight-state :node]))
-             (not  (.somethingSelected cm))
+             (not (.somethingSelected cm))
              (tree/sexp? node))
     (clear-highlight! this)
     (v/swap-state! this assoc :highlight-state
@@ -107,10 +107,10 @@
          :as                 state} (:state this)]
 
     (match [(.-type e) (.-which e) (.-metaKey e)]
-           ["mousemove" 91 true] (highlight-node! this cm (->> (mouse-pos cm e)
-                                                               (tree/node-at zipper)
-                                                               tree/mouse-eval-region
-                                                               z/node))
+           ["mousemove" _ true] (highlight-node! this cm (->> (mouse-pos cm e)
+                                                              (tree/node-at zipper)
+                                                              tree/mouse-eval-region
+                                                              z/node))
            ["keyup" 91 false] (clear-highlight! this)
            ["keydown" _ true] (highlight-node! this cm cursor-node)
            :else nil)))
