@@ -14,7 +14,7 @@
     [maria.html]
     [maria.user :include-macros true]
 
-    [re-view.routing :refer [router]]
+    [re-view.subscriptions :refer [router]]
     [re-view.core :as v :refer [defcomponent]]))
 
 (enable-console-print!)

@@ -3,7 +3,7 @@
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
             [re-view.core :as v :refer [defcomponent]]
-            [re-view.subscriptions :as subs]
+            [re-view.subscriptions :as subs :include-macros true]
             [clojure.string :as string]
             [fast-zip.core :as z]
             [maria.tree.core :as tree]
@@ -135,10 +135,12 @@
            :zipper (tree/ast-zip ast))))
 
 (defcomponent editor
-  :subscriptions {:source (fn [this st-key]
-                            (when-let [[uid src] (get-in this [:props :local-storage])]
-                              (init-local-storage uid src)
-                              ((subs/db [uid :source]) this st-key)))}
+  :subscriptions {:source (subs/db [this] (some-> this
+                                                  (get-in [:props :local-storage])
+                                                  first
+                                                  (d/get :source)))}
+  :will-mount #(some->> (get-in % [:props :local-storage])
+                        (apply init-local-storage))
   :did-mount
   (fn [{{:keys [value read-only? on-mount cm-opts local-storage] :as props} :props :as this}]
     (let [dom-node (js/ReactDOM.findDOMNode (v/get-ref this "editor-container"))

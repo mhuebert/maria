@@ -66,11 +66,11 @@
      (map display-result (last-n 50 results))]))
 
 (defcomponent main
-  :subscriptions {:eval-result-log (subs/db [repl-editor-id :eval-result-log])}
+  :subscriptions {:eval-result-log (subs/db (d/get repl-editor-id :eval-result-log))}
   :get-editor
   #(-> %1 (v/get-ref "repl-editor") :state :editor)
   :render
-  (fn [{{:keys [eval-result-log source]} :state :as this}]
+  (fn [{{:keys [eval-result-log source] :as state} :state :as this}]
     [:.flex.flex-row.h-100
      [:.w-50.h-100.bg-solarized-light.pa3
       {:on-mouse-move #(when-let [editor (.getEditor this)]
