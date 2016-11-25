@@ -6,6 +6,7 @@ node_modules
 resources/public/js/compiled
 resources/public/css
 checkouts
+.cljs_live_planck_cache
 .lein-repl-history
 .nrepl-port
 .planck_cache
