@@ -72,7 +72,7 @@
   :render
   (fn [{{:keys [eval-result-log source] :as state} :state :as this}]
     [:.flex.flex-row.h-100
-     [:.w-50.h-100.bg-solarized-light.pa3
+     [:.w-50.h-100.bg-solarized-light
       {:on-mouse-move #(when-let [editor (.getEditor this)]
                         (cm/update-highlights editor %))}
       (cm/editor {:value           source
