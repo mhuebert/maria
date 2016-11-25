@@ -32,7 +32,7 @@
   (fn [{{:keys [main-view]} :state}]
     [:div.h-100
      [:.w-100.fixed.bottom-0.z-3
-      [:.dib.center
+      [:.dib.center.left-50
        (for [[href title] [["/" "REPL"]
                            ["/walkthrough" "Walkthrough"]
                            ["/paredit" "Paredit"]]]

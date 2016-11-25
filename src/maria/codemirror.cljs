@@ -22,10 +22,11 @@
     (.cancel change)))
 
 (defn set-preserve-cursor [editor value]
-  (let [cursor-pos (.getCursor editor)]
-    (.setValue editor (str value))
-    (if (-> editor (aget "state" "focused"))
-      (.setCursor editor cursor-pos))))
+  (when-not (identical? value (.getValue editor))
+    (let [cursor-pos (.getCursor editor)]
+      (.setValue editor (str value))
+      (if (-> editor (aget "state" "focused"))
+        (.setCursor editor cursor-pos)))))
 
 (defn cursor-pos [editor]
   (let [cm-pos (.getCursor editor)]
