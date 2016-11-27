@@ -36,3 +36,13 @@ In rough order.
  - recursion
  - maps, sets, lists/sequences/collections/vectors
  - namespaces, requiring, external dependencies
+
+## Differences from Orthodox Clojure ##
+
+Some of these are only plans for the future.
+
+ - side-by-side interface (normally Clojurists use a REPL or evaluation-at-point using CIDER)
+ - the `what-is` function is specific to this environment
+ - all drawings and shape manipulation (`circle`, `line-up`, `colorize`) are specific to this environment
+ - we say "Clojure" which many people hear as "Clojure on the JVM" whereas we are using "Clojure in JavaScript" a.k.a. ClojureScript--but it's all just Clojure on different hosts
+ - (comment syntax?)
