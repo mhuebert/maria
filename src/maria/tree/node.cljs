@@ -21,8 +21,9 @@
 (defn newline? [node] (= :newline (get node :tag)))
 (def sexp? (every-pred (complement comment?)
                        (complement whitespace?)))
+
 (defn terminal-node? [node]
-  (boolean (#{:string :token :regex :var :keyword :space :newline :comma :comment} (get node :tag))))
+  (boolean (#{:string :token :regex :var :keyword :namespaced-keyword :space :newline :comma :comment} (get node :tag))))
 
 (def can-have-children? (complement terminal-node?))
 

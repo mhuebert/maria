@@ -94,6 +94,9 @@
                       (recur remaining))))))))
 
 (defonce _
-         (do (c/preloads! c-state)
-             (eval '(require '[maria.user :include-macros true]))
-             (eval '(in-ns maria.user))))
+         (c/load-bundles! c-state
+                          ["/js/cljs_bundles/maria_user.json"
+                           #_"/js/cljs_bundles/quil.json"]
+                          (fn []
+                            (eval '(require '[maria.user :include-macros true]))
+                            (eval '(in-ns maria.user)))))

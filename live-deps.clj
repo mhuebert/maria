@@ -4,5 +4,9 @@
                   :require       [[cljs.spec :include-macros true]
                                   [maria.user :include-macros true]]
                   :provided      [maria.core]
-                  :require-cache [maria.eval]
-                  :cljsbuild-out "resources/public/js/compiled/out"}]}
+                  :require-cache [maria.eval]}
+                 #_{:name          quil
+                    :require       [[quil.core :include-macros true]]
+                    :provided      [maria.core maria.user]
+                    :exclude-cache [cljs.core cljs.core$macros]
+                    :dependencies  [[quil "2.5.0"]]}]}

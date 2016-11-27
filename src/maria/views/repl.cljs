@@ -31,7 +31,7 @@
             (try (pr-str value)
                  (catch js/Error e "error printing result")))))
 
- (defn display-result [{:keys [value error warnings]}]
+(defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    [:.mv2 (if (or error (seq warnings))
             [:.bg-near-white.ph3.pv2.mv2.ws-prewrap
@@ -50,10 +50,10 @@
 
 (defn eval-editor [cm]
   (when-let [source (or (cm/selection-text cm)
-                        (-> (:state (.-view cm))
-                            :highlight-state
-                            :node
-                            tree/string))]
+                        (->> (:state (.-view cm))
+                             :highlight-state
+                             :node
+                             (tree/string (:ns @eval/c-env))))]
 
     (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (eval/eval-src source)]])))
 
