@@ -57,7 +57,42 @@
 ;; We colorized our circle by passing it to another function. Notice
 ;; how the `circle` function is nested inside the `colorize` function?
 
-;; Let's say we wanted to draw a square.
+;; Let's draw a bunch of shapes side-by-side using the `line-up` function:
+
+(line-up (circle 25)
+         (rectangle 50 50)
+         (circle 25)
+         (rectangle 50 50)
+         (circle 25)
+         (rectangle 50 50)
+         (circle 25)
+         (rectangle 50 50)
+         (circle 25)
+         (rectangle 50 50))
+
+;; Man, that was a lot of typing. And so repetitive! When I see myself
+;; repeating the same code over and over, I get suspicious.
+
+;; Luckily, we can code ourselves a shorter solution. We don't have to
+;; type `(rectangle 50 50)` and `(circle 25)` over and over. We can
+;; type it once and Clojure will remember it for us:
+
+(let [c (circle 25) ;; XXX just one pair at first?
+      r (rectangle 50 50)] 
+  ;; Now we can type just `c` and `r`:
+  (line-up c r c r c r c r c r))
+
+;; We used `let` to define names (`c` and `r`) for our
+;; expressions. The `let` function's first parameter is a pair of
+;; square brackets (`[]`) with pairs of names and values inside.
+
+;; Can you make all the circles one color, and the squares another?
+
+...
+
+;; OK. Let's say we wanted to draw a checkerboard: a big square made
+;; up of lots of little squares, alternating colors. Let's start with
+;; our smallest unit: a single square.
 
 (square 5) ;; ERROR
 
@@ -65,19 +100,39 @@
 
 (rectangle 25 25)
 
-;; Cool. But what if we want a bunch of squares? We can use `line-up`:
+;; We can make a 2x2 checker for our building block.
 
-(line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25))
+(let [r (colorize "red" (rectangle 25 25))
+      b (colorize "black" (rectangle 25 25))]
+  (stack (line-up r b)
+         (line-up b r)))
 
-;; Man, that was a lot of typing. I hate typing. Luckily, we can code
+;; OK, now let's repeat that checker until it forms a row.
+
+(let [r (colorize "red" (rectangle 25 25))
+      b (colorize "black" (rectangle 25 25))
+      checker (stack (line-up r b)
+                     (line-up b r))]
+  (apply line-up (repeat 4 checker)))
+
+;; ...and we repeat the rows to make a complete board.
+
+(let [r (colorize "red" (rectangle 25 25))
+      b (colorize "black" (rectangle 25 25))
+      checker (stack (line-up r b)
+                     (line-up b r)) 
+      row (apply line-up (repeat 4 checker))]
+  (stack (repeat 4 row)))
+
+
+;; XXX Man, that was a lot of typing. I hate typing. Luckily, we can code
 ;; ourselves a shorter solution. We don't have to type `(rectangle 25
 ;; 25)` over and over. We can type it once and Clojure will remember
 ;; it for us:
 
-(let [r (rectangle 25 25)]
-  (line-up r r r r r r r r r r)) ;; XXX that's the most boring drawing in the universe
 
-;; Ah. That's nice.
+
+
 
 ;; XXX should we do something else before immediately showing `def`?
 (def r (rectangle 25 25))
@@ -85,6 +140,10 @@
 ;; We just told Clojure to "define" the letter r as the expression `(rectangle 25 25)` for later. That lets us say:
 
 (line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25))
+
+;; ...as
+
+(line-up r r r r)
 
 ;; But we still want a SQUARE, don't we? Why do you make us write `25`
 ;; twice every time we call `rectangle`, Clojure? I thought you were
@@ -111,7 +170,8 @@
 ;; We defined `square` with the `def` function:
 (doc def)
 
-;; We defined 
+
+
 
 
 
