@@ -13,15 +13,112 @@
 ;; Put your cursor to the right of "duck", after the quotation
 ;; mark. Press `command-enter`. Bam. You just evaluated a duck.
 
+;; Our duck evaluation (which is also "duck") appeared in the output
+;; panel on the right. That's how we're going to work: type and
+;; evaluate code on the left; output displays on the right.
+
 ;; We call "duck" an `expression`. What happened when you pressed
 ;; `command-enter` was that Clojure, the programming language,
-;; returned to you the `value` that the expression `evaluates` to.
+;; returned to you the `value` that the expression `evaluates` to. In
+;; this case, "duck" evaluates to "duck".
 
-;; In this case, "duck" evaluates to "duck". Why? What does "duck", like, mean, dude? (XXX perhaps too much idiom for nonnative speakers)
+;; What else can we evaluate? Well, Clojure can help us draw.
 
-;; Clojure will tell us what "duck" is. Clojure is helpful. Clojure is
-;; your friend. Clojure would never hurt you. Clojure just wants to be
-;; loved.
+(circle 20)
+
+;; Clojure evaluated a circle for us. This time, our expression calls
+;; a function. To call a function, we create a pair of
+;; parenteses--`()`--and put the function name inside, followed by all
+;; the expressions we want to give to the function (the
+;; "parameters"). Here, `circle` is the function we call, and we give
+;; it a radius parameter of `20`.
+
+;; XXX we need arglists hints so I can explain them here
+
+;; How do you think you could make that circle bigger? Type your code
+;; in where we put the ellipsis `...`. XXX Remember to check the arg
+;; list.
+
+...
+
+;; What do you think happens if you give `circle` too many parameters?
+;; Let's try:
+
+(circle 20 20)
+
+;; If we write code that Clojure can't understand, it will tell us it
+;; can't run it. If it can, Clojure will try to tell you how to fix
+;; your code.
+
+;; What do you think this next expression will draw?
+
+(colorize "blue" (circle 20))
+
+;; We colorized our circle by passing it to another function. Notice
+;; how the `circle` function is nested inside the `colorize` function?
+
+;; Let's say we wanted to draw a square.
+
+(square 5) ;; ERROR
+
+;; Oops. Clojure doesn't know squares--only rectangles.
+
+(rectangle 25 25)
+
+;; Cool. But what if we want a bunch of squares? We can use `line-up`:
+
+(line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25))
+
+;; Man, that was a lot of typing. I hate typing. Luckily, we can code
+;; ourselves a shorter solution. We don't have to type `(rectangle 25
+;; 25)` over and over. We can type it once and Clojure will remember
+;; it for us:
+
+(let [r (rectangle 25 25)]
+  (line-up r r r r r r r r r r)) ;; XXX that's the most boring drawing in the universe
+
+;; Ah. That's nice.
+
+;; XXX should we do something else before immediately showing `def`?
+(def r (rectangle 25 25))
+
+;; We just told Clojure to "define" the letter r as the expression `(rectangle 25 25)` for later. That lets us say:
+
+(line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25))
+
+;; But we still want a SQUARE, don't we? Why do you make us write `25`
+;; twice every time we call `rectangle`, Clojure? I thought you were
+;; my friend, Clojure. Couldn't you give us a `square` function?
+
+;; Clojure feels bad that it didn't give you a `square` function. But
+;; Clojure has an idea. You're a programmer now, and Clojure is here
+;; to help you. You and Clojure can MAKE a `square` function:
+
+(def square (fn [side] (rectangle side side)))
+
+;; Once we evaluate that, we can `(square 5)` as often as we please:
+
+(square 5)
+
+(square 5)
+
+(square 5)
+
+(square 5)
+
+;; Awesome. How did we do that?
+
+;; We defined `square` with the `def` function:
+(doc def)
+
+;; We defined 
+
+
+
+
+;;;; XXX transition
+;; Why? Have no fear. Clojure will tell us what "duck" is. Clojure is
+;; helpful. Clojure is your friend.
 
 ;; We ask Clojure questions like this. Go ahead, evaluate it. (Put
 ;; your cursor at the end of the line and press `command-enter`.)
@@ -75,83 +172,11 @@
 ;; doesn't want "please" and "thank you", though. It just wants
 ;; parentheses.
 
-;; Let's ask Clojure to draw for us. Clojure is a great art buddy.
-
-(circle 20)
-
-;; How do you think you could make that circle bigger? XXX Remember to check the arg list.
-
-;; While we're here, let's try giving `circle` the wrong number of
-;; arguments, just to see what happens:
-
-(circle 20 20) ;; (draws the circle but warns about wrong arity)
-
-;; What do you think this next expression will draw?
-
-(colorize "blue" (circle 20))
-
-;; Let's say we wanted to draw a square.
-
-(square 5) ;; ERROR
-
-;; Come on, Clojure. Help us out.
-
-(rectangle 25 25)
-
-;; Fine. Let's line up a whole row of squares across the screen.
-
-(line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25)) 
-;; XXX it would be nice to have spaces between them (margin/padding)
-
-;; Man, that was a lot of typing. I hate typing.
-
-;; --What's that, Clojure?
-
-;; Clojure says we don't have to type `(rectangle 25 25)` over and
-;; over. We can type it once and Clojur will remember it for us:
-
-(let [r (rectangle 25 25)]
-  (line-up r r r r r r r r r r))
-
-;; That's nicer.
 
 
-;; XXX we should do something else before immediately showing `def`, maybe
-(def r (rectangle 25 25))
-
-;; We just told Clojure to "define" the letter r as the expression `(rectangle 25 25)` for later. That let's us say:
-
-(line-up (rectangle 25 25) (rectangle 25 25) (rectangle 25 25) (rectangle 25 25))
-
-;; But we still want a SQUARE, don't we? Why do you make us write `25`
-;; twice every time we call `rectangle`, Clojure? I thought you were
-;; my friend, Clojure. Couldn't you give us a `square` function?
-
-;; Clojure feels bad that it didn't give you a `square` function. But
-;; Clojure has an idea. You're a programmer now, and Clojure is here
-;; to help you. You and Clojure can MAKE a `square` function:
-
-(def square (fn [side] (rectangle side side)))
-
-;; Once we evaluate that, we can `(square 5)` as often as we please:
-
-(square 5)
-
-(square 5)
-
-(square 5)
-
-(square 5)
-
-;; Awesome. How did we do that?
-
-;; We defined `square` with the `def` function:
-(doc def)
-
-;; We defined 
 
 
-;; If you said 
+
 
 
 
