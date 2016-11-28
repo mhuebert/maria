@@ -14,7 +14,7 @@
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
         :else ["(" ")"]))                                   ; XXX probably wrong
-
+ 
 (defn format-value [value]
   (cond
     (or (vector? value)

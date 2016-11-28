@@ -91,12 +91,12 @@
         form (read-fn reader)
         end-pos (position reader)]
     (when-not (nil? form)
-      {:tag     (nth form 0)
-       :value   (nth form 1)
-       :row     (aget start-pos 0)
-       :col     (aget start-pos 1)
-       :end-row (aget end-pos 0)
-       :end-col (aget end-pos 1)})))
+      {:tag        (nth form 0)
+       :value      (nth form 1)
+       :line       (aget start-pos 0)
+       :column     (aget start-pos 1)
+       :end-line   (aget end-pos 0)
+       :end-column (aget end-pos 1)})))
 
 (defn read-n
   "Call the given function on the given reader until `n` values matching `p?` have been

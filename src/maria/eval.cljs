@@ -98,5 +98,6 @@
                           ["/js/cljs_bundles/maria_user.json"
                            #_"/js/cljs_bundles/quil.json"]
                           (fn []
+                            (eval '(require '[cljs.core :include-macros true]))
                             (eval '(require '[maria.user :include-macros true]))
                             (eval '(in-ns maria.user)))))

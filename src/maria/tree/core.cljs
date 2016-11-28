@@ -49,8 +49,8 @@
                       (when-not (= :base (get node :tag))
                         loc))))]
       (if (let [found-node (some-> found z/node)]
-            (and (= (get pos :row) (get found-node :end-row))
-                 (= (get pos :col) (get found-node :end-col))))
+            (and (= (get pos :line) (get found-node :end-line))
+                 (= (get pos :column) (get found-node :end-column))))
         (or (z/right found) found)
         found))
 
@@ -81,25 +81,25 @@
 
 (comment
 
-  (assert (n/within? {:row     1 :col 1
-                      :end-row 1 :end-col 2}
-                     {:row 1 :col 1}))
+  (assert (n/within? {:line     1 :column 1
+                      :end-line 1 :end-column 2}
+                     {:line 1 :column 1}))
 
-  (doseq [[sample-str [row col] result-sexp result-string] [["1" [1 1] 1 "1"]
-                                                            ["[1]" [1 1] [1] "[1]"]
-                                                            ["#{}" [1 1] #{} "#{}"]
-                                                            ["\"\"" [1 1] "" "\"\""]
-                                                            ["(+ 1)" [1 0] nil nil]
-                                                            ["(+ 1)" [1 1] '(+ 1) "(+ 1)"]
-                                                            ["(+ 1)" [1 2] '+ "+"]
-                                                            ["(+ 1)" [1 3] nil " "]
-                                                            ["(+ 1)" [1 4] 1 "1"]
-                                                            ["(+ 1)" [1 5] '(+ 1) "(+ 1)"]
-                                                            ["(+ 1)" [1 6] nil nil]
-                                                            ["\n1" [2 1] 1 "1"]]]
+  (doseq [[sample-str [line column] result-sexp result-string] [["1" [1 1] 1 "1"]
+                                                                ["[1]" [1 1] [1] "[1]"]
+                                                                ["#{}" [1 1] #{} "#{}"]
+                                                                ["\"\"" [1 1] "" "\"\""]
+                                                                ["(+ 1)" [1 0] nil nil]
+                                                                ["(+ 1)" [1 1] '(+ 1) "(+ 1)"]
+                                                                ["(+ 1)" [1 2] '+ "+"]
+                                                                ["(+ 1)" [1 3] nil " "]
+                                                                ["(+ 1)" [1 4] 1 "1"]
+                                                                ["(+ 1)" [1 5] '(+ 1) "(+ 1)"]
+                                                                ["(+ 1)" [1 6] nil nil]
+                                                                ["\n1" [2 1] 1 "1"]]]
     (reset! log [])
-    (let [result-node (node-at (ast sample-str) {:row row
-                                                 :col col})]
+    (let [result-node (node-at (ast sample-str) {:line   line
+                                                 :column column})]
       (is (= (sexp result-node) result-sexp))
       (is (= (string result-node) result-string)))))
 

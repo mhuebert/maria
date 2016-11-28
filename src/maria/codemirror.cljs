@@ -30,14 +30,14 @@
 
 (defn cursor-pos [editor]
   (let [cm-pos (.getCursor editor)]
-    {:row (.-line cm-pos)
-     :col (.-ch cm-pos)}))
+    {:line   (.-line cm-pos)
+     :column (.-ch cm-pos)}))
 
 (defn mouse-pos [editor e]
   (let [cm-pos (.coordsChar editor #js {:left (.-clientX e)
                                         :top  (.-clientY e)})]
-    {:row (.-line cm-pos)
-     :col (.-ch cm-pos)}))
+    {:line   (.-line cm-pos)
+     :column (.-ch cm-pos)}))
 
 
 ;; to support multiple editors
@@ -57,10 +57,10 @@
    :keyMap            "macDefault"})
 
 (defn parse-range
-  "Return Codemirror-compatible `from` and `to` positions from a row/col range."
-  [{:keys [row col end-row end-col]}]
-  [#js {:line row :ch col}
-   #js {:line end-row :ch end-col}])
+  "Return Codemirror-compatible `from` and `to` positions from a line/column range."
+  [{:keys [line column end-line end-column]}]
+  [#js {:line line :ch column}
+   #js {:line end-line :ch end-column}])
 
 (defn node-highlights
   "Get range(s) to highlight for a node. For a collection, only highlight brackets."

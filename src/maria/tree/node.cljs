@@ -9,12 +9,12 @@
 
     PersistentArrayMap
     #_maria.tree.parse/Node
-    (let [{r :row c :col} pos
-          {:keys [row col end-row end-col]} container]
-      (and (>= r row)
-           (<= r end-row)
-           (if (= r row) (>= c col) true)
-           (if (= r end-row) (<= c end-col) true)))))
+    (let [{r :line c :column} pos
+          {:keys [line column end-line end-column]} container]
+      (and (>= r line)
+           (<= r end-line)
+           (if (= r line) (>= c column) true)
+           (if (= r end-line) (<= c end-column) true)))))
 
 (defn comment? [node] (#{:uneval :comment} (get node :tag)))
 (defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
@@ -31,9 +31,9 @@
   (when (can-have-children? node)
     (let [[left right] (get unwrap/edges (get node :tag))]
       (cond-> []
-              left (conj {:row     (:row node) :end-row (:row node)
-                          :col     (:col node)
-                          :end-col (+ (:col node) (count left))})
-              right (conj {:row     (:end-row node) :end-row (:end-row node)
-                           :col     (- (:end-col node) (count right))
-                           :end-col (:end-col node)})))))
+              left (conj {:line       (:line node) :end-line (:line node)
+                          :column     (:column node)
+                          :end-column (+ (:column node) (count left))})
+              right (conj {:line       (:end-line node) :end-line (:end-line node)
+                           :column     (- (:end-column node) (count right))
+                           :end-column (:end-column node)})))))

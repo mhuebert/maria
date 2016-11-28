@@ -13,7 +13,7 @@
 
 (defcomponent track-cursor
   :render
-    (fn [this]
+  (fn [this]
     (let [{:keys [ast zipper cursor-state] :as state} (some-> this (v/get-ref "editor") :state)
           {:keys [pos node]} cursor-state
           node (some-> zipper (tree/node-at pos) z/node)]
@@ -27,7 +27,7 @@
        [:.mt2 (cm/editor {:ref   "viewer"
                           :value (str "cursor: " pos "\n"
                                       "node tag: " (:tag node) \newline
-                                      "node pos:" (pretty-str (select-keys node [:row :col :end-row :end-col]))
+                                      "node pos:" (pretty-str (select-keys node [:line :column :end-line :end-column]))
                                       "\n" (tree/string node) "\n"
                                       )})]])))
 
