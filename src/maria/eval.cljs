@@ -94,8 +94,8 @@
                       (recur remaining))))))))
 
 (defonce _
-         (c/load-bundles! c-state
-                          ["/js/cljs_bundles/maria_user.json"
+         (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
+                           "/js/cljs_bundles/maria.user.json"
                            #_"/js/cljs_bundles/quil.json"]
                           (fn []
                             (eval '(require '[cljs.core :include-macros true]))

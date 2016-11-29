@@ -1,6 +1,8 @@
 {:cljsbuild-out "resources/public/js/compiled/out"
  :output-dir    "resources/public/js/cljs_bundles"
- :bundles       [{:name          maria-user
+ :bundles       [#_{:name          cljs.core
+                  :require-cache [cljs.core cljs.core$macros]}
+                 {:name          maria.user
                   :require       [[cljs.spec :include-macros true]
                                   [maria.user :include-macros true]]
                   :provided      [maria.core]

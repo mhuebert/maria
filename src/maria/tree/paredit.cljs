@@ -20,7 +20,7 @@
       [:div.ma4.ph3
        [:.f4.mt2 "Track Cursor"]
        [:.black-70.i.mt2 "Helper view to inspect cursor & node positions"]
-       [:.h3.bg-solarized-light.mt2.pa3
+       [:.bg-solarized-light.mt2.pa3
         (cm/editor {:ref                  "editor"
                     :local-storage        ["track-cursor" "(conj [1 2 3] 4)"]
                     :event/cursorActivity #(v/force-update this)})]
