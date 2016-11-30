@@ -3,7 +3,7 @@
 
     [maria.walkthrough :as walkthrough]
     [maria.views.repl :as repl]
-    [maria.tree.paredit :as paredit]
+    [maria.views.paredit :as paredit]
 
     ;; include to precompile for self-hosted env
     [clojure.set]

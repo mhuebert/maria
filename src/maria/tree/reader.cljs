@@ -44,12 +44,6 @@
   [^not-native reader p?]
   (read-while reader (complement p?) (p? nil)))
 
-(defn read-until-inclusive
-  "Read until a char fulfills the given condition. Includes the matching char."
-  [^not-native reader p?]
-  (str (read-while reader (complement p?) (p? nil))
-       (r/read-char reader)))
-
 (defn next
   "Read next char."
   [^not-native reader]

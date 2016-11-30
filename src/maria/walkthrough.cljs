@@ -1,7 +1,7 @@
 (ns maria.walkthrough
   (:require [cljsjs.marked]
             [maria.eval :refer [eval-src]]
-            [maria.codemirror :refer [viewer]]
+            [maria.editor :refer [viewer]]
             [re-view.core :as v :refer [defview]]))
 
 (def ^:dynamic *depth* 0)

@@ -79,6 +79,13 @@
            first)
       (z/up loc)))
 
+(defn node-highlights
+  "Get range(s) to highlight for a node. For a collection, only highlight brackets."
+  [node]
+  (if (can-have-children? node)
+    (edge-ranges node)
+    [node]))
+
 (comment
 
   (assert (n/within? {:line     1 :column 1

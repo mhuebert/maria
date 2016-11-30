@@ -73,7 +73,7 @@
   [reader delimiter]
   (rd/ignore reader)
   (->> #(binding [*delimiter* delimiter]
-         (parse-next %))
+          (parse-next %))
        (rd/read-repeatedly reader)))
 
 (defn ^:boolean printable-only? [n]
@@ -160,7 +160,7 @@
       :keyword (parse-keyword reader)
       :sharp (parse-sharp reader)
       :comment (do (rd/ignore reader)
-                   [tag (rd/read-until-inclusive reader (fn [x] (or (nil? x) (#{\newline \return} x))))])
+                   [tag (rd/read-until reader (fn [x] (or (nil? x) (#{\newline \return} x))))])
       (:deref
         :quote
         :syntax-quote) [tag (parse-printables reader tag 1 true)]

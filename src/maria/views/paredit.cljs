@@ -1,20 +1,18 @@
-(ns maria.tree.paredit
+(ns maria.views.paredit
   (:require [maria.tree.core :as tree]
-            [maria.codemirror :as cm]
-            [re-view.subscriptions :as subs]
+            [maria.editor :as cm]
             [fast-zip.core :as z]
             [re-db.d :as d]
             [cljs.pprint :refer [pprint]]
             [re-view.core :as v :refer [defview]]))
-
 
 (defn pretty-str [x]
   (with-out-str (pprint x)))
 
 (defview track-cursor
   (fn [this]
-    (let [{:keys [ast zipper cursor-state] :as state} (some-> this (v/get-ref "editor") :state)
-          {:keys [pos node]} cursor-state
+    (let [{:keys [ast zipper cursor] :as state} (some-> this (v/get-ref "editor") :state)
+          {:keys [pos node]} cursor
           node (some-> zipper (tree/node-at pos) z/node)]
       [:div.ma4.ph3
        [:.f4.mt2 "Track Cursor"]
@@ -27,12 +25,11 @@
                           :value (str "cursor: " pos "\n"
                                       "node tag: " (:tag node) \newline
                                       "node pos:" (pretty-str (select-keys node [:line :column :end-line :end-column]))
-                                      "\n" (tree/string node) "\n"
-                                      )})]])))
-
+                                      "\n" (tree/string node) "\n")})]])))
 
 (defview examples
   [:.serif
    (track-cursor)])
+
 
 

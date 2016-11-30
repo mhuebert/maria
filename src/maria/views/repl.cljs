@@ -2,6 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.codemirror :as cm]
+            [maria.editor :as editor]
             [maria.eval :as eval]
             [maria.user :refer [show]]
             [maria.messages :refer [reformat-error reformat-warning]]
@@ -69,17 +70,17 @@
            [:.flex.flex-row.h-100
             [:.w-50.h-100.bg-solarized-light
              {:on-mouse-move #(when-let [editor (.getEditor this)]
-                                (cm/update-highlights editor %))}
-             (cm/editor {:ref             "repl-editor"
-                         :local-storage   [repl-editor-id
-                                           ";; Type code here;
-                                           ;; Press command-enter or command-click to evaluate forms."]
-                         :event/mousedown #(when (.-metaKey %)
-                                             (.preventDefault %)
-                                             (eval-editor (.getEditor this)))
-                         :event/keyup     cm/update-highlights
-                         :event/keydown   #(do (cm/update-highlights %1 %2)
-                                               (when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                                 (eval-editor %1)))})]
+                                (editor/update-highlights editor %))}
+             (editor/editor {:ref             "repl-editor"
+                             :local-storage   [repl-editor-id
+                                               ";; Type code here;
+                                               ;; Press command-enter or command-click to evaluate forms."]
+                             :event/mousedown #(when (.-metaKey %)
+                                                 (.preventDefault %)
+                                                 (eval-editor (.getEditor this)))
+                             :event/keyup     editor/update-highlights
+                             :event/keydown   #(do (editor/update-highlights %1 %2)
+                                                   (when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                                     (eval-editor %1)))})]
             [:.w-50.h-100
              (result-pane)]]))
