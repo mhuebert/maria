@@ -164,7 +164,8 @@
                 (cm/set-preserve-cursor editor next-source)
                 #_(binding [*self-op* true]))))
           :should-update
-          (fn [_] false)}
+          (fn [_] false)
+          :clearHighlight #(clear-highlight! %)}
          [:.h-100 {:ref "editor-container"}])
 
 (defn viewer [source]

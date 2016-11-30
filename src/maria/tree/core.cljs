@@ -23,6 +23,8 @@
 (def can-have-children? n/can-have-children?)
 (def terminal-node? n/terminal-node?)
 (def edge-ranges n/edge-ranges)
+(def inner-range n/inner-range)
+(def has-edges? n/has-edges?)
 
 (def log (atom []))
 

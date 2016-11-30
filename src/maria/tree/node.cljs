@@ -37,3 +37,15 @@
               right (conj {:line       (:end-line node) :end-line (:end-line node)
                            :column     (- (:end-column node) (count right))
                            :end-column (:end-column node)})))))
+
+(defn has-edges? [node]
+  (contains? unwrap/edges (get node :tag)))
+
+(defn inner-range [{:keys [line column end-line end-column tag]}]
+  (when-let [[left right] (get unwrap/edges tag)]
+    {:line       line
+     :column     (+ column (count left))
+     :end-line   end-line
+     :end-column (- end-column (count right))}))
+
+(defn at-boundary? [node pos])
