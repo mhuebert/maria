@@ -1,6 +1,6 @@
 (ns maria.module-1
   (:require
-   [maria.messages :refer [what-is]]))
+    [maria.messages :refer [what-is]]))
 ;; pull in `what-is` from maria.messages
 ;; pull in clojure.repl/doc
 
@@ -139,7 +139,7 @@
 (let [r (colorize "red" (rectangle 50 50))
       b (colorize "black" (rectangle 50 50))
       checker (stack (line-up r b)
-                     (line-up b r)) 
+                     (line-up b r))
       row (apply line-up (repeat 4 checker))]
   (apply stack (repeat 4 row)))
 ;; XXX XXX XXX apply is waaaaay too advanced!
@@ -158,7 +158,7 @@
   (let [r (colorize "red" (rectangle 25 25))
         b (colorize "black" (rectangle 25 25))
         checker (stack (line-up r b)
-                       (line-up b r)) 
+                       (line-up b r))
         row (apply line-up (repeat 4 checker))]
     (stack (repeat 4 row))))
 

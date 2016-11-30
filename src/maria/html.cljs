@@ -4,4 +4,4 @@
 (defn html [x]
   (when-not (vector? x)
     (throw (js/Error. "Argument to `html` must be a vector.")))
-  (v/component x))
+  (v/view x))

@@ -5,14 +5,13 @@
             [fast-zip.core :as z]
             [re-db.d :as d]
             [cljs.pprint :refer [pprint]]
-            [re-view.core :as v :refer [defcomponent]]))
+            [re-view.core :as v :refer [defview]]))
 
 
 (defn pretty-str [x]
   (with-out-str (pprint x)))
 
-(defcomponent track-cursor
-  :render
+(defview track-cursor
   (fn [this]
     (let [{:keys [ast zipper cursor-state] :as state} (some-> this (v/get-ref "editor") :state)
           {:keys [pos node]} cursor-state
@@ -32,7 +31,7 @@
                                       )})]])))
 
 
-(defcomponent examples
+(defview examples
   [:.serif
    (track-cursor)])
 

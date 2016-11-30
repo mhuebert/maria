@@ -1,5 +1,5 @@
 (ns maria.views.repl
-  (:require [re-view.core :as v :refer [defcomponent]]
+  (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.codemirror :as cm]
             [maria.eval :as eval]
@@ -14,7 +14,7 @@
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
         :else ["(" ")"]))                                   ; XXX probably wrong
- 
+
 (defn format-value [value]
   (cond
     (or (vector? value)
@@ -57,35 +57,29 @@
 
     (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (eval/eval-src source)]])))
 
-(defcomponent result-pane
-  :did-update scroll-bottom
-  :did-mount scroll-bottom
-  :render
-  (fn [{{:keys [results]} :props}]
-    [:div.h-100.overflow-auto.code
-     (map display-result (last-n 50 results))]))
+(defview result-pane
+         {:did-update scroll-bottom
+          :did-mount  scroll-bottom}
+         [:div.h-100.overflow-auto.code
+          (map display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
 
-(defcomponent main
-  :subscriptions {:eval-result-log (subs/db (d/get repl-editor-id :eval-result-log))}
-  :get-editor
-  #(-> %1 (v/get-ref "repl-editor") :state :editor)
-  :render
-  (fn [{{:keys [eval-result-log source] :as state} :state :as this}]
-    [:.flex.flex-row.h-100
-     [:.w-50.h-100.bg-solarized-light
-      {:on-mouse-move #(when-let [editor (.getEditor this)]
-                        (cm/update-highlights editor %))}
-      (cm/editor {:value           source
-                  :ref             "repl-editor"
-                  :local-storage   [repl-editor-id
-                                    ";; Type code here;
-                                    ;; Press command-enter or command-click to evaluate forms."]
-                  :event/mousedown #(when (.-metaKey %)
-                                     (.preventDefault %)
-                                     (eval-editor (.getEditor this)))
-                  :event/keyup     cm/update-highlights
-                  :event/keydown   #(do (cm/update-highlights %1 %2)
-                                        (when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                          (eval-editor %1)))})]
-     [:.w-50.h-100
-      (result-pane {:results eval-result-log})]]))
+(defview main
+         {:get-editor #(-> %1 (v/get-ref "repl-editor") :state :editor)}
+         (fn [this]
+           [:.flex.flex-row.h-100
+            [:.w-50.h-100.bg-solarized-light
+             {:on-mouse-move #(when-let [editor (.getEditor this)]
+                                (cm/update-highlights editor %))}
+             (cm/editor {:ref             "repl-editor"
+                         :local-storage   [repl-editor-id
+                                           ";; Type code here;
+                                           ;; Press command-enter or command-click to evaluate forms."]
+                         :event/mousedown #(when (.-metaKey %)
+                                             (.preventDefault %)
+                                             (eval-editor (.getEditor this)))
+                         :event/keyup     cm/update-highlights
+                         :event/keydown   #(do (cm/update-highlights %1 %2)
+                                               (when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                                 (eval-editor %1)))})]
+            [:.w-50.h-100
+             (result-pane)]]))

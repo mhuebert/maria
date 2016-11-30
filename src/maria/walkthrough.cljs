@@ -2,7 +2,7 @@
   (:require [cljsjs.marked]
             [maria.eval :refer [eval-src]]
             [maria.codemirror :refer [viewer]]
-            [re-view.core :as v :refer [defcomponent]]))
+            [re-view.core :as v :refer [defview]]))
 
 (def ^:dynamic *depth* 0)
 
@@ -23,22 +23,20 @@
                        (vector? item) (with-attrs item {:key (str "mixed-" *depth* "-" i)})
                        :else (println "Unknown form passed to `mixed`"))) items))
 
-(defcomponent code-split
-              :render
-              (fn [{{:keys [evaluate]} :state
-                    [source] :children
-                    :as this}]
-                [:.flex
-                 [:.w-50.bg-solarized-light (viewer source)]
-                 [:.w-50
-                  (if evaluate
-                    ;; does not yet differentiate between error and value
-                    (viewer (with-out-str (prn (:value (eval-src source)))))
-                    [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
-                     {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
+(defview code-split
+         (fn [{{:keys [evaluate]} :state
+               [source]           :children
+               :as                this}]
+           [:.flex
+            [:.w-50.bg-solarized-light (viewer source)]
+            [:.w-50
+             (if evaluate
+               ;; does not yet differentiate between error and value
+               (viewer (with-out-str (prn (:value (eval-src source)))))
+               [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
+                {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
 
-(defcomponent
-  main
+(defview main
   [:.serif.center.mw7.mt5.f4
    [:.f1.tc "Walkthrough"]
    (mixed
