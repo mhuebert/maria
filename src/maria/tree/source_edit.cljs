@@ -119,12 +119,12 @@
                :hop-right
                (cursor-boundary-skip :right)
                :expand-selection
-               (fn [cm {{{:keys [bracket-loc node] cursor-pos :pos} :cursor zipper :zipper} :state :as this}]
+               (fn [cm {{{:keys [bracket-loc] cursor-pos :pos} :cursor zipper :zipper} :state :as this}]
                  (let [sel (selection-boundaries cm)
                        loc (tree/node-at zipper sel)
                        node (z/node loc)
                        parent (some-> (z/up loc) z/node)
-                       select #(do
+                       select #(when %
                                  (select-range cm %)
                                  (swap! this update-in [:cursor :stack] conj (tree/boundaries %)))]
                    (cond
@@ -142,7 +142,8 @@
                (fn [cm this]
                  (when-let [stack (get-in this [:state :cursor :stack])]
                    (let [stack (cond-> stack
-                                       (= (selection-boundaries cm) (first stack)) rest)]
+                                       (or (:base (first stack))
+                                            (= (selection-boundaries cm) (first stack))) rest)]
                      (some->> (first stack) (select-range cm))
                      (swap! this update-in [:cursor :stack] rest))))
 

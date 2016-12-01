@@ -195,7 +195,8 @@
   (-> (rd/read-with-position (indexing-reader (str "[\n" s "]")) parse-next*)
       (assoc :tag :base)
       (update :value rest)
-      (update :end-col dec)))
+      (update :line inc)
+      (update :end-column dec)))
 
 (comment
   (doseq [[string res-sexp res-str] [["1" '[1]]
