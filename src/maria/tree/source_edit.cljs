@@ -29,6 +29,14 @@
   [{:keys [line column]}]
   #js {:line line :ch column})
 
+(defn replace-range
+  ([cm s from {:keys [line column]}]
+   (replace-range cm s (merge from {:end-line line :end-column column})))
+  ([cm s {:keys [line column end-line end-column]}]
+   (.replaceRange cm s
+                  #js {:line line :ch column}
+                  #js {:line (or end-line line) :ch (or end-column column)})))
+
 (defn cut-range
   "Cut a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
@@ -139,19 +147,43 @@
                      (swap! this update-in [:cursor :stack] rest))))
 
                :comment-line
-               (fn [cm _]
+               (fn [cm {{zipper :zipper} :state}]
                  (let [line-n (.-line (.getCursor cm))
-                       line (.getLine cm line-n)
-                       [spaces semicolons] (map count (rest (re-find #"^(\s*)(;+)?" line)))]
-                   (if (> semicolons 0)
+                       [spaces semicolons] (rest (re-find #"^(\s*)(;+)?" (.getLine cm line-n)))
+                       [space-n semicolon-n] (map count [spaces semicolons])]
+                   (if (> semicolon-n 0)
                      (.replaceRange cm ""
-                                    #js {:line line-n :ch spaces}
-                                    #js {:line line-n :ch (+ spaces semicolons)})
-                     (.replaceRange cm ";;"
-                                    #js {:line line-n :ch spaces}
-                                    #js {:line line-n :ch spaces}))))
+                                    #js {:line line-n :ch space-n}
+                                    #js {:line line-n :ch (+ space-n semicolon-n)})
+                     (let [{:keys [end-line end-column]} (some-> (tree/node-at zipper {:line line-n :column 0})
+                                                                 z/up
+                                                                 z/node)]
+                       (when (= line-n end-line)
+                         (replace-range cm (str "\n" spaces) {:line line-n :column (dec end-column)}))
+                       (replace-range cm ";;" {:line line-n :column space-n})))))
 
-               })
+               :uneval-at-point
+               (fn [cm {{{:keys [bracket-loc]} :cursor} :state :as this}]
+                 (let [add-uneval (fn [{:keys [line column]}] (replace-range cm "#_" {:line line :column column}))
+                       remove-uneval (fn [{:keys [line column]}] (replace-range cm ""
+                                                                                {:line       line
+                                                                                 :column     column
+                                                                                 :end-column (+ 2 column)}))
+                       bracket-node (z/node bracket-loc)]
+                   (if (.somethingSelected cm)
+                     (let [sel-pos (selection-boundaries cm)]
+                       (if (= "#_" (subs (.getSelection cm) 0 2))
+                         (remove-uneval sel-pos)
+                         (do (add-uneval sel-pos)
+                             (select-range cm (cond-> sel-pos
+                                                      (= (:line sel-pos)
+                                                         (:end-line sel-pos)) (update :end-column #(+ % 2)))))))
+
+                     (if-let [uneval-node (first (filter #(= :uneval (get % :tag))
+                                                         (list bracket-node (some-> bracket-loc z/up z/node))))]
+                       (remove-uneval uneval-node)
+                       (add-uneval bracket-node))))
+                 )})
 
 (def key-commands
   (reduce-kv (fn [m k command]
@@ -170,4 +202,5 @@
               "Cmd-2"         :shrink-selection
 
               "Cmd-/"         :comment-line
+              "Cmd-."         :uneval-at-point
               }))
