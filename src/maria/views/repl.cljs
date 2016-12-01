@@ -5,6 +5,7 @@
             [maria.editor :as editor]
             [maria.eval :as eval]
             [maria.user :refer [show]]
+            [cljs.pprint :refer [pprint]]
             [maria.messages :refer [reformat-error reformat-warning]]
             [re-view.subscriptions :as subs]
             [maria.tree.core :as tree]))
@@ -29,18 +30,19 @@
     (v/is-react-element? value) (value)
     :else (if (nil? value)
             "nil"
-            (try (pr-str value)
+            (try (with-out-str (pprint value))
                  (catch js/Error e "error printing result")))))
 
 (defn display-result [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
-   [:.mv2 (if (or error (seq warnings))
-            [:.bg-near-white.ph3.pv2.mv2.ws-prewrap
-             (for [message (cons (some-> error str reformat-error)
-                                 (map reformat-warning (distinct warnings)))
-                   :when message]
-               [:.pv2 message])]
-            (format-value value))]])
+   [:.mv2.ws-prewrap
+    (if (or error (seq warnings))
+      [:.bg-near-white.ph3.pv2.mv2
+       (for [message (cons (some-> error str reformat-error)
+                           (map reformat-warning (distinct warnings)))
+             :when message]
+         [:.pv2 message])]
+      (format-value value))]])
 
 (defn scroll-bottom [component]
   (let [el (js/ReactDOM.findDOMNode component)]

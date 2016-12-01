@@ -1,6 +1,6 @@
 {:cljsbuild-out "resources/public/js/compiled/out"
  :output-dir    "resources/public/js/cljs_bundles"
- :bundles       [#_{:name          cljs.core
+ :bundles       [{:name          cljs.core
                   :require-cache [cljs.core cljs.core$macros]}
                  {:name          maria.user
                   :require       [[cljs.spec :include-macros true]
