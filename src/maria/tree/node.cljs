@@ -20,8 +20,8 @@
                (if (= r line) (gt c column) true)
                (if (= r end-line) (lt c end-column) true)))))))
 
-(def within-inner? (contains-fn true))
-(def within? (contains-fn false))
+(def within? (contains-fn true))
+(def inside? (contains-fn false))
 
 (defn comment? [node] (#{:uneval :comment} (get node :tag)))
 (defn whitespace? [node] (#{:space :newline :comma} (get node :tag)))
@@ -32,7 +32,7 @@
 (defn terminal-node? [node]
   (boolean (#{:string :token :regex :var :keyword :namespaced-keyword :space :newline :comma :comment} (get node :tag))))
 
-(def can-have-children? (complement terminal-node?))
+(def may-contain-children? (complement terminal-node?))
 
 (defn has-edges? [node]
   (contains? unwrap/edges (get node :tag)))

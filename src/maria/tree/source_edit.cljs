@@ -132,7 +132,7 @@
                      (do (swap! this assoc-in [:cursor :stack] (list (selection-boundaries cm)))
                          (.clearHighlight this)
                          (select (let [node (if (tree/comment? node) node (z/node bracket-loc))]
-                                   (or (when (tree/within? node cursor-pos) (tree/inner-range node))
+                                   (or (when (tree/inside? node cursor-pos) (tree/inner-range node))
                                        node))))
                      (= sel (tree/inner-range parent)) (select parent)
                      (pos= sel (tree/boundaries node)) (select (or (tree/inner-range parent) parent))
@@ -163,25 +163,39 @@
                        (replace-range cm ";;" {:line line-n :column space-n})))))
 
                :uneval-at-point
-               (fn [cm {{{:keys [pos]} :cursor zipper :zipper} :state :as this}]
+               (fn [cm {{{:keys [pos]} :cursor zipper :zipper} :state}]
                  (let [bracket-loc (tree/nearest-bracket-region (tree/node-at zipper pos))
-                       add-uneval (fn [pos] (replace-range cm "#_" (tree/boundaries pos :left)))
-                       remove-uneval (fn [{:keys [column] :as pos}]
-                                       (replace-range cm "" (assoc pos :end-column (+ 2 column))))
+                       add-uneval (fn [pos] (replace-range cm "#_" (select-keys pos [:line :column])))
+                       remove-uneval (fn [pos] (replace-range cm "" (assoc pos :end-column (+ 2 (:column pos)))))
                        bracket-node (z/node bracket-loc)]
                    (if (.somethingSelected cm)
-                     (let [sel-pos (selection-boundaries cm)]
+                     (let [{:keys [line end-line] :as sel-pos} (selection-boundaries cm)]
                        (if (= "#_" (subs (.getSelection cm) 0 2))
                          (remove-uneval sel-pos)
                          (do (add-uneval sel-pos)
                              (select-range cm (cond-> sel-pos
-                                                      (= (:line sel-pos)
-                                                         (:end-line sel-pos)) (update :end-column #(+ % 2)))))))
+                                                      (= line end-line) (update :end-column #(+ % 2)))))))
 
                      (if-let [uneval-node (first (filter #(= :uneval (get % :tag))
                                                          (list bracket-node (some-> bracket-loc z/up z/node))))]
                        (remove-uneval uneval-node)
-                       (add-uneval bracket-node)))))})
+                       (add-uneval bracket-node)))))
+               :slurp
+               (fn [cm {{{:keys [pos]} :cursor zipper :zipper} :state}]
+                 (let [loc (tree/node-at zipper pos)
+                       loc (cond-> loc
+                                   (and (or (not (tree/may-contain-children? (z/node loc)))
+                                            (not (tree/inside? (z/node loc) pos)))) z/up)
+                       {:keys [tag] :as node} (z/node loc)]
+                   (when-not (= :base tag)
+                     (when-let [next-form (some->> (z/rights loc)
+                                                   (filter tree/sexp?)
+                                                   first)]
+                       (let [[_ rb] (get tree/edges tag)]
+                         (replace-range cm rb (tree/boundaries next-form :right))
+                         (replace-range cm "" (-> (tree/boundaries node :right)
+                                                  (assoc :end-column (dec (:end-column node)))))))))
+                 )})
 
 (def key-commands
   (reduce-kv (fn [m k command]
@@ -201,4 +215,6 @@
 
               "Cmd-/"         :comment-line
               "Cmd-."         :uneval-at-point
+
+              "Shift-Cmd-K"   :slurp
               }))

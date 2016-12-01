@@ -54,7 +54,7 @@
   (let [prev-node (get-in (:state this) [:cursor :node])]
     (when (not= prev-node node)
       (clear-brackets! this)
-      (when (tree/can-have-children? node)
+      (when (tree/may-contain-children? node)
         (v/swap-state! this assoc-in [:cursor :handles]
                        (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
@@ -165,7 +165,9 @@
                 #_(binding [*self-op* true]))))
           :should-update
           (fn [_] false)
-          :clearHighlight #(clear-highlight! %)}
+          :clearHighlight
+          clear-highlight!
+          }
          [:.h-100 {:ref "editor-container"}])
 
 (defn viewer [source]

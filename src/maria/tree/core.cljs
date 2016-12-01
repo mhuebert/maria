@@ -8,7 +8,7 @@
 (def ast parse/ast)
 (defn ast-zip [ast]
   (z/zipper
-    n/can-have-children?
+    n/may-contain-children?
     :value
     (fn [node children] (assoc node :value children))
     ast))
@@ -20,14 +20,14 @@
 (def whitespace? n/whitespace?)
 (def newline? n/newline?)
 (def sexp? n/sexp?)
-(def can-have-children? n/can-have-children?)
+(def may-contain-children? n/may-contain-children?)
 (def terminal-node? n/terminal-node?)
 (def edge-ranges n/edge-ranges)
 (def inner-range n/inner-range)
 (def has-edges? n/has-edges?)
-(def within-inner? n/within-inner?)
 (def within? n/within?)
-
+(def inside? n/inside?)
+(def edges unwrap/edges)
 (def log (atom []))
 
 (defn child-locs [loc]
@@ -42,12 +42,12 @@
     z/ZipperLocation
     (let [loc ast
           node (z/node loc)
-          found (when (n/within-inner? node pos)
+          found (when (n/within? node pos)
                   (if
                     (or (terminal-node? node) (not (seq (get node :value))))
                     loc
                     (or
-                      (some-> (filter #(n/within-inner? % pos) (child-locs loc))
+                      (some-> (filter #(n/within? % pos) (child-locs loc))
                               first
                               (node-at pos))
                       ;; do we want to avoid 'base'?
@@ -60,11 +60,11 @@
         found))
 
     PersistentArrayMap
-    (when (n/within-inner? ast pos)
+    (when (n/within? ast pos)
       (if
         (or (terminal-node? ast) (not (seq (get ast :value))))
         ast
-        (or (some-> (filter #(n/within-inner? % pos) (get ast :value))
+        (or (some-> (filter #(n/within? % pos) (get ast :value))
                     first
                     (node-at pos))
             (when-not (= :base (get ast :tag))
@@ -96,7 +96,7 @@
 (defn node-highlights
   "Get range(s) to highlight for a node. For a collection, only highlight brackets."
   [node]
-  (if (can-have-children? node)
+  (if (may-contain-children? node)
     (if (second (get unwrap/edges (get node :tag)))
       (edge-ranges node)
       (update (edge-ranges (first (:value node))) 0 merge (boundaries node :left)))
@@ -104,9 +104,9 @@
 
 (comment
 
-  (assert (n/within-inner? {:line     1 :column 1
+  (assert (n/within? {:line           1 :column 1
                             :end-line 1 :end-column 2}
-                           {:line 1 :column 1}))
+                     {:line 1 :column 1}))
 
   (doseq [[sample-str [line column] result-sexp result-string] [["1" [1 1] 1 "1"]
                                                                 ["[1]" [1 1] [1] "[1]"]
