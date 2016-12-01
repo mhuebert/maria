@@ -42,7 +42,7 @@
               {:value
                (html [:div (with-out-str
                              (some-> (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
-                                     (select-keys [:name :doc])
+                                     (select-keys [:name :doc :arglists])
                                      (cond->
                                        friendly-doc (assoc :doc friendly-doc))
                                      print-doc)
