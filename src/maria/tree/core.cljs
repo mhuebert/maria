@@ -52,7 +52,7 @@
                               (node-at pos))
                       ;; do we want to avoid 'base'?
                       loc #_(when-not (= :base (get node :tag))
-                        loc))))]
+                              loc))))]
       (if (let [found-node (some-> found z/node)]
             (and (= (get pos :line) (get found-node :end-line))
                  (= (get pos :column) (get found-node :end-column))))
@@ -80,7 +80,8 @@
   "Highlight brackets for specified sexp, or nearest sexp to the left, or parent."
   [loc]
   (or (->> (cons loc (left-locs loc))
-           (filter (comp sexp? z/node))
+           (filter (comp #(or (sexp? %)
+                              (= :uneval (get % :tag))) z/node))
            first)
       (z/up loc)))
 
@@ -103,8 +104,8 @@
 
 (comment
 
-  (assert (n/within-inner? {:line 1 :column 1
-                      :end-line   1 :end-column 2}
+  (assert (n/within-inner? {:line     1 :column 1
+                            :end-line 1 :end-column 2}
                            {:line 1 :column 1}))
 
   (doseq [[sample-str [line column] result-sexp result-string] [["1" [1 1] 1 "1"]

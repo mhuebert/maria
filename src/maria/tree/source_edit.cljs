@@ -163,12 +163,11 @@
                        (replace-range cm ";;" {:line line-n :column space-n})))))
 
                :uneval-at-point
-               (fn [cm {{{:keys [bracket-loc]} :cursor} :state :as this}]
-                 (let [add-uneval (fn [{:keys [line column]}] (replace-range cm "#_" {:line line :column column}))
-                       remove-uneval (fn [{:keys [line column]}] (replace-range cm ""
-                                                                                {:line       line
-                                                                                 :column     column
-                                                                                 :end-column (+ 2 column)}))
+               (fn [cm {{{:keys [pos]} :cursor zipper :zipper} :state :as this}]
+                 (let [bracket-loc (tree/nearest-bracket-region (tree/node-at zipper pos))
+                       add-uneval (fn [pos] (replace-range cm "#_" (tree/boundaries pos :left)))
+                       remove-uneval (fn [{:keys [column] :as pos}]
+                                       (replace-range cm "" (assoc pos :end-column (+ 2 column))))
                        bracket-node (z/node bracket-loc)]
                    (if (.somethingSelected cm)
                      (let [sel-pos (selection-boundaries cm)]
@@ -182,8 +181,7 @@
                      (if-let [uneval-node (first (filter #(= :uneval (get % :tag))
                                                          (list bracket-node (some-> bracket-loc z/up z/node))))]
                        (remove-uneval uneval-node)
-                       (add-uneval bracket-node))))
-                 )})
+                       (add-uneval bracket-node)))))})
 
 (def key-commands
   (reduce-kv (fn [m k command]

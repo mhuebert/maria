@@ -2,22 +2,6 @@
   (:require [maria.tree.emit :as unwrap]
             [fast-zip.core :as z]))
 
-
-
-#_(defn within? [container pos]
-  (condp = (type container)
-    z/ZipperLocation
-    (within? (z/node container) pos)
-
-    PersistentArrayMap
-    #_maria.tree.parse/Node
-    (let [{r :line c :column} pos
-          {:keys [line column end-line end-column]} container]
-      (and (>= r line)
-           (<= r end-line)
-           (if (= r line) (>= c column) true)
-           (if (= r end-line) (<= c end-column) true)))))
-
 (defn contains-fn [include-boundaries?]
   (let [[gt lt] (case include-boundaries?
                       true [>= <=]
