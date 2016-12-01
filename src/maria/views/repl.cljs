@@ -8,7 +8,8 @@
             [cljs.pprint :refer [pprint]]
             [maria.messages :refer [reformat-error reformat-warning]]
             [re-view.subscriptions :as subs]
-            [maria.tree.core :as tree]))
+            [maria.tree.core :as tree]
+            [clojure.string :as string]))
 
 (def repl-editor-id "maria-repl-left-pane")
 
@@ -17,7 +18,8 @@
         (set? value) ["#{" "}"]
         :else ["(" ")"]))                                   ; XXX probably wrong
 
-(defn format-value [value]
+(defn format-value
+  [value]
   (cond
     (or (vector? value)
         (seq? value)
@@ -33,16 +35,18 @@
             (try (with-out-str (pprint value))
                  (catch js/Error e "error printing result")))))
 
-(defn display-result [{:keys [value error warnings]}]
-  [:div.bb.b--near-white.ph3
-   [:.mv2.ws-prewrap
-    (if (or error (seq warnings))
-      [:.bg-near-white.ph3.pv2.mv2
-       (for [message (cons (some-> error str reformat-error)
-                           (map reformat-warning (distinct warnings)))
-             :when message]
-         [:.pv2 message])]
-      (format-value value))]])
+(defview display-result
+         {:should-update #(not= (:props %) (:prev-props %))}
+         (fn [{{:keys [value error warnings]} :props}]
+           [:div.bb.b--near-white.ph3
+            [:.mv2.ws-prewrap
+             (if (or error (seq warnings))
+               [:.bg-near-white.ph3.pv2.mv2
+                (for [message (cons (some-> error str reformat-error)
+                                    (map reformat-warning (distinct warnings)))
+                      :when message]
+                  [:.pv2 message])]
+               (format-value value))]]))
 
 (defn scroll-bottom [component]
   (let [el (js/ReactDOM.findDOMNode component)]

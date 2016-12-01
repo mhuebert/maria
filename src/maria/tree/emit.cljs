@@ -29,7 +29,9 @@
    :uneval           ["#_"]
    :var              ["#'"]
    :vector           [\[ \]]
-   :comment          [";"]})
+   ;:comment          [";"]
+
+   })
 
 (def printable-only? #{:comment :uneval :space :newline :comma})
 

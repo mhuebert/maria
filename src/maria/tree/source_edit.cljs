@@ -143,7 +143,7 @@
                  (when-let [stack (get-in this [:state :cursor :stack])]
                    (let [stack (cond-> stack
                                        (or (:base (first stack))
-                                            (= (selection-boundaries cm) (first stack))) rest)]
+                                           (= (selection-boundaries cm) (first stack))) rest)]
                      (some->> (first stack) (select-range cm))
                      (swap! this update-in [:cursor :stack] rest))))
 
@@ -167,7 +167,7 @@
                (fn [cm {{{:keys [pos]} :cursor zipper :zipper} :state}]
                  (let [bracket-loc (tree/nearest-bracket-region (tree/node-at zipper pos))
                        add-uneval (fn [pos] (replace-range cm "#_" (select-keys pos [:line :column])))
-                       remove-uneval (fn [pos] (replace-range cm "" (assoc pos :end-column (+ 2 (:column pos)))))
+                       remove-uneval (fn [pos] (replace-range cm "" (assoc (select-keys pos [:line :column]) :end-column (+ 2 (:column pos)))))
                        bracket-node (z/node bracket-loc)]
                    (if (.somethingSelected cm)
                      (let [{:keys [line end-line] :as sel-pos} (selection-boundaries cm)]
