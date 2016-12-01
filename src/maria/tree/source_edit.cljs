@@ -64,18 +64,6 @@
        :end-line   (.-line cur)
        :end-column (.-ch cur)})))
 
-(defn boundaries
-  "Returns position map for left or right boundary of the node."
-  ([node] (select-keys node [:line :column :end-line :end-column]))
-  ([node side]
-   (case side :left (select-keys node [:line :column])
-              :right {:line   (:end-line node)
-                      :column (:end-column node)})))
-
-(defn at-boundary? [node pos]
-  (or (= pos (boundaries node :left))
-      (= pos (boundaries node :right))))
-
 (defn get-kill-range
   "Returns range beginning at cursor, ending at newline or inner boundary of current node."
   [pos loc]
@@ -90,13 +78,13 @@
   (fn [cm {{{:keys [pos loc]} :cursor} :state}]
     (let [next-loc (case side :left z/left :right z/right)]
       (loop [loc loc]
-        (cond (not= pos (boundaries (z/node loc) side)) (.setCursor cm (cm-pos (boundaries (z/node loc) side)))
+        (cond (not= pos (tree/boundaries (z/node loc) side)) (.setCursor cm (cm-pos (tree/boundaries (z/node loc) side)))
               (next-loc loc) (recur (next-loc loc))
               :else (some->> (z/up loc) recur))))))
 
 (defn pos= [p1 p2]
-  (= (boundaries p1)
-     (boundaries p2)))
+  (= (tree/boundaries p1)
+     (tree/boundaries p2)))
 
 (def commands {:kill
                (fn [cm {{{pos :pos loc :loc} :cursor} :state}]
@@ -127,10 +115,10 @@
                  (let [sel (selection-boundaries cm)
                        loc (tree/node-at zipper sel)
                        node (z/node loc)
-                       parent (z/node (z/up loc))
+                       parent (some-> (z/up loc) z/node)
                        select #(do
                                  (select-range cm %)
-                                 (swap! this update-in [:cursor :stack] conj (boundaries %)))]
+                                 (swap! this update-in [:cursor :stack] conj (tree/boundaries %)))]
                    (cond
                      (not (.somethingSelected cm))
                      (do (swap! this assoc-in [:cursor :stack] (list (selection-boundaries cm)))
@@ -139,7 +127,7 @@
                                    (or (when (tree/within? node cursor-pos) (tree/inner-range node))
                                        node))))
                      (= sel (tree/inner-range parent)) (select parent)
-                     (pos= sel (boundaries node)) (select (or (tree/inner-range parent) parent))
+                     (pos= sel (tree/boundaries node)) (select (or (tree/inner-range parent) parent))
                      (= sel (tree/inner-range node)) (select node)
                      :else nil)))
                :shrink-selection
@@ -148,7 +136,22 @@
                    (let [stack (cond-> stack
                                        (= (selection-boundaries cm) (first stack)) rest)]
                      (some->> (first stack) (select-range cm))
-                     (swap! this update-in [:cursor :stack] rest))))})
+                     (swap! this update-in [:cursor :stack] rest))))
+
+               :comment-line
+               (fn [cm _]
+                 (let [line-n (.-line (.getCursor cm))
+                       line (.getLine cm line-n)
+                       [spaces semicolons] (map count (rest (re-find #"^(\s*)(;+)?" line)))]
+                   (if (> semicolons 0)
+                     (.replaceRange cm ""
+                                    #js {:line line-n :ch spaces}
+                                    #js {:line line-n :ch (+ spaces semicolons)})
+                     (.replaceRange cm ";;"
+                                    #js {:line line-n :ch spaces}
+                                    #js {:line line-n :ch spaces}))))
+
+               })
 
 (def key-commands
   (reduce-kv (fn [m k command]
@@ -164,4 +167,7 @@
               "Alt-Right"     :hop-right                    ;; touch only node boundaries.
 
               "Cmd-1"         :expand-selection
-              "Cmd-2"         :shrink-selection}))
+              "Cmd-2"         :shrink-selection
+
+              "Cmd-/"         :comment-line
+              }))

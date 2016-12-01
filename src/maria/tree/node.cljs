@@ -50,8 +50,11 @@
 
 (def can-have-children? (complement terminal-node?))
 
+(defn has-edges? [node]
+  (contains? unwrap/edges (get node :tag)))
+
 (defn edge-ranges [node]
-  (when (can-have-children? node)
+  (when (has-edges? node)
     (let [[left right] (get unwrap/edges (get node :tag))]
       (cond-> []
               left (conj {:line       (:line node) :end-line (:line node)
@@ -60,9 +63,6 @@
               right (conj {:line       (:end-line node) :end-line (:end-line node)
                            :column     (- (:end-column node) (count right))
                            :end-column (:end-column node)})))))
-
-(defn has-edges? [node]
-  (contains? unwrap/edges (get node :tag)))
 
 (defn inner-range [{:keys [line column end-line end-column tag]}]
   (when-let [[left right] (get unwrap/edges tag)]

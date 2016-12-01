@@ -50,7 +50,8 @@
                       (some-> (filter #(n/within-inner? % pos) (child-locs loc))
                               first
                               (node-at pos))
-                      (when-not (= :base (get node :tag))
+                      ;; do we want to avoid 'base'?
+                      loc #_(when-not (= :base (get node :tag))
                         loc))))]
       (if (let [found-node (some-> found z/node)]
             (and (= (get pos :line) (get found-node :end-line))
@@ -83,11 +84,21 @@
            first)
       (z/up loc)))
 
+(defn boundaries
+  "Returns position map for left or right boundary of the node."
+  ([node] (select-keys node [:line :column :end-line :end-column]))
+  ([node side]
+   (case side :left (select-keys node [:line :column])
+              :right {:line   (:end-line node)
+                      :column (:end-column node)})))
+
 (defn node-highlights
   "Get range(s) to highlight for a node. For a collection, only highlight brackets."
   [node]
   (if (can-have-children? node)
-    (edge-ranges node)
+    (if (second (get unwrap/edges (get node :tag)))
+      (edge-ranges node)
+      (update (edge-ranges (first (:value node))) 0 merge (boundaries node :left)))
     [node]))
 
 (comment
