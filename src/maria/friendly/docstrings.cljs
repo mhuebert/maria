@@ -261,7 +261,7 @@
      "Returns true if given any argument."
 
      rand-int
-     "Returns a random integer between 0 (inclusive) and n (exclusive)."
+     "Returns a random whole number, from 0 up to (but not including) n."
 
      aclone
      "Returns a javascript array, cloned from the passed in array"
