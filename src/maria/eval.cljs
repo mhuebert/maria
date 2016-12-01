@@ -46,7 +46,10 @@
                                      (cond->
                                        friendly-doc (assoc :doc friendly-doc))
                                      print-doc)
-                             "Not found")])}))
+                             "Not found")
+                      (when (#{'cljs.core 'clojure.core} namespace)
+                        (list [:.gray.di "view on "]
+                              [:a {:href (str "https://clojuredocs.org/clojure.core/" name)} "clojuredocs.org"]))])}))
    })
 
 (defn repl-special [op & args]
