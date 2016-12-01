@@ -25,6 +25,8 @@
 (def edge-ranges n/edge-ranges)
 (def inner-range n/inner-range)
 (def has-edges? n/has-edges?)
+(def within-inner? n/within-inner?)
+(def within? n/within?)
 
 (def log (atom []))
 
@@ -40,12 +42,12 @@
     z/ZipperLocation
     (let [loc ast
           node (z/node loc)
-          found (when (n/within? node pos)
+          found (when (n/within-inner? node pos)
                   (if
                     (or (terminal-node? node) (not (seq (get node :value))))
                     loc
                     (or
-                      (some-> (filter #(n/within? % pos) (child-locs loc))
+                      (some-> (filter #(n/within-inner? % pos) (child-locs loc))
                               first
                               (node-at pos))
                       (when-not (= :base (get node :tag))
@@ -57,11 +59,11 @@
         found))
 
     PersistentArrayMap
-    (when (n/within? ast pos)
+    (when (n/within-inner? ast pos)
       (if
         (or (terminal-node? ast) (not (seq (get ast :value))))
         ast
-        (or (some-> (filter #(n/within? % pos) (get ast :value))
+        (or (some-> (filter #(n/within-inner? % pos) (get ast :value))
                     first
                     (node-at pos))
             (when-not (= :base (get ast :tag))
@@ -90,9 +92,9 @@
 
 (comment
 
-  (assert (n/within? {:line     1 :column 1
-                      :end-line 1 :end-column 2}
-                     {:line 1 :column 1}))
+  (assert (n/within-inner? {:line 1 :column 1
+                      :end-line   1 :end-column 2}
+                           {:line 1 :column 1}))
 
   (doseq [[sample-str [line column] result-sexp result-string] [["1" [1 1] 1 "1"]
                                                                 ["[1]" [1 1] [1] "[1]"]

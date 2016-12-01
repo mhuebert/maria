@@ -46,7 +46,7 @@
   "Copy a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
   (let [[from to] (cm-util/parse-range range)]
-    (.setSelection cm from to)))
+    (.setSelection cm from to #js {:scroll false})))
 
 (defn selection-boundaries
   [cm]
@@ -128,24 +128,20 @@
                        loc (tree/node-at zipper sel)
                        node (z/node loc)
                        parent (z/node (z/up loc))
-                       select #(when-not (= :base (get % :tag))
+                       select #(do
                                  (select-range cm %)
                                  (swap! this update-in [:cursor :stack] conj (boundaries %)))]
                    (cond
                      (not (.somethingSelected cm))
                      (do (swap! this assoc-in [:cursor :stack] (list (selection-boundaries cm)))
                          (.clearHighlight this)
-                         (select (let [node (if (tree/comment? node)
-                                              node
-                                              (z/node bracket-loc))]
-                                   (if (at-boundary? node cursor-pos)
-                                     node
-                                     (or (tree/inner-range node) node)))))
+                         (select (let [node (if (tree/comment? node) node (z/node bracket-loc))]
+                                   (or (when (tree/within? node cursor-pos) (tree/inner-range node))
+                                       node))))
                      (= sel (tree/inner-range parent)) (select parent)
                      (pos= sel (boundaries node)) (select (or (tree/inner-range parent) parent))
                      (= sel (tree/inner-range node)) (select node)
                      :else nil)))
-
                :shrink-selection
                (fn [cm this]
                  (when-let [stack (get-in this [:state :cursor :stack])]
