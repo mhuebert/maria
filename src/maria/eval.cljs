@@ -13,6 +13,12 @@
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 (def ^:dynamic *cljs-warnings* nil)
 
+(defn get-ns [ns] (get-in @c-state [:cljs.analyzer/namespaces ns]))
+
+(defn resolve-symbol [sym]
+  (binding [cljs.env/*compiler* c-state]
+    (:name (cljs.analyzer/resolve-var (assoc @cljs.env/*compiler* :ns (or (get-ns (:ns @c-env)) 'cljs.user)) sym))))
+
 (defn c-opts
   []
   {:load               c/load-fn
@@ -38,7 +44,8 @@
              :ns    n})
 
    'doc   (fn [n]
-            (let [[namespace name] (map symbol [(namespace n) (name n)])
+            (let [[namespace name] (let [n (resolve-symbol n)]
+                                     (map symbol [(namespace n) (name n)]))
                   friendly-doc (get-in docstrings [namespace name])]
               {:value
                (html [:div (with-out-str
@@ -100,18 +107,12 @@
   [src]
   (str "[\n" src "\n]"))
 
-(defn get-ns [ns] (get-in @c-state [:cljs.analyzer/namespaces ns]))
-
-(defn resolve-symbol [sym]
-  (binding [cljs.env/*compiler* c-state]
-    (:name (cljs.analyzer/resolve-var (assoc @cljs.env/*compiler* :ns (or (get-ns (:ns @c-env)) 'cljs.user)) sym))))
-
 (defn read-src
   "Read src using default tools.reader. If an error is encountered,
   re-read an unwrapped version of src using indexed reader to return
   a correct error location."
   [src]
-  (binding [cljs.tools.reader/resolve-symbol resolve-symbol] 
+  (binding [cljs.tools.reader/resolve-symbol resolve-symbol]
     (try (r/read-string (wrap-source src))
          (catch js/Error e1
            (try (read-string-indexed src)
