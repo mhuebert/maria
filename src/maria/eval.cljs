@@ -95,6 +95,7 @@
                (when (and macros-ns? (not= (:ns opts) (:ns @c-env)))
                  (eval `(require-macros '[~(:ns @c-env) :refer [~(second form)]])))
                (catch js/Error e
+                 (throw e)
                  (.error js/console (or (.-cause e) e))
                  (swap! result assoc :error e))))
         (when (and ns? (contains? @result :value))

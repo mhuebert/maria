@@ -23,12 +23,12 @@
   (cond
     (or (vector? value)
         (seq? value)
-        (set? value)) (let [[lb rb] (bracket-type value)]
-                        (list
-                          [:span.output-bracket lb]
-                          [:span (interpose " " (map format-value value))]
-                          [:span.output-bracket rb]))
-    (= :shape (:is-a value)) ((show value))                 ; synthesize component for shape
+        (set? value)) #_(let [[lb rb] (bracket-type value)]
+                          (list
+                            [:span.output-bracket lb]
+                            [:span (interpose " " (map format-value value))]
+                            [:span.output-bracket rb]))
+    (= :shape (:is-a value)) (show value)                   ; synthesize component for shape
     (v/is-react-element? value) (value)
     :else (if (nil? value)
             "nil"

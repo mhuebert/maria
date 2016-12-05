@@ -94,32 +94,34 @@
   (= (tree/boundaries p1)
      (tree/boundaries p2)))
 
+(defn at-cursor [f]
+  (fn [cm {{cursor :cursor} :state}]
+    (if (.somethingSelected cm)
+      pass
+      (f cm cursor))))
+
 (def commands {:kill
                (fn [cm {{{pos :pos loc :loc} :cursor} :state}]
                  (if (.somethingSelected cm)
                    pass
                    (->> (get-kill-range pos loc)
                         (cut-range cm))))
+
                :copy-at-point
-               (fn [cm {{{:keys [bracket-loc]} :cursor} :state}]
-                 (if (.somethingSelected cm)
-                   pass
-                   (some->> bracket-loc
-                            z/node
-                            (copy-range cm))))
+               (at-cursor (fn [cm {:keys [bracket-node]}] (copy-range cm bracket-node)))
+
                :cut-at-point
-               (fn [cm {{{:keys [bracket-loc]} :cursor} :state}]
-                 (if (.somethingSelected cm)
-                   pass
-                   (some->> bracket-loc
-                            z/node
-                            (cut-range cm))))
+               (at-cursor (fn [cm {:keys [bracket-node]}] (cut-range cm bracket-node)))
+
+               :delete-at-point
+               (at-cursor (fn [cm {:keys [bracket-node]}] (replace-range cm "" bracket-node)))
+
                :hop-left
                (cursor-boundary-skip :left)
                :hop-right
                (cursor-boundary-skip :right)
                :expand-selection
-               (fn [cm {{{:keys [bracket-loc] cursor-pos :pos} :cursor zipper :zipper} :state :as this}]
+               (fn [cm {{{:keys [bracket-node] cursor-pos :pos} :cursor zipper :zipper} :state :as this}]
                  (let [sel (selection-boundaries cm)
                        loc (tree/node-at zipper sel)
                        node (z/node loc)
@@ -131,7 +133,7 @@
                      (not (.somethingSelected cm))
                      (do (swap! this assoc-in [:cursor :stack] (list (selection-boundaries cm)))
                          (.clearHighlight this)
-                         (select (let [node (if (tree/comment? node) node (z/node bracket-loc))]
+                         (select (let [node (if (tree/comment? node) node bracket-node)]
                                    (or (when (tree/inside? node cursor-pos) (tree/inner-range node))
                                        node))))
                      (= sel (tree/inner-range parent)) (select parent)
@@ -205,7 +207,7 @@
              {"Ctrl-K"        :kill                         ;; cut to end of line / node
 
               "Cmd-X"         :cut-at-point                 ;; cut/copy selection or
-              "Cmd-Backspace" :cut-at-point                 ;; nearest node (highlighted).
+              "Cmd-Backspace" :delete-at-point                 ;; nearest node (highlighted).
               "Cmd-C"         :copy-at-point
 
               "Alt-Left"      :hop-left                     ;; move cursor left/right,

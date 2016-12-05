@@ -93,12 +93,14 @@
   (let [position (cm/cursor-pos cm)]
     (when-let [loc (some->> position
                             (tree/node-at zipper))]
-      (let [bracket-loc (tree/nearest-bracket-region loc)]
-        (match-brackets! this cm (z/node bracket-loc))
-        (v/swap-state! this update :cursor merge {:loc         loc
-                                                  :node        (z/node loc)
-                                                  :bracket-loc bracket-loc
-                                                  :pos         position})))))
+      (let [bracket-loc (tree/nearest-bracket-region loc)
+            bracket-node (z/node bracket-loc)]
+        (match-brackets! this cm bracket-node)
+        (v/swap-state! this update :cursor merge {:loc          loc
+                                                  :node         (z/node loc)
+                                                  :bracket-loc  bracket-loc
+                                                  :bracket-node bracket-node
+                                                  :pos          position})))))
 
 (defn update-ast
   [cm]
