@@ -31,8 +31,9 @@
             (for [[href title] [["/" "REPL"]
                                 ["/walkthrough" "Walkthrough"]
                                 ["/paredit" "Paredit"]]]
-              [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href href} title])]]
-          (r/router (d/get ::state :route)
+              [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href href} title])
+            ]]
+           (r/router (d/get ::state :route)
                     "/" repl/main
                     "/walkthrough" walkthrough/main
                     "/paredit" paredit/examples

@@ -16,7 +16,7 @@
                  [cljsjs/marked "0.3.5-0"]
 
                  [org.clojars.mhuebert/cljs-live "0.1.10-SNAPSHOT"]
-                 [org.clojars.mhuebert/re-view "0.2.5-SNAPSHOT"]]
+                 [org.clojars.mhuebert/re-view "0.2.6-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
@@ -49,9 +49,11 @@
                                        :dump-core      false
                                        :optimizations  :simple}}]}
 
-  :figwheel {:css-dirs ["resources/public/css"]}
+  :figwheel {:ring-handler figwheel-server.core/handler
+             :css-dirs ["resources/public/css"]}
 
-  :profiles {:dev {:dependencies [[binaryage/devtools "0.8.2"]
+  :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.0"]
+                                  [binaryage/devtools "0.8.2"]
                                   [figwheel-sidecar "0.5.8"]
                                   [com.cemerick/piggieback "0.2.1"]]
                    ;; need to add dev source path here to get user.clj loaded

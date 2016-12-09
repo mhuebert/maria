@@ -28,7 +28,8 @@
   "Given a unique id, initialize a local-storage backed source"
   [uid default-src]
   (d/transact! [[:db/add uid :source (or (aget js/window "localStorage" uid) default-src)]])
-  (d/listen! [uid :source] #(aset js/window "localStorage" uid %))
+  (d/listen! [uid :source] (fn [datom]
+                             (aset js/window "localStorage" uid (datom 2))))
   uid)
 
 (defn add-view-to-args [f]
@@ -121,7 +122,7 @@
                     (apply init-local-storage))
           :did-mount
           (fn [{{:keys [value read-only? on-mount cm-opts local-storage] :as props} :props :as this}]
-            (let [dom-node (js/ReactDOM.findDOMNode (v/get-ref this "editor-container"))
+            (let [dom-node (js/ReactDOM.findDOMNode (v/ref this "editor-container"))
                   editor (js/CodeMirror dom-node
                                         (clj->js (merge cm-opts
                                                         (cond-> options
