@@ -19,22 +19,24 @@
         :else ["(" ")"]))                                   ; XXX probably wrong
 
 (defn format-value
-  [value]
-  (cond
-    (= :shape (:is-a value)) ((show value))                 ; synthesize component for shape
-    (or (vector? value)
-        (seq? value)
-        (set? value)) (let [[lb rb] (bracket-type value)]
-                        (list
-                          [:span.output-bracket lb]
-                          [:span (interpose " " (map format-value value))]
-                          [:span.output-bracket rb]))
+  ([value] (format-value (d/squuid) value))
+  ([i value]
+   [:span {:key i}
+    (cond
+      (= :shape (:is-a value)) ((show value))               ; synthesize component for shape
+      (or (vector? value)
+          (seq? value)
+          (set? value)) (let [[lb rb] (bracket-type value)]
+                          (list
+                            [:span.output-bracket lb]
+                            (interpose " " (map-indexed format-value value))
+                            [:span.output-bracket rb]))
 
-    (v/is-react-element? value) (value)
-    :else (if (nil? value)
-            "nil"
-            (try (with-out-str (pprint value))
-                 (catch js/Error e "error printing result")))))
+      (v/is-react-element? value) (value)
+      :else (if (nil? value)
+              "nil"
+              (try (with-out-str (pprint value))
+                   (catch js/Error e "error printing result"))))]))
 
 (defview display-result
   {:key           #(get-in % [:props :id])
