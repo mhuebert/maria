@@ -1,5 +1,5 @@
 (ns maria.views.paredit
-  (:require [maria.tree.core :as tree]
+  (:require [magic-tree.core :as tree]
             [maria.editor :as cm]
             [fast-zip.core :as z]
             [re-db.d :as d]

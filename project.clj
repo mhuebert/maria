@@ -15,8 +15,9 @@
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
 
-                 [org.clojars.mhuebert/cljs-live "0.1.10-SNAPSHOT"]
-                 [org.clojars.mhuebert/re-view "0.2.6-SNAPSHOT"]]
+                 [org.clojars.mhuebert/cljs-live "0.1.10"]
+                 [org.clojars.mhuebert/re-view "0.2.6-SNAPSHOT"]
+                 [org.clojars.mhuebert/magic-tree "0.0.1-SNAPSHOT"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
@@ -33,12 +34,12 @@
   :cljsbuild {:builds [{:id           "dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main                 "maria.core"
-                                       :asset-path           "js/compiled/out"
-                                       :output-to            "resources/public/js/compiled/maria.js"
-                                       :output-dir           "resources/public/js/compiled/out"
+                        :compiler     {:main           "maria.core"
+                                       :asset-path     "js/compiled/out"
+                                       :output-to      "resources/public/js/compiled/maria.js"
+                                       :output-dir     "resources/public/js/compiled/out"
                                        ;:source-map-timestamp true
-                                       :parallel-build       true}}
+                                       :parallel-build true}}
                        {:id           "prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.core"
@@ -50,7 +51,7 @@
                                        :optimizations  :simple}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
-             :css-dirs ["resources/public/css"]}
+             :css-dirs     ["resources/public/css"]}
 
   :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.0"]
                                   [binaryage/devtools "0.8.2"]

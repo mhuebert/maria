@@ -7,9 +7,7 @@
             [maria.user :refer [show]]
             [cljs.pprint :refer [pprint]]
             [maria.messages :refer [reformat-error reformat-warning]]
-            [re-view.subscriptions :as subs]
-            [maria.tree.core :as tree]
-            [clojure.string :as string]))
+            [magic-tree.core :as tree]))
 
 (def repl-editor-id "maria-repl-left-pane")
 
@@ -61,9 +59,10 @@
 
 (defn eval-editor [cm]
   (when-let [source (or (cm/selection-text cm)
-                        (->> (:state (.-view cm))
-                             :highlight-state
-                             :node
+                        (->> cm
+                             :magic/cursor
+                             :bracket-loc
+                             tree/top-loc
                              (tree/string (:ns @eval/c-env))))]
 
     (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-src source) :id (d/squuid))]])))
@@ -75,21 +74,18 @@
    (map display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
 
 (defview main
-  {:get-editor #(-> %1 (v/ref "repl-editor") :state :editor)}
+  {:get-editor #(-> %1 (v/ref "repl-editor") :state :editor)
+   :did-mount  #(-> % (v/ref "repl-editor") :state :editor (.focus))}
   (fn [this]
     [:.flex.flex-row.h-100
      [:.w-50.h-100.bg-solarized-light.pb4
-      {:on-mouse-move #(when-let [editor (.getEditor this)]
-                         (editor/update-highlights editor %))}
       (editor/editor {:ref             "repl-editor"
                       :local-storage   [repl-editor-id
                                         ";; Type code here; press command-enter or command-click to evaluate forms.\n"]
                       :event/mousedown #(when (.-metaKey %)
                                           (.preventDefault %)
                                           (eval-editor (.getEditor this)))
-                      :event/keyup     editor/update-highlights
-                      :event/keydown   #(do (editor/update-highlights %1 %2)
-                                            (when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                              (eval-editor %1)))})]
+                      :event/keydown   #(when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                          (eval-editor %1))})]
      [:.w-50.h-100
       (result-pane)]]))
