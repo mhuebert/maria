@@ -1,5 +1,23 @@
 (ns maria.module-2)
 
+
+;; Inspecting our code: evaluating from the middle of larger expressions, (doc), arg lists
+
+
+;;;;;
+
+;; Idea: explore def, maps, `keys`, `rand-nth` via `maria.user/colors`:
+(def color-names (keys colors))
+
+(rand-nth color-names)
+
+(let [clr (rand-nth color-names)]
+  (colorize clr (square 50)))
+
+
+
+;;;;;
+
 ;; HOFs: map, reduce. Thinking recursively.
 
 ;; adapted from Steven Luscher https://twitter.com/steveluscher/status/741089564329054208

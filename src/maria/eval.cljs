@@ -29,7 +29,9 @@
                    "Not found")
             (when (#{'cljs.core 'cljs.core$macros 'clojure.core} namespace)
               (list [:.gray.di "view on "]
-                    [:a {:href (str "https://clojuredocs.org/clojure.core/" name)} "clojuredocs.org"]))])}))
+                    [:a {:href (str "https://clojuredocs.org/clojure.core/" name)
+                         :target "_blank"
+                         :rel "noopener noreferrer"} "clojuredocs.org"]))])}))
 
 ;; mutate cljs-live's default repl-specials
 (e/swap-repl-specials! assoc 'doc doc)
@@ -46,7 +48,6 @@
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))
                                 (eval '(in-ns maria.user))))))
-
 
 
 
