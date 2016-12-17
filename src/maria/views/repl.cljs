@@ -1,7 +1,7 @@
 (ns maria.views.repl
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.codemirror :as cm]
+            [magic-tree.codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
             [maria.user :refer [show]]
@@ -17,33 +17,33 @@
         :else ["(" ")"]))                                   ; XXX probably wrong
 
 (defn format-value
-  ([value] (format-value (d/squuid) value))
-  ([i value]
-   [:span {:key i}
-    (cond
-      (= :shape (:is-a value)) ((show value))               ; synthesize component for shape
-      (or (vector? value)
-          (seq? value)
-          (set? value)) (let [[lb rb] (bracket-type value)]
-                          (list
-                            [:span.output-bracket lb]
-                            (interpose " " (map-indexed format-value value))
-                            [:span.output-bracket rb]))
+  [value]
+  [:span
+   (cond
+     (= :shape (:is-a value)) ((show value))                ; synthesize component for shape
+     (or (vector? value)
+         (seq? value)
+         (set? value)) (let [[lb rb] (bracket-type value)]
+                         (list
+                           [:span.output-bracket lb]
+                           (interpose " " (v/map format-value value))
+                           [:span.output-bracket rb]))
 
-      (v/is-react-element? value) (value)
-      :else (if (nil? value)
-              "nil"
-              (try (with-out-str (pprint value))
-                   (catch js/Error e "error printing result"))))]))
+     (v/is-react-element? value) (value)
+     :else (if (nil? value)
+             "nil"
+             (try (with-out-str (pprint value))
+                  (catch js/Error e "error printing result"))))])
 
 (defview display-result
-  {:key           #(get-in % [:props :id])
+  {:key           :id
    :should-update #(not= (:props %) (:prev-props %))}
   (fn [{{:keys [value error warnings]} :props}]
     [:div.bb.b--near-white.ph3
      [:.mv2.ws-prewrap
       (if (or error (seq warnings))
         [:.bg-near-white.ph3.pv2.mv2
+         (when error (.error js/console error))
          (for [message (cons (some-> error str reformat-error)
                              (map reformat-warning (distinct warnings)))
                :when message]
@@ -65,7 +65,7 @@
                              tree/top-loc
                              (tree/string (:ns @eval/c-env))))]
 
-    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-src source) :id (d/squuid))]])))
+    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source) :id (d/squuid))]])))
 
 (defview result-pane
   {:did-update scroll-bottom

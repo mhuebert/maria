@@ -11,8 +11,7 @@
 
 (defview track-cursor
   (fn [this]
-    (let [{:keys [ast zipper cursor] :as state} (some-> this (v/ref "editor") :state)
-          {:keys [pos node]} cursor
+    (let [{:keys [zipper] {:keys [pos]} :magic/cursor} (some-> this (v/ref "editor") :state :editor)
           node (some-> zipper (tree/node-at pos) z/node)]
       [:div.ma4.ph3
        [:.f4.mt2 "Track Cursor"]

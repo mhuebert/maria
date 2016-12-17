@@ -3,9 +3,10 @@
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
             [magic-tree.codemirror.addons]
+            [magic-tree.codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
             [re-view.subscriptions :as subs :include-macros true]
-            [maria.codemirror :as cm]
+
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]
             [re-db.d :as d]))
@@ -48,7 +49,7 @@
                                                                         (assoc :readOnly "nocursor"))))))]
        (set! (.-view editor) this)
 
-       (v/swap-state! this assoc :editor editor)
+       (swap! this assoc :editor editor)
 
        (when-not read-only?
 
@@ -62,7 +63,7 @@
                (.on editor event-key f))))
          (when on-mount (on-mount editor this)))
 
-       (when-let [initial-source (get-in this [:state :source] value)]
+       (when-let [initial-source (or value (get-in this [:state :source] value))]
          (.setValue editor (str initial-source)))
        (when-let [local-storage-uid (first local-storage)]
          (.on editor "change" #(d/transact! [[:db/add local-storage-uid :source (.getValue %1)]])))))

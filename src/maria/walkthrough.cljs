@@ -1,6 +1,6 @@
 (ns maria.walkthrough
   (:require [cljsjs.marked]
-            [maria.eval :refer [eval-src]]
+            [maria.eval :refer [eval-str]]
             [maria.editor :refer [viewer]]
             [re-view.core :as v :refer [defview]]))
 
@@ -17,28 +17,32 @@
 
 (defn mixed [& items]
   (map-indexed (fn [i item]
-                 (cond (js/React.isValidElement item) item
-                       (string? item) (md item)
-                       (seq? item) (doall (binding [*depth* (inc *depth*)] (map mixed item)))
-                       (vector? item) (with-attrs item {:key (str "mixed-" *depth* "-" i)})
-                       :else (println "Unknown form passed to `mixed`"))) items))
+                 (let [k (str "mixed-" *depth* "-" i)]
+
+                   (cond (v/is-react-element? item) item
+                         (string? item) (md item)
+                         (seq? item) (doall (binding [*depth* (inc *depth*)] (map mixed item)))
+                         (vector? item) (with-attrs item {:key k})
+                         :else (println "Unknown form passed to `mixed`")))) items))
 
 (defview code-split
-         (fn [{{:keys [evaluate]} :state
-               [source]           :children
-               :as                this}]
-           [:.flex
-            [:.w-50.bg-solarized-light (viewer source)]
-            [:.w-50
-             (if evaluate
-               ;; does not yet differentiate between error and value
-               (viewer (with-out-str (prn (:value (eval-src source)))))
-               [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
-                {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
+  {:key #(-> % :children first)}
+  (fn [{{:keys [evaluate]} :state
+        [source]           :children
+        :as                this}]
+    [:.flex
+     [:.w-50.bg-solarized-light (viewer source)]
+     [:.w-50
+      (if evaluate
+        ;; does not yet differentiate between error and value
+        (viewer (with-out-str (prn (:value (eval-str source)))))
+        [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
+         {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
 
 (defview main
   [:.serif.center.mw7.mt5.f4
    [:.f1.tc "Walkthrough"]
+
    (mixed
      "Explore basic data types: String, list, nil"
 
