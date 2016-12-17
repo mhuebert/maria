@@ -26,7 +26,7 @@
          (set? value)) (let [[lb rb] (bracket-type value)]
                          (list
                            [:span.output-bracket lb]
-                           (interpose " " (v/map format-value value))
+                           (interpose " " (v/map-with-keys format-value value))
                            [:span.output-bracket rb]))
 
      (v/is-react-element? value) (value)
