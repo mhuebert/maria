@@ -59,7 +59,9 @@
 
 ;;;;
 
-;; Now let's draw a bunch of circles, each one a different size. We can list the sizes we want in what's called a "vector", which looks like this:
+;; Now let's draw a bunch of circles, each one a different size. We
+;; can list the sizes we want in what's called a "vector", which looks
+;; like this:
 
 [2 4 8 16 32 64 128]
 
@@ -140,7 +142,7 @@
 ;; but when we call it with a parameter, we get what we're looking
 ;; for:
 
-((fn [radius] (colorize "mauve" (circle radius))) 50)
+((fn [radius] (colorize "darkcyan" (circle radius))) 50)
 
 ;; Awesome. Let's apply our new function to our circles:
 
@@ -148,130 +150,16 @@
       [2 4 8 16 32 64 128])
 
 ;; Lovely!
-
-
-
-;;;;; XXX
-
-
-
-
-
-;; Let's draw a bunch of shapes side-by-side using the `line-up` function:
-
-(line-up (circle 25)
-         (circle 25)
-         (circle 25))
-
-
-;; Man, that was a lot of typing. And so repetitive! When I see myself
-;; repeating the same code over and over, I get suspicious.
-
-;; Luckily, we can code ourselves a shorter solution. We don't have to
-;; type `(circle 25)` over and over. We can type it once and Clojure
-;; will remember it for us:
-
-(let [c (circle 25)]
-  ;; Now we can type just `c`:
-  (line-up c c c c c c c c c))
-
-;; We used `let` to define a name `c` for our expression. The `let`
-;; function's first parameter is a pair of square brackets (`[]`) with
-;; pairs of names and values inside.
-
-;; We can have multiple pairs if we want:
-
-(let [c (circle 25)
-      r (rectangle 50 50)]
-  (line-up c r c r c r c r c r))
-
-;; Can you change that expression to make all the circles one color
-;; and the squares another?
-
-...
-
-;; Nice. Now let's say we wanted to draw a checkerboard: a big square
-;; made up of lots of little squares, alternating colors. Let's start
-;; with our smallest unit: a single square. We'll build our
-;; checkerboard code step by step, so that it gradually grows into the
-;; final shape we want.
-
-(square 50) ;; ERROR
-
-;; Oops. Clojure knows rectangles, but apparently not squares.
-
-(rectangle 50 50)
-
-;; We add a dash of color...
-
-(colorize "red" (rectangle 50 50))
-
-(colorize "black" (rectangle 50 50))
-
-;; We can put those together with `let` to make a 2x2 checker. That
-;; will be our building block.
-
-(let [r (colorize "red" (rectangle 50 50))
-      b (colorize "black" (rectangle 50 50))]
-  (stack (line-up r b)
-         (line-up b r)))
-
-;; OK, now let's repeat that checker until it forms a row. We'll do
-;; that with the `repeat` function, which just calls a function as
-;; many times as it's told.
-
-(let [r (colorize "red" (rectangle 50 50)) ;; same as above
-      b (colorize "black" (rectangle 50 50)) ;; same as above
-      checker (stack (line-up r b)
-                     (line-up b r))]
-  (apply line-up (repeat 4 checker)))
-;; XXX XXX XXX apply is waaaaay too advanced!
-
-;; ...and we `repeat` the rows to make a complete board. (Again, we
-;; repeat our `r`, `b`, and `checker` definitions in our `let`.)
-
-(let [r (colorize "red" (rectangle 50 50))
-      b (colorize "black" (rectangle 50 50))
-      checker (stack (line-up r b)
-                     (line-up b r))
-      row (apply line-up (repeat 4 checker))]
-  (apply stack (repeat 4 row)))
-;; XXX XXX XXX apply is waaaaay too advanced!
-
-;; Cool!
-
-;; Now, what if we wanted to play with that checkerboard? To draw five
-;; of them across the screen, or to show it to friends later? Our
-;; `(let)` can only do one thing at a time, and is getting too long
-;; anyway. We're still repeating ourselves too much!
-
-;; What we need is to create a name for our checkerboard and use it
-;; anywhere we want--not just inside a `let`. For that, we use `def`:
-
-(def checkerboard
-  (let [r (colorize "red" (rectangle 25 25))
-        b (colorize "black" (rectangle 25 25))
-        checker (stack (line-up r b)
-                       (line-up b r))
-        row (apply line-up (repeat 4 checker))]
-    (stack (repeat 4 row))))
-
-checkerboard
-
-;; Look what we can do now!
-
-(stack (repeat 5 checkerboard))
-
-(line-up (repeat 50 checkerboard))
-
-;; XXX transition/more
-
-;; XXX introduce `fn` with building `rainbow`, not `square`. one of them is literally square.
 ;; XXX
-;; XXX
-;; XXX
-;; XXX see comment in users.cljs -- mixed types, gradual build
-;; XXX
-;; XXX
-;; XXX
-;; XXX
+;; Suppose we want to make two rows of colored circles, using the
+;; function we just wrote? It would be wasteful to write it
+;; twice. What we do instead is give it a name, like this:
+(let [cyan-circles (fn [radius] (colorize "darkcyan" (circle radius)))] 
+  (vector (mapv cyan-circles [2 4 8 16 32 64 128])
+          (mapv cyan-circles [128 64 32 16 8 4 2])))
+;; XXX (I'd like a more elegant way to use the function twice. Perhaps
+;; I should just name it when I use it once, and not revisit it to
+;; introduce `let`?)
+
+;; XXX introduce `fn` with building `rainbow` or similar--see comment
+;; in users.cljs -- mixed types, gradual build
