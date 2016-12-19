@@ -163,3 +163,14 @@
 
 ;; XXX introduce `fn` with building `rainbow` or similar--see comment
 ;; in users.cljs -- mixed types, gradual build
+
+
+;; TODO introduce
+(def rand-circles
+  ;; FIXME `colors` doesn't yet work--need to run cljs-live deps?
+  (fn [radius] (colorize (rand-nth colors) (circle radius))))
+
+;; ...
+
+(defn rand-circles [radius]
+  (colorize (rand-nth colors) (circle radius)))
