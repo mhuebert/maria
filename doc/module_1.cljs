@@ -4,7 +4,7 @@
 ;; pull in `what-is` from maria.messages
 ;; pull in clojure.repl/doc
 
-;; Hi. Those two semicolons to my left mean I'm a comment--I don't
+;; Hi. Those two semicolons to my left mean I'm a comment, so I don't
 ;; evaluate to anything. In Clojure, the programming language we're
 ;; using today, everything that's not a comment evaluates to
 ;; something.
@@ -71,12 +71,11 @@
 ;; means it can be a parameter to a function.
 
 ;; To make a circle for each size we have in our vector, we use the
-;; `mapv` function. What it does is take a function and a collection
-;; of values, and applies the function to each of those values. So in
-;; our case, we give the function `mapv` the `circle` function and our
+;; `map` function. It applies a function to each value in a
+;; collection. So in our case, we "map" the function `circle` across a
 ;; vector of sizes:
 
-(mapv circle [2 4 8 16 32 64 128])
+(map circle [2 4 8 16 32 64 128])
 
 ;; Great! We applied `circle` to 2, and then to 4, and then to 8, and
 ;; then to 16, and so on. What did we get from evaluating it? A
@@ -95,8 +94,10 @@
 ;; We can create our own functions with the `fn` function. It's the
 ;; function function!
 
-;; The `fn` function's first parameter is a vector of all the
-;; parameters the function you create will accept. We want our function to accept the same parameters as `circle`: just one, the radius. So the outline of our function should look like this:
+;; `fn`'s first parameter is a vector of all the
+;; parameters the function you create will accept. We want our
+;; function to accept the same parameters as `circle`: just one, the
+;; radius. So the outline of our function should look like this:
 
 (fn [radius] ...)
 
@@ -135,42 +136,26 @@
 
 (fn [radius] (colorize "blue" (circle radius)))
 
-;; I'll warn you, evaluating that function gives me something
-;; weird. "#object[Function" blah blah blah. Don't worry too much
-;; about it, except to know that `fn` evaluates to a function
-;; definition. The evaluation of the function itself isn't so helpful,
-;; but when we call it with a parameter, we get what we're looking
-;; for:
+;; Did you get something weird from evaluating that? Me
+;; too. "#object[Function" blah blah blah. That's a function
+;; definition--don't worry too much about it, except to know that we
+;; created a function. Super! Evaluating the function itself isn't so
+;; helpful ("#object[Function"), but we can use our function like we
+;; use other functions to do things. All we have to do is put our
+;; function as the first thing inside a set of parentheses, like this:
 
 ((fn [radius] (colorize "darkcyan" (circle radius))) 50)
 
-;; Awesome. Let's apply our new function to our circles:
+;; Awesome. We can also apply our new function to those circles from
+;; before:
 
-(mapv (fn [radius] (colorize "cyan" (circle radius)))
-      [2 4 8 16 32 64 128])
+(map (fn [radius] (colorize "cyan" (circle radius)))
+     [2 4 8 16 32 64 128])
 
 ;; Lovely!
-;; XXX
-;; Suppose we want to make two rows of colored circles, using the
-;; function we just wrote? It would be wasteful to write it
-;; twice. What we do instead is give it a name, like this:
-(let [cyan-circles (fn [radius] (colorize "darkcyan" (circle radius)))] 
-  (vector (mapv cyan-circles [2 4 8 16 32 64 128])
-          (mapv cyan-circles [128 64 32 16 8 4 2])))
-;; XXX (I'd like a more elegant way to use the function twice. Perhaps
-;; I should just name it when I use it once, and not revisit it to
-;; introduce `let`?)
 
-;; XXX introduce `fn` with building `rainbow` or similar--see comment
-;; in users.cljs -- mixed types, gradual build
-
-
-;; TODO introduce
-(def rand-circles
-  ;; FIXME `colors` doesn't yet work--need to run cljs-live deps?
-  (fn [radius] (colorize (rand-nth colors) (circle radius))))
-
-;; ...
-
-(defn rand-circles [radius]
-  (colorize (rand-nth colors) (circle radius)))
+;; By this point you should be comfortable evaluating functions,
+;; working with vectors, mapping functions across values...phew! But
+;; the most important milestone is that you've created your own
+;; function. That means it's too late to turn back: you are a
+;; programmer.

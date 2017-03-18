@@ -31,11 +31,11 @@ g
 ;;  2. the question (function) we're asking Clojure is `what-is` (because it goes first)
 ;;  3. we're asking `what-is` on the expression `"duck"`
 
-;; Let's ask Clojure some other questions. 
+;; Let's ask Clojure some other questions.
 
 (first "duck")
 
-;; Weird. What is that? --wait! You know how to ask Clojure what a thing is. Go ahead. 
+;; Weird. What is that? --wait! You know how to ask Clojure what a thing is. Go ahead.
 
 (what-is (first "duck"))
 
@@ -75,7 +75,7 @@ g
 
 
 ;; (XXX either transition or culling needed--this was snipped from `what-is` intro)
-;; what does Clojure give us back? 
+;; what does Clojure give us back?
 
 (what-is (what-is "duck"))  ;; (have them eval both inner and outer form)
 
@@ -275,3 +275,37 @@ my-pet ;; still just the Schaferhund
 ;; for later
 ;; By the way, (what-is first) is nicer than evaluating a function name on its own:
 first ;; #function[clojure.core/first--4339]
+
+
+
+
+
+
+
+
+
+
+;; XXX
+;; Suppose we want to make two rows of colored circles, using the
+;; function we just wrote? It would be wasteful to write it
+;; twice. What we do instead is give it a name, like this:
+(let [cyan-circles (fn [radius] (colorize "darkcyan" (circle radius)))]
+  (vector (mapv cyan-circles [2 4 8 16 32 64 128])
+          (mapv cyan-circles [128 64 32 16 8 4 2])))
+;; XXX (I'd like a more elegant way to use the function twice. Perhaps
+;; I should just name it when I use it once, and not revisit it to
+;; introduce `let`?)
+
+;; XXX introduce `fn` with building `rainbow` or similar--see comment
+;; in users.cljs -- mixed types, gradual build
+
+
+;; TODO introduce
+(def rand-circles
+  ;; FIXME `colors` doesn't yet work--need to run cljs-live deps?
+  (fn [radius] (colorize (rand-nth colors) (circle radius))))
+
+;; ...
+
+(defn rand-circles [radius]
+  (colorize (rand-nth colors) (circle radius)))
