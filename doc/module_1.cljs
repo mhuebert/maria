@@ -78,8 +78,9 @@
 (map circle [2 4 8 16 32 64 128])
 
 ;; Great! We applied `circle` to 2, and then to 4, and then to 8, and
-;; then to 16, and so on. What did we get from evaluating it? A
-;; vector! A vector with a circle of each size we asked for.
+;; then to 16, and so on. (Notice that the evaluation is contained in
+;; parentheses. That's because `map` returns a list, and in Clojure,
+;; lists go inside parentheses.)
 
 ;; That's nice, but what if we wanted to make all those circles some
 ;; color? Like this:
@@ -94,17 +95,26 @@
 ;; We can create our own functions with the `fn` function. It's the
 ;; function function!
 
-;; `fn`'s first parameter is a vector of all the
-;; parameters the function you create will accept. We want our
-;; function to accept the same parameters as `circle`: just one, the
-;; radius. So the outline of our function should look like this:
+;; `fn`'s first parameter is a vector of all the parameters the
+;; function you create will accept. We want our function to be like
+;; `circle`, so it will take one parameter: the radius. So the outline
+;; of our function should look like this:
 
 (fn [radius] ...)
 
-;; Try to fill in that outline so that your function will return a
+;; Putting `radius` in the parameter list means that we can type
+;; `radius` anywhere in our function to use the value of whatever
+;; input we get. This lets us refer to values that we don't know
+;; yet--like `x` is used in algebra.
+
+;; Fill in that outline so that your function will return a
 ;; circle of size `radius` in your favorite color.
 
-...
+;; A word of warning: your function will evaluate to something weird,
+;; like "#object[Function" blah blah blah. Don't worry, that's
+;; normal. That's a function definition.
+
+(fn [radius] ...)
 
 ;; Don't peek.
 
@@ -136,10 +146,7 @@
 
 (fn [radius] (colorize "blue" (circle radius)))
 
-;; Did you get something weird from evaluating that? Me
-;; too. "#object[Function" blah blah blah. That's a function
-;; definition--don't worry too much about it, except to know that we
-;; created a function. Super! Evaluating the function itself isn't so
+;; Super! Evaluating the function itself isn't so
 ;; helpful ("#object[Function"), but we can use our function like we
 ;; use other functions to do things. All we have to do is put our
 ;; function as the first thing inside a set of parentheses, like this:
@@ -154,8 +161,7 @@
 
 ;; Lovely!
 
-;; By this point you should be comfortable evaluating functions,
-;; working with vectors, mapping functions across values...phew! But
-;; the most important milestone is that you've created your own
-;; function. That means it's too late to turn back: you are a
-;; programmer.
+;; By this point you've evaluated functions,
+;; used vectors, and mapped functions across values...phew! But
+;; the most important milestone is that you've created a programmer's best friend: your own
+;; function. You're well on your way.
