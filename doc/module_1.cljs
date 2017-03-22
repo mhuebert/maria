@@ -4,7 +4,7 @@
 ;; pull in `what-is` from maria.messages
 ;; pull in clojure.repl/doc
 
-;; Hi. Those two semicolons to my left mean I'm a comment--I don't
+;; Hi. Those two semicolons to my left mean I'm a comment, so I don't
 ;; evaluate to anything. In Clojure, the programming language we're
 ;; using today, everything that's not a comment evaluates to
 ;; something.
@@ -59,7 +59,9 @@
 
 ;;;;
 
-;; Now let's draw a bunch of circles, each one a different size. We can list the sizes we want in what's called a "vector", which looks like this:
+;; Now let's draw a bunch of circles, each one a different size. We
+;; can list the sizes we want in what's called a "vector", which looks
+;; like this:
 
 [2 4 8 16 32 64 128]
 
@@ -69,16 +71,16 @@
 ;; means it can be a parameter to a function.
 
 ;; To make a circle for each size we have in our vector, we use the
-;; `mapv` function. What it does is take a function and a collection
-;; of values, and applies the function to each of those values. So in
-;; our case, we give the function `mapv` the `circle` function and our
+;; `map` function. It applies a function to each value in a
+;; collection. So in our case, we "map" the function `circle` across a
 ;; vector of sizes:
 
-(mapv circle [2 4 8 16 32 64 128])
+(map circle [2 4 8 16 32 64 128])
 
 ;; Great! We applied `circle` to 2, and then to 4, and then to 8, and
-;; then to 16, and so on. What did we get from evaluating it? A
-;; vector! A vector with a circle of each size we asked for.
+;; then to 16, and so on. (Notice that the evaluation is contained in
+;; parentheses. That's because `map` returns a list, and in Clojure,
+;; lists go inside parentheses.)
 
 ;; That's nice, but what if we wanted to make all those circles some
 ;; color? Like this:
@@ -93,15 +95,26 @@
 ;; We can create our own functions with the `fn` function. It's the
 ;; function function!
 
-;; The `fn` function's first parameter is a vector of all the
-;; parameters the function you create will accept. We want our function to accept the same parameters as `circle`: just one, the radius. So the outline of our function should look like this:
+;; `fn`'s first parameter is a vector of all the parameters the
+;; function you create will accept. We want our function to be like
+;; `circle`, so it will take one parameter: the radius. So the outline
+;; of our function should look like this:
 
 (fn [radius] ...)
 
-;; Try to fill in that outline so that your function will return a
+;; Putting `radius` in the parameter list means that we can type
+;; `radius` anywhere in our function to use the value of whatever
+;; input we get. This lets us refer to values that we don't know
+;; yet--like `x` is used in algebra.
+
+;; Fill in that outline so that your function will return a
 ;; circle of size `radius` in your favorite color.
 
-...
+;; A word of warning: your function will evaluate to something weird,
+;; like "#object[Function" blah blah blah. Don't worry, that's
+;; normal. That's a function definition.
+
+(fn [radius] ...)
 
 ;; Don't peek.
 
@@ -133,145 +146,22 @@
 
 (fn [radius] (colorize "blue" (circle radius)))
 
-;; I'll warn you, evaluating that function gives me something
-;; weird. "#object[Function" blah blah blah. Don't worry too much
-;; about it, except to know that `fn` evaluates to a function
-;; definition. The evaluation of the function itself isn't so helpful,
-;; but when we call it with a parameter, we get what we're looking
-;; for:
+;; Super! Evaluating the function itself isn't so
+;; helpful ("#object[Function"), but we can use our function like we
+;; use other functions to do things. All we have to do is put our
+;; function as the first thing inside a set of parentheses, like this:
 
-((fn [radius] (colorize "mauve" (circle radius))) 50)
+((fn [radius] (colorize "darkcyan" (circle radius))) 50)
 
-;; Awesome. Let's apply our new function to our circles:
+;; Awesome. We can also apply our new function to those circles from
+;; before:
 
-(mapv (fn [radius] (colorize "cyan" (circle radius)))
-      [2 4 8 16 32 64 128])
+(map (fn [radius] (colorize "cyan" (circle radius)))
+     [2 4 8 16 32 64 128])
 
 ;; Lovely!
 
-
-
-;;;;; XXX
-
-
-
-
-
-;; Let's draw a bunch of shapes side-by-side using the `line-up` function:
-
-(line-up (circle 25)
-         (circle 25)
-         (circle 25))
-
-
-;; Man, that was a lot of typing. And so repetitive! When I see myself
-;; repeating the same code over and over, I get suspicious.
-
-;; Luckily, we can code ourselves a shorter solution. We don't have to
-;; type `(circle 25)` over and over. We can type it once and Clojure
-;; will remember it for us:
-
-(let [c (circle 25)]
-  ;; Now we can type just `c`:
-  (line-up c c c c c c c c c))
-
-;; We used `let` to define a name `c` for our expression. The `let`
-;; function's first parameter is a pair of square brackets (`[]`) with
-;; pairs of names and values inside.
-
-;; We can have multiple pairs if we want:
-
-(let [c (circle 25)
-      r (rectangle 50 50)]
-  (line-up c r c r c r c r c r))
-
-;; Can you change that expression to make all the circles one color
-;; and the squares another?
-
-...
-
-;; Nice. Now let's say we wanted to draw a checkerboard: a big square
-;; made up of lots of little squares, alternating colors. Let's start
-;; with our smallest unit: a single square. We'll build our
-;; checkerboard code step by step, so that it gradually grows into the
-;; final shape we want.
-
-(square 50) ;; ERROR
-
-;; Oops. Clojure knows rectangles, but apparently not squares.
-
-(rectangle 50 50)
-
-;; We add a dash of color...
-
-(colorize "red" (rectangle 50 50))
-
-(colorize "black" (rectangle 50 50))
-
-;; We can put those together with `let` to make a 2x2 checker. That
-;; will be our building block.
-
-(let [r (colorize "red" (rectangle 50 50))
-      b (colorize "black" (rectangle 50 50))]
-  (stack (line-up r b)
-         (line-up b r)))
-
-;; OK, now let's repeat that checker until it forms a row. We'll do
-;; that with the `repeat` function, which just calls a function as
-;; many times as it's told.
-
-(let [r (colorize "red" (rectangle 50 50)) ;; same as above
-      b (colorize "black" (rectangle 50 50)) ;; same as above
-      checker (stack (line-up r b)
-                     (line-up b r))]
-  (apply line-up (repeat 4 checker)))
-;; XXX XXX XXX apply is waaaaay too advanced!
-
-;; ...and we `repeat` the rows to make a complete board. (Again, we
-;; repeat our `r`, `b`, and `checker` definitions in our `let`.)
-
-(let [r (colorize "red" (rectangle 50 50))
-      b (colorize "black" (rectangle 50 50))
-      checker (stack (line-up r b)
-                     (line-up b r))
-      row (apply line-up (repeat 4 checker))]
-  (apply stack (repeat 4 row)))
-;; XXX XXX XXX apply is waaaaay too advanced!
-
-;; Cool!
-
-;; Now, what if we wanted to play with that checkerboard? To draw five
-;; of them across the screen, or to show it to friends later? Our
-;; `(let)` can only do one thing at a time, and is getting too long
-;; anyway. We're still repeating ourselves too much!
-
-;; What we need is to create a name for our checkerboard and use it
-;; anywhere we want--not just inside a `let`. For that, we use `def`:
-
-(def checkerboard
-  (let [r (colorize "red" (rectangle 25 25))
-        b (colorize "black" (rectangle 25 25))
-        checker (stack (line-up r b)
-                       (line-up b r))
-        row (apply line-up (repeat 4 checker))]
-    (stack (repeat 4 row))))
-
-checkerboard
-
-;; Look what we can do now!
-
-(stack (repeat 5 checkerboard))
-
-(line-up (repeat 50 checkerboard))
-
-;; XXX transition/more
-
-;; XXX introduce `fn` with building `rainbow`, not `square`. one of them is literally square.
-;; XXX
-;; XXX
-;; XXX
-;; XXX see comment in users.cljs -- mixed types, gradual build
-;; XXX
-;; XXX
-;; XXX
-;; XXX
+;; By this point you've evaluated functions,
+;; used vectors, and mapped functions across values...phew! But
+;; the most important milestone is that you've created a programmer's best friend: your own
+;; function. You're well on your way.
