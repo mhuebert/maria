@@ -26,20 +26,18 @@
                          :else (println "Unknown form passed to `mixed`")))) items))
 
 (defview code-split
-  {:key #(-> % :children first)}
-  (fn [{{:keys [evaluate]} :state
-        [source]           :children
-        :as                this}]
-    [:.flex
-     [:.w-50.bg-solarized-light (viewer source)]
-     [:.w-50
-      (if evaluate
-        ;; does not yet differentiate between error and value
-        (viewer (with-out-str (prn (:value (eval-str source)))))
-        [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
-         {:on-click #(v/swap-state! this assoc :evaluate true)} "?"])]]))
+  {:key (fn [_ x] x)}
+  [{:keys [view/state] :as this} source]
+  [:.flex
+   [:.w-50.bg-solarized-light (viewer source)]
+   [:.w-50
+    (if (:evaluate @state)
+      ;; does not yet differentiate between error and value
+      (viewer (with-out-str (prn (:value (eval-str source)))))
+      [:div.pointer.br-100-ns.bg-near-white.tc.dib.bold.w3.h3.v-mid.ml3.serif.f2.black-30
+       {:on-click #(swap! state assoc :evaluate true)} "?"])]])
 
-(defview main
+(defview main []
   [:.serif.center.mw7.mt5.f4
    [:.f1.tc "Walkthrough"]
 

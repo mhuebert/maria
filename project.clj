@@ -16,8 +16,11 @@
                  [cljsjs/marked "0.3.5-0"]
 
                  [org.clojars.mhuebert/cljs-live "0.1.11"]
-                 [org.clojars.mhuebert/re-view "0.2.8-SNAPSHOT"]
-                 [org.clojars.mhuebert/magic-tree "0.0.1"]]
+                 [org.clojars.mhuebert/re-view "0.3.0"]
+                 [org.clojars.mhuebert/magic-tree "0.0.1"]
+
+                 [cljsjs/react "15.4.2-0"]
+                 [cljsjs/react-dom "15.4.2-0"]]
 
   :plugins [[lein-figwheel "0.5.8"]
             [lein-npm "0.6.2"]
@@ -39,6 +42,7 @@
                                        :output-to      "resources/public/js/compiled/maria.js"
                                        :output-dir     "resources/public/js/compiled/out"
                                        ;:source-map-timestamp true
+                                       :optimizations  :none
                                        :parallel-build true}}
                        {:id           "prod"
                         :source-paths ["src"]

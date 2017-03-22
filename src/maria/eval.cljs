@@ -5,7 +5,7 @@
             [cljs-live.eval :as e]
             [cljs.tools.reader :as r]
             [cljs.repl :refer [print-doc]]
-            [maria.html :refer [html]]
+            [re-view.hiccup :as hiccup]
             [maria.friendly.docstrings :refer [docstrings]]
             [cljs.tools.reader.reader-types :as rt]
             [clojure.string :as string]))
@@ -20,18 +20,18 @@
                            (map symbol [(namespace n) (name n)]))
         friendly-doc (get-in docstrings [namespace name])]
     {:value
-     (html [:div (with-out-str
-                   (some-> (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
-                           (select-keys [:name :doc :arglists])
-                           (cond->
-                             friendly-doc (assoc :doc friendly-doc))
-                           print-doc)
-                   "Not found")
-            (when (#{'cljs.core 'cljs.core$macros 'clojure.core} namespace)
-              (list [:.gray.di "view on "]
-                    [:a {:href (str "https://clojuredocs.org/clojure.core/" name)
-                         :target "_blank"
-                         :rel "noopener noreferrer"} "clojuredocs.org"]))])}))
+     (element [:div (with-out-str
+                      (some-> (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
+                              (select-keys [:name :doc :arglists])
+                              (cond->
+                                friendly-doc (assoc :doc friendly-doc))
+                              print-doc)
+                      "Not found")
+               (when (#{'cljs.core 'cljs.core$macros 'clojure.core} namespace)
+                 (list [:.gray.di "view on "]
+                       [:a {:href   (str "https://clojuredocs.org/clojure.core/" name)
+                            :target "_blank"
+                            :rel    "noopener noreferrer"} "clojuredocs.org"]))])}))
 
 ;; mutate cljs-live's default repl-specials
 (e/swap-repl-specials! assoc 'doc doc)

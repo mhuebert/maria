@@ -31,60 +31,60 @@
    :magicEdit         true})
 
 (defview editor
-  {:subscriptions
-   {:source (subs/db [this] (some-> this
-                                    (get-in [:props :local-storage])
-                                    first
-                                    (d/get :source)))}
+  {:initial-state {:editor nil}
    :will-mount
-   #(some->> (get-in % [:props :local-storage])
-             (apply init-local-storage))
+                 #(some->> (:local-storage %)
+                           (apply init-local-storage))
    :did-mount
-   (fn [{{:keys [value read-only? on-mount cm-opts local-storage] :as props} :props :as this}]
-     (let [dom-node (js/ReactDOM.findDOMNode (v/ref this "editor-container"))
-           editor (js/CodeMirror dom-node
-                                 (clj->js (merge cm-opts
-                                                 (cond-> options
-                                                         read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                        (assoc :readOnly "nocursor"))))))]
-       (set! (.-view editor) this)
+                 (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props]
+                       [local-storage-id _] :local-storage
+                       :as                  this}]
+                   (let [dom-node (v/dom-node (:editor-container @state))
+                         editor (js/CodeMirror dom-node
+                                               (clj->js (merge cm-opts
+                                                               (cond-> options
+                                                                       read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                                      (assoc :readOnly "nocursor"))))))]
+                     (set! (.-view editor) this)
 
-       (swap! this assoc :editor editor)
+                     (swap! state assoc :editor editor)
 
-       (when-not read-only?
+                     (when-not read-only?
 
-         ;; event handlers are passed in as props with keys like :event/mousedown
-         (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
-           (let [event-key (name event-key)]
-             (if (#{"mousedown" "click" "mouseup"} event-key)
-               ;; attach mouse handlers to dom node, preventing CodeMirror selection by using goog.events capture phase
-               (events/listen dom-node event-key f true)
-               ;; attach other handlers to CodeMirror instance
-               (.on editor event-key f))))
-         (when on-mount (on-mount editor this)))
+                       ;; event handlers are passed in as props with keys like :event/mousedown
+                       (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
+                         (let [event-key (name event-key)]
+                           (if (#{"mousedown" "click" "mouseup"} event-key)
+                             ;; attach mouse handlers to dom node, preventing CodeMirror selection by using goog.events capture phase
+                             (events/listen dom-node event-key f true)
+                             ;; attach other handlers to CodeMirror instance
+                             (.on editor event-key f))))
+                       (when on-mount (on-mount editor this)))
 
-       (when-let [initial-source (or value (get-in this [:state :source] value))]
-         (.setValue editor (str initial-source)))
-       (when-let [local-storage-uid (first local-storage)]
-         (.on editor "change" #(d/transact! [[:db/add local-storage-uid :source (.getValue %1)]])))))
+                     (when-let [initial-source (or value (d/get local-storage-id :source))]
+                       (.setValue editor (str initial-source)))
+                     (when local-storage-id
+                       (.on editor "change" #(d/transact! [[:db/add local-storage-id :source (.getValue %1)]])))))
 
    :will-receive-props
-   (fn [{{next-value :value} :props
-         {:keys [value]}     :prev-props
-         :as                 this}]
-     (when (not= next-value value)
-       (when-let [editor (get-in this [:state :editor])]
-         (cm/set-preserve-cursor editor next-value))))
+                 (fn [{next-value      :value
+                       {:keys [value]} :view/prev-props
+                       state           :view/state
+                       :as             this}]
+                   (when (not= next-value value)
+                     (when-let [editor (:editor @state)]
+                       (cm/set-preserve-cursor editor next-value))))
 
    :will-receive-state
-   (fn [{{next-source :source}   :state
-         {:keys [source editor]} :prev-state}]
-     (when (and (not= next-source source) editor)
-       (cm/set-preserve-cursor editor next-source)))
+                 (fn [{:keys [view/state view/prev-state]}]
+                   (when (and (not= (:source @state) (:source prev-state)) (:editor prev-state))
+                     (cm/set-preserve-cursor (:editor prev-state) (:source @state))))
 
    :should-update
-   (fn [_] false)}
-  [:.h-100 {:ref "editor-container"}])
+                 (fn [_] false)}
+  [{:keys [view/state]}]
+  [:.h-100 {:ref (fn [el]
+                   (when el (swap! state assoc :editor-container el)))}])
 
 (defn viewer [source]
   (editor {:read-only? true

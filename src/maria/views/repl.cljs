@@ -20,7 +20,7 @@
   [value]
   [:span
    (cond
-     (= :shape (:is-a value)) ((show value))                ; synthesize component for shape
+     (= :shape (:is-a value)) (show value)                  ; synthesize component for shape
      (or (vector? value)
          (seq? value)
          (set? value)) (let [[lb rb] (bracket-type value)]
@@ -37,18 +37,18 @@
 
 (defview display-result
   {:key           :id
-   :should-update #(not= (:props %) (:prev-props %))}
-  (fn [{{:keys [value error warnings]} :props}]
-    [:div.bb.b--near-white.ph3
-     [:.mv2.ws-prewrap
-      (if (or error (seq warnings))
-        [:.bg-near-white.ph3.pv2.mv2
-         (when error (.error js/console error))
-         (for [message (cons (some-> error str reformat-error)
-                             (map reformat-warning (distinct warnings)))
-               :when message]
-           [:.pv2 message])]
-        (format-value value))]]))
+   :should-update #(not= (:view/props %) (:view/prev-props %))}
+  [{:keys [value error warnings]}]
+  [:div.bb.b--near-white.ph3
+   [:.mv2.ws-prewrap
+    (if (or error (seq warnings))
+      [:.bg-near-white.ph3.pv2.mv2
+       (when error (.error js/console error))
+       (for [message (cons (some-> error str reformat-error)
+                           (map reformat-warning (distinct warnings)))
+             :when message]
+         [:.pv2 message])]
+      (format-value value))]])
 
 (defn scroll-bottom [component]
   (let [el (v/dom-node component)]
@@ -70,22 +70,25 @@
 (defview result-pane
   {:did-update scroll-bottom
    :did-mount  scroll-bottom}
+  []
   [:div.h-100.overflow-auto.code
    (map display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
 
 (defview main
-  {:get-editor #(-> %1 (v/ref "repl-editor") :state :editor)
-   :did-mount  #(-> % (v/ref "repl-editor") :state :editor (.focus))}
-  (fn [this]
-    [:.flex.flex-row.h-100
-     [:.w-50.h-100.bg-solarized-light.pb4
-      (editor/editor {:ref             "repl-editor"
-                      :local-storage   [repl-editor-id
-                                        ";; Type code here; press command-enter or command-click to evaluate forms.\n"]
-                      :event/mousedown #(when (.-metaKey %)
-                                          (.preventDefault %)
-                                          (eval-editor (.getEditor this)))
-                      :event/keydown   #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                          (eval-editor %1))})]
-     [:.w-50.h-100
-      (result-pane)]]))
+  {:initial-state {:repl-editor nil}
+   :get-editor    (fn [{:keys [view/state]}]
+                    (some-> (:repl-editor @state) :view/state deref :editor))
+   :did-mount     (fn [this] (some-> (.getEditor this) (.focus)))}
+  [{:keys [view/state] :as this}]
+  [:.flex.flex-row.h-100
+   [:.w-50.h-100.bg-solarized-light.pb4
+    (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                    :local-storage   [repl-editor-id
+                                      ";; Type code here; press command-enter or command-click to evaluate forms.\n"]
+                    :event/mousedown #(when (.-metaKey %)
+                                        (.preventDefault %)
+                                        (eval-editor (.getEditor this)))
+                    :event/keydown   #(when (and (= 13 (.-which %2)) (.-metaKey %2))
+                                        (eval-editor %1))})]
+   [:.w-50.h-100
+    (result-pane)]])

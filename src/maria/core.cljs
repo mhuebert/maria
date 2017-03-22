@@ -1,5 +1,7 @@
 (ns maria.core
   (:require
+    [cljsjs.react]
+    [cljsjs.react.dom]
 
     [maria.walkthrough :as walkthrough]
     [maria.views.repl :as repl]
@@ -20,12 +22,12 @@
 
 (enable-console-print!)
 
-(defview not-found
+(defview not-found []
   [:div "We couldn't find this page!"])
 
-(defonce _ (r/on-route-change #(d/transact! [[:db/add ::state :route (r/tokenize %)]])))
+(defonce _ (r/on-route-change #(d/transact! [[:db/add ::state :route (r/tokenize %)]]) true))
 
-(defview layout
+(defview layout []
   [:div.h-100
    [:.w-100.fixed.bottom-0.z-3
     [:.dib.center.left-50
@@ -41,6 +43,6 @@
           :else (not-found))])
 
 (defn main []
-  (v/render-to-dom (layout {:x 1}) "maria-main"))
+  (v/render-to-id (layout {:x 1}) "maria-main"))
 
 (main)

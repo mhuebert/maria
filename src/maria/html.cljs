@@ -1,7 +1,4 @@
 (ns maria.html
-  (:require [re-view.core :as v]))
+  (:require [re-view.hiccup :as hiccup]))
 
-(defn html [x]
-  (when-not (vector? x)
-    (throw (js/Error. "Argument to `html` must be a vector.")))
-  (v/view x))
+(def html hiccup/element)
