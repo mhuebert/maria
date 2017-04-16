@@ -94,7 +94,7 @@
                                (humanize-sequence bad-types) ".")
       :undeclared-var (str "The expression `"
                            (:source-form w)
-                           "`contains `"
+                           "` contains `"
                            (-> w :extra :suffix)
                            "`, but it hasn't been defined!")
       (with-out-str (pprint (dissoc w :env))))))
