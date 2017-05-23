@@ -1,5 +1,6 @@
 (ns maria.views.repl
   (:require [re-view.core :as v :refer [defview]]
+            [re-view.util :as v-util]
             [re-db.d :as d]
             [magic-tree.codemirror.util :as cm]
             [maria.editor :as editor]
@@ -26,18 +27,18 @@
          (set? value)) (let [[lb rb] (bracket-type value)]
                          (list
                            [:span.output-bracket lb]
-                           (interpose " " (v/map-with-keys format-value value))
+                           (interpose " " (v-util/map-with-keys format-value value))
                            [:span.output-bracket rb]))
 
-     (v/is-react-element? value) (value)
+     (v/is-react-element? value) value
      :else (if (nil? value)
              "nil"
              (try (with-out-str (pprint value))
                   (catch js/Error e "error printing result"))))])
 
 (defview display-result
-  {:key           :id
-   :should-update #(not= (:view/props %) (:view/prev-props %))}
+  {:key                :id
+   :life/should-update #(not= (:view/props %) (:view/prev-props %))}
   [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
    [:.mv2.ws-prewrap
@@ -65,20 +66,20 @@
                              tree/top-loc
                              (tree/string (:ns @eval/c-env))))]
 
-    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source) :id (d/squuid))]])))
+    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source) :id (d/unique-id))]])))
 
 (defview result-pane
-  {:did-update scroll-bottom
-   :did-mount  scroll-bottom}
+  {:life/did-update scroll-bottom
+   :life/did-mount  scroll-bottom}
   []
   [:div.h-100.overflow-auto.code
    (map display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
 
 (defview main
-  {:initial-state {:repl-editor nil}
-   :get-editor    (fn [{:keys [view/state]}]
-                    (some-> (:repl-editor @state) :view/state deref :editor))
-   :did-mount     (fn [this] (some-> (.getEditor this) (.focus)))}
+  {:life/initial-state {:repl-editor nil}
+   :get-editor         (fn [{:keys [view/state]}]
+                         (some-> (:repl-editor @state) :view/state deref :editor))
+   :life/did-mount     (fn [this] (some-> (.getEditor this) (.focus)))}
   [{:keys [view/state] :as this}]
   [:.flex.flex-row.h-100
    [:.w-50.h-100.bg-solarized-light.pb4

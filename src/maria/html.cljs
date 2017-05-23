@@ -1,4 +1,4 @@
 (ns maria.html
-  (:require [re-view.hiccup :as hiccup]))
+  (:require [re-view-hiccup.core :as hiccup]))
 
 (def html hiccup/element)

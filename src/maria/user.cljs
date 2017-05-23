@@ -1,6 +1,9 @@
 (ns maria.user
-  (:require [maria.html :refer [html]])
-  (:require-macros [maria.user :refer [user-macro]]))
+  (:require
+    [maria.html :refer [html]]
+    [maria.messages :as messages])
+  (:require-macros
+    [maria.user :refer [user-macro]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy

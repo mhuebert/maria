@@ -5,7 +5,7 @@
             [cljs-live.eval :as e]
             [cljs.tools.reader :as r]
             [cljs.repl :refer [print-doc]]
-            [re-view.hiccup :as hiccup]
+            [re-view-hiccup.core :as hiccup :refer [element]]
             [maria.friendly.docstrings :refer [docstrings]]
             [cljs.tools.reader.reader-types :as rt]
             [clojure.string :as string]))

@@ -6,8 +6,8 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[org.clojure/clojure "1.9.0-alpha14"]
-                 [org.clojure/clojurescript "1.9.293"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
+                 [org.clojure/clojurescript "1.9.542"]
 
                  [fast-zip "0.7.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
@@ -15,16 +15,19 @@
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
 
-                 [org.clojars.mhuebert/cljs-live "0.1.11"]
-                 [org.clojars.mhuebert/re-view "0.3.0"]
-                 [org.clojars.mhuebert/magic-tree "0.0.1"]
 
-                 [cljsjs/react "15.4.2-0"]
-                 [cljsjs/react-dom "15.4.2-0"]]
+                 [re-view "0.3.14"]
+                 [re-view-routing "0.1.3"]
 
-  :plugins [[lein-figwheel "0.5.8"]
+                 [cljs-live "0.1.12"]
+                 [magic-tree "0.0.2-SNAPSHOT"]
+
+                 [cljsjs/react "15.5.4-0"]
+                 [cljsjs/react-dom "15.5.4-0"]]
+
+  :plugins [[lein-figwheel "0.5.10"]
             [lein-npm "0.6.2"]
-            [lein-cljsbuild "1.1.4" :exclusions [org.clojure/clojure]]]
+            [lein-cljsbuild "1.1.6" :exclusions [org.clojure/clojure]]]
 
   :npm {:dependencies [[stylus "0.54.5"]
                        [firebase-tools "3.1.0"]]}
@@ -59,7 +62,7 @@
 
   :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.0"]
                                   [binaryage/devtools "0.8.2"]
-                                  [figwheel-sidecar "0.5.8"]
+                                  [figwheel-sidecar "0.5.10"]
                                   [com.cemerick/piggieback "0.2.1"]]
                    ;; need to add dev source path here to get user.clj loaded
                    :source-paths ["src" "dev"]

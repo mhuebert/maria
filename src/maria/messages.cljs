@@ -1,25 +1,29 @@
 (ns maria.messages
   (:require [clojure.string :as cs]
             [cljs.pprint :refer [pprint]]
-            [cljs.core.match :refer-macros [match]]))
+    ;; core.match not yet supported in self-hosted clojurescript
+    ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
+    #_[clojure.core.match :refer-macros [match]]
+
+            ))
 
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."
   [thing]
-  (cond 
-    (vector? thing)  "a vector"
-    (list? thing)    "a list"
-    (string? thing)  "a string"
-    (char? thing)    "a character"
-    (number? thing)  "a number"
+  (cond
+    (vector? thing) "a vector"
+    (list? thing) "a list"
+    (string? thing) "a string"
+    (char? thing) "a character"
+    (number? thing) "a number"
     (keyword? thing) "a keyword"
-    (symbol? thing)  "a symbol"
-    (fn? thing)      "a function"
-    (map? thing)     "a map"
-    (seq? thing)     "a sequence"
-    (true? thing)    "the Boolean value true"
-    (false? thing)   "the Boolean value false"
-    (nil? thing)     "the special value nil (nothing)"
+    (symbol? thing) "a symbol"
+    (fn? thing) "a function"
+    (map? thing) "a map"
+    (seq? thing) "a sequence"
+    (true? thing) "the Boolean value true"
+    (false? thing) "the Boolean value false"
+    (nil? thing) "the special value nil (nothing)"
     :else (type thing)))
 
 (defn tokenize
@@ -33,28 +37,29 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [e]
-  (match [(tokenize e)]
-         [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
-         (str "It looks like you're trying to call a function that hasn't been defined.")
-         [["invalid" "arity" the-value]] ;; TODO warning is better
-         (str the-value " is too many arguments!")
-         [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]]
-         (str "The " the-type " `" the-value "` can't be used as a collection.")
-         [[the-value "is" "not" "iseqable"]]
-         (str "The value `" the-value "` can't be used as a sequence or collection.")
-         [[the-value "call" "is" "not" "a" "function"]]
-         (str "The value `" the-value "` isn't a function, but it's being called like one.")
-         :else e))
+  "<must implement reformat-error>"
+  #_(match [(tokenize e)]
+           [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
+           (str "It looks like you're trying to call a function that hasn't been defined.")
+           [["invalid" "arity" the-value]]                  ;; TODO warning is better
+           (str the-value " is too many arguments!")
+           [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]]
+           (str "The " the-type " `" the-value "` can't be used as a collection.")
+           [[the-value "is" "not" "iseqable"]]
+           (str "The value `" the-value "` can't be used as a sequence or collection.")
+           [[the-value "call" "is" "not" "a" "function"]]
+           (str "The value `" the-value "` isn't a function, but it's being called like one.")
+           :else e))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
   [thing]
-  (cond 
-    (= 'string thing)                                "a string"
-    (= 'number thing)                                "a number"
-    (cs/includes? (name thing) "Vector")             "a vector"
-    (cs/includes? (name thing) "List")               "a list"
-    (cs/includes? (name thing) "Keyword")            "a keyword"
+  (cond
+    (= 'string thing) "a string"
+    (= 'number thing) "a number"
+    (cs/includes? (name thing) "Vector") "a vector"
+    (cs/includes? (name thing) "List") "a list"
+    (cs/includes? (name thing) "Keyword") "a keyword"
     (cs/includes? (name thing) "PersistentArrayMap") "a map"
     :else thing))
 
@@ -82,7 +87,7 @@
                      "` in the expression `"
                      (:source-form w)
                      "` needs "
-                     (if (= 0 (-> w :extra :argc)) ;; TODO get arity from meta
+                     (if (= 0 (-> w :extra :argc))          ;; TODO get arity from meta
                        "more"
                        "a different number of")
                      " arguments.")
@@ -103,12 +108,12 @@
 
 (comment
 
-  (what-is true)    ;"the Boolean value true"
-  (what-is 1)       ;"a number"
-  (what-is "bob")   ;"a string"
-  (what-is 'a)      ;"a symbol"
-  (what-is :b)      ;"a keyword"
-  (what-is (fn [_])) ;"a function"
+  (what-is true)                                            ;"the Boolean value true"
+  (what-is 1)                                               ;"a number"
+  (what-is "bob")                                           ;"a string"
+  (what-is 'a)                                              ;"a symbol"
+  (what-is :b)                                              ;"a keyword"
+  (what-is (fn [_]))                                        ;"a function"
 
   (reformat-error "Error: No protocol method ICollection.-conj defined for type number: 5")
   ;;=> "The number `5` can't be used as a collection."  
@@ -119,8 +124,8 @@
   (reformat-error "TypeError: 1.call is not a function")
   ;;=> "The value `1` isn't a function, but it's being called like one."  
 
-  (reformat-warning '{:type :invalid-arithmetic,
-                      :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
+  (reformat-warning '{:type        :invalid-arithmetic,
+                      :extra       {:js-op cljs.core/+, :types [cljs.core/IVector number]},
                       :source-form (+ [] 5)})
   ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )
