@@ -10,8 +10,8 @@
             [cljs.pprint :refer [pprint]]
             [maria.messages :refer [reformat-error reformat-warning]]
             [magic-tree.core :as tree]
-            [goog.net.XhrIo :as xhr]
-            [clojure.string :as string]))
+            [maria.ns-utils :as ns-utils]
+            [re-view-material.core :as ui]))
 
 (def repl-editor-id "maria-repl-left-pane")
 
@@ -20,34 +20,27 @@
         (set? value) ["#{" "}"]
         :else ["(" ")"]))                                   ; XXX probably wrong
 
-(defn builtin-ns? [s]
-  (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s)))
-
-(defn ns-map [ns]
-  (get-in @eval/c-state [:cljs.analyzer/namespaces ns]))
-
-(defn usable-names [ns]
-  (->> (ns-map ns)
-       (dissoc :defs)
-       (vals)
-       (filter map?)
-       (map #(dissoc % :order :seen))
-       (apply merge)))
-
-(defn user-namespaces []
-  (->> (keys (:cljs.analyzer/namespaces @eval/c-state))
-       (filter (complement builtin-ns?))))
 
 (def current-namespace
   (fn [] (hoc/bind-atom (v/view [{:keys [ns]}]
-                                [:span
-                                 (str ns)
-                                 (when-let [ns-doc (:doc (ns-map ns))]
+                                [:.dib
+                                 (ui/SimpleMenuWithTrigger
+                                   (ui/Button {:label   (str ns)
+                                               :compact true
+                                               :dense   true
+                                               :style   {:margin-left "-0.25rem"}})
+                                   (map (fn [item-ns] (ui/SimpleMenuItem {:text-primary (str item-ns)
+                                                                          :ripple       false
+                                                                          :style        (when (= item-ns ns)
+                                                                                          {:background-color "rgba(0,0,0,0.05)"})
+                                                                          :on-click     #(eval/eval-str `(~'in-ns ~item-ns))})) (-> (cons ns (ns-utils/user-namespaces))
+                                                                                                                                    (distinct))))
+                                 (when-let [ns-doc (:doc (ns-utils/ns-map ns))]
                                    [:span.pl2.f7.o-50 ns-doc])]) eval/c-env)))
 
 (defn source-bar []
-  [:.ph3.pv2.bb.code.o-60 {:style {:border-color     "rgba(0,0,0,0.03)"
-                                   :background-color "#f7eed4"}}
+  [:.ph3.pv2.bb.code {:style {:border-color     "rgba(0,0,0,0.03)"
+                              :background-color "#f7eed4"}}
    (current-namespace)])
 
 (defn format-value
