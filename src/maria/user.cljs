@@ -1,7 +1,8 @@
 (ns maria.user
   (:require
     [maria.html :refer [html]]
-    [maria.messages :as messages])
+    [maria.messages :as messages]
+    [re-view.core :as v :include-macros true])
   (:require-macros
     [maria.user :refer [user-macro]]))
 

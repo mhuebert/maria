@@ -44,8 +44,9 @@
    [:.mv2.ws-prewrap
     (if (or error (seq warnings))
       [:.bg-near-white.ph3.pv2.mv2
-       (when error (.error js/console error))
-       (for [message (cons (some-> error str reformat-error)
+       (when error
+         (.error js/console "Eval Result Contains Error" error))
+       (for [message (cons (some-> error reformat-error)
                            (map reformat-warning (distinct warnings)))
              :when message]
          [:.pv2 message])]

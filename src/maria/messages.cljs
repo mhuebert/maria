@@ -37,7 +37,10 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [e]
-  "<must implement reformat-error>"
+  [:div.overflow-auto
+   [:p (ex-message e)]
+   [:p (ex-message (ex-cause e))]
+   [:pre (some-> (ex-cause e) (aget "stack"))]]
   #_(match [(tokenize e)]
            [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
            (str "It looks like you're trying to call a function that hasn't been defined.")

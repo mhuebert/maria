@@ -16,7 +16,7 @@
                  [cljsjs/marked "0.3.5-0"]
 
 
-                 [re-view "0.3.14"]
+                 [re-view "0.3.15"]
                  [re-view-routing "0.1.3"]
 
                  [cljs-live "0.1.13"]
