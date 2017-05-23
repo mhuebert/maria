@@ -82,7 +82,7 @@
          [:.pv2 message])]
       (format-value value))]
    (when ns
-     [:.bg-near-white.ph3.pv2.mb2 (str ns)])])
+     [:.pa3 [:span.b "Namespace: "] (str ns)])])
 
 (defn scroll-bottom [component]
   (let [el (v/dom-node component)]
