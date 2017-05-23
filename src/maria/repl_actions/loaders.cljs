@@ -4,16 +4,31 @@
             [clojure.string :as string]
             [maria.eval :as eval]
             [goog.net.XhrIo :as xhr]
-            [maria.views.repl-ui :as repl-ui]))
+            [maria.views.repl-ui :as repl-ui]
+            [re-view-material.icons :as icons]))
 
 (defview gist-loader-status
   [{:keys [status
            url
-           error]}]
+           error
+           source
+           view/state]}]
   [:.ph3
    {:class repl-ui/card-classes}
+
+   [:.b.mv2.flex.items-center
+    (when source {:class "pointer"
+                  :on-click #(swap! state not)})
+    status
+    [:.flex-auto]
+    (when source (if @state icons/ArrowDropUp icons/ArrowDropDown))]
+
+   (when (and @state source)
+     [:.code.overflow-scroll.ph3.nl3.nr3.bt.bb.b--darken.pv2
+      {:style {:max-height 200}} source])
+
    [:.gray.pv2.overflow-auto.w-100.pv2 {:style {:font-size 13}} url]
-   [:.b.mv2 status]
+
    (when error [:.bg-near-white.pa2.mv2 error])])
 
 (defn normalize-gist-path [gist-path]
@@ -33,9 +48,11 @@
                (fn [e]
                  (let [target (.-target e)]
                    (if (.isSuccess target)
-                     (do
-                       (eval/eval-str (.getResponseText target))
-                       (swap! status assoc :status "Gist loaded."))
+                     (let [source (.getResponseText target)]
+                       (eval/eval-str source)
+                       (swap! status assoc
+                              :status "Gist loaded."
+                              :source source))
                      (swap! status assoc
                             :status [:.dark-red "Error:"]
                             :error (.getLastError target))))))
