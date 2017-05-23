@@ -67,8 +67,9 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value error warnings ns]}]
+  [{:keys [value error warnings source ns view/props] :as result}]
   [:div.bb.b--near-white.mb4
+   [:.o-30.code.overflow-auto.pa3 source]
    [:.ws-prewrap.overflow-hidden
 
     (if (or error (seq warnings))
@@ -98,7 +99,9 @@
                              tree/top-loc
                              (tree/string (:ns @eval/c-env))))]
 
-    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source) :id (d/unique-id))]])))
+    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source)
+                                                                                    :id (d/unique-id)
+                                                                                    :source source)]])))
 
 (defview result-pane
   {:life/did-update scroll-bottom
