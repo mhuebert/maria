@@ -1,6 +1,5 @@
 (ns maria.ns-utils)
 
-
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
        (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))

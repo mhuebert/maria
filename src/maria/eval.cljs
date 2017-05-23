@@ -32,8 +32,7 @@
                   :rel    "noopener noreferrer"} "clojuredocs.org"]))]))
 
 (defview doc-display
-  {:life/initial-state #(do (prn :doc-display (:view/props %))
-                            (:expanded? %))
+  {:life/initial-state #(:expanded? %)
    :key                :name}
   [{:keys [doc arglists view/state show-namespace?] :as this}]
   [:.ph3.bt.b--near-white
@@ -59,23 +58,36 @@
                                  :show-namespace? true}
                                 (get-in (ns-utils/ns-map @c-state namespace) [:defs name])))}))
 
-(defn dir
+(defview dir
+  {:life/initial-state {:expanded? false}}
+  [{:keys [view/state]} c-state ns]
+  (let [defs (->> (:defs (ns-utils/ns-map @c-state ns))
+                  (seq)
+                  (sort)
+                  (map second)
+                  (filter #(not (:private (:meta %)))))
+        c (count defs)
+        limit 10
+        {:keys [expanded?]} @state]
+    [:.sans-serif
+     [:.b.pv2.ph3.f5 (str ns)]
+     (map doc-display (cond->> defs
+                               (not expanded?) (take limit)))
+     (when (and (not expanded?) (> c limit))
+       [:.o-50.pv2.flex.items-center.ph3.pointer.bt.b--near-white
+        {:on-click #(swap! state assoc :expanded? true)}
+        [:span "Show All (" (- c limit) " more)"]
+        [:.flex-auto] icons/ExpandMore])]))
+
+(defn dir*
   "Display public vars in namespace"
   [c-state c-env [_ ns]]
   (let [ns (or ns (:ns @c-env))]
-    {:value
-     (element [:.sans-serif
-               [:.b.pv2.ph3.f5 (str ns)]
-               (->> (:defs (ns-utils/ns-map @c-state ns))
-                    (seq)
-                    (sort)
-                    (map second)
-                    (filter #(not (:private (:meta %))))
-                    (map doc-display))])}))
+    {:value (dir c-state ns)}))
 
 ;; mutate cljs-live's default repl-specials
 (e/swap-repl-specials! merge {'doc doc
-                              'dir dir})
+                              'dir dir*})
 
 (def eval (partial e/eval c-state c-env))
 (def eval-str (partial e/eval-str c-state c-env))

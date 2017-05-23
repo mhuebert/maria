@@ -72,7 +72,7 @@
    [:.ws-prewrap.overflow-hidden
 
     (if (or error (seq warnings))
-      [:.bg-near-white.ph3.pv2.mv2
+      [:.bg-near-white.ph3.pv2.overflow-auto
        (when error
          (.error js/console "Eval Result Contains Error" error))
        (for [message (cons (some-> error reformat-error)

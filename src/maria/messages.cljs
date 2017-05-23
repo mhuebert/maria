@@ -37,7 +37,7 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [e]
-  [:div.overflow-auto
+  [:div
    [:p (ex-message e)]
    [:p (ex-message (ex-cause e))]
    [:pre (some-> (ex-cause e) (aget "stack"))]]
