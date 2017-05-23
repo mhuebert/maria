@@ -27,11 +27,7 @@
                  [cljsjs/react-dom "15.5.4-0"]]
 
   :plugins [[lein-figwheel "0.5.10"]
-            [lein-npm "0.6.2"]
             [lein-cljsbuild "1.1.6" :exclusions [org.clojure/clojure]]]
-
-  :npm {:dependencies [[stylus "0.54.5"]
-                       [firebase-tools "3.1.0"]]}
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]

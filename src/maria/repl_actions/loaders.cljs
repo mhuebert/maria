@@ -1,18 +1,20 @@
-(ns maria.helpers.loaders
+(ns maria.repl-tools.loaders
   (:require [re-view.core :as v :refer [defview]]
             [re-view.hoc :as hoc]
             [clojure.string :as string]
             [maria.eval :as eval]
-            [goog.net.XhrIo :as xhr]))
+            [goog.net.XhrIo :as xhr]
+            [maria.views.repl-ui :as repl-ui]))
 
 (defview gist-loader-status
   [{:keys [status
            url
            error]}]
-  [:.pa3
-   [:.gray.pv2 {:style {:font-size 13}} url]
-   [:.b status]
-   (when error [:.bg-near-white.pa2 error])])
+  [:.ph3
+   {:class repl-ui/card-classes}
+   [:.gray.pv2.overflow-auto.w-100.pv2 {:style {:font-size 13}} url]
+   [:.b.mv2 status]
+   (when error [:.bg-near-white.pa2.mv2 error])])
 
 (defn normalize-gist-path [gist-path]
   (as-> gist-path path
@@ -33,7 +35,7 @@
                    (if (.isSuccess target)
                      (do
                        (eval/eval-str (.getResponseText target))
-                       (swap! status assoc :status "Loaded."))
+                       (swap! status assoc :status "Gist loaded."))
                      (swap! status assoc
                             :status [:.dark-red "Error:"]
                             :error (.getLastError target))))))

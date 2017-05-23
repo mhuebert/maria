@@ -4,7 +4,7 @@
     [cljsjs.react.dom]
 
     [maria.walkthrough :as walkthrough]
-    [maria.views.repl :as repl]
+    [maria.views.repl-layout :as repl]
     [maria.views.paredit :as paredit]
 
     ;; include to precompile for self-hosted env
@@ -27,16 +27,9 @@
 (defonce _ (r/listen #(d/transact! [(assoc % :db/id :router/location)])))
 
 (defview layout []
-  [:div.h-100
-   [:.w-100.fixed.bottom-0.z-3
-    #_[:.dib.center.left-50
-     (for [[href title] [["/" "REPL"]
-                         ["/walkthrough" "Walkthrough"]
-                         ["/paredit" "Paredit"]]]
-       [:a.dib.pa2.black-70.no-underline.f6.bg-black-05 {:href href} title])
-     ]]
+  [:.h-100
    (match (d/get :router/location :segments)
-          [] (repl/main)
+          [] (repl/layout)
           ["walkthrough"] (walkthrough/main)
           ["paredit"] (paredit/examples)
           :else (not-found))])

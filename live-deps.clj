@@ -1,4 +1,4 @@
-{:cljsbuild-out "resources/public/js/compiled/out"
+{:cljsbuild-out "resources/public/js/compiled/out-prod"
  :output-dir    "resources/public/js/cljs_bundles"
  :bundles       [{:name          cljs.core
                   :require-cache [cljs.core cljs.core$macros]}

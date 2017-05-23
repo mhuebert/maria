@@ -9,8 +9,8 @@
 First, compile stylesheets:
 
 ```
-lein npm install;
-script/styles.sh; # add -w to watch, recompiling on change
+yarn install;
+webpack -p;
 ```
 
 ### standard figwheel
@@ -50,14 +50,18 @@ to evaluate forms in the browser from emacs.
 
 ### cljs-live deps
 
+///\\\///\\\
+
+warning, cljs-live is still unstable and difficult to use
+
+///\\\///\\\
+
 Dependencies for the self-hosted ClojureScript compiler are compiled using
 [cljs-live](https://www.github.com/mhuebert/cljs-live), with deps specified
  in `live-deps.clj` and compiled to `resources/public/js/cljs_live_cache_core.js`.
 
- You should be able to do this yourself:
-
  1. Make sure planck is installed
- 2. Clone (git@github.com:mhuebert/cljs-live.git) and put a symlink to script/script/bootstrap.cljs on your path
+ 2. Clone (git@github.com:mhuebert/cljs-live.git) and put a symlink to bundle.sh on your path
  3. In this directory (maria), run `bootstrap.cljs --deps live-deps.clj` to generate an updated version of `resources/public/js/cljs_live_cache.js`
 
  (Inspect live-deps.clj to see what is included in the cache)

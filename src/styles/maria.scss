@@ -1,0 +1,75 @@
+@import "vendor/et-book";
+@import '../../node_modules/tachyons/css/tachyons.min.css';
+@import '../../node_modules/codemirror/lib/codemirror';
+@import '../../node_modules/codemirror/theme/solarized';
+@import '../../node_modules/@material/list/mdc-list';
+@import '../../node_modules/@material/menu/mdc-menu';
+@import '../../node_modules/@material/button/mdc-button';
+@import '../../node_modules/@material/ripple/mdc-ripple';
+
+html, body, #maria-main {
+  height: 100%;
+}
+
+.serif {
+  font-family: "et-book", Georgia, Times New Roman, serif;
+}
+
+div.CodeMirror {
+  height: 100%;
+}
+
+div.CodeMirror pre {
+  padding: 0;
+}
+
+div.CodeMirror {
+  span.CodeMirror-matchingbracket {
+    font-weight: bold;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .CodeMirror-evalRegion {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .cm-comment {
+    color: #a27b11;
+    font-family: 'et book', Georgia, Times New Roman, serif;
+    font-size: 15px;
+  }
+}
+
+.CodeMirror, .code, code, pre {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 14px;
+}
+
+.CodeMirror {
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  padding: 0 1rem;
+}
+
+.bg-solarized-light {
+  background: #fdf6e3;
+  box-shadow: inset 0px 0 2px 0px rgba(172, 126, 0, 0.36);
+}
+
+.CodeMirror-eval-highlight {
+  background: rgba(0, 0, 0, 0.07);
+  cursor: pointer;
+}
+
+.ws-prewrap {
+  white-space: pre-wrap;
+}
+
+.f7 {
+  font-size: 0.75rem;
+}
+.b--darken {
+  border-color: rgba(0,0,0,0.05);
+}

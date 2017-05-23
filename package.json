@@ -1,6 +1,18 @@
 {
   "dependencies": {
+    "autoprefixer": "^7.1.1",
+    "codemirror": "^5.26.0",
+    "css-loader": "^0.28.2",
+    "extract-text-webpack-plugin": "^2.1.0",
+    "firebase-tools": "^3.9.0",
     "material-components-web": "^0.11.1",
-    "stylus": "^0.54.5"
+    "node-sass": "^4.5.3",
+    "postcss": "^6.0.1",
+    "postcss-loader": "^2.0.5",
+    "sass-loader": "^6.0.5",
+    "style-loader": "^0.18.1",
+    "stylus": "^0.54.5",
+    "tachyons": "^4.7.4",
+    "webpack": "^2.6.0"
   }
 }
