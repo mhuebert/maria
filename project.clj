@@ -19,8 +19,8 @@
                  [re-view "0.3.14"]
                  [re-view-routing "0.1.3"]
 
-                 [cljs-live "0.1.12"]
-                 [magic-tree "0.0.2-SNAPSHOT"]
+                 [cljs-live "0.1.13"]
+                 [magic-tree "0.0.2"]
 
                  [cljsjs/react "15.5.4-0"]
                  [cljsjs/react-dom "15.5.4-0"]]
@@ -59,6 +59,8 @@
 
   :figwheel {:ring-handler figwheel-server.core/handler
              :css-dirs     ["resources/public/css"]}
+
+  :deploy-via :clojars
 
   :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.0"]
                                   [binaryage/devtools "0.8.2"]
