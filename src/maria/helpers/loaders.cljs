@@ -9,7 +9,7 @@
   [{:keys [status
            url
            error]}]
-  [:div
+  [:.pa3
    [:.gray.pv2 {:style {:font-size 13}} url]
    [:.b status]
    (when error [:.bg-near-white.pa2 error])])
