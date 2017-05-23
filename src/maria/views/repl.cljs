@@ -2,6 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-view.util :as v-util]
             [re-db.d :as d]
+            [re-view.hoc :as hoc]
             [magic-tree.codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
@@ -18,6 +19,36 @@
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
         :else ["(" ")"]))                                   ; XXX probably wrong
+
+(defn builtin-ns? [s]
+  (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s)))
+
+(defn ns-map [ns]
+  (get-in @eval/c-state [:cljs.analyzer/namespaces ns]))
+
+(defn usable-names [ns]
+  (->> (ns-map ns)
+       (dissoc :defs)
+       (vals)
+       (filter map?)
+       (map #(dissoc % :order :seen))
+       (apply merge)))
+
+(defn user-namespaces []
+  (->> (keys (:cljs.analyzer/namespaces @eval/c-state))
+       (filter (complement builtin-ns?))))
+
+(def current-namespace
+  (fn [] (hoc/bind-atom (v/view [{:keys [ns]}]
+                                [:span
+                                 (str ns)
+                                 (when-let [ns-doc (:doc (ns-map ns))]
+                                   [:span.pl2.f7.o-50 ns-doc])]) eval/c-env)))
+
+(defn source-bar []
+  [:.ph3.pv2.bb.code.o-60 {:style {:border-color     "rgba(0,0,0,0.03)"
+                                   :background-color "#f7eed4"}}
+   (current-namespace)])
 
 (defn format-value
   [value]
@@ -85,7 +116,8 @@
    :life/did-mount     (fn [this] (some-> (.getEditor this) (.focus)))}
   [{:keys [view/state] :as this}]
   [:.flex.flex-row.h-100
-   [:.w-50.h-100.bg-solarized-light.pb4
+   [:.w-50.h-100.bg-solarized-light.pb4.relative
+    (source-bar)
     (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                     :local-storage   [repl-editor-id
                                       ";; Type code here; press command-enter or command-click to evaluate forms.\n"]

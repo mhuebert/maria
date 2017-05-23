@@ -82,8 +82,8 @@
    :life/should-update
                        (fn [_] false)}
   [{:keys [view/state]}]
-  [:.h-100 {:ref (fn [el]
-                   (when el (swap! state assoc :editor-container el)))}])
+  [:.h-100.ph3 {:ref (fn [el]
+                       (when el (swap! state assoc :editor-container el)))}])
 
 (defn viewer [source]
   (editor {:read-only? true
