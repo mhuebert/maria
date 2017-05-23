@@ -8,7 +8,9 @@
             [maria.user :refer [show]]
             [cljs.pprint :refer [pprint]]
             [maria.messages :refer [reformat-error reformat-warning]]
-            [magic-tree.core :as tree]))
+            [magic-tree.core :as tree]
+            [goog.net.XhrIo :as xhr]
+            [clojure.string :as string]))
 
 (def repl-editor-id "maria-repl-left-pane")
 
@@ -41,7 +43,7 @@
    :life/should-update #(not= (:view/props %) (:view/prev-props %))}
   [{:keys [value error warnings]}]
   [:div.bb.b--near-white.ph3
-   [:.mv2.ws-prewrap
+   [:.mv2.ws-prewrap.overflow-auto
     (if (or error (seq warnings))
       [:.bg-near-white.ph3.pv2.mv2
        (when error
