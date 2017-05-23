@@ -1,22 +1,21 @@
-(ns maria.ns-utils
-  (:require [maria.eval :as eval]))
+(ns maria.ns-utils)
 
 
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
        (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))
 
-(defn ns-map [ns]
-  (get-in @eval/c-state [:cljs.analyzer/namespaces ns]))
+(defn ns-map [c-state ns]
+  (get-in c-state [:cljs.analyzer/namespaces ns]))
 
-(defn usable-names [ns]
-  (->> (ns-map ns)
+(defn usable-names [c-state ns]
+  (->> (ns-map c-state ns)
        (dissoc :defs)
        (vals)
        (filter map?)
        (map #(dissoc % :order :seen))
        (apply merge)))
 
-(defn user-namespaces []
-  (->> (keys (:cljs.analyzer/namespaces @eval/c-state))
+(defn user-namespaces [c-state]
+  (->> (keys (:cljs.analyzer/namespaces c-state))
        (filter (complement builtin-ns?))))

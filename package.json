@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "material-components-web": "^0.11.1"
+    "material-components-web": "^0.11.1",
+    "stylus": "^0.54.5"
   }
 }

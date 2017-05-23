@@ -11,7 +11,8 @@
             [maria.messages :refer [reformat-error reformat-warning]]
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
-            [re-view-material.core :as ui]))
+            [re-view-material.core :as ui]
+            [re-view-material.icons :as icons]))
 
 (def repl-editor-id "maria-repl-left-pane")
 
@@ -33,9 +34,9 @@
                                                                           :ripple       false
                                                                           :style        (when (= item-ns ns)
                                                                                           {:background-color "rgba(0,0,0,0.05)"})
-                                                                          :on-click     #(eval/eval-str `(~'in-ns ~item-ns))})) (-> (cons ns (ns-utils/user-namespaces))
+                                                                          :on-click     #(eval/eval-str `(~'in-ns ~item-ns))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
                                                                                                                                     (distinct))))
-                                 (when-let [ns-doc (:doc (ns-utils/ns-map ns))]
+                                 (when-let [ns-doc (:doc (ns-utils/ns-map @eval/c-state ns))]
                                    [:span.pl2.f7.o-50 ns-doc])]) eval/c-env)))
 
 (defn source-bar []
@@ -45,29 +46,31 @@
 
 (defn format-value
   [value]
-  [:span
-   (cond
-     (= :shape (:is-a value)) (show value)                  ; synthesize component for shape
-     (or (vector? value)
-         (seq? value)
-         (set? value)) (let [[lb rb] (bracket-type value)]
-                         (list
-                           [:span.output-bracket lb]
-                           (interpose " " (v-util/map-with-keys format-value value))
-                           [:span.output-bracket rb]))
+  (let [element? (v/is-react-element? value)]
+    (if element?
+      value
+      [:.ph3
+       (cond
+         (= :shape (:is-a value)) (show value)              ; synthesize component for shape
+         (or (vector? value)
+             (seq? value)
+             (set? value)) (let [[lb rb] (bracket-type value)]
+                             (list
+                               [:span.output-bracket lb]
+                               (interpose " " (v-util/map-with-keys format-value value))
+                               [:span.output-bracket rb]))
 
-     (v/is-react-element? value) value
-     :else (if (nil? value)
-             "nil"
-             (try (with-out-str (pprint value))
-                  (catch js/Error e "error printing result"))))])
+         :else (if (nil? value)
+                 "nil"
+                 (try (with-out-str (pprint value))
+                      (catch js/Error e "error printing result"))))])))
 
 (defview display-result
-  {:key                :id
-   :life/should-update #(not= (:view/props %) (:view/prev-props %))}
-  [{:keys [value error warnings]}]
-  [:div.bb.b--near-white.ph3
-   [:.mv2.ws-prewrap.overflow-auto
+  {:key :id}
+  [{:keys [value error warnings ns]}]
+  [:div.bb.b--near-white.mb4
+   [:.ws-prewrap.overflow-hidden
+
     (if (or error (seq warnings))
       [:.bg-near-white.ph3.pv2.mv2
        (when error
@@ -76,7 +79,9 @@
                            (map reformat-warning (distinct warnings)))
              :when message]
          [:.pv2 message])]
-      (format-value value))]])
+      (format-value value))]
+   (when ns
+     [:.bg-near-white.ph3.pv2.mb2 (str ns)])])
 
 (defn scroll-bottom [component]
   (let [el (v/dom-node component)]
@@ -99,7 +104,7 @@
   {:life/did-update scroll-bottom
    :life/did-mount  scroll-bottom}
   []
-  [:div.h-100.overflow-auto.code
+  [:div.h-100.overflow-auto.code.pt
    (map display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
 
 (defview main

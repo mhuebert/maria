@@ -30,7 +30,10 @@
    :magicEdit         true})
 
 (defview editor
-  {:life/initial-state {:editor nil}
+  {:view/spec          {:props {:local-storage   :Vector
+                                :event/mousedown :Function
+                                :event/keydown   :Function}}
+   :life/initial-state {:editor nil}
    :life/will-mount
                        #(some->> (:local-storage %)
                                  (apply init-local-storage))
@@ -38,7 +41,7 @@
                        (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props]
                              [local-storage-id _] :local-storage
                              :as                  this}]
-                         (let [dom-node (v/dom-node (:editor-container @state))
+                         (let [dom-node (v/dom-node this)
                                editor (js/CodeMirror dom-node
                                                      (clj->js (merge cm-opts
                                                                      (cond-> options
@@ -79,11 +82,9 @@
                          (when (and (not= (:source @state) (:source prev-state)) (:editor prev-state))
                            (cm/set-preserve-cursor (:editor prev-state) (:source @state))))
 
-   :life/should-update
-                       (fn [_] false)}
-  [{:keys [view/state]}]
-  [:.h-100.ph3 {:ref (fn [el]
-                       (when el (swap! state assoc :editor-container el)))}])
+   :life/should-update (fn [_] false)}
+  [{:keys [view/state] :as this}]
+  [:.h-100 ])
 
 (defn viewer [source]
   (editor {:read-only? true
