@@ -1,4 +1,4 @@
-(ns maria.repl-tools.loaders
+(ns maria.repl-actions.loaders
   (:require [re-view.core :as v :refer [defview]]
             [re-view.hoc :as hoc]
             [clojure.string :as string]
