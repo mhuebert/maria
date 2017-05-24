@@ -1,8 +1,15 @@
 machine:
+  environment:
+    PATH: "${PATH}:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
   java:
     version: oraclejdk8
 dependencies:
+  cache_directories:
+    - ~/.cache/yarn
+  override:
+    - yarn
   post:
     - webpack -p
     - lein cljsbuild once prod
     - node_modules/firebase-tools/bin/firebase deploy --only hosting --token $FIREBASE_TOKEN
+
