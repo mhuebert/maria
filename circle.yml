@@ -3,7 +3,6 @@ machine:
     version: oraclejdk8
 dependencies:
   post:
-    - lein npm install
-    - script/styles.sh
+    - webpack -p
     - lein cljsbuild once prod
     - node_modules/firebase-tools/bin/firebase deploy --only hosting --token $FIREBASE_TOKEN
