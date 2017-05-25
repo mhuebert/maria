@@ -18,7 +18,7 @@
 
                  [re-view "0.3.16"]
                  [re-view-routing "0.1.3"]
-                 [re-view-material "0.1.2"]
+                 [re-view-material "0.1.3"]
 
                  [cljs-live "0.1.13"]
                  [magic-tree "0.0.2"]
