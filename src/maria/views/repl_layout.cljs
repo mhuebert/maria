@@ -55,18 +55,20 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
-(defn eval-editor [cm]
-  (when-let [source (or (cm/selection-text cm)
-                        (->> cm
-                             :magic/cursor
-                             :bracket-loc
-                             tree/top-loc
-                             (tree/string (:ns @eval/c-env))))]
+(defn eval-editor [cm scope]
+  (let [traverse (case scope :top-level tree/top-loc
+                             :bracket identity)]
+    (when-let [source (or (cm/selection-text cm)
+                          (->> cm
+                               :magic/cursor
+                               :bracket-loc
+                               (traverse)
+                               (tree/string (:ns @eval/c-env))))]
 
-    (d/transact! [[:db/update-attr :repl/state :eval-log conj (assoc (eval/eval-str source)
-                                                                :id (d/unique-id)
+      (d/transact! [[:db/update-attr :repl/state :eval-log conj (assoc (eval/eval-str source)
+                                                                  :id (d/unique-id)
 
-                                                                :source source)]])))
+                                                                  :source source)]]))))
 
 
 
@@ -103,7 +105,10 @@
                                          ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
                      :event/mousedown #(when (.-metaKey %)
                                          (.preventDefault %)
-                                         (eval-editor (.getEditor this)))
-                     :event/keydown   #(when (and (= 13 (.-which %2)) (.-metaKey %2))
-                                         (eval-editor %1))})]]
+                                         (eval-editor (.getEditor this) :bracket))
+                     :event/keydown   #(when
+                                         (and (= 13 (.-which %2)) (.-metaKey %2))
+                                         (eval-editor %1 (if (.-shiftKey %2)
+                                                           :bracket
+                                                           :top-level)))})]]
    (result-pane)])
