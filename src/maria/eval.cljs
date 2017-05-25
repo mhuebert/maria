@@ -35,7 +35,7 @@
          (do (set! cljs-live.compiler/debug? true)
              (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
                                "/js/cljs_bundles/maria.user.json"
-                               #_"/js/cljs_bundles/quil.json"]
+                               #_"/js/cljs_bundles/cljs.spec.alpha.json"]
                               (fn []
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))

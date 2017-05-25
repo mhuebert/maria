@@ -17,7 +17,7 @@
    {:class repl-ui/card-classes}
 
    [:.b.mv2.flex.items-center
-    (when source {:class "pointer"
+    (when source {:class    "pointer"
                   :on-click #(swap! state not)})
     status
     [:.flex-auto]
@@ -31,30 +31,37 @@
 
    (when error [:.bg-near-white.pa2.mv2 error])])
 
-(defn normalize-gist-path [gist-path]
-  (as-> gist-path path
-        (string/replace path #"https://gist\.github.*?\.com/" "")
-        (str "https://gist.githubusercontent.com/" path)
-        (cond-> path
-                (not (re-find #"\.(?:clj|cljs|cljc)$" path)) (str "/raw"))))
+(defn gist-source [gist-json]
+  (->> (js->clj (aget gist-json "files"))
+       (vals)
+       (keep (fn [{:strs [content language]}]
+               (when (= language "Clojure")
+                 content)))
+       (string/join "\n")))
+
+(defn get-gist [id cb]
+  (let [status (atom {:url    id
+                      :status "Loading gist..."})]
+    (xhr/send (str "https://api.github.com/gists/" id)
+              (fn [e]
+                (let [target (.-target e)]
+                  (if (.isSuccess target)
+                    (cb {:value (.getResponseJson target)})
+                    (cb {:error (.getLastError target)})))))))
 
 (defn load-gist
-  ([gist-path] (load-gist gist-path {}))
-  ([gist-path opts]
-   (let [url (normalize-gist-path gist-path)
-         status (atom {:url    url
-                       :status "Loading gist..."})]
-     (xhr/send url
-               (fn [e]
-                 (let [target (.-target e)]
-                   (if (.isSuccess target)
-                     (let [source (.getResponseText target)]
+  [id]
+  (let [status (atom {:url    id
+                      :status "Loading gist..."})]
+    (get-gist id (fn [{:keys [value error]}]
+                   (if error
+                     (swap! status assoc
+                            :status [:.dark-red "Error:"]
+                            :error error)
+                     (let [source (gist-source value)]
                        (eval/eval-str source)
                        (swap! status assoc
                               :status "Gist loaded."
-                              :source source))
-                     (swap! status assoc
-                            :status [:.dark-red "Error:"]
-                            :error (.getLastError target))))))
-     (-> gist-loader-status
-         (hoc/bind-atom status)))))
+                              :source source)))))
+    (-> gist-loader-status
+        (hoc/bind-atom status))))

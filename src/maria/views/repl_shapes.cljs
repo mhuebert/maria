@@ -1,7 +1,6 @@
 (ns maria.views.repl-shapes
   (:require [re-view-hiccup.core :refer [element]]))
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
 

@@ -38,7 +38,7 @@
                         :source-paths ["src"]
                         :figwheel     true
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "js/compiled/out"
+                                       :asset-path     "/js/compiled/out"
                                        :output-to      "resources/public/js/compiled/maria.js"
                                        :output-dir     "resources/public/js/compiled/out"
                                        ;:source-map-timestamp true
@@ -47,7 +47,7 @@
                        {:id           "prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "js/compiled/out"
+                                       :asset-path     "/js/compiled/out"
                                        :output-to      "resources/public/js/compiled/maria.js"
                                        :output-dir     "resources/public/js/compiled/out-prod"
                                        :cache-analysis true

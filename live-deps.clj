@@ -6,4 +6,11 @@
                   :require        [[maria.user :include-macros true]]
                   :require-macros [magic-tree.backtick]
                   :provided       [maria.core]
-                  :require-cache  [maria.eval]}]}
+                  :require-cache  [maria.eval]}
+                 {:name           cljs.spec.alpha
+                  :require        [cljs.spec.alpha]
+                  :require-macros [cljs.spec.alpha]
+                  :provided       [maria.core
+                                   maria.user
+                                   cljs.core
+                                   cljs.core$macros]}]}

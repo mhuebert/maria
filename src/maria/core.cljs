@@ -17,7 +17,9 @@
     [re-view-routing.core :as r]
     [re-view.core :as v :refer [defview]]
     [cljs.core.match :refer-macros [match]]
-    [re-db.d :as d]))
+    [re-db.d :as d]
+
+    [clojure.spec.alpha :include-macros true]))
 
 (enable-console-print!)
 
@@ -30,6 +32,7 @@
   [:.h-100
    (match (d/get :router/location :segments)
           [] (repl/layout)
+          ["gist" id] (repl/layout {:gist-id id})
           ["walkthrough"] (walkthrough/main)
           ["paredit"] (paredit/examples)
           :else (not-found))])

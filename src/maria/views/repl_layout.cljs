@@ -9,14 +9,25 @@
 
             [cljs.pprint :refer [pprint]]
 
+            [maria.repl-actions.loaders :as loaders]
+
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
             [clojure.string :as string]
-            [maria.views.repl-values :as repl-values]))
+            [maria.views.repl-values :as repl-values]
+            [maria.views.repl-ui :as repl-ui]))
 
-(def repl-editor-id "maria-repl-left-pane")
-
+(defonce _
+         (do
+           (d/transact! [[:db/add :repl/state {:eval-log []}]])
+           (add-watch eval/c-env :notice-namespace-changes
+                      (fn [_ _ {prev-ns :ns} {ns :ns}]
+                        (when (not= prev-ns ns)
+                          (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
+                                                         (fnil conj [])
+                                                         {:id    (d/unique-id)
+                                                          :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}
@@ -52,32 +63,44 @@
                              tree/top-loc
                              (tree/string (:ns @eval/c-env))))]
 
-    (d/transact! [[:db/update-attr repl-editor-id :eval-result-log (fnil conj []) (assoc (eval/eval-str source)
-                                                                                    :id (d/unique-id)
-                                                                                    :source source)]])))
+    (d/transact! [[:db/update-attr :repl/state :eval-log conj (assoc (eval/eval-str source)
+                                                                :id (d/unique-id)
+
+                                                                :source source)]])))
+
+
 
 (defview result-pane
   {:life/did-update scroll-bottom
    :life/did-mount  scroll-bottom}
   []
   [:.w-50.h-100.overflow-auto.code.pt.bg-near-white
-   (map repl-values/display-result (last-n 50 (d/get repl-editor-id :eval-result-log)))])
+   (map repl-values/display-result (last-n 50 (d/get :repl/state :eval-log)))])
 
 (defview layout
   {:life/initial-state {:repl-editor nil}
    :get-editor         (fn [{:keys [view/state]}]
                          (some-> (:repl-editor @state) :view/state deref :editor))
-   :life/did-mount     (fn [this] (some-> (.getEditor this) (.focus)))}
-  [{:keys [view/state] :as this}]
+   :life/did-mount     (fn [{:keys [gist-id] :as this}]
+                         (let [editor (.getEditor this)]
+                           (some-> editor (.focus))
+                           (when gist-id
+                             (loaders/get-gist gist-id (fn [{:keys [value error]}]
+                                                         (.setValue editor (or (some-> value (loaders/gist-source))
+                                                                               (str "\nError loading gist:  " error))))))))}
+  [{:keys [view/state gist-id] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
-    [:.ph3.pv2.bb.code.flex-none {:style {:border-color     "rgba(0,0,0,0.03)"
-                                          :background-color "#f7eed4"}}
-     (hoc/bind-atom current-namespace eval/c-env)]
+    #_[:.ph3.pv2.bb.code.flex-none {:style {:border-color     "rgba(0,0,0,0.03)"
+                                            :background-color "#f7eed4"}}
+       (hoc/bind-atom current-namespace eval/c-env)]
     [:.flex-auto.overflow-auto.pb4
      (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                     :local-storage   [repl-editor-id
-                                       ";; Type code here; press command-enter or command-click to evaluate forms.\n"]
+                     :local-storage   (if gist-id
+                                        [gist-id
+                                         ";; loading gist"]
+                                        ["maria-repl-left-pane"
+                                         ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
                      :event/mousedown #(when (.-metaKey %)
                                          (.preventDefault %)
                                          (eval-editor (.getEditor this)))

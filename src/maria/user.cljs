@@ -1,7 +1,7 @@
 (ns maria.user
   (:require
     [re-view-hiccup.core :refer [element] :rename {element html}]
-    [maria.messages :as messages]
+    [maria.messages :refer [what-is]]
     [maria.repl-actions.loaders :refer [load-gist]]
     [maria.views.repl-shapes :as shapes :refer [show
                                                 circle

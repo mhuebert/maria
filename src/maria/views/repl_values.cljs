@@ -35,7 +35,8 @@
   {:key :id}
   [{:keys [value error warnings source ns view/props] :as result}]
   [:div.bb.b--darken
-   [:.o-50.code.overflow-auto.ma3 source]
+   (when source
+     [:.o-50.code.overflow-auto.ma3 source])
    [:.ws-prewrap.overflow-hidden.mv3
     (cond (or error (seq warnings))
           [:.bg-near-white.ph3.pv2.overflow-auto
@@ -45,9 +46,7 @@
              [:.pv2 message])]
           (v/is-react-element? value)
           value
-          :else [:.mh3 (format-value value)])]
-   (when ns
-     [:.pa3 [:span.b "Namespace: "] (str ns)])])
+          :else [:.mh3 (format-value value)])]])
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
