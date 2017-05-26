@@ -4,7 +4,8 @@
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
             [maria.views.repl-shapes :as shapes]
-            [cljs.pprint :refer [pprint]]))
+            [cljs.pprint :refer [pprint]]
+            [re-view-material.icons :as icons]))
 
 
 (defn bracket-type [value]
@@ -33,20 +34,24 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value error warnings source ns view/props] :as result}]
-  [:div.bb.b--darken
+  [{:keys [value error warnings source]}]
+  [:div.bb.b--darken.overflow-hidden
    (when source
-     [:.o-50.code.overflow-auto.ma3 source])
-   [:.ws-prewrap.overflow-hidden.mv3
+     [:.o-50.code.ma3.overflow-auto.pre
+      {:style {:max-height 200}} source])
+   [:.ws-prewrap.relative
+    {:style {:max-height 500
+             :overflow-y "auto"}}
     (cond (or error (seq warnings))
           [:.bg-near-white.ph3.pv2.overflow-auto
            (for [message (cons (some-> error messages/reformat-error)
                                (map messages/reformat-warning (distinct warnings)))
                  :when message]
-             [:.pv2 message])]
+             [:.ph3.pv2 message])]
           (v/is-react-element? value)
           value
-          :else [:.mh3 (format-value value)])]])
+          :else [:.ma3 (format-value value)])]
+   ])
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

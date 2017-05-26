@@ -106,9 +106,9 @@
                      :event/mousedown #(when (.-metaKey %)
                                          (.preventDefault %)
                                          (eval-editor (.getEditor this) :bracket))
-                     :event/keydown   #(when
-                                         (and (= 13 (.-which %2)) (.-metaKey %2))
-                                         (eval-editor %1 (if (.-shiftKey %2)
-                                                           :bracket
-                                                           :top-level)))})]]
+                     :event/keydown   (fn [editor e]
+                                        (case (.keyName js/CodeMirror e)
+                                          "Cmd-Enter" (eval-editor editor :top-level)
+                                          "Cmd-Shift-Enter" (eval-editor editor :bracket)
+                                          nil))})]]
    (result-pane)])
