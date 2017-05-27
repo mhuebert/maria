@@ -11,19 +11,19 @@
   "Returns a string describing what kind of thing `thing` is."
   [thing]
   (cond
-    (vector? thing) "a vector"
-    (list? thing) "a list"
-    (string? thing) "a string"
-    (char? thing) "a character"
-    (number? thing) "a number"
+    (vector?  thing) "a vector"
+    (list?    thing) "a list"
+    (string?  thing) "a string"
+    (char?    thing) "a character"
+    (number?  thing) "a number"
     (keyword? thing) "a keyword"
-    (symbol? thing) "a symbol"
-    (fn? thing) "a function"
-    (map? thing) "a map"
-    (seq? thing) "a sequence"
-    (true? thing) "the Boolean value true"
-    (false? thing) "the Boolean value false"
-    (nil? thing) "the special value nil (nothing)"
+    (symbol?  thing) "a symbol"
+    (fn?      thing) "a function"
+    (map?     thing) "a map"
+    (seq?     thing) "a sequence"
+    (true?    thing) "the Boolean value true"
+    (false?   thing) "the Boolean value false"
+    (nil?     thing) "the special value nil (nothing)"
     :else (type thing)))
 
 (defn tokenize
@@ -119,13 +119,13 @@
   (what-is (fn [_]))                                        ;"a function"
 
   (reformat-error "Error: No protocol method ICollection.-conj defined for type number: 5")
-  ;;=> "The number `5` can't be used as a collection."  
+  ;;=> "The number `5` can't be used as a collection."
 
   (reformat-error "Error: 1 is not ISeqable")
   ;;=> "The value `1` can't be used as a sequence or collection."
 
   (reformat-error "TypeError: 1.call is not a function")
-  ;;=> "The value `1` isn't a function, but it's being called like one."  
+  ;;=> "The value `1` isn't a function, but it's being called like one."
 
   (reformat-warning '{:type        :invalid-arithmetic,
                       :extra       {:js-op cljs.core/+, :types [cljs.core/IVector number]},
