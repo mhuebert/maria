@@ -1,25 +1,24 @@
 (ns maria.core
-  (:require
-    [cljsjs.react]
-    [cljsjs.react.dom]
+  (:require [cljsjs.react]
+            [cljsjs.react.dom]
 
-    [maria.walkthrough :as walkthrough]
-    [maria.views.repl-layout :as repl]
-    [maria.views.paredit :as paredit]
+            [maria.walkthrough :as walkthrough]
+            [maria.views.repl-layout :as repl]
+            [maria.views.paredit :as paredit]
 
-    ;; include to precompile for self-hosted env
-    [clojure.set]
-    [clojure.string]
-    [clojure.walk]
+            ;; include to precompile for self-hosted env
+            [clojure.set]
+            [clojure.string]
+            [clojure.walk]
 
-    [maria.html]
-    [maria.user :include-macros true]
-    [re-view-routing.core :as r]
-    [re-view.core :as v :refer [defview]]
-    [cljs.core.match :refer-macros [match]]
-    [re-db.d :as d]
+            [maria.html]
+            [maria.user :include-macros true]
+            [re-view-routing.core :as r]
+            [re-view.core :as v :refer [defview]]
+            [cljs.core.match :refer-macros [match]]
+            [re-db.d :as d]
 
-    [clojure.spec.alpha :include-macros true]))
+            [clojure.spec.alpha :include-macros true]))
 
 (enable-console-print!)
 

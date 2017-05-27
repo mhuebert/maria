@@ -49,8 +49,7 @@
                     (cb {:value (.getResponseJson target)})
                     (cb {:error (.getLastError target)})))))))
 
-(defn load-gist
-  [id]
+(defn load-gist [id]
   (let [status (atom {:url    id
                       :status "Loading gist..."})]
     (get-gist id (fn [{:keys [value error]}]
