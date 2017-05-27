@@ -7,6 +7,7 @@
 
             ))
 
+;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."
   [thing]
