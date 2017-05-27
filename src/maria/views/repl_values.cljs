@@ -13,8 +13,7 @@
         (set? value) ["#{" "}"]
         :else ["(" ")"]))
 
-(defn format-value
-  [value]
+(defn format-value [value]
   [:span
    (cond
      (= :shape (:is-a value)) (shapes/show value)           ; synthesize component for shape
@@ -22,9 +21,9 @@
          (seq? value)
          (set? value)) (let [[lb rb] (bracket-type value)]
                          (list
-                           [:span.output-bracket lb]
-                           (interpose " " (v-util/map-with-keys format-value value))
-                           [:span.output-bracket rb]))
+                          [:span.output-bracket lb]
+                          (interpose " " (v-util/map-with-keys format-value value))
+                          [:span.output-bracket rb]))
      (v/is-react-element? value) value
 
      :else (if (nil? value)
@@ -50,8 +49,7 @@
              [:.ph3.pv2 message])]
           (v/is-react-element? value)
           value
-          :else [:.ma3 (format-value value)])]
-   ])
+          :else [:.ma3 (format-value value)])]])
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
