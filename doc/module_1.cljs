@@ -25,11 +25,11 @@
 (circle 20)
 
 ;; This time, Clojure evaluated a circle for us. You might notice that
-;; this expression is enclosed by parentheses--`( )`. This makes the
+;; this expression is enclosed by parentheses: `( )`. This makes the
 ;; expression a function. The function name is the first thing inside
 ;; the parentheses. After the function name go the values we want to
 ;; give to the function. Those values are called the parameters. Here,
-;; we're evaluating the function `circle` a radius parameter of `20`.
+;; we're evaluating the function `circle` with a radius of `20`.
 
 ;; XXX we need arglists hints so I can explain them here
 
