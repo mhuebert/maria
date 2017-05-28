@@ -14,6 +14,7 @@
   (cond
     (vector?  thing) "a vector: a collection of values, indexed by contiguous integers"
     (list?    thing) "a list: a collection and sequence, possibly lazy"
+    (set?     thing) "a set: a collection of unique values"
     (string?  thing) "a string: text characters"
     (char?    thing) "a character: a single literal unit of text"
     (number?  thing) "a number: literal digits or a ratio"
@@ -81,32 +82,36 @@
 ;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
-(defn reformat-warning [w]
+(defn reformat-warning [{{:keys [line column]} :env :as w}]
   (let [bad-types (map type-to-name
                        (remove (partial = 'number)
                                (:types (:extra w))))]
-    (case (:type w)
-      :fn-arity (str "The function `"
-                     (name (-> w :extra :name))
-                     "` in the expression `"
-                     (:source-form w)
-                     "` needs "
-                     (if (= 0 (-> w :extra :argc))          ;; TODO get arity from meta
-                       "more"
-                       "a different number of")
-                     " arguments.")
-      :invalid-arithmetic (str "In the expression `"
-                               (:source-form w)
-                               "`, the arithmetic operaror `"
-                               (name (-> w :extra :js-op))
-                               "` can't be used on non-numbers, like "
-                               (humanize-sequence bad-types) ".")
-      :undeclared-var (str "The expression `"
-                           (:source-form w)
-                           "` contains `"
-                           (-> w :extra :suffix)
-                           "`, but it hasn't been defined!")
-      (with-out-str (pprint (dissoc w :env))))))
+
+    [:div
+     [:div "line: " line ", column: " column]
+
+     (case (:type w)
+       :fn-arity (str "The function `"
+                      (name (-> w :extra :name))
+                      "` in the expression `"
+                      (:source-form w)
+                      "` needs "
+                      (if (= 0 (-> w :extra :argc))         ;; TODO get arity from meta
+                        "more"
+                        "a different number of")
+                      " arguments.")
+       :invalid-arithmetic (str "In the expression `"
+                                (:source-form w)
+                                "`, the arithmetic operaror `"
+                                (name (-> w :extra :js-op))
+                                "` can't be used on non-numbers, like "
+                                (humanize-sequence bad-types) ".")
+       :undeclared-var (str "The expression `"
+                            (:source-form w)
+                            "` contains `"
+                            (-> w :extra :suffix)
+                            "`, but it hasn't been defined!")
+       (with-out-str (pprint (dissoc w :env))))]))
 
 ;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :source-form (what-is "foo")}
 

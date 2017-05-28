@@ -20,3 +20,9 @@
   (let [ns (or ns (:ns @c-env))]
     {:value (repl-ns/dir c-state ns)}))
 
+(defspecial what-is
+  "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
+  [c-state c-env thing]
+  (e/eval c-state c-env `(maria.messages/what-is ~(if (and (symbol? thing)
+                                                           (contains? e/repl-specials thing))
+                                                    '(fn []) thing))))

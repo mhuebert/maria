@@ -44,7 +44,7 @@
    (when source
      [:.o-50.code.ma3.overflow-auto.pre
       {:style {:max-height 200}} source])
-   [:.ws-prewrap.relative
+   [:.ws-prewrap.relative.mv3
     {:style {:max-height 500
              :overflow-y "auto"}}
     (cond (or error (seq warnings))
@@ -55,7 +55,7 @@
              [:.ph3.pv2 message])]
           (v/is-react-element? value)
           value
-          :else [:.ma3 (format-value value)])]])
+          :else [:.mh3 (format-value value)])]])
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

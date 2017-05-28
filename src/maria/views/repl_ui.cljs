@@ -6,14 +6,11 @@
 (v/defn card
   {:spec/props {:spec/keys []}
    :spec/children []}
-
   [& items]
   (into [:div {:class card-classes}] items))
 
 (v/defn plain [& items]
-  (into [:.ma3] items))
-
-
+  (into [:.mh3] items))
 
 (defn scroll-bottom [component]
   (let [el (v/dom-node component)]
