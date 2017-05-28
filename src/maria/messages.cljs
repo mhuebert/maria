@@ -4,7 +4,6 @@
     ;; core.match not yet supported in self-hosted clojurescript
     ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
     #_[clojure.core.match :refer-macros [match]]
-
             ))
 
 ;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures
@@ -36,14 +35,17 @@
        rest
        (into [])))
 
+
+
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [e]
+  [{:keys [error error-location]}]
   [:div
-   [:p (ex-message e)]
-   [:p (ex-message (ex-cause e))]
-   [:pre (some-> (ex-cause e) (aget "stack"))]]
-  #_(match [(tokenize e)]
+   [:.f7 (str error-location)]
+   [:p (ex-message error)]
+   [:p (ex-message (ex-cause error))]
+   [:pre (some-> (ex-cause error) (aget "stack"))]]
+  #_(match [(tokenize error)]
            [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
            (str "It looks like you're trying to call a function that hasn't been defined.")
            [["invalid" "arity" the-value]]                  ;; TODO warning is better
@@ -54,7 +56,7 @@
            (str "The value `" the-value "` can't be used as a sequence or collection.")
            [[the-value "call" "is" "not" "a" "function"]]
            (str "The value `" the-value "` isn't a function, but it's being called like one.")
-           :else e))
+           :else error))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -82,13 +84,13 @@
 ;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
-(defn reformat-warning [{{:keys [line column]} :env :as w}]
+(defn reformat-warning [{:keys [env] :as w}]
   (let [bad-types (map type-to-name
                        (remove (partial = 'number)
                                (:types (:extra w))))]
 
     [:div
-     [:div "line: " line ", column: " column]
+     [:.f7 (str (select-keys env [:line :column]))]
 
      (case (:type w)
        :fn-arity (str "The function `"

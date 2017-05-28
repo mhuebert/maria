@@ -7,7 +7,6 @@
             [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]))
 
-
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
@@ -21,9 +20,9 @@
          (seq? value)
          (set? value)) (let [[lb rb] (bracket-type value)]
                          (list
-                          [:span.output-bracket lb]
-                          (interpose " " (v-util/map-with-keys format-value value))
-                          [:span.output-bracket rb]))
+                           [:span.output-bracket lb]
+                           (interpose " " (v-util/map-with-keys format-value value))
+                           [:span.output-bracket rb]))
      (v/is-react-element? value) value
 
      :else (if (nil? value)
@@ -33,10 +32,8 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value error warnings source]}]
+  [{:keys [value error warnings source] :as result}]
   (when error
-    (prn :error-data (ex-data error))
-    (prn :error-cause-data (ex-data (ex-cause error)))
     (.error js/console error))
   (when warnings
     (prn :warnings warnings))
@@ -49,7 +46,7 @@
              :overflow-y "auto"}}
     (cond (or error (seq warnings))
           [:.bg-near-white.ph3.pv2.overflow-auto
-           (for [message (cons (some-> error messages/reformat-error)
+           (for [message (cons (when error (messages/reformat-error result))
                                (map messages/reformat-warning (distinct warnings)))
                  :when message]
              [:.ph3.pv2 message])]
