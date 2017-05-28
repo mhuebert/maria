@@ -74,19 +74,17 @@
     {:width  (:width (apply max-key :width bounds))
      :height (:height (apply max-key :height bounds))}))
 
-(defn shape->vector [shape]
-  [(:kind shape)
-   (-> shape (dissoc :is-a) (dissoc :kind))
-   (when-let [kids (:children shape)]
-     (mapv shape->vector kids))])
+(defn shape->vector [{:keys [kind children] :as shape}]
+  (-> [kind (dissoc shape :is-a :kind)]
+      (into (mapv shape->vector children))))
 
 ;; TODO becomes a method of the shape protocol
 (defn show
   "Returns a component from this collection of shapes."
   [shapes]
   (let [shapes (assure-shape-seq shapes)]
-    (element (into [:svg (assoc (bounds shapes) :x 0 :y 0)]
-                   (map shape->vector shapes)))))
+    (element (-> [:svg (assoc (bounds shapes) :x 0 :y 0)]
+                 (into (mapv shape->vector shapes))))))
 
 (defn colorize
   "Return `shape` with its color changed to `color`."
