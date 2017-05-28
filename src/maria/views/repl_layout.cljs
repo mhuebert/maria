@@ -48,9 +48,7 @@
      [:span.pl2.f7.o-50 ns-doc])])
 
 
-(defn scroll-bottom [component]
-  (let [el (v/dom-node component)]
-    (set! (.-scrollTop el) (.-scrollHeight el))))
+
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -72,12 +70,14 @@
 
 
 
-(defview result-pane
-  {:life/did-update scroll-bottom
-   :life/did-mount  scroll-bottom}
-  []
-  [:.w-50.h-100.overflow-auto.code.pt.bg-near-white
-   (map repl-values/display-result (last-n 50 (d/get :repl/state :eval-log)))])
+(def result-toolbar
+  [:.bt.code.flex.items-center.z-1.flex-none
+   {:style {:border-color     "rgba(0,0,0,0.03)"
+            :background-color "rgba(0,0,0,0.02)"}}
+   [:.flex-auto]
+   ;; ...toolbar items
+   ])
+
 
 (defview layout
   {:life/initial-state {:repl-editor nil}
@@ -93,9 +93,6 @@
   [{:keys [view/state gist-id] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
-    #_[:.ph3.pv2.bb.code.flex-none {:style {:border-color     "rgba(0,0,0,0.03)"
-                                            :background-color "#f7eed4"}}
-       (hoc/bind-atom current-namespace eval/c-env)]
     [:.flex-auto.overflow-auto.pb4
      (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                      :local-storage   (if gist-id
@@ -111,4 +108,8 @@
                                           "Cmd-Enter" (eval-editor editor :top-level)
                                           "Cmd-Shift-Enter" (eval-editor editor :bracket)
                                           nil))})]]
-   (result-pane)])
+   [:.w-50.h-100.bg-near-white.relative.flex.flex-column
+    (repl-ui/ScrollBottom
+      [:.flex-auto.overflow-auto.code
+       (map repl-values/display-result (last-n 50 (d/get :repl/state :eval-log)))])
+    result-toolbar]])
