@@ -11,8 +11,8 @@
                            (map symbol [(namespace n) (clojure.core/name n)]))]
     {:value (repl-ns/doc (merge {:expanded?   true
                                  :standalone? true}
-                                (or (some-> (get e/repl-specials name) (meta))
-                                    (get-in (ns-utils/ns-map @c-state namespace) [:defs name]))))}))
+                                (or (get-in (ns-utils/ns-map @c-state namespace) [:defs name])
+                                    (some-> (get e/repl-specials name) (meta)))))}))
 
 (defspecial dir
   "Display public vars in namespace"
