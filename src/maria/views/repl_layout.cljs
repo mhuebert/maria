@@ -63,10 +63,9 @@
                                (traverse)
                                (tree/string (:ns @eval/c-env))))]
 
-      (d/transact! [[:db/update-attr :repl/state :eval-log conj (assoc (eval/eval-str source)
-                                                                  :id (d/unique-id)
-
-                                                                  :source source)]]))))
+      (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
+                                                                             :id (d/unique-id)
+                                                                            :source source)]]))))
 
 
 

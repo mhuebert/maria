@@ -34,6 +34,12 @@
 (defview display-result
   {:key :id}
   [{:keys [value error warnings source]}]
+  (when error
+    (prn :error-data (ex-data error))
+    (prn :error-cause-data (ex-data (ex-cause error)))
+    (.error js/console error))
+  (when warnings
+    (prn :warnings warnings))
   [:div.bb.b--darken.overflow-hidden
    (when source
      [:.o-50.code.ma3.overflow-auto.pre

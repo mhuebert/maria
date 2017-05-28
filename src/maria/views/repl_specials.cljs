@@ -1,4 +1,4 @@
-(ns maria.views.repl-ns
+(ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.ns-utils :as ns-utils]
             [re-view-material.icons :as icons]
@@ -13,7 +13,9 @@
                :rel    "noopener noreferrer"} "clojuredocs.org"])))
 
 
-
+(defn elide-quote [x]
+  (cond-> x
+          (and (seq? x) (= 'quote (first x))) (second)))
 
 (defview doc
   {:life/initial-state #(:expanded? %)
@@ -35,7 +37,7 @@
                 icons/ArrowDropDown)]]
    (when @state
      (list
-       [:.mv1.blue (string/join ", " (map str (second arglists)))]
+       [:.mv1.blue (string/join ", " (map str (elide-quote arglists)))]
        [:.gray.mv2 doc]))])
 
 (defview dir
