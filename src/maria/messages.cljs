@@ -36,19 +36,19 @@
        (remove empty?)
        rest
        (into [])))
-
-(defn error-range [source error-location]
+ 
+(defn error-ranges [source error-location]
   (-> (tree/ast source)
       (tree/ast-zip)
       (tree/node-at error-location)
       (z/node)
-      (select-keys [:line :column :end-line :end-column])))
+      (tree/node-highlights)))
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error-location]}]
   [:div
-   [:.f7 (str (error-range source error-location))
+   [:.f7 (str (error-ranges source error-location))
     ]
    [:p (ex-message error)]
    [:p (ex-message (ex-cause error))]
@@ -98,7 +98,7 @@
                                (:types (:extra w))))]
 
     [:div
-     [:.f7 (str (when source (error-range source env)))]
+     [:.f7 (str (when source (error-ranges source env)))]
 
      (case (:type w)
        :fn-arity (str "The function `"

@@ -43,8 +43,8 @@
      [:.code.ma3.overflow-auto.pre.gray
       {:style {:max-height 200}}
       (editor/viewer {:error-locations (cond-> []
-                                               error (conj (messages/error-range source error-location))
-                                               (seq warnings) (into (map #(:env %) warnings)))} source)])
+                                               error (into (messages/error-ranges source error-location))
+                                               (seq warnings) (into (mapcat #(messages/error-ranges source (:env %)) warnings)))} source)])
    [:.ws-prewrap.relative.mv3
     {:style {:max-height 500
              :overflow-y "auto"}}
