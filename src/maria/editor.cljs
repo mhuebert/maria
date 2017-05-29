@@ -38,7 +38,7 @@
                        #(some->> (:local-storage %)
                                  (apply init-local-storage))
    :life/did-mount
-                       (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props]
+                       (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props error-locations]
                              [local-storage-id _] :local-storage
                              :as                  this}]
                          (let [dom-node (v/dom-node this)
@@ -66,28 +66,24 @@
                            (when-let [initial-source (or value (d/get local-storage-id :source))]
                              (.setValue editor (str initial-source)))
                            (when local-storage-id
-                             (.on editor "change" #(d/transact! [[:db/add local-storage-id :source (.getValue %1)]])))))
-
+                             (.on editor "change" #(d/transact! [[:db/add local-storage-id :source (.getValue %1)]])))
+                           (cm/mark-ranges! editor error-locations #js {"className" "error-text"})))
+   :set-value          (fn [{:keys [view/state value]}]
+                         (when-let [editor (:editor @state)]
+                           (cm/set-preserve-cursor editor value)))
    :life/will-receive-props
                        (fn [{next-value      :value
                              {:keys [value]} :view/prev-props
-                             state           :view/state
                              :as             this}]
                          (when (not= next-value value)
-                           (when-let [editor (:editor @state)]
-                             (cm/set-preserve-cursor editor next-value))))
-
-   :life/will-receive-state
-                       (fn [{:keys [view/state view/prev-state]}]
-                         (when (and (not= (:source @state) (:source prev-state)) (:editor prev-state))
-                           (cm/set-preserve-cursor (:editor prev-state) (:source @state))))
-
+                           (.setValue this)))
    :life/should-update (fn [_] false)}
   [{:keys [view/state] :as this}]
-  [:.h-100 ])
+  [:.h-100])
 
-(defn viewer [source]
-  (editor {:read-only? true
-           :value      source}))
+(v/defn viewer [props source]
+  (editor (merge {:read-only? true
+                  :value      source}
+                 props)))
 
 

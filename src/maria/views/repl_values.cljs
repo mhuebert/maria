@@ -5,7 +5,8 @@
             [re-view.core :as v :refer [defview]]
             [maria.views.repl-shapes :as shapes]
             [cljs.pprint :refer [pprint]]
-            [re-view-material.icons :as icons]))
+            [re-view-material.icons :as icons]
+            [maria.editor :as editor]))
 
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
@@ -32,15 +33,18 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value error warnings source] :as result}]
+  [{:keys [value error error-location warnings source] :as result}]
   (when error
     (.error js/console error))
   (when warnings
     (prn :warnings (count warnings)))
   [:div.bb.b--darken.overflow-hidden
    (when source
-     [:.o-50.code.ma3.overflow-auto.pre
-      {:style {:max-height 200}} source])
+     [:.code.ma3.overflow-auto.pre.gray
+      {:style {:max-height 200}}
+      (editor/viewer {:error-locations (cond-> []
+                                               error (conj (messages/error-range source error-location))
+                                               (seq warnings) (into (map #(:env %) warnings)))} source)])
    [:.ws-prewrap.relative.mv3
     {:style {:max-height 500
              :overflow-y "auto"}}
