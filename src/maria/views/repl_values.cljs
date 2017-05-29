@@ -37,7 +37,7 @@
   (when error
     (.error js/console error))
   (when warnings
-    (prn :warnings (count warnings)))
+    (prn :warnings warnings))
   [:div.bb.b--darken.overflow-hidden
    (when source
      [:.code.ma3.overflow-auto.pre.gray

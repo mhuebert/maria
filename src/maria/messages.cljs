@@ -36,7 +36,7 @@
        (remove empty?)
        rest
        (into [])))
- 
+
 (defn error-ranges [source error-location]
   (-> (tree/ast source)
       (tree/ast-zip)
@@ -48,8 +48,6 @@
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error-location]}]
   [:div
-   [:.f7 (str (error-ranges source error-location))
-    ]
    [:p (ex-message error)]
    [:p (ex-message (ex-cause error))]
    [:pre (some-> (ex-cause error) (aget "stack"))]]
@@ -98,8 +96,6 @@
                                (:types (:extra w))))]
 
     [:div
-     [:.f7 (str (when source (error-ranges source env)))]
-
      (case (:type w)
        :fn-arity (str "The function `"
                       (name (-> w :extra :name))
