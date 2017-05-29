@@ -38,7 +38,7 @@
                        #(some->> (:local-storage %)
                                  (apply init-local-storage))
    :life/did-mount
-                       (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props error-locations]
+                       (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props error-ranges]
                              [local-storage-id _] :local-storage
                              :as                  this}]
                          (let [dom-node (v/dom-node this)
@@ -67,7 +67,7 @@
                              (.setValue editor (str initial-source)))
                            (when local-storage-id
                              (.on editor "change" #(d/transact! [[:db/add local-storage-id :source (.getValue %1)]])))
-                           (cm/mark-ranges! editor error-locations #js {"className" "error-text"})))
+                           (cm/mark-ranges! editor error-ranges #js {"className" "error-text"})))
    :set-value          (fn [{:keys [view/state value]}]
                          (when-let [editor (:editor @state)]
                            (cm/set-preserve-cursor editor value)))

@@ -21,7 +21,7 @@
                  [re-view-material "0.1.3"]
 
                  [cljs-live "0.1.17"]
-                 [magic-tree "0.0.2"]
+                 [magic-tree "0.0.3"]
 
                  [cljsjs/react "15.5.4-0"]
                  [cljsjs/react-dom "15.5.4-0"]]

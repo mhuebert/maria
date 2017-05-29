@@ -23,6 +23,6 @@
 (defspecial what-is
   "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
   [c-state c-env thing]
-  (e/eval c-state c-env `(maria.messages/what-is ~(if (and (symbol? thing)
-                                                           (contains? e/repl-specials thing))
-                                                    '(fn []) thing))))
+  (e/eval-str c-state c-env (str `(maria.messages/what-is ~(if (and (symbol? thing)
+                                                                    (contains? e/repl-specials thing))
+                                                             '(fn []) thing)))))

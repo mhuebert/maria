@@ -1,8 +1,7 @@
 (ns maria.messages
   (:require [clojure.string :as cs]
             [cljs.pprint :refer [pprint]]
-            [magic-tree.core :as tree]
-            [fast-zip.core :as z]
+
     ;; core.match not yet supported in self-hosted clojurescript
     ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
     #_[clojure.core.match :refer-macros [match]]
@@ -36,13 +35,6 @@
        (remove empty?)
        rest
        (into [])))
-
-(defn error-ranges [source error-location]
-  (-> (tree/ast source)
-      (tree/ast-zip)
-      (tree/node-at error-location)
-      (z/node)
-      (tree/node-highlights)))
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."

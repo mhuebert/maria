@@ -6,6 +6,7 @@
             [maria.views.repl-shapes :as shapes]
             [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
+            [maria.magic-tree :as magic]
             [maria.editor :as editor]))
 
 (defn bracket-type [value]
@@ -24,7 +25,7 @@
                            [:span.output-bracket lb]
                            (interpose " " (v-util/map-with-keys format-value value))
                            [:span.output-bracket rb]))
-     (v/is-react-element? value)  value
+     (v/is-react-element? value) value
 
      :else (if (nil? value)
              "nil"
@@ -33,7 +34,11 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value error error-location warnings source] :as result}]
+  [{:keys [value
+           error
+           error-location
+           warnings
+           source] :as result}]
   (when error
     (.error js/console error))
   (when warnings
@@ -42,9 +47,9 @@
    (when source
      [:.code.ma3.overflow-auto.pre.gray
       {:style {:max-height 200}}
-      (editor/viewer {:error-locations (cond-> []
-                                               error (into (messages/error-ranges source error-location))
-                                               (seq warnings) (into (mapcat #(messages/error-ranges source (:env %)) warnings)))} source)])
+      (editor/viewer {:error-ranges (cond-> []
+                                            error (into (magic/error-ranges source error-location))
+                                            (seq warnings) (into (mapcat #(magic/error-ranges source (:env %)) warnings)))} source)])
    [:.ws-prewrap.relative.mv3
     {:style {:max-height 500
              :overflow-y "auto"}}
