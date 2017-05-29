@@ -5,7 +5,7 @@
             [maria.ns-utils :as ns-utils]))
 
 (defspecial doc
-  "Show doc for symbol"
+  "Show documentation for given symbol"
   [c-state c-env name]
   (let [[namespace name] (let [n (e/resolve-symbol c-state c-env name)]
                            (map symbol [(namespace n) (clojure.core/name n)]))]
