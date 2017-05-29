@@ -1,6 +1,8 @@
 (ns maria.messages
   (:require [clojure.string :as cs]
             [cljs.pprint :refer [pprint]]
+            [magic-tree.core :as tree]
+            [fast-zip.core :as z]
     ;; core.match not yet supported in self-hosted clojurescript
     ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
     #_[clojure.core.match :refer-macros [match]]
@@ -11,20 +13,20 @@
   "Returns a string describing what kind of thing `thing` is."
   [thing]
   (cond
-    (vector?  thing) "a vector: a collection of values, indexed by contiguous integers"
-    (list?    thing) "a list: a collection and sequence, possibly lazy"
-    (set?     thing) "a set: a collection of unique values"
-    (string?  thing) "a string: text characters"
-    (char?    thing) "a character: a single literal unit of text"
-    (number?  thing) "a number: literal digits or a ratio"
+    (vector? thing) "a vector: a collection of values, indexed by contiguous integers"
+    (list? thing) "a list: a collection and sequence, possibly lazy"
+    (set? thing) "a set: a collection of unique values"
+    (string? thing) "a string: text characters"
+    (char? thing) "a character: a single literal unit of text"
+    (number? thing) "a number: literal digits or a ratio"
     (keyword? thing) "a keyword: a symbolic identifier"
-    (symbol?  thing) "a symbol: a name that refers to something else"
-    (fn?      thing) "a function: an object you call with input, that returns output"
-    (map?     thing) "a map: a collection of key/value pairs, where each key is a 'map' to its corresponding value"
-    (seq?     thing) "a sequence: a logical list of values, each one followed by the next"
-    (true?    thing) "the Boolean value true"
-    (false?   thing) "the Boolean value false"
-    (nil?     thing) "the special value nil (nothing)"
+    (symbol? thing) "a symbol: a name that refers to something else"
+    (fn? thing) "a function: an object you call with input, that returns output"
+    (map? thing) "a map: a collection of key/value pairs, where each key is a 'map' to its corresponding value"
+    (seq? thing) "a sequence: a logical list of values, each one followed by the next"
+    (true? thing) "the Boolean value true"
+    (false? thing) "the Boolean value false"
+    (nil? thing) "the special value nil (nothing)"
     :else (type thing)))
 
 (defn tokenize
@@ -35,13 +37,19 @@
        rest
        (into [])))
 
-
+(defn error-range [source error-location]
+  (-> (tree/ast source)
+      (tree/ast-zip)
+      (tree/node-at error-location)
+      (z/node)
+      (select-keys [:line :column :end-line :end-column])))
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [error error-location]}]
+  [{:keys [source error error-location]}]
   [:div
-   [:.f7 (str error-location)]
+   [:.f7 (str (error-range source error-location))
+    ]
    [:p (ex-message error)]
    [:p (ex-message (ex-cause error))]
    [:pre (some-> (ex-cause error) (aget "stack"))]]
@@ -84,38 +92,38 @@
 ;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
-(defn reformat-warning [{:keys [env] :as w}]
+(defn reformat-warning [{:keys [source env] :as w}]
   (let [bad-types (map type-to-name
                        (remove (partial = 'number)
                                (:types (:extra w))))]
 
     [:div
-     [:.f7 (str (select-keys env [:line :column]))]
+     [:.f7 (str (when source (error-range source env)))]
 
      (case (:type w)
        :fn-arity (str "The function `"
                       (name (-> w :extra :name))
                       "` in the expression `"
-                      (:source-form w)
+                      (:form w)
                       "` needs "
                       (if (= 0 (-> w :extra :argc))         ;; TODO get arity from meta
                         "more"
                         "a different number of")
                       " arguments.")
        :invalid-arithmetic (str "In the expression `"
-                                (:source-form w)
+                                (:form w)
                                 "`, the arithmetic operaror `"
                                 (name (-> w :extra :js-op))
                                 "` can't be used on non-numbers, like "
                                 (humanize-sequence bad-types) ".")
        :undeclared-var (str "The expression `"
-                            (:source-form w)
+                            (:form w)
                             "` contains `"
                             (-> w :extra :suffix)
                             "`, but it hasn't been defined!")
        (with-out-str (pprint (dissoc w :env))))]))
 
-;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :source-form (what-is "foo")}
+;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :form (what-is "foo")}
 
 (comment
 
@@ -135,8 +143,8 @@
   (reformat-error "TypeError: 1.call is not a function")
   ;;=> "The value `1` isn't a function, but it's being called like one."
 
-  (reformat-warning '{:type        :invalid-arithmetic,
-                      :extra       {:js-op cljs.core/+, :types [cljs.core/IVector number]},
-                      :source-form (+ [] 5)})
+  (reformat-warning '{:type  :invalid-arithmetic,
+                      :extra {:js-op cljs.core/+, :types [cljs.core/IVector number]},
+                      :form  (+ [] 5)})
   ;;=>"In the expression `(+ [] 5)`, the arithmetic operaror `+` can't be used on non-numbers, like a vector."
   )

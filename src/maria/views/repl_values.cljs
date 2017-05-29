@@ -23,7 +23,7 @@
                            [:span.output-bracket lb]
                            (interpose " " (v-util/map-with-keys format-value value))
                            [:span.output-bracket rb]))
-     (v/is-react-element? value) value
+     (v/is-react-element? value)  value
 
      :else (if (nil? value)
              "nil"
@@ -36,7 +36,7 @@
   (when error
     (.error js/console error))
   (when warnings
-    (prn :warnings warnings))
+    (prn :warnings (count warnings)))
   [:div.bb.b--darken.overflow-hidden
    (when source
      [:.o-50.code.ma3.overflow-auto.pre
