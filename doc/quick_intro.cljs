@@ -22,7 +22,7 @@
 
 (circle 20)
 
-;; The evaluation of the `circle` function call is a circle. The parameter to `circle` determines the circle's radius, in pixels. How did we find out the parameters to `circle`? Why, we asked Clojure!
+;; The evaluation of the `circle` function call is a circle. The parameter to `circle` determines the circle's radius, in pixels. How do we find out the parameters to `circle`? Why, we ask Clojure!
 
 (doc circle)
 
