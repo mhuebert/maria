@@ -18,3 +18,7 @@
 (defn user-namespaces [c-state]
   (->> (keys (:cljs.analyzer/namespaces c-state))
        (filter (complement builtin-ns?))))
+
+(defn elide-quote [x]
+  (cond-> x
+          (and (seq? x) (= 'quote (first x))) (second)))

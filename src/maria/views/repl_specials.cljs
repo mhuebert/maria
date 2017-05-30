@@ -12,11 +12,6 @@
                :target "_blank"
                :rel    "noopener noreferrer"} "clojuredocs.org"])))
 
-
-(defn elide-quote [x]
-  (cond-> x
-          (and (seq? x) (= 'quote (first x))) (second)))
-
 (defview doc
   {:life/initial-state #(:expanded? %)
    :key                :name}
@@ -37,7 +32,7 @@
                 icons/ArrowDropDown)]]
    (when @state
      (list
-       [:.mv1.blue (string/join ", " (map str (elide-quote arglists)))]
+       [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote arglists)))]
        [:.gray.mv2 doc]))])
 
 (defview dir

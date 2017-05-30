@@ -26,3 +26,11 @@
   (e/eval-str c-state c-env (str `(maria.messages/what-is ~(if (and (symbol? thing)
                                                                     (contains? e/repl-specials thing))
                                                              '(fn []) thing)))))
+
+(defspecial inject
+  "Inject vars into a namespace, preserving all metadata (inc. name)"
+  [c-state c-env ns mappings]
+  (let [ns (ns-utils/elide-quote ns)]
+    (doseq [[inject-as sym] (seq (ns-utils/elide-quote mappings))]
+      (e/eval c-state c-env `(def ~inject-as ~sym) {:ns ns})
+      (swap! c-state update-in [:cljs.analyzer/namespaces ns :defs inject-as] merge (e/resolve-var c-state c-env sym)))))

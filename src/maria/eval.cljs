@@ -20,6 +20,24 @@
                               (fn []
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))
+
+                                (eval '(inject 'cljs.core '{what-is          maria.messages/what-is
+                                                            load-gist        maria.repl-actions.loaders/load-gist
+                                                            html             re-view-hiccup.core/element
+
+                                                            show             maria.views.repl-shapes/show
+                                                            circle           maria.views.repl-shapes/circle
+                                                            rectangle        maria.views.repl-shapes/rectangle
+                                                            assure-shape-seq maria.views.repl-shapes/assure-shape-seq
+                                                            shape-bounds     maria.views.repl-shapes/shape-bounds
+                                                            bounds           maria.views.repl-shapes/bounds
+                                                            shape->vector    maria.views.repl-shapes/shape->vector
+                                                            colorize         maria.views.repl-shapes/colorize
+                                                            position         maria.views.repl-shapes/position
+                                                            group            maria.views.repl-shapes/group
+                                                            line-up          maria.views.repl-shapes/line-up
+                                                            stack            maria.views.repl-shapes/stack
+                                                            colors           maria.views.repl-shapes/colors}))
                                 (eval '(in-ns maria.user))))))
 
 
