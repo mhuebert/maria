@@ -1,5 +1,5 @@
 (ns maria.messages
-  (:require [clojure.string :as cs]
+  (:require [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
 
     ;; core.match not yet supported in self-hosted clojurescript
@@ -31,7 +31,7 @@
 (defn tokenize
   "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
   [s]
-  (->> (cs/split (cs/lower-case s) #"[^a-z0-9]")
+  (->> (string/split (string/lower-case s) #"[^a-z0-9]")
        (remove empty?)
        rest
        (into [])))
@@ -62,10 +62,10 @@
   (cond
     (= 'string thing) "a string"
     (= 'number thing) "a number"
-    (cs/includes? (name thing) "Vector") "a vector"
-    (cs/includes? (name thing) "List") "a list"
-    (cs/includes? (name thing) "Keyword") "a keyword"
-    (cs/includes? (name thing) "PersistentArrayMap") "a map"
+    (string/includes? (name thing) "Vector") "a vector"
+    (string/includes? (name thing) "List") "a list"
+    (string/includes? (name thing) "Keyword") "a keyword"
+    (string/includes? (name thing) "PersistentArrayMap") "a map"
     :else thing))
 
 (defn humanize-sequence

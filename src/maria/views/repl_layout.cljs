@@ -20,7 +20,7 @@
 
 (defonce _
          (do
-           (d/transact! [[:db/add :repl/state {:eval-log []}]])
+           (d/transact! [[:db/add :repl/state :eval-log []]])
            (add-watch eval/c-env :notice-namespace-changes
                       (fn [_ _ {prev-ns :ns} {ns :ns}]
                         (when (not= prev-ns ns)

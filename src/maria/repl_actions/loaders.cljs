@@ -40,14 +40,12 @@
        (string/join "\n")))
 
 (defn get-gist [id cb]
-  (let [status (atom {:url    id
-                      :status "Loading gist..."})]
-    (xhr/send (str "https://api.github.com/gists/" id)
-              (fn [e]
-                (let [target (.-target e)]
-                  (if (.isSuccess target)
-                    (cb {:value (.getResponseJson target)})
-                    (cb {:error (.getLastError target)})))))))
+  (xhr/send (str "https://api.github.com/gists/" id)
+            (fn [e]
+              (let [target (.-target e)]
+                (if (.isSuccess target)
+                  (cb {:value (.getResponseJson target)})
+                  (cb {:error (.getLastError target)}))))))
 
 (defn load-gist [id]
   (let [status (atom {:url    id
