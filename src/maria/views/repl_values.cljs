@@ -26,7 +26,7 @@
                            (interpose " " (v-util/map-with-keys format-value value))
                            [:span.output-bracket rb]))
      (v/is-react-element? value) value
-
+     (instance? cljs.core/Namespace value) (str value)
      :else (if (nil? value)
              "nil"
              (try (string/trim-newline (with-out-str (pprint value)))
@@ -45,7 +45,7 @@
     (prn :warnings warnings))
   [:div.bb.b--darken.overflow-hidden
    (when source
-     [:.code.ma3.overflow-auto.pre.gray
+     [:.code.mv3.overflow-auto.pre.gray
       {:style {:max-height 200}}
       (editor/viewer {:error-ranges (cond-> []
                                             error (into (magic/error-ranges source error-location))
