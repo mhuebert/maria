@@ -43,13 +43,13 @@
                                             :style        (when (= item-ns ns)
                                                             {:background-color "rgba(0,0,0,0.05)"})
                                             :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
-                                                                                                      (distinct))))
+                                                                                                            (distinct))))
    (when-let [ns-doc (:doc (ns-utils/ns-map @eval/c-state ns))]
      [:span.pl2.f7.o-50 ns-doc])])
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
-
+ 
 (defn eval-editor [cm scope]
   (let [traverse (case scope :top-level tree/top-loc
                              :bracket identity)]
@@ -61,7 +61,7 @@
                                (tree/string (:ns @eval/c-env))))]
 
       (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
-                                                                             :id (d/unique-id)
+                                                                            :id (d/unique-id)
                                                                             :source source)]]))))
 
 
@@ -90,20 +90,20 @@
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
     [:.flex-auto.overflow-auto.pb4
-     (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                     :local-storage   (if gist-id
-                                        [gist-id
-                                         ";; loading gist"]
-                                        ["maria-repl-left-pane"
-                                         ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
+     (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+                     :local-storage (if gist-id
+                                      [gist-id
+                                       ";; loading gist"]
+                                      ["maria-repl-left-pane"
+                                       ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
                      :event/mousedown #(when (.-metaKey %)
-                                         (.preventDefault %)
-                                         (eval-editor (.getEditor this) :bracket))
-                     :event/keydown   (fn [editor e]
-                                        (case (.keyName js/CodeMirror e)
-                                          "Cmd-Enter" (eval-editor editor :top-level)
-                                          "Cmd-Shift-Enter" (eval-editor editor :bracket)
-                                          nil))})]]
+                                            (.preventDefault %)
+                                            (eval-editor (.getEditor this) :bracket))
+                     :event/keydown (fn [editor e]
+                                      (case (.keyName js/CodeMirror e)
+                                        "Cmd-Enter" (eval-editor editor :top-level)
+                                        "Shift-Cmd-Enter" (eval-editor editor :bracket)
+                                        nil))})]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

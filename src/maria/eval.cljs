@@ -16,7 +16,8 @@
          (do (set! cljs-live.compiler/debug? true)
              (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
                                "/js/cljs_bundles/maria.user.json"
-                               "/js/cljs_bundles/cljs.spec.alpha.json"]
+                               "/js/cljs_bundles/cljs.spec.alpha.json"
+                               ]
                               (fn []
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))
@@ -38,4 +39,3 @@
                                                             stack            maria.views.repl-shapes/stack
                                                             colors           maria.views.repl-shapes/colors}))
                                 (eval '(in-ns maria.user))))))
- 
