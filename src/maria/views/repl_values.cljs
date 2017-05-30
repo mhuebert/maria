@@ -39,29 +39,31 @@
            error-location
            warnings
            source] :as result}]
-  (when error
-    (.error js/console error))
-  (when warnings
-    (prn :warnings warnings))
-  [:div.bb.b--darken.overflow-hidden
-   (when source
-     [:.code.mv3.overflow-auto.pre.gray
-      {:style {:max-height 200}}
-      (editor/viewer {:error-ranges (cond-> []
-                                            error (into (magic/error-ranges source error-location))
-                                            (seq warnings) (into (mapcat #(magic/error-ranges source (:env %)) warnings)))} source)])
-   [:.ws-prewrap.relative.mv3
-    {:style {:max-height 500
-             :overflow-y "auto"}}
-    (cond (or error (seq warnings))
-          [:.bg-near-white.ph3.pv2.overflow-auto
-           (for [message (cons (when error (messages/reformat-error result))
-                               (map messages/reformat-warning (distinct warnings)))
-                 :when message]
-             [:.ph3.pv2 message])]
-          (v/is-react-element? value)
-          value
-          :else [:.mh3 (format-value value)])]])
+  (let [error? (or error (seq warnings))]
+    (when error
+      (.error js/console error))
+    (when warnings
+      (prn :warnings warnings))
+    [:div.bb.b--darken.overflow-hidden
+     {:class (when error? "bg-darken-red")}
+     (when source
+       [:.code.overflow-auto.pre.gray.mv3
+        {:style {:max-height 200}}
+        (editor/viewer {:error-ranges (cond-> []
+                                              error (conj (magic/error-range source error-location))
+                                              (seq warnings) (into (map #(magic/error-range source (:env %)) warnings)))} source)])
+     [:.ws-prewrap.relative.mv3
+      {:style {:max-height 500
+               :overflow-y "auto"}}
+      (cond error?
+            [:.ph3.overflow-auto
+             (for [message (cons (when error (messages/reformat-error result))
+                                 (map messages/reformat-warning (distinct warnings)))
+                   :when message]
+               [:.mv2 message])]
+            (v/is-react-element? value)
+            value
+            :else [:.ph3 (format-value value)])]]))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

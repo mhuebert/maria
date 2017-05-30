@@ -79,5 +79,9 @@ div.CodeMirror {
 }
 
 .error-text {
-  background: rgba(255,0,0,0.1);
+  //background: rgba(255,0,0,0.1);
+  border-bottom: 2px solid black;
+}
+.bg-darken-red {
+  background-color: rgba(255, 79, 79, 0.1);
 }
