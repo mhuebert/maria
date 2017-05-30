@@ -42,7 +42,7 @@
                                             :ripple       false
                                             :style        (when (= item-ns ns)
                                                             {:background-color "rgba(0,0,0,0.05)"})
-                                            :on-click     #(eval/eval-str `(~'in-ns ~item-ns))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
+                                            :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
                                                                                                       (distinct))))
    (when-let [ns-doc (:doc (ns-utils/ns-map @eval/c-state ns))]
      [:span.pl2.f7.o-50 ns-doc])])
