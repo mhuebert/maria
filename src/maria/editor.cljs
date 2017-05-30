@@ -2,8 +2,8 @@
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
-            [magic-tree.codemirror.addons]
-            [magic-tree.codemirror.util :as cm]
+            [magic-tree-codemirror.addons]
+            [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
 
             [goog.events :as events]

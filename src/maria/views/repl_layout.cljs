@@ -3,7 +3,7 @@
             [re-view.util :as v-util]
             [re-db.d :as d]
             [re-view.hoc :as hoc]
-            [magic-tree.codemirror.util :as cm]
+            [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
 
@@ -49,7 +49,7 @@
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
- 
+
 (defn eval-editor [cm scope]
   (let [traverse (case scope :top-level tree/top-loc
                              :bracket identity)]
