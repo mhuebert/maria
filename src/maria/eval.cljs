@@ -20,7 +20,6 @@
                               (fn []
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))
-
                                 (eval '(inject 'cljs.core '{what-is          maria.messages/what-is
                                                             load-gist        maria.repl-actions.loaders/load-gist
                                                             html             re-view-hiccup.core/element

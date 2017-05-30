@@ -47,9 +47,6 @@
    (when-let [ns-doc (:doc (ns-utils/ns-map @eval/c-state ns))]
      [:span.pl2.f7.o-50 ns-doc])])
 
-
-
-
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
