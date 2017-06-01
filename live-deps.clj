@@ -1,12 +1,14 @@
 {:cljsbuild-out "resources/public/js/compiled/out"
  :output-dir    "resources/public/js/cljs_bundles"
- :bundles       [#_{:name          cljs.core
-                    :require-cache [cljs.core cljs.core$macros]}
-                 #_{:name           maria.user
-                    :require        [[maria.user :include-macros true]]
-                    :require-macros [magic-tree.backtick]
-                    :provided       [maria.core]
-                    :require-cache  [maria.eval]}
+ :bundles       [{:name          cljs.core
+                  :require-cache [cljs.core cljs.core$macros]}
+                 {:name           maria.user
+                  :source-paths   ["src"]
+                  :require        [[maria.user :include-macros true]
+                                   [goog.net.jsloader]]
+                  :require-macros [magic-tree.backtick]
+                  :provided       [maria.core]
+                  :require-cache  [maria.eval]}
                  {:name     cljs.spec.alpha
                   :require  [[cljs.spec.alpha :include-macros true]
 

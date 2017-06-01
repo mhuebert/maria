@@ -101,8 +101,8 @@
                                             (eval-editor (.getEditor this) :bracket))
                      :event/keydown (fn [editor e]
                                       (case (.keyName js/CodeMirror e)
-                                        "Cmd-Enter" (eval-editor editor :top-level)
-                                        "Shift-Cmd-Enter" (eval-editor editor :bracket)
+                                        "Shift-Cmd-Enter"  (eval-editor editor :top-level)
+                                        "Cmd-Enter" (eval-editor editor :bracket)
                                         nil))})]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom

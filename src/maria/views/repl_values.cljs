@@ -7,12 +7,30 @@
             [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
             [maria.magic-tree :as magic]
-            [maria.editor :as editor]))
+            [maria.editor :as editor])
+  (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
         :else ["(" ")"]))
+
+(declare format-value)
+
+(defview display-deferred
+  {:life/will-mount (fn [{:keys [deferred view/state]}]
+                      (-> deferred
+                          (.addCallback #(swap! state assoc :value %2))
+                          (.addErrback #(swap! state assoc :error %)))
+
+                      )}
+  [{:keys [view/state]}]
+  (let [{:keys [value error] :as s} @state]
+    [:div
+     [:.gray.i "goog.async.Deferred"]
+     [:.pv3 (cond (nil? s) "in Progress..."
+                  error (str error)
+                  :else "Finished.")]]))
 
 (defn format-value [value]
   [:span
@@ -27,6 +45,7 @@
                            [:span.output-bracket rb]))
      (v/is-react-element? value) value
      (instance? cljs.core/Namespace value) (str value)
+     (instance? Deferred value) (display-deferred {:deferred value})
      :else (if (nil? value)
              "nil"
              (try (string/trim-newline (with-out-str (pprint value)))
