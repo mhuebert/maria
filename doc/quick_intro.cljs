@@ -116,4 +116,61 @@
 
 (doc map)
 
-;; That's a bit technical. For our purposes here, `map` applies a function to every value in a collection. That means our code above created a circle of radius 2, a circle of radius 4, a circle of radius 8, and so on for each element in our vector of numbers.
+;; Oof. Maybe that's a bit technical. Let's break it down for what we're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
+
+;; So let's look again at our code from above:
+
+(map circle [2 4 8 16 32 64 128])
+
+;; This returns the result of evaluating `circle` with radius 2, then radius 4, then radius 8, and so on for each element in our vector of numbers.
+
+;; One neat thing about `map` is that you can give it more than one collection. To make that work, you need to `map` a function that uses more than one parameter. Remember `colorize`?
+
+(doc colorize)
+
+;; The first parameter to `colorize` is a color (as a string), and the second is a shape. (By the way, if you want to see which colors you we use, evaluate `colors`.) That means that if we want to `map` with the `colorize` function, we can give it two collections: first a collection of colors, and then a collection of rectangles. Then `map` will execute `colorize` using the first element of each collection, then the second element of each collection, then the third, and so on. So:
+(map colorize
+     ["red" "blue" "yellow"]
+     [(rectangle 20 20) (rectangle 50 50) (rectangle 100 100)])
+
+;; This is like calling each of these:
+
+(colorize "red" (rectangle 20 20))
+(colorize "blue" (rectangle 50 50))
+(colorize "yellow" (rectangle 100 100))
+
+
+;;;; Choosing names
+
+;; Often when programming we need to name something we've created, so we can use it later. This is useful, but it's also a major source of trouble. There's an old saying in programming, attributed to Phil Carlton: "There are only two hard things in Computer Science: cache invalidation and naming things." Let's leave cache invalidation for another day and focus on names.
+
+
+;; TODO `let` and `fn`, then `def`, then `defn`
+
+
+;; XXX checkerboard? too direct a theft from Racket
+
+
+
+;; XXX (or?) Let's make a rainbow:
+
+(apply line-up
+       (map colorize
+            ["red" "orange" "yellow" "green" "blue" "purple"]
+            (repeat (rectangle 20 20))))
+
+;; TODO
+
+(let [rainbow (apply line-up
+                     (map colorize
+                          ["red" "orange" "yellow" "green" "blue" "purple"]
+                          (repeat (rectangle 20 20))))]
+  (apply stack (repeat 20 [rainbow (rectangle 120 20)])))
+
+
+
+(let [rainbow (fn [shape]
+                (mapv colorize
+                      ["red" "orange" "yellow" "green" "blue" "purple"]
+                      (repeat shape)))]
+  (rainbow (rectangle 20 20)))
