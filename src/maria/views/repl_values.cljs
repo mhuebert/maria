@@ -20,7 +20,7 @@
 (defview display-deferred
   {:life/will-mount (fn [{:keys [deferred view/state]}]
                       (-> deferred
-                          (.addCallback #(swap! state assoc :value %2))
+                          (.addCallback #(swap! state assoc :value %1))
                           (.addErrback #(swap! state assoc :error %)))
 
                       )}
@@ -28,9 +28,9 @@
   (let [{:keys [value error] :as s} @state]
     [:div
      [:.gray.i "goog.async.Deferred"]
-     [:.pv3 (cond (nil? s) "in Progress..."
+     [:.pv3 (cond (nil? s) [:.progress-indeterminate]
                   error (str error)
-                  :else "Finished.")]]))
+                  :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
 (defn format-value [value]
   [:span
@@ -61,7 +61,7 @@
   (let [error? (or error (seq warnings))]
     (when error
       (.error js/console error))
-    (when warnings
+    (when (seq warnings)
       (prn :warnings warnings))
     [:div.bb.b--darken.overflow-hidden
      {:class (when error? "bg-darken-red")}

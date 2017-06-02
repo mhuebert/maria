@@ -1,11 +1,18 @@
 (ns maria.repl-actions.loaders
   (:require [re-view.core :as v :refer [defview]]
             [re-view.hoc :as hoc]
-            [clojure.string :as string]
+            [re-view-material.icons :as icons]
+
+            [re-view-hiccup.core :as hiccup]
+
             [maria.eval :as eval]
-            [goog.net.XhrIo :as xhr]
             [maria.views.repl-ui :as repl-ui]
-            [re-view-material.icons :as icons]))
+
+            [goog.net.XhrIo :as xhr]
+            [goog.net.jsloader :as jsl]
+
+            [clojure.string :as string]
+            [clojure.set :as set]))
 
 (defview gist-loader-status
   [{:keys [status
@@ -47,7 +54,10 @@
                   (cb {:value (.getResponseJson target)})
                   (cb {:error (.getLastError target)}))))))
 
-(defn load-gist [id]
+(defn load-gist
+  "Loads gist content, evaluating as ClojureScript code."
+  ;; TODO - distinguish between .clj(s|c) files and .md files, handle appropriately.
+  [id]
   (let [status (atom {:url    id
                       :status "Loading gist..."})]
     (get-gist id (fn [{:keys [value error]}]
@@ -62,3 +72,21 @@
                               :source source)))))
     (-> gist-loader-status
         (hoc/bind-atom status))))
+
+(defn load-js
+  "Load javascript file from url. Return message indicating added global variables."
+  [url]
+  (let [start-globals (set (js->clj (.keys js/Object js/window)))]
+    (-> (jsl/load url)
+        (.addCallback (fn []
+                        (when-let [new-globals (seq (set/difference (set (js->clj (.keys js/Object js/window)))
+                                                                    start-globals))]
+                          (hiccup/element [:div "Added: " (->> new-globals
+                                                               (map #(do (list "window." [:span.b %])))
+                                                               (interpose ", "))])))))))
+
+(defn load-npm
+  "Load package from NPM, packaged with browserify (see https://wzrd.in/).
+   Usage: `(load-npm \"my-package@0.2.0\")` or `(load-npm \"my-package@latest\")`"
+  [package]
+  (load-js (str "https://wzrd.in/standalone/" package)))

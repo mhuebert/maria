@@ -1,6 +1,5 @@
 (ns maria.messages
   (:require [clojure.string :as string]
-            [cljs.pprint :refer [pprint]]
 
     ;; core.match not yet supported in self-hosted clojurescript
     ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
@@ -109,7 +108,7 @@
                             "` contains `"
                             (-> w :extra :suffix)
                             "`, but it hasn't been defined!")
-       (with-out-str (pprint (dissoc w :env))))]))
+       (with-out-str (println (dissoc w :env))))]))
 
 ;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :form (what-is "foo")}
 

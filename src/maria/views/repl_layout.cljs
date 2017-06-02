@@ -19,15 +19,13 @@
             [maria.views.repl-ui :as repl-ui]))
 
 (defonce _
-         (do
-           (d/transact! [[:db/add :repl/state :eval-log []]])
-           (add-watch eval/c-env :notice-namespace-changes
-                      (fn [_ _ {prev-ns :ns} {ns :ns}]
-                        (when (not= prev-ns ns)
-                          (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
-                                                         (fnil conj [])
-                                                         {:id    (d/unique-id)
-                                                          :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))))
+         (add-watch eval/c-env :notice-namespace-changes
+                    (fn [_ _ {prev-ns :ns} {ns :ns}]
+                      (when (not= prev-ns ns)
+                        (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
+                                                       (fnil conj [])
+                                                       {:id    (d/unique-id)
+                                                        :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0)))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}
@@ -109,5 +107,7 @@
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
-       (map repl-values/display-result (last-n 50 (d/get :repl/state :eval-log)))])
+       (if-let [eval-log (d/get :repl/state :eval-log)]
+         (map repl-values/display-result (last-n 50 eval-log))
+         [:.pa3.gray "Loading..."])])
     result-toolbar]])
