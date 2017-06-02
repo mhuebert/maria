@@ -78,10 +78,12 @@
           (colorize "blue" (rectangle 20 20))
           (colorize "green" (rectangle 20 20))))
 
+;; If you have some time, take a minute and play around a little. Make your own composite shapes.
+
 
 ;;;; 4. Your friend the computer
 
-;; We already saw how Clojure will share what it knows about a function with `doc`. You can also ask the computer what something is. What was that value we evaluated up above?
+;; We already saw how `doc` is a way to ask Clojure what it knows about a function. You can also ask the computer what kind of thing something is. What was that value we evaluated up above?
 
 (what-is "duck")
 
@@ -89,7 +91,7 @@
 
 (what-is what-is)
 
-;; Please don't be shy about using `doc` and `what-is` a lot. All the best programmers use their tools as external brain packs, and documentation and checking what something is are two of the best tools.
+;; Please don't be shy about using `doc` and `what-is`. Ask the computer what it knows. The ideal state of programming is a natural, ongoing conversation with the computer, where you ask it questions, it explains things, and you tell it to do favors for you.
 
 ;; TODO add parameter hints to their toolbelt here -- if their cursor is inside parens enclosing a function, show the arglist for that function
 
@@ -104,7 +106,7 @@
 
 (what-is [2 4 8 16 32 64 128])
 
-;; OK. So we have a collection of integers.
+;; OK. So we have a vector of integers.
 
 ;; What's `map`?
 
