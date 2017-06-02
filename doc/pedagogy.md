@@ -21,7 +21,8 @@ The best way to learn a tool’s usefulness is to do the task without the tool. 
     - introduction to basics of computer science (recursion, higher order functions)
     - do some basic web stuff--this may be complicated by the fact that Maria is a self-enclosed tool, so building a web app may not be within scope. Instead, perhaps it would be possible to make a remote API call?
     - an exploration of Clojure features, e.g. laziness, infinite sequences, data types (this is the closest analogue to the existing ClojureBridge curriculum)
-    - a fun wander through mathematics or statistics
+    - a fun wander through mathematics or statistics (Fibonnacci, Shannon's entropy, Markov chains)
+    - word or programming puzzles
     - ??? your idea goes here
 
 
