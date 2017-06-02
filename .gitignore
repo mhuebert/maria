@@ -12,3 +12,4 @@ checkouts
 .planck_cache
 opts.clj
 /.cljs_rhino_repl/
+/doc/ideating.clj
