@@ -11,3 +11,4 @@ checkouts
 .nrepl-port
 .planck_cache
 opts.clj
+/.cljs_rhino_repl/
