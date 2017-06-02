@@ -1,8 +1,4 @@
-(ns maria.module-1
-  (:require
-   [maria.messages :refer [what-is]]))
-;; pull in `what-is` from maria.messages
-;; pull in clojure.repl/doc
+(ns maria.module-1)
 
 ;; Hi. Those two semicolons to my left mean I'm a comment, so I don't
 ;; evaluate to anything. In Clojure, the programming language we're
