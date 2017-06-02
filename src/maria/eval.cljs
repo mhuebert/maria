@@ -21,8 +21,8 @@
                                 (eval '(require '[cljs.core :include-macros true]))
                                 (eval '(require '[maria.user :include-macros true]))
                                 (eval '(inject 'cljs.core '{what-is   maria.messages/what-is
-                                                            load-gist maria.repl-actions.loaders/load-gist
-                                                            load-js   maria.repl-actions.loaders/load-js
-                                                            load-npm  maria.repl-actions.loaders/load-npm
+                                                            load-gist maria.user.loaders/load-gist
+                                                            load-js   maria.user.loaders/load-js
+                                                            load-npm  maria.user.loaders/load-npm
                                                             html      re-view-hiccup.core/element}))
                                 (eval '(in-ns maria.user))))))

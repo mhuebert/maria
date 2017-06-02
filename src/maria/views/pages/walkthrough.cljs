@@ -1,4 +1,4 @@
-(ns maria.walkthrough
+(ns maria.views.pages.walkthrough
   (:require [cljsjs.marked]
             [maria.eval :refer [eval-str]]
             [maria.editor :refer [viewer]]

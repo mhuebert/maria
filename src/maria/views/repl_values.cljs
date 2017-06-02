@@ -3,7 +3,7 @@
             [maria.messages :as messages]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
-            [maria.views.repl-shapes :as shapes]
+            [maria.user.shapes :as shapes]
             [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
             [maria.magic-tree :as magic]

@@ -1,4 +1,4 @@
-(ns maria.views.paredit
+(ns maria.views.pages.paredit-inspect
   (:require [magic-tree.core :as tree]
             [maria.editor :as cm]
             [fast-zip.core :as z]

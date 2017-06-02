@@ -1,4 +1,4 @@
-(ns maria.views.repl-layout
+(ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
             [re-view.util :as v-util]
             [re-db.d :as d]
@@ -9,14 +9,14 @@
 
             [cljs.pprint :refer [pprint]]
 
-            [maria.repl-actions.loaders :as loaders]
+            [maria.user.loaders :as loaders]
 
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
             [clojure.string :as string]
             [maria.views.repl-values :as repl-values]
-            [maria.views.repl-ui :as repl-ui]))
+            [maria.views.repl-utils :as repl-ui]))
 
 (defonce _
          (add-watch eval/c-env :notice-namespace-changes
@@ -42,7 +42,7 @@
                                                             {:background-color "rgba(0,0,0,0.05)"})
                                             :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
                                                                                                             (distinct))))
-   (when-let [ns-doc (:doc (ns-utils/ns-map @eval/c-state ns))]
+   (when-let [ns-doc (:doc (ns-utils/analyzer-ns @eval/c-state ns))]
      [:span.pl2.f7.o-50 ns-doc])])
 
 (defn last-n [n v]

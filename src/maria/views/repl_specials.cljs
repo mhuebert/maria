@@ -3,14 +3,14 @@
             [maria.ns-utils :as ns-utils]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
-            [maria.views.repl-ui :as repl-ui]))
+            [maria.views.repl-utils :as repl-ui]))
 
 (defn docs-link [namespace name]
-  (when (#{'cljs.core 'cljs.core$macros 'clojure.core} namespace)
-    (list [:.gray.di "view on "]
-          [:a {:href   (str "https://clojuredocs.org/clojure.core/" name)
-               :target "_blank"
-               :rel    "noopener noreferrer"} "clojuredocs.org"])))
+  (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
+    [:.mv2
+     [:a.f7.black {:href   (str "https://clojuredocs.org/clojure.core/" name)
+                   :target "_blank"
+                   :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
 (defview doc
   {:life/initial-state #(:expanded? %)
@@ -19,26 +19,28 @@
            arglists
            view/state
            standalone?] :as this}]
-  [:.ph3.bt.b--near-white
-   {:class (when standalone? repl-ui/card-classes)}
-   [:.code.flex.items-center.pointer.mv1
-    {:on-click #(swap! state not)}
-    (when standalone?
-      [:span.o-60 (namespace (:name this)) "/"])
-    (str (name (:name this)))
-    [:.flex-auto]
-    [:span.o-50
-     (if @state icons/ArrowDropUp
-                icons/ArrowDropDown)]]
-   (when @state
-     (list
-       [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote arglists)))]
-       [:.gray.mv2 doc]))])
+  (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
+    [:.ph3.bt.b--near-white
+     {:class (when standalone? repl-ui/card-classes)}
+     [:.code.flex.items-center.pointer.mv1
+      {:on-click #(swap! state not)}
+      (when standalone?
+        [:span.o-60 namespace "/"])
+      name
+      [:.flex-auto]
+      [:span.o-50
+       (if @state icons/ArrowDropUp
+                  icons/ArrowDropDown)]]
+     (when @state
+       (list
+         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote arglists)))]
+         [:.gray.mv2 doc]
+         (docs-link namespace name)))]))
 
 (defview dir
   {:life/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
-  (let [defs (->> (:defs (ns-utils/ns-map @c-state ns))
+  (let [defs (->> (:defs (ns-utils/analyzer-ns @c-state ns))
                   (seq)
                   (sort)
                   (map second)

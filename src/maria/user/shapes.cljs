@@ -1,4 +1,4 @@
-(ns maria.views.repl-shapes
+(ns maria.user.shapes
   (:require [re-view-hiccup.core :refer [element]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

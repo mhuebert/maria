@@ -1,4 +1,4 @@
-(ns maria.repl-actions.loaders
+(ns maria.user.loaders
   (:require [re-view.core :as v :refer [defview]]
             [re-view.hoc :as hoc]
             [re-view-material.icons :as icons]
@@ -6,7 +6,7 @@
             [re-view-hiccup.core :as hiccup]
 
             [maria.eval :as eval]
-            [maria.views.repl-ui :as repl-ui]
+            [maria.views.repl-utils :as repl-ui]
 
             [goog.net.XhrIo :as xhr]
             [goog.net.jsloader :as jsl]

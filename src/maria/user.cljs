@@ -1,8 +1,8 @@
 (ns maria.user
   (:require re-view-hiccup.core
             maria.messages
-            maria.repl-actions.loaders
-            [maria.views.repl-shapes :as shapes :refer [show
+            maria.user.loaders
+            [maria.user.shapes :as shapes :refer [show
                                                         circle
                                                         rectangle
                                                         assure-shape-seq

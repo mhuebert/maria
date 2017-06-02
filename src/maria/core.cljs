@@ -2,9 +2,9 @@
   (:require [cljsjs.react]
             [cljsjs.react.dom]
 
-            [maria.walkthrough :as walkthrough]
-            [maria.views.repl-layout :as repl]
-            [maria.views.paredit :as paredit]
+            [maria.views.pages.walkthrough :as walkthrough]
+            [maria.views.pages.repl :as repl]
+            [maria.views.pages.paredit-inspect :as paredit]
 
             ;; include to precompile for self-hosted env
             [clojure.set]

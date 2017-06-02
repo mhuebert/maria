@@ -1,19 +1,12 @@
-(ns maria.ns-utils)
+(ns maria.ns-utils
+  (:require [cljs-live.eval :as e]))
 
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
        (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))
 
-(defn ns-map [c-state ns]
+(defn analyzer-ns [c-state ns]
   (get-in c-state [:cljs.analyzer/namespaces ns]))
-
-(defn usable-names [c-state ns]
-  (->> (ns-map c-state ns)
-       (dissoc :defs)
-       (vals)
-       (filter map?)
-       (map #(dissoc % :order :seen))
-       (apply merge)))
 
 (defn user-namespaces [c-state]
   (->> (keys (:cljs.analyzer/namespaces c-state))
@@ -22,3 +15,15 @@
 (defn elide-quote [x]
   (cond-> x
           (and (seq? x) (= 'quote (first x))) (second)))
+
+(defn resolve-sym
+  "Resolve a symbol into fully qualified name. Returns vector of [namespace, name] as symbols."
+  [c-state c-env sym]
+  (let [n (e/resolve-symbol c-state c-env sym)]
+    (mapv symbol [(namespace n) (name n)])))
+
+(defn resolve-var
+  "Simplified resolve-var fn, looks up `def` in compiler state."
+  [c-state c-env sym]
+  (let [[namespace name] (resolve-sym c-state c-env sym)]
+    (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])))
