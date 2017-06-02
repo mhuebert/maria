@@ -1,6 +1,9 @@
 {
   "hosting": {
     "public": "resources/public",
+    "ignore": [
+      "js/compiled/out**"
+    ],
     "rewrites": [
       {
         "source": "**",

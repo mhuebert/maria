@@ -90,20 +90,22 @@
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
     [:.flex-auto.overflow-auto.pb4
-     (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-                     :local-storage (if gist-id
-                                      [gist-id
-                                       ";; loading gist"]
-                                      ["maria-repl-left-pane"
-                                       ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
+     (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                     :local-storage   (if gist-id
+                                        [gist-id
+                                         ";; loading gist"]
+                                        ["maria-repl-left-pane"
+                                         ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
                      :event/mousedown #(when (.-metaKey %)
-                                            (.preventDefault %)
-                                            (eval-editor (.getEditor this) :bracket))
-                     :event/keydown (fn [editor e]
-                                      (case (.keyName js/CodeMirror e)
-                                        "Shift-Cmd-Enter"  (eval-editor editor :top-level)
-                                        "Cmd-Enter" (eval-editor editor :bracket)
-                                        nil))})]]
+                                         (.preventDefault %)
+                                         (eval-editor (.getEditor this) :bracket))
+                     :event/keydown   (fn [editor e]
+                                        (case (.keyName js/CodeMirror e)
+                                          ("Cmd-Enter"
+                                            "Ctrl-Enter") (eval-editor editor :top-level)
+                                          ("Shift-Cmd-Enter"
+                                            "Shift-Ctrl-Enter") (eval-editor editor :bracket)
+                                          nil))})]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
