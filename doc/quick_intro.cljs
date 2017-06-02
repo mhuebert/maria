@@ -106,7 +106,7 @@
 
 (what-is [2 4 8 16 32 64 128])
 
-;; OK. So we have a vector of integers.
+;; OK. So we have an ordered collection of numbers--a vector of integers.
 
 ;; What's `map`?
 
