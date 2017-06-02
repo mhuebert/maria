@@ -1,6 +1,15 @@
 ;;;; Hi! This is A Quick Introduction to Clojure with Pictures.
 
-;;;; 1. Ready, set...
+
+;;;; 1. Ready...
+
+;; Hi! This tutorial will introduce you to programming by drawing pictures using the Clojure programming language.
+
+;; This environment we're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor like Emacs or Cursive.
+
+
+;;;; 2. Set...
+
 ;; To draw pictures, we need to evaluate expressions.
 
 ;; In Clojure, everything except a comment is an expression. This text you're reading is a comment, bcause of the two semicolons at the start of the line. This is an expression:
