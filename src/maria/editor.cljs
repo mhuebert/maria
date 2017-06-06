@@ -25,7 +25,7 @@
    :lineNumbers       false
    :lineWrapping      true
    :mode              "clojure"
-   :keyMap            "macDefault"
+   :keyMap            "default"
    :magicBrackets     true
    :magicEdit         true})
 
