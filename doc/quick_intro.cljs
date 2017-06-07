@@ -5,7 +5,7 @@
 
 ;; Hi! This tutorial will introduce you to programming by drawing pictures using the Clojure programming language.
 
-;; This environment we're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor like Emacs or Cursive.
+;; This environment we're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor.
 
 
 ;;;; 2. Set...
