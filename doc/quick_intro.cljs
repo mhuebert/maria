@@ -1,4 +1,4 @@
-;;;; Hi! This is A Quick Introduction to Clojure with Pictures.
+;;;; A Quick Introduction to Clojure with Pictures.
 
 
 ;;;; 1. Ready...
