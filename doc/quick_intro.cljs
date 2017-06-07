@@ -5,18 +5,18 @@
 
 ;; Hi! This tutorial will introduce you to programming by drawing pictures using the Clojure programming language.
 
-;; This environment we're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor.
+;; This environment you're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor.
 
 
 ;;;; 2. Set...
 
-;; To draw pictures, we need to evaluate expressions.
+;; This text you're reading is a comment, bcause of the two semicolons at the start of the line.
 
-;; In Clojure, everything except a comment is an expression. This text you're reading is a comment, bcause of the two semicolons at the start of the line. This is an expression:
+;; In Clojure, everything that isn't a comment is an expression. You can evaluate expressions, which is like asking the expression what it is or what it does. Here is a simple expression:
 
 "duck"
 
-;; Put your cursor to the same line as the expression "duck", and press `command-enter`. BOOM. You just evaluated a duck. This duck expression is just a value, so it evaluates to itself: "duck". Clojure printed the evaluation of our "duck" expression in the output panel on the right. That's how we're going to work: type and evaluate expressions on the left; evaluation shows up on the right.
+;; Put your cursor to the same line as the expression "duck", and press `command-enter`. BOOM. You just evaluated a duck. This "duck" expression evaluates to just itself: "duck". Clojure printed the evaluation of our "duck" expression in the output panel on the right. That's how you're going to work: type and evaluate expressions on the left; and read the result of our evaluations on the right.
 
 
 ;;;; 2. Go!
@@ -25,17 +25,17 @@
 
 (circle 20)
 
-;; The evaluation of the `circle` function call is a circle. The parameter to `circle` determines the circle's radius, in pixels. How do we find out the parameters to `circle`? Why, we ask Clojure!
+;; The evaluation of the `circle` function call is a circle. The parameter to `circle` determines the circle's radius, in pixels. How do you find out the parameters to `circle`? Why, you ask Clojure!
 
 (doc circle)
 
-;; The `doc` function returns the documentation for any function. We pass it the parameter `circle`, so it prints `circle`'s documentation for us. The computer is your friend and wants to help you.
+;; The `doc` function returns the documentation for any function. You pass it the parameter `circle`, so it prints `circle`'s documentation for us. The computer is your friend and wants to help you.
 
 ;; Try giving circle the wrong number of arguments, just to see what happens:
 
 (circle 20 10)
 
-;; Notice that the result is an error instead of a picture or value. If we write code that Clojure can't understand, it will tell us it can't run it. If it can, Clojure will try to tell you how to fix your code.
+;; Notice that the result is an error instead of a picture or value. If you write code that Clojure can't understand, it will tell you it can't run it. If it can, Clojure will try to tell you how to fix your code.
 
 ;; Don't worry if you create an error. It happens to all of us.
 
@@ -54,7 +54,7 @@
 
 (colorize "blue" (rectangle 50 50))
 
-;; That's a nice change of pace. We can also combine shapes with `stack` and `line-up`:
+;; That's a nice change of pace. You can also combine shapes with `stack` and `line-up`:
 
 (stack (colorize "red" (rectangle 20 20))
        (colorize "blue" (rectangle 20 20)))
@@ -77,11 +77,11 @@
 
 ;;;; 4. Your friend the computer
 
-;; We already saw how `doc` is a way to ask Clojure what it knows about a function. You can also ask the computer what kind of thing something is. What was that value we evaluated up above?
+;; You already saw how `doc` is a way to ask Clojure what it knows about a function. You can also ask the computer what kind of thing something is. What was that value you evaluated up above?
 
 (what-is "duck")
 
-;; We'll explore all sorts of Clojure expressions and values together, and so we want you to have `what-is` by your side in case you're ever curious or confused. So...what is `what-is`?
+;; We'll explore all sorts of Clojure expressions and values together, and so Maria wants you to have `what-is` by your side in case you're ever curious or confused. So...what is `what-is`?
 
 (what-is what-is)
 
@@ -92,7 +92,7 @@
 
 ;;;; 5. Functions upon functions upon functions
 
-;; What if we want to draw a whole bunch of shapes? Typing "rectangle" over and over again would be a chore. We don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
+;; What if you want to draw a whole bunch of shapes? Typing "rectangle" over and over again would be a chore. You don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
 
 (map circle [2 4 8 16 32 64 128])
 
@@ -100,7 +100,7 @@
 
 (what-is [2 4 8 16 32 64 128])
 
-;; OK. So we have an ordered collection of numbers--a vector of integers.
+;; OK. So you have an ordered collection of numbers--a vector of integers.
 
 ;; What's `map`?
 
@@ -110,7 +110,7 @@
 
 (doc map)
 
-;; Oof. Maybe that's a bit technical. Let's break it down for what we're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
+;; Oof. Maybe that's a bit technical. Let's break it down for what you're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
 
 ;; So let's look again at our code from above:
 
@@ -122,7 +122,7 @@
 
 (doc colorize)
 
-;; The first parameter to `colorize` is a color (as a string), and the second is a shape. (By the way, if you want to see which colors you we use, evaluate `colors`.) That means that if we want to `map` with the `colorize` function, we can give it two collections: first a collection of colors, and then a collection of rectangles. Then `map` will execute `colorize` using the first element of each collection, then the second element of each collection, then the third, and so on. So:
+;; The first parameter to `colorize` is a color (as a string), and the second is a shape. (By the way, if you want to see which colors you use, evaluate `colors`.) That means that if you want to `map` with the `colorize` function, you can give it two collections: first a collection of colors, and then a collection of rectangles. Then `map` will execute `colorize` using the first element of each collection, then the second element of each collection, then the third, and so on. So:
 (map colorize
      ["red" "blue" "yellow"]
      [(rectangle 20 20) (rectangle 50 50) (rectangle 100 100)])
@@ -136,7 +136,7 @@
 
 ;;;; Choosing names
 
-;; Often when programming we need to name something we've created, so we can use it later. This is useful, but it's also a major source of trouble. There's an old saying in programming, attributed to Phil Carlton: "There are only two hard things in Computer Science: cache invalidation and naming things." Let's leave cache invalidation for another day and focus on names.
+;; Often when programming you need to name something you've created, so you can use it later. This is useful, but it's also a major source of trouble. There's an old saying in programming, attributed to Phil Carlton: "There are only two hard things in Computer Science: cache invalidation and naming things." Let's leave cache invalidation for another day and focus on names.
 
 
 ;; TODO `let` and `fn`, then `def`, then `defn`
