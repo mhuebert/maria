@@ -18,12 +18,6 @@
 
 ;; Put your cursor to the same line as the expression "duck", and press `command-enter`. BOOM. You just evaluated a duck. This duck expression is just a value, so it evaluates to itself: "duck". Clojure printed the evaluation of our "duck" expression in the output panel on the right. That's how we're going to work: type and evaluate expressions on the left; evaluation shows up on the right.
 
-;; Try evaluating some other values:
-
-5
-
-18247575
-
 
 ;;;; 2. Go!
 
