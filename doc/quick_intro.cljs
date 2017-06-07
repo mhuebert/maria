@@ -150,6 +150,7 @@
 
 ;; The first parameter to `let` is always a vector that takes pairs of names and their definitions. The rest of the parameters to `let` are expressions that can use those names. So here, we "let" the name "palette" be a vector of color names, and then evaluated `colorize` on a circle using a random-picked color from our palette.
 
+;; TODO transition
 
 (let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
   (apply line-up
@@ -157,7 +158,7 @@
               (take 3 (repeatedly (fn [] (rand-nth palette))))
               (repeat (circle 50)))))
 
-;; TODO `let` and `fn`, then `def`, then `defn`
+;; TODO `let` then `def` and `fn` then `defn`
 
 
 
