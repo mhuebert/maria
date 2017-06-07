@@ -10,7 +10,7 @@
 
 ;;;; 2. Set...
 
-;; This text you're reading is a comment, bcause of the two semicolons at the start of the line.
+;; This text you're reading is a comment. That just means it's meant for humans like you to read it, and the computer ignores it. You can tell it's a comment because of the two semicolons at the start of the line.
 
 ;; In Clojure, everything that isn't a comment is an expression. You can evaluate expressions, which is like asking the expression what it is or what it does. Here is a simple expression:
 
@@ -21,11 +21,11 @@
 
 ;;;; 2. Go!
 
-;; An expression can also be a function call. To call a function, put an open parenthesis before the function name, then expressions for the function parameters, and then a close parenthesis, like this:
+;; An expression can also be a function call. To call a function, put an open parenthesis before the function name, then expressions for the parameters you give the function, and then a close parenthesis, like this:
 
-(circle 20)
+(circle 50)
 
-;; The evaluation of the `circle` function call is a circle. The parameter to `circle` determines the circle's radius, in pixels. How do you find out the parameters to `circle`? Why, you ask Clojure!
+;; The evaluation of the `circle` function call is a circle. The `circle` function needs a parameter for how big the circle will be. You just asked the computer to draw a circle with a 50-pixel radius. How would you find out the parameters to a function like `circle`? Why, you can ask Clojure!
 
 (doc circle)
 
@@ -48,29 +48,34 @@
 
 ;; OK, so it takes two parameters: width and height. Let's take it for a spin.
 
-(rectangle 100 25)
+(rectangle 200 50)
 
 ;; That's pretty much what one would expect. But these one-tone shapes bore me. Let's add some color!
 
-(colorize "blue" (rectangle 50 50))
+(colorize "blue" (rectangle 250 100))
 
-;; That's a nice change of pace. You can also combine shapes with `stack` and `line-up`:
 
-(stack (colorize "red" (rectangle 20 20))
-       (colorize "blue" (rectangle 20 20)))
+;; That's a nice change of pace. You can also combine shapes with `stack`:
 
-(line-up (colorize "red" (rectangle 20 20))
-         (colorize "blue" (rectangle 20 20))
-         (colorize "green" (rectangle 20 20)))
+(stack (colorize "red" (rectangle 50 50))
+       (colorize "blue" (rectangle 50 50)))
+
+;; and also `line-up`:
+
+(line-up (colorize "red" (rectangle 50 50))
+         (colorize "blue" (rectangle 50 50))
+         (colorize "green" (rectangle 50 50)))
+
+;; and you can combine `stack` and `line-up`:
 
 (stack
- (stack (colorize "red" (rectangle 20 20))
-        (colorize "blue" (rectangle 20 20))
-        (colorize "green" (rectangle 20 20)))
- (line-up (colorize "orange" (rectangle 20 20))
-          (colorize "red" (rectangle 20 20))
-          (colorize "blue" (rectangle 20 20))
-          (colorize "green" (rectangle 20 20))))
+ (stack (colorize "red" (rectangle 50 50))
+        (colorize "blue" (rectangle 50 50))
+        (colorize "green" (rectangle 50 50)))
+ (line-up (colorize "orange" (rectangle 50 50))
+          (colorize "red" (rectangle 50 50))
+          (colorize "blue" (rectangle 50 50))
+          (colorize "green" (rectangle 50 50))))
 
 ;; If you have some time, take a minute and play around a little. Make your own composite shapes.
 
@@ -100,7 +105,7 @@
 
 (what-is [2 4 8 16 32 64 128])
 
-;; OK. So you have an ordered collection of numbers--a vector of integers.
+;; OK. So you have a vector of integers.
 
 ;; What's `map`?
 
@@ -138,6 +143,19 @@
 
 ;; Often when programming you need to name something you've created, so you can use it later. This is useful, but it's also a major source of trouble. There's an old saying in programming, attributed to Phil Carlton: "There are only two hard things in Computer Science: cache invalidation and naming things." Let's leave cache invalidation for another day and focus on names.
 
+;; For instance, what if you want to pick which colors you'll use while drawing? For this you could use `let`, like this:
+
+(let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
+  (colorize (rand-nth palette) (circle 50)))
+
+;; The first parameter to `let` is always a vector that takes pairs of names and their definitions. The rest of the parameters to `let` are expressions that can use those names. So here, we "let" the name "palette" be a vector of color names, and then evaluated `colorize` on a circle using a random-picked color from our palette.
+
+
+(let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
+  (apply line-up
+         (map colorize
+              (take 3 (repeatedly (fn [] (rand-nth palette))))
+              (repeat (circle 50)))))
 
 ;; TODO `let` and `fn`, then `def`, then `defn`
 
