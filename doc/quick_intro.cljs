@@ -148,7 +148,15 @@
 ;; TODO `let` and `fn`, then `def`, then `defn`
 
 
-;; XXX checkerboard? too direct a theft from Racket
+
+;; XXX perhaps 1. introduce `def` with a color palette!
+(def palette ["red" "orange" "yellow" "green" "blue" "purple"])
+
+;; then 2. use that to introduce `fn` with something colorful:
+(apply line-up
+       (map colorize
+            (take 5 (repeatedly (fn [] (rand-nth palette))))
+            (repeat (circle 50))))
 
 
 
