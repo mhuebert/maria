@@ -39,12 +39,14 @@
    (when error [:.bg-near-white.pa2.mv2 error])])
 
 (defn gist-source [gist-json]
-  (->> (js->clj (aget gist-json "files"))
-       (vals)
-       (keep (fn [{:strs [content language]}]
-               (when (= language "Clojure")
-                 content)))
-       (string/join "\n")))
+  (if-let [clojure-files (->> (js->clj (aget gist-json "files"))
+                              (vals)
+                              (keep (fn [{:strs [content language]}]
+                                      (when (= language "Clojure")
+                                        content)))
+                              (seq))]
+    (string/join "\n" clojure-files)
+    ";; No Clojure files found in gist."))
 
 (defn get-gist [id cb]
   (xhr/send (str "https://api.github.com/gists/" id)
