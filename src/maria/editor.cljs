@@ -20,7 +20,7 @@
   uid)
 
 (def options
-  {:theme             "solarized light"
+  {:theme             "maria-light"
    :autoCloseBrackets "()[]{}\"\""
    :lineNumbers       false
    :lineWrapping      true

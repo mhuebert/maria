@@ -13,6 +13,7 @@
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
-    "webpack": "^2.6.0"
+    "webpack": "^2.6.1",
+    "yarn": "^0.24.5"
   }
 }

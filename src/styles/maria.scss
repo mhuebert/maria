@@ -1,136 +1,136 @@
 @import "vendor/et-book";
+@import "vendor/fira-code";
 @import '../../node_modules/tachyons/css/tachyons.min.css';
 @import '../../node_modules/codemirror/lib/codemirror';
-@import '../../node_modules/codemirror/theme/solarized';
+@import '../../node_modules/codemirror/theme/maria-light';
 @import '../../node_modules/@material/list/mdc-list';
 @import '../../node_modules/@material/menu/mdc-menu';
 @import '../../node_modules/@material/button/mdc-button';
 @import '../../node_modules/@material/ripple/mdc-ripple';
 
 html, body, #maria-main {
-  height: 100%;
+    height: 100%;
 }
 
 .serif {
-  font-family: "et-book", Georgia, Times New Roman, serif;
+    font-family: "et-book", Georgia, Times New Roman, serif;
 }
 
 div.CodeMirror {
-  height: 100%;
+    height: 100%;
 }
 
 div.CodeMirror pre {
-  padding: 0;
+    padding: 0;
 }
 
 div.CodeMirror {
-  span.CodeMirror-matchingbracket {
-    font-weight: bold;
-    color: #000;
-    //cursor: pointer;
-  }
+    span.CodeMirror-matchingbracket {
+        //font-weight: bold;
+        color: #777;
+        //cursor: pointer;
+    }
 
-  .CodeMirror-evalRegion {
-    background: rgba(0, 0, 0, 0.1);
-  }
+    .CodeMirror-evalRegion {
+        background: rgba(0, 0, 0, 0.1);
+    }
 
-  .cm-comment {
-    color: #a27b11;
-    font-family: 'et book', Georgia, Times New Roman, serif;
-    font-size: 15px;
-  }
+    .cm-comment {
+        font-family: 'et book', Georgia, Times New Roman, serif;
+        font-size: 15px;
+    }
 }
 
 .CodeMirror, .code, code, pre {
-  font-family: 'Source Code Pro', monospace;
-  font-size: 14px;
+    font-family: 'Fira Code', monospace;
+    font-size: 15px;
 }
 
 .CodeMirror {
-  background: transparent !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  padding: 0 1rem;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    padding: 0 1rem;
 }
 
-.bg-solarized-light {
-  background: #fdf6e3;
-  box-shadow: inset 0px 0 2px 0px rgba(172, 126, 0, 0.36);
+.bg-maria-light {
+//    background: #f5f5f5;
+    box-shadow: inset 0px 0 2px 0px rgba(172, 126, 0, 0.36);
 }
 
 .CodeMirror-eval-highlight {
-  background: rgba(0, 0, 0, 0.07);
-  cursor: pointer;
+    background: rgba(0, 0, 0, 0.07);
+    cursor: pointer;
 }
 
 .ws-prewrap {
-  white-space: pre-wrap;
+    white-space: pre-wrap;
 }
 
 .f7 {
-  font-size: 0.75rem;
+    font-size: 0.75rem;
 }
 .b--darken {
-  border-color: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.05);
 }
 
 .bg-darken {
-  background-color: rgba(0,0,0,0.05);
+    background-color: rgba(0,0,0,0.05);
 }
 
 .error-text {
-  //background: rgba(255,0,0,0.1);
-  border-bottom: 2px solid black;
+    //background: rgba(255,0,0,0.1);
+    border-bottom: 2px solid black;
 }
 .bg-darken-red {
-  background-color: rgba(255, 79, 79, 0.1);
+    background-color: rgba(255, 79, 79, 0.1);
 }
 
 
 .progress-indeterminate, .progress-indeterminate:before {
-  height: 3px;
-  width: 100%;
-  margin: 0;
+    height: 3px;
+    width: 100%;
+    margin: 0;
 }
 
 .progress-indeterminate {
-  background-color: #b3d4fc;
-  display: -webkit-flex;
-  display: flex;
-  &:before {
-    background-color: #3f51b5;
-    content: '';
-    -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
+    background-color: #b3d4fc;
+    display: -webkit-flex;
+    display: flex;
+    &:before {
+        background-color: #3f51b5;
+        content: '';
+        -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
 }
 
 @-webkit-keyframes running-progress {
-  0% {
-    margin-left: 0px;
-    margin-right: 100%;
-  }
-  50% {
-    margin-left: 25%;
-    margin-right: 0%;
-  }
-  100% {
-    margin-left: 100%;
-    margin-right: 0;
-  }
+    0% {
+        margin-left: 0px;
+        margin-right: 100%;
+    }
+    50% {
+        margin-left: 25%;
+        margin-right: 0%;
+    }
+    100% {
+        margin-left: 100%;
+        margin-right: 0;
+    }
 }
 
 @keyframes running-progress {
-  0% {
-    margin-left: 0px;
-    margin-right: 100%;
-  }
-  50% {
-    margin-left: 25%;
-    margin-right: 0%;
-  }
-  100% {
-    margin-left: 100%;
-    margin-right: 0;
-  }
+    0% {
+        margin-left: 0px;
+        margin-right: 100%;
+    }
+    50% {
+        margin-left: 25%;
+        margin-right: 0%;
+    }
+    100% {
+        margin-left: 100%;
+        margin-right: 0;
+    }
 }
