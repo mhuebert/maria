@@ -10,22 +10,25 @@
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."
   [thing]
-  (cond
-    (vector? thing) "a vector: a collection of values, indexed by contiguous integers"
-    (list? thing) "a list: a collection and sequence, possibly lazy"
-    (set? thing) "a set: a collection of unique values"
-    (string? thing) "a string: text characters"
-    (char? thing) "a character: a single literal unit of text"
-    (number? thing) "a number: literal digits or a ratio"
-    (keyword? thing) "a keyword: a symbolic identifier"
-    (symbol? thing) "a symbol: a name that refers to something else"
-    (fn? thing) "a function: an object you call with input, that returns output"
-    (map? thing) "a map: a collection of key/value pairs, where each key is a 'map' to its corresponding value"
-    (seq? thing) "a sequence: a logical list of values, each one followed by the next"
-    (true? thing) "the Boolean value true"
-    (false? thing) "the Boolean value false"
-    (nil? thing) "the special value nil (nothing)"
-    :else (type thing)))
+  (case thing
+    :maria.kinds/macro "a macro: a function that transforms source code before it is evaluated."
+    :maria.kinds/function (what-is (fn []))
+    (cond
+      (vector? thing) "a vector: a collection of values, indexed by contiguous integers"
+      (list? thing) "a list: a collection and sequence, possibly lazy"
+      (set? thing) "a set: a collection of unique values"
+      (string? thing) "a string: text characters"
+      (char? thing) "a character: a single literal unit of text"
+      (number? thing) "a number: literal digits or a ratio"
+      (keyword? thing) "a keyword: a symbolic identifier"
+      (symbol? thing) "a symbol: a name that refers to something else"
+      (fn? thing) "a function: an object you call with input, that returns output"
+      (map? thing) "a map: a collection of key/value pairs, where each key is a 'map' to its corresponding value"
+      (seq? thing) "a sequence: a logical list of values, each one followed by the next"
+      (true? thing) "the Boolean value true"
+      (false? thing) "the Boolean value false"
+      (nil? thing) "the special value nil (nothing)"
+      :else (type thing))))
 
 (defn tokenize
   "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."

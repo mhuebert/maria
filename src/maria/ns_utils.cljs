@@ -12,6 +12,9 @@
   (->> (keys (:cljs.analyzer/namespaces c-state))
        (filter (complement builtin-ns?))))
 
+(defn add-$macros-suffix [sym]
+  (symbol (str sym "$macros")))
+
 (defn elide-quote [x]
   (cond-> x
           (and (seq? x) (= 'quote (first x))) (second)))
@@ -26,4 +29,5 @@
   "Simplified resolve-var fn, looks up `def` in compiler state."
   [c-state c-env sym]
   (let [[namespace name] (resolve-sym c-state c-env sym)]
-    (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])))
+    (or (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
+        (get-in @c-state [:cljs.analyzer/namespaces (add-$macros-suffix namespace) :defs name]))))
