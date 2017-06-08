@@ -1,46 +1,38 @@
-;;;; A Quick Introduction to Clojure with Pictures.
+;;;; A Quick Introduction to Clojure with Shapes
+
+;; Hi! This tutorial will introduce you to programming by helping you draw some shapes.
+
+;; Here is a simple expression:
+
+"puppy"
+
+;; Put your cursor on the same line as "puppy" and press `control-enter` (`command-enter` on Mac). BOOM. You just evaluated a puppy. This expression evaluates to itself: "puppy". Clojure (the programming language we're using) printed the evaluation of our "puppy" expression in the output panel on the right.
+
+;; That's how you'll explore: type and evaluate expressions on the left; and read the result of your evaluations on the right.
 
 
-;;;; 1. Ready...
+;;;; Asking the Computer Questions
 
-;; Hi! This tutorial will introduce you to programming by drawing pictures using the Clojure programming language.
-
-;; This environment you're in is called Maria, after education pioneer Maria Montessori. Working with Maria is the friendliest way we know how to share the elegance of programming Clojure, even if you eventually use some other editor.
-
-
-;;;; 2. Set...
-
-;; This text you're reading is a comment. That just means it's meant for humans like you to read it, and the computer ignores it. You can tell it's a comment because of the two semicolons at the start of the line.
-
-;; In Clojure, everything that isn't a comment is an expression. You can evaluate expressions, which is like asking the expression what it is or what it does. Here is a simple expression:
-
-"duck"
-
-;; Put your cursor to the same line as the expression "duck", and press `command-enter`. BOOM. You just evaluated a duck. This "duck" expression evaluates to just itself: "duck". Clojure printed the evaluation of our "duck" expression in the output panel on the right. That's how you're going to work: type and evaluate expressions on the left; and read the result of our evaluations on the right.
-
-
-;;;; 2. Go!
-
-;; An expression can also be a function call. To call a function, put an open parenthesis before the function name, then expressions for the parameters you give the function, and then a close parenthesis, like this:
+;; You can ask the computer questions by calling functions, which will return expressions. To call a function, put an open parenthesis, then the function name, then parameters you give the function, and then a close parenthesis. It looks like this:
 
 (circle 50)
 
-;; The evaluation of the `circle` function call is a circle. The `circle` function needs a parameter for how big the circle will be. You just asked the computer to draw a circle with a 50-pixel radius. How would you find out the parameters to a function like `circle`? Why, you can ask Clojure!
+;; The function is `circle` and you give it the parameter `50`. Evaluating the `circle` function asks the computer to draw a circle with a 50-pixel radius.
+
+;; What if you didn't know that `circle` needed to be given a radius? How would you find out the parameters to a function? Why, you can ask your friend the computer!
 
 (doc circle)
 
-;; The `doc` function returns the documentation for any function. You pass it the parameter `circle`, so it prints `circle`'s documentation for us. The computer is your friend and wants to help you.
+;; The `doc` function is short for "documentation". It tells you what a function does and what parameters it needs. You gave `doc` the parameter `circle`, so it gives you documentation for the `circle` function. The computer wants to help you.
 
-;; Try giving circle the wrong number of arguments, just to see what happens:
+;; Try giving circle the wrong number of parameters, just to see what happens:
 
 (circle 20 10)
 
-;; Notice that the result is an error instead of a picture or value. If you write code that Clojure can't understand, it will tell you it can't run it. If it can, Clojure will try to tell you how to fix your code.
-
-;; Don't worry if you create an error. It happens to all of us.
+;; You got an error instead of a shape or expression. Don't worry if you create an error. It happens to all of us. If you write code that Clojure can't understand, it will tell you it can't run it. Clojure will try to tell you how to fix your code. This is the ideal: programmer and computer, working together, each doing the part of the task they do best.
 
 
-;;;; 3. Drawing
+;;;; Shapes and Colors
 
 ;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
@@ -54,8 +46,7 @@
 
 (colorize "blue" (rectangle 250 100))
 
-
-;; That's a nice change of pace. You can also combine shapes with `stack`:
+;; That blue is nice. You can also combine shapes with `stack`:
 
 (stack (colorize "red" (rectangle 50 50))
        (colorize "blue" (rectangle 50 50)))
@@ -66,7 +57,15 @@
          (colorize "blue" (rectangle 50 50))
          (colorize "green" (rectangle 50 50)))
 
-;; and you can combine `stack` and `line-up`:
+;; Wow--that is a lot of nested function calls. Let's make sure you understand how they work together.
+
+;; Put your cursor on a `50` inside the `rectangle` call, then evaluate it. You should get `50`: a number evaluates to itself.
+
+;; Now put your cursor after a `(rectangle 50 50)`, to the right of the first close-parenthesis. Evaluate it. You should get a black square.
+
+;; Now put your cursor at the end of the first line and evaluate it. You should get a red square.
+
+;; OK, now that you're experienced with evaluating individual expressions inside a big nested expression, let's combine `stack` and `line-up`:
 
 (stack
  (stack (colorize "red" (rectangle 50 50))
@@ -77,27 +76,27 @@
           (colorize "blue" (rectangle 50 50))
           (colorize "green" (rectangle 50 50))))
 
-;; If you have some time, take a minute and play around a little. Make your own composite shapes.
+;; If you have some time, take a minute and play around a little. Make your own composite shapes, evaluating inner expressions to make sure you know how they fit into the expression containing them.
 
 
-;;;; 4. Your friend the computer
+;;;; More questions to ask
 
 ;; You already saw how `doc` is a way to ask Clojure what it knows about a function. You can also ask the computer what kind of thing something is. What was that value you evaluated up above?
 
-(what-is "duck")
+(what-is "puppy")
 
 ;; We'll explore all sorts of Clojure expressions and values together, and so Maria wants you to have `what-is` by your side in case you're ever curious or confused. So...what is `what-is`?
 
 (what-is what-is)
 
-;; Please don't be shy about using `doc` and `what-is`. Ask the computer what it knows. The ideal state of programming is a natural, ongoing conversation with the computer, where you ask it questions, it explains things, and you tell it to do favors for you.
+;; Please don't be shy about using `doc` and `what-is`. Ask the computer what it knows. It's like a dog that never gets tired of playing fetch: it will keep answering you as long as you have questions to ask.
 
 ;; TODO add parameter hints to their toolbelt here -- if their cursor is inside parens enclosing a function, show the arglist for that function
 
 
-;;;; 5. Functions upon functions upon functions
+;;;; Powers of fun
 
-;; What if you want to draw a whole bunch of shapes? Typing "rectangle" over and over again would be a chore. You don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
+;; What if you want to draw a whole bunch of shapes? Typing "rectangle" over and over again is a chore. You don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
 
 (map circle [2 4 8 16 32 64 128])
 
@@ -105,7 +104,7 @@
 
 (what-is [2 4 8 16 32 64 128])
 
-;; OK. So you have a vector of integers.
+;; OK. So square brackets mean a vector. This vector has numbers in it.
 
 ;; What's `map`?
 
@@ -121,77 +120,60 @@
 
 (map circle [2 4 8 16 32 64 128])
 
-;; This returns the result of evaluating `circle` with radius 2, then radius 4, then radius 8, and so on for each element in our vector of numbers.
+;; This returns the result of evaluating `circle` with radius 2, then radius 4, then radius 8, and so on for each number in our vector.
 
-;; One neat thing about `map` is that you can give it more than one collection. To make that work, you need to `map` a function that uses more than one parameter. Remember `colorize`?
+;; One neat thing about `map` is that you can give it more than one collection. To make that work, you need to `map` a function that uses more than one parameter. We'll use `colorize`.
 
-(doc colorize)
-
-;; The first parameter to `colorize` is a color (as a string), and the second is a shape. (By the way, if you want to see which colors you use, evaluate `colors`.) That means that if you want to `map` with the `colorize` function, you can give it two collections: first a collection of colors, and then a collection of rectangles. Then `map` will execute `colorize` using the first element of each collection, then the second element of each collection, then the third, and so on. So:
+;; `colorize` takes a color and a shape. That means that if you want to `map` with the `colorize` function, you can give it two collections: first a collection of colors, and then a collection of shapes. Then `map` will execute `colorize` using the first element of each collection, then the second element of each collection, then the third, and so on. So:
 (map colorize
      ["red" "blue" "yellow"]
      [(rectangle 20 20) (rectangle 50 50) (rectangle 100 100)])
 
-;; This is like calling each of these:
+;; The first element of the first collection and the first element of the second collection get used to call the function. So that expression with `map` is like evaluating each of these individual expressions:
 
 (colorize "red" (rectangle 20 20))
 (colorize "blue" (rectangle 50 50))
 (colorize "yellow" (rectangle 100 100))
 
 
-;;;; Choosing names
+;;;; The power of names
 
-;; Often when programming you need to name something you've created, so you can use it later. This is useful, but it's also a major source of trouble. There's an old saying in programming, attributed to Phil Carlton: "There are only two hard things in Computer Science: cache invalidation and naming things." Let's leave cache invalidation for another day and focus on names.
-
-;; For instance, what if you want to pick which colors you'll use while drawing? For this you could use `let`, like this:
+;; Often when programming you need to name something you've created. For instance, you can let the name "palette" be a vector of colors:
 
 (let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
-  (colorize (rand-nth palette) (circle 50)))
+  (rand-nth palette))
 
-;; The first parameter to `let` is always a vector that takes pairs of names and their definitions. The rest of the parameters to `let` are expressions that can use those names. So here, we "let" the name "palette" be a vector of color names, and then evaluated `colorize` on a circle using a random-picked color from our palette.
+;; You can read this as saying, "Let 'palette' be the name for this vector, ['red' 'orange' blah blah blah] while we evaluate the next expression." The next expression says, "Get a random element from 'palette'." Evaluate it a few times--you'll see a different random color from your palette every time!
+
+;; Names can be helpful, but too many names scattered across your code gets hard to keep track of. That's why we use `let` to create names we only need for right now. Watch--try to use `palette` outside the `let`:
+
+palette
+
+;; The name `palette` only means something *inside the `let`*. That way we know it won't cause trouble somewhere else.
+
+;; FIXME this might be too soon to switch to `def`
+
+;; If you need a name that you'll use over and over, you need to define it with `def`:
+(def palette ["red" "orange" "yellow" "green" "blue" "purple"])
+
+;; Now we can use `palette` anywhere:
+(colorize (rand-nth palette) (circle 50))
 
 ;; TODO transition
 
-(let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
-  (apply line-up
-         (map colorize
-              (take 3 (repeatedly (fn [] (rand-nth palette))))
-              (repeat (circle 50)))))
-
-;; TODO `let` then `def` and `fn` then `defn`
+(apply stack
+       (map colorize
+            (repeatedly (fn [] (rand-nth palette)))
+            [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
+;; FIXME requires creating triangle function
 
 
+;; TODO introduce `fn`
 
-;; XXX perhaps 1. introduce `def` with a color palette!
-(def palette ["red" "orange" "yellow" "green" "blue" "purple"])
-
-;; then 2. use that to introduce `fn` with something colorful:
 (apply line-up
        (map colorize
-            (take 5 (repeatedly (fn [] (rand-nth palette))))
+            (take 3 (repeatedly (fn [] (rand-nth palette))))
             (repeat (circle 50))))
 
 
-
-;; XXX (or?) Let's make a rainbow:
-
-(apply line-up
-       (map colorize
-            ["red" "orange" "yellow" "green" "blue" "purple"]
-            (repeat (rectangle 20 20))))
-
-;; TODO
-
-(let [rainbow (apply line-up
-                     (map colorize
-                          ["red" "orange" "yellow" "green" "blue" "purple"]
-                          (repeat (rectangle 20 20))))]
-  (apply stack (repeat 20 [rainbow (rectangle 120 20)])))
-
-
-
-(let [rainbow (fn [shape]
-                (mapv colorize
-                      ["red" "orange" "yellow" "green" "blue" "purple"]
-                      (repeat shape)))]
-  (rainbow (rectangle 20 20)))
+;; TODO introduce `defn` and that's it
