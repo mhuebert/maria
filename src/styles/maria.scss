@@ -2,11 +2,42 @@
 @import "vendor/fira-code";
 @import '../../node_modules/tachyons/css/tachyons.min.css';
 @import '../../node_modules/codemirror/lib/codemirror';
-@import '../../node_modules/codemirror/theme/maria-light';
+//@import '../../node_modules/codemirror/theme/maria-light';
 @import '../../node_modules/@material/list/mdc-list';
 @import '../../node_modules/@material/menu/mdc-menu';
 @import '../../node_modules/@material/button/mdc-button';
 @import '../../node_modules/@material/ripple/mdc-ripple';
+
+/******************************************************************************/
+// short term home of maria-light theme
+
+.cm-s-maria-light.CodeMirror {background: #f9f8f4; color: #3a3c40;}
+.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection { background: #f8f8e8; }
+.cm-s-maria-light div.CodeMirror-selected {background: #f8f8e8 !important;}
+.cm-s-maria-light .CodeMirror-cursor {border-left: 1px solid #868886 !important;}
+
+.cm-s-maria-light span.cm-comment {color: #a3685a;}
+.cm-s-maria-light span.cm-atom {color: #ad8fb6;}
+.cm-s-maria-light span.cm-number {color: #ad8fb6;}
+
+.cm-s-maria-light span.cm-property, .cm-s-maria-light span.cm-attribute {color: #b0b963;}
+.cm-s-maria-light span.cm-keyword {color: #cc6666;}
+.cm-s-maria-light span.cm-string {color: #bca250;}
+
+.cm-s-maria-light span.cm-variable {color: #b0b963;}
+.cm-s-maria-light span.cm-variable-2 {color: #7192ae;}
+.cm-s-maria-light span.cm-def {color: #cb804c;}
+.cm-s-maria-light span.cm-error {background: #cc6666; color: #969896;}
+.cm-s-maria-light span.cm-bracket {color: #c9c9c9;}
+.cm-s-maria-light span.cm-tag {color: #cc6666;}
+.cm-s-maria-light span.cm-link {color: #ad8fb6;}
+
+/******************************************************************************/
+
+/* I don't think we're using these */
+.cm-s-maria-light .CodeMirror-gutters {background: #ffffff; border-right: 0px;}
+.cm-s-maria-light .CodeMirror-linenumber {color: #b4b7b4;}
+
 
 html, body, #maria-main {
     height: 100%;
