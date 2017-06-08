@@ -36,16 +36,17 @@
    :fill   "black"})
 
 (defn rectangle
-  "Returns a rectangle of `width` and `height`."
-  [width height]
-  {:is-a   :shape
-   :kind   :rect
-   :x      0
-   :y      0
-   :width  width
-   :height height
-   :stroke "none"
-   :fill   "black"})
+  "Returns a rectangle of `width` and `height`. Returns a square if given a single `side`."
+  ([side] (rectangle side side))
+  ([width height]
+   {:is-a   :shape
+    :kind   :rect
+    :x      0
+    :y      0
+    :width  width
+    :height height
+    :stroke "none"
+    :fill   "black"}))
 
 (defn assure-shape-seq
   "Returns `shape-or-shapes` wrapped in a vector if it appears to be a single shape."
@@ -374,4 +375,3 @@
        (rainbow (rectangle 20 30)))
 
   )                                                         ;/comment
-

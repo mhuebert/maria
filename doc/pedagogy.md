@@ -15,7 +15,7 @@ The best way to learn a tool’s usefulness is to do the task without the tool. 
 
 ## Roadmap ##
 
- 1. A quick introduction, modeled after a blatant loving rewrite of [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/). The goal is to walk the learner through the basics of working with Maria using a *minimum* of syntax and programming concepts. Someone familiar with modern computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching.
+ 1. A quick introduction, modeled after a blatant loving rewrite of [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/). The goal is to walk the learner through the basics of working with Maria using a *minimum* of syntax and programming concepts. Someone familiar with modern computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour or two with coaching.
  2. Allow the user to select from a library of "modules" according to their interests. Possibilities include:
     - more extensive drawing explorations, with Quil or native Maria shapes
     - introduction to basics of computer science (recursion, higher order functions)
