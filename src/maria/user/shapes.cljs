@@ -23,7 +23,6 @@
 ;; themselves for output. This can work for all sorts of things
 ;; (images, mathematics, and so on) in addition to shapes.
 
-
 (defn circle
   "Returns a circle of `radius`."
   [radius]
@@ -36,7 +35,7 @@
    :fill   "black"})
 
 (defn rectangle
-  "Returns a rectangle of `width` and `height`. Returns a square if given a single `side`."
+  "Returns a rectangle of `width` and `height`. If given a single parameter, returns a square of dimension `side`."
   ([side] (rectangle side side))
   ([width height]
    {:is-a   :shape
@@ -47,6 +46,24 @@
     :height height
     :stroke "none"
     :fill   "black"}))
+
+(defn triangle
+  "Returns an equilateral triangle with sides of `size`."
+  ([size]
+   {:is-a   :shape
+    :kind   :polygon
+    :x      0
+    :y      0
+    :width  size
+    :height size
+    :points (str 0 "," size " "
+                 (/ size 2) "," (- size (* 0.8660259 size)) " "
+                 size "," size)
+    :stroke "none"
+    :fill   "black"}))
+
+;; TODO add general polygon fn
+;; TODO add spec annotations!
 
 (defn assure-shape-seq
   "Returns `shape-or-shapes` wrapped in a vector if it appears to be a single shape."
@@ -151,7 +168,7 @@
        :out
        (apply group)))
 
-(def colors
+(def color-names
   "Recognized SVG color keyword names, mapped to their RGB value."
   {"aliceblue"            [240, 248, 255]
    "antiquewhite"         [250, 235, 215]

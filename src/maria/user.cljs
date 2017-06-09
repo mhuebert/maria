@@ -5,6 +5,7 @@
             [maria.user.shapes :as shapes :refer [show
                                                   circle
                                                   rectangle
+                                                  triangle
                                                   assure-shape-seq
                                                   shape-bounds
                                                   bounds
@@ -14,7 +15,7 @@
                                                   group
                                                   line-up
                                                   stack
-                                                  colors]]
+                                                  color-names]]
             [re-view.core :include-macros true])
   (:require-macros [maria.user :refer [user-macro]]))
 
