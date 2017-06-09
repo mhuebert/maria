@@ -29,7 +29,7 @@
 
 (circle 20 10)
 
-;; You got an error instead of a shape or expression. Don't worry if you create an error. It happens to all of us. If you write code that Clojure can't understand, it will tell you it can't run it. Clojure will try to tell you how to fix your code. This is the ideal: programmer and computer, working together, each doing the part of the task they do best.
+;; You got an error instead of a shape or expression. Don't worry if you create an error. It happens to all of us. If you write code that Clojure can't understand, it will tell you. Clojure will try to tell you how to fix your code. This is the ideal: programmer and computer, working together, each doing the part of the task they do best.
 
 
 ;;;; Shapes and Colors
@@ -151,29 +151,62 @@ palette
 
 ;; The name `palette` only means something *inside the `let`*. That way we know it won't cause trouble somewhere else.
 
-;; FIXME this might be too soon to switch to `def`
-
 ;; If you need a name that you'll use over and over, you need to define it with `def`:
 (def palette ["red" "orange" "yellow" "green" "blue" "purple"])
 
-;; Now we can use `palette` anywhere:
+;; Now we can use `palette` anywhere.
 (colorize (rand-nth palette) (circle 50))
 
-;; TODO transition
+;; Let's make a more complex shape with our new color palette.
+(apply stack
+       (map colorize
+            [(rand-nth palette) (rand-nth palette) (rand-nth palette)]
+            ;; FIXME requires creating triangle function
+            [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
 
+;; It's kind of annoying that we must repeat ourselves for those random colors. And we don't have to! If you need to do something over and over, you can create a function with `fn`:
+(what-is (fn [] (rand-nth palette)))
+
+;; All the functions you've used so far have had names, but this one doesn't, because we're just using it once.
+
+;; Your anonymous function has square brackets to declare its parameters, of which it has none. Now you can call this anonymous function `repeatedly`:
 (apply stack
        (map colorize
             (repeatedly (fn [] (rand-nth palette)))
+            ;; FIXME requires creating triangle function
             [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
-;; FIXME requires creating triangle function
 
+;; `repeatedly` will go on forever if you ask it to, but it knows you only need to call that function as many times as there are shapes. (Clojure is crafty like that.)
 
-;; TODO introduce `fn`
-
+;; You can get an infinite list of shapes, too, as long as you tell it how many you want:
 (apply line-up
        (map colorize
             (take 3 (repeatedly (fn [] (rand-nth palette))))
             (repeat (circle 50))))
 
+;; You know, we keep using that anonymous function. That's a good sign that maybe we should name it. Just like with `palette`, we use `def`:
+(def rand-color (fn [] (rand-nth palette)))
 
-;; TODO introduce `defn` and that's it
+;; Now `rand-color` stands shoulder-to-shoulder with `circle` and `map`:
+(what-is rand-color)
+
+;; And now it's much more concise to get a random color in your expression:
+(apply line-up
+       (map colorize
+            (take 10 (rand-color))
+            (repeat (rectangle 50))))
+
+;; Because we define functions so often, there's a special shorthand for giving them names:
+(defn rand-color []
+  (rand-nth palette))
+
+;; You use the result of `defn` exactly the same way as the result of `def fn...`:
+;; FIXME insert operatic amazing concluding shape here
+(apply line-up
+       (map colorize
+            (take 10 (rand-color))
+            (repeat (rectangle 50))))
+
+;; Congratulations! Now that you've created a function, you are a True Programmer. Give yourself a high-five.
+
+;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Where to go with that power is up to you: the next step is finding interesting ways to put functions together to create cool stuff.
