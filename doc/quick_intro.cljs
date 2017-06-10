@@ -192,7 +192,7 @@ palette
        (map colorize
             [(rand-nth palette) (rand-nth palette) (rand-nth palette)]
             ;; FIXME requires creating triangle function
-            [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
+            [(circle 50) (triangle 100) (rectangle 100 100)]))
 
 ;; It's kind of annoying that we must repeat ourselves for those random colors. And we don't have to! Just like `repeat` will give you as many "nouns" you need, `repeatedly` will give you as many "verby" function calls you need.
 
