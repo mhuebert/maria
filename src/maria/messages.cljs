@@ -1,10 +1,5 @@
 (ns maria.messages
-  (:require [clojure.string :as string]
-
-    ;; core.match not yet supported in self-hosted clojurescript
-    ;; see: http://blog.klipse.tech/clojure/2016/10/25/core-match.html
-    #_[clojure.core.match :refer-macros [match]]
-            ))
+  (:require [clojure.string :as string]))
 
 ;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures
 (defn what-is
@@ -14,29 +9,81 @@
     :maria.kinds/macro "a macro: a function that transforms source code before it is evaluated."
     :maria.kinds/function (what-is (fn []))
     (cond
-      (vector? thing) "a vector: a collection of values, indexed by contiguous integers"
-      (list? thing) "a list: a collection and sequence, possibly lazy"
-      (set? thing) "a set: a collection of unique values"
-      (string? thing) "a string: text characters"
-      (char? thing) "a character: a single literal unit of text"
-      (number? thing) "a number: literal digits or a ratio"
-      (keyword? thing) "a keyword: a symbolic identifier"
-      (symbol? thing) "a symbol: a name that refers to something else"
-      (fn? thing) "a function: an object you call with input, that returns output"
-      (map? thing) "a map: a collection of key/value pairs, where each key is a 'map' to its corresponding value"
-      (seq? thing) "a sequence: a logical list of values, each one followed by the next"
-      (true? thing) "the Boolean value true"
-      (false? thing) "the Boolean value false"
-      (nil? thing) "the special value nil (nothing)"
+      (char? thing)    "a character: a unit of writing (letter, emoji, and so on)"
+      (false? thing)   "false: the Boolean value 'false'"
+      (fn? thing)      "a function: something you call with input that returns output"
+      (keyword? thing) "a keyword: a special symbolic identifier"
+      (list? thing)    "a list: a sequence, possibly 'lazy'"
+      (map? thing)     "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"
+      (nil? thing)     "nil: a special value meaning nothing"
+      (number? thing)  "a number: it can be whole, a decimal, or even a ratio"
+      (seq? thing)     "a sequence: a sequence of values, each followed by the next"
+      (set? thing)     "a set: a collection of unique values"
+      (string? thing)  "a string: a run of characters that can make up a text"
+      (symbol? thing)  "a symbol: a name that usually refers to something"
+      (true? thing)    "true: the Boolean value 'true'"
+      (vector? thing)  "a vector: a collection of values, indexable by number"
       :else (type thing))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; error message prettifier
+
+(defn match-in-tokens
+  "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
+  ([trie tokens] (match-in-tokens trie tokens {}))
+  ([trie tokens context]
+   (let [token   (first tokens)
+         capture (let [x (ffirst trie)]
+                   (when (symbol? x) x))
+         this-match (if capture (trie capture) (trie token))
+         context (when capture (assoc context capture token))]
+     (if this-match
+       (let [next-match (match-in-tokens this-match (rest tokens) context)]
+         (if (:message this-match)
+           (merge this-match context)
+           next-match))
+       (merge this-match context)))))
+
+(defn build-error-message-trie
+  "Convert a sequence of pattern/output `templates` into a search trie."
+  [templates]
+  (reduce (fn [trie [pattern output]]
+            (assoc-in trie (conj pattern :message) output))
+          {}
+          templates))
 
 (defn tokenize
   "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
   [s]
   (->> (string/split (string/lower-case s) #"[^a-z0-9]")
        (remove empty?)
-       rest
+       ;; XXX the "Error" and "TypeError" tokens are gone now?
+       ;;       rest
        (into [])))
+
+(def error-message-trie
+  "A search trie for matching error messages to templates."
+  (build-error-message-trie
+   '[[["cannot" "read" "property" "call" "of" the-value]
+      ["It looks like you're trying to call a function that hasn't been defined."]]
+     [["invalid" "arity" the-value] 
+      [the-value " is too many arguments!"]]
+     [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]
+      ["The " the-type " `" the-value "` can't be used as a collection."]]
+     [[the-value "is" "not" "iseqable"]
+      ["The value `" the-value "` can't be used as a sequence or collection."]]
+     [[the-value "call" "is" "not" "a" "function"]
+      ["The value `" the-value "` isn't a function, but it's being called like one."]]]))
+
+(defn prettify-error-message
+  "Take an error `message` string and return a prettified version."
+  [message]
+  (if-let [match (match-in-tokens error-message-trie (tokenize message))]
+    (apply str (map #(if (symbol? %)
+                       (get match %)
+                       %)
+                    (:message match)))
+    message))
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
@@ -44,19 +91,7 @@
   [:div
    [:p (ex-message error)]
    [:p (ex-message (ex-cause error))]
-   [:pre (some-> (ex-cause error) (aget "stack"))]]
-  #_(match [(tokenize error)]
-           [["cannot" "read" "property" "call" "of" the-value]] ;; TODO warning is better
-           (str "It looks like you're trying to call a function that hasn't been defined.")
-           [["invalid" "arity" the-value]]                  ;; TODO warning is better
-           (str the-value " is too many arguments!")
-           [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]]
-           (str "The " the-type " `" the-value "` can't be used as a collection.")
-           [[the-value "is" "not" "iseqable"]]
-           (str "The value `" the-value "` can't be used as a sequence or collection.")
-           [[the-value "call" "is" "not" "a" "function"]]
-           (str "The value `" the-value "` isn't a function, but it's being called like one.")
-           :else error))
+   [:pre (some-> (ex-cause error) (aget "stack"))]])
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -88,7 +123,6 @@
   (let [bad-types (map type-to-name
                        (remove (partial = 'number)
                                (:types (:extra w))))]
-
     [:div
      (case (:type w)
        :fn-arity (str "The function `"
