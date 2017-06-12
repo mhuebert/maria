@@ -50,17 +50,18 @@
 (defn triangle
   "Returns an equilateral triangle with sides of `size`."
   ([size]
-   {:is-a   :shape
-    :kind   :polygon
-    :x      0
-    :y      0
-    :width  size
-    :height size
-    :points (str 0 "," size " "
-                 (/ size 2) "," (- size (* 0.8660259 size)) " "
-                 size "," size)
-    :stroke "none"
-    :fill   "black"}))
+   (let [h (* 0.8660259 size)]
+     {:is-a   :shape
+      :kind   :polygon
+      :x      0
+      :y      0
+      :width  size
+      :height h
+      :points [[0 size]
+               [(/ size 2) (- size h)]
+               [size size]]
+      :stroke "none"
+      :fill   "black"})))
 
 ;; TODO add general polygon fn
 ;; TODO add spec annotations!
@@ -92,9 +93,28 @@
     {:width  (:width (apply max-key :width bounds))
      :height (:height (apply max-key :height bounds))}))
 
+(defn points->string [pts]
+  (->> (map (partial interpose ",") pts)
+       (interpose " ")
+       flatten
+       (apply str)))
+
+;; TODO rotate can take two more numbers for the centrum, would
+;; probably be better for each thing to rotate around itself
+;; TODO SVG translation/rotation causes slipping, may need to re-calc bounds
 (defn shape->vector [{:keys [kind children] :as shape}]
-  (-> [kind (dissoc shape :is-a :kind)]
-      (into (mapv shape->vector children))))
+  (let [unkinded (dissoc shape :is-a :kind)]
+    (into [kind (reduce ;; clean up/preprocess the string-y bits of the SVG element
+                 (fn [m [k v]]
+                   (case k
+                     :points    (update m :points points->string)
+                     :rotate    (update m :transform #(str (or % "") " rotate(" (:rotate m) ")"))
+                     :translate (update m :transform #(str (or % "") " translate(" (apply str (interpose "," (:translate m))) ")"))
+                     :scale     (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
+                     m))
+                 unkinded
+                 (select-keys unkinded [:points :rotate :translate :scale]))]
+          (mapv shape->vector children))))
 
 ;; TODO becomes a method of the shape protocol
 (defn show
@@ -107,15 +127,28 @@
 (defn colorize
   "Return `shape` with its color changed to `color`."
   [color shape]
-  (assoc shape :fill color))
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv (partial colorize color) (:children shape)))
+    (assoc shape :fill color)))
+
+(defn move-points [m new-x new-y]
+  (let [old-x (:x m)
+        old-y (:y m)]
+    (assoc m :points (mapv (fn [[x y]]
+                             [(+ new-x (- x old-x))
+                              (+ new-y (- y old-y))])
+                           (:points m)))))
 
 (defn position
   "Return `shape` with its position set to `[x y]`."
   [[x y] shape]
-  (if (= :circle (:kind shape))
-    (-> shape
-        (assoc :cx x)
-        (assoc :cy y))
+  (case (:kind shape)
+    :circle  (-> shape
+                 (assoc :cx x)
+                 (assoc :cy y))
+    :polygon (-> (move-points shape x y)
+                 (assoc :x x)
+                 (assoc :y y))
     (-> shape
         (assoc :x x)
         (assoc :y y))))
