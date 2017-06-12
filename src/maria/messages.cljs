@@ -28,21 +28,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier
 
+;; 
 (defn match-in-tokens
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
   ([trie tokens] (match-in-tokens trie tokens {}))
   ([trie tokens context]
-   (let [token   (first tokens)
-         capture (let [x (ffirst trie)]
-                   (when (symbol? x) x))
-         this-match (if capture (trie capture) (trie token))
-         context (when capture (assoc context capture token))]
-     (if this-match
-       (let [next-match (match-in-tokens this-match (rest tokens) context)]
-         (if (:message this-match)
-           (merge this-match context)
+   (let [token      (first tokens)
+         capture    (first (filter symbol? (keys trie)))
+         context    (if capture
+                      (assoc context capture token)
+                      context)
+         trie-match (or (trie token) (trie capture))]
+     (if trie-match
+       (let [next-match (match-in-tokens trie-match (rest tokens) context)]
+         (if (:message trie-match)
+           (merge trie-match context)
            next-match))
-       (merge this-match context)))))
+       (merge trie-match context)))))
 
 (defn build-error-message-trie
   "Convert a sequence of pattern/output `templates` into a search trie."
@@ -57,8 +59,6 @@
   [s]
   (->> (string/split (string/lower-case s) #"[^a-z0-9]")
        (remove empty?)
-       ;; XXX the "Error" and "TypeError" tokens are gone now?
-       ;;       rest
        (into [])))
 
 (def error-message-trie
@@ -85,11 +85,13 @@
                     (:message match)))
     message))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error-location]}]
   [:div
-   [:p (ex-message error)]
+   [:p (prettify-error-message (ex-message error))]
    [:p (ex-message (ex-cause error))]
    [:pre (some-> (ex-cause error) (aget "stack"))]])
 
@@ -127,25 +129,25 @@
      (case (:type w)
        :fn-arity (str "The function `"
                       (name (-> w :extra :name))
-                      "` in the expression `"
-                      (:form w)
-                      "` needs "
-                      (if (= 0 (-> w :extra :argc))         ;; TODO get arity from meta
+                      "` in the expression above needs "
+                      (if (= 0 (-> w :extra :argc)) ;; TODO get arity from meta
                         "more"
                         "a different number of")
                       " arguments.")
-       :invalid-arithmetic (str "In the expression `"
-                                (:form w)
-                                "`, the arithmetic operaror `"
+       :invalid-arithmetic (str "In the above expression, the arithmetic operator `"
                                 (name (-> w :extra :js-op))
                                 "` can't be used on non-numbers, like "
                                 (humanize-sequence bad-types) ".")
-       :undeclared-var (str "The expression `"
-                            (:form w)
-                            "` contains `"
+       :undeclared-var (str "The above expression contains a reference to `"
                             (-> w :extra :suffix)
                             "`, but it hasn't been defined!")
        (with-out-str (println (dissoc w :env))))]))
+
+;; NB took this out because we're already
+;; printing the expression in a nicer way
+;; above the messages. -jar
+;;
+;; (:form w) "` contains `"
 
 ;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :form (what-is "foo")}
 
