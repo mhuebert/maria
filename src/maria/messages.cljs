@@ -28,23 +28,23 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier
 
-;; 
+;; XXX still has a small bug where multiple different variable names
+;; at the same level of the trie will cause weird behavior, should add
+;; check to the trie builder to prevent this.
 (defn match-in-tokens
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
   ([trie tokens] (match-in-tokens trie tokens {}))
-  ([trie tokens context]
-   (let [token      (first tokens)
-         capture    (first (filter symbol? (keys trie)))
+  ([trie [token & remaining-tokens] context]
+   (let [capture    (first (filter symbol? (keys trie)))
          context    (if capture
                       (assoc context capture token)
-                      context)
-         trie-match (or (trie token) (trie capture))]
-     (if trie-match
-       (let [next-match (match-in-tokens trie-match (rest tokens) context)]
+                      context)]
+     (if-let [trie-match (or (trie token) (trie capture))]
+       (let [next-match (match-in-tokens trie-match remaining-tokens context)]
          (if (:message trie-match)
            (merge trie-match context)
            next-match))
-       (merge trie-match context)))))
+       context))))
 
 (defn build-error-message-trie
   "Convert a sequence of pattern/output `templates` into a search trie."
