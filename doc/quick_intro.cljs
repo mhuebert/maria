@@ -1,27 +1,25 @@
-;;;; A Quick Introduction to Clojure with Shapes
-
-;; Hi! This tutorial will introduce you to programming by helping you draw some shapes.
+;; Hi! This tutorial will introduce us to programming by drawing some shapes.
 
 ;; Here is a simple expression:
 
 "puppy"
 
-;; Put your cursor at the end of the line with "puppy" and press `control-enter` (`command-enter` on Mac). BOOM. You just evaluated a puppy. This expression evaluates to itself: "puppy". Clojure (the programming language we're using) printed the evaluation of our "puppy" expression in the output panel on the right.
+;; Expressions are meant to be evaluated. Put the cursor at the end of the line with "puppy" and press `control-enter` (`command-enter` on Mac). BOOM. We just evaluated a puppy. This expression evaluates to itself: "puppy". Clojure (the programming language we're using) printed the evaluation of our "puppy" expression in the output panel on the right.
 
-;; That's how you'll explore: type and evaluate expressions on the left; and read the result of your evaluations on the right.
+;; That's how we'll explore our code: type and evaluate expressions on the left; and read the result of our evaluations on the right.
 
 
 ;;;; Asking the Computer Questions
 
-;; You can think of expressions like "puppy" as nouns. They describe a thing and they evaluate to themselves. Expressions that are verbs return something other than themselves, and we call those functions. Functions are how we ask the computer questions or to do something for us.
+;; We can think of expressions like "puppy" as nouns. They describe a thing and they evaluate to themselves. Expressions that are verbs return something other than themselves, and we call those functions. Functions are how we ask the computer questions or to do something for us.
 
-;; We write these function expressions inside parentheses that hold the function name (the "verb") followed by all the parameters (the "nouns" you give the function). It looks like this:
+;; We write these function expressions inside parentheses that hold the function name (the "verb") followed by all the parameters (the "nouns" we give the function). It looks like this:
 
 (circle 50)
 
-;; The "verb" (function name) is `circle`, and we give it the "noun" `50`. Everything stays inside the parentheses, so there's no confusion about which verbs go with which nouns. When you evaluate this expression you're asking the computer to draw a circle with a 50-pixel radius.
+;; The "verb" (function name) is `circle`, and we give it the "noun" `50`. Everything stays inside the parentheses, so there's no confusion about which verbs go with which nouns. When we evaluate this expression we're asking the computer to draw a circle with a 50-pixel radius.
 
-;; What if you didn't know that `circle` needed to be given a radius? How would you find out the parameters to a function? Why, you can ask your friend the computer!
+;; What if we didn't know that `circle` needed to be given a radius? How would we find out the parameters to a function? Why, we can ask our friend the computer!
 
 (what-is circle)
 
@@ -29,7 +27,7 @@
 
 (what-is what-is)
 
-;; If you're not sure what a certain expression is, you can ask!
+;; If we're not sure what a certain expression is, we can ask!
 
 (what-is 50)
 
@@ -38,7 +36,7 @@
 ;; FIXME transition
 (doc circle)
 
-;; The `doc` function is short for "documentation". It tells you what a function does and what parameters it needs. You gave `doc` the parameter `circle`, so it gives you documentation for the `circle` function. The computer wants to help you.
+;; The `doc` function is short for "documentation". It tells us what a function does and what parameters it needs. We gave `doc` the parameter `circle`, so it gives us documentation for the `circle` function. The computer wants to help us.
 
 ;; TODO (once we have nice results) try and fail (doc "puppy")
 
@@ -46,12 +44,12 @@
 
 (circle 20 10)
 
-;; You got an error instead of a shape or expression. Don't worry if you create an error. It happens to all of us. If you write code that Clojure can't understand, it will tell you. Clojure will try to tell you how to fix your code. This is the ideal: programmer and computer, working together, each doing the part of the task they do best.
+;; We got an error instead of a shape or expression. Don't worry if we create an error. It happens to all of us. If we write code that Clojure can't understand, it will tell us. Clojure will try to say how to fix our code. This is the ideal: programmer and computer, working together, each doing the part of the task they do best.
 
 
 ;;;; Shapes and Colors
 
-;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
+;; As one might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
 (doc rectangle)
 
@@ -63,7 +61,7 @@
 
 (colorize "blue" (rectangle 250 100))
 
-;; That blue is nice. You can also combine shapes with `stack`:
+;; That blue is nice. We can also combine shapes with `stack`:
 
 (stack (colorize "red" (rectangle 50 50))
        (colorize "blue" (rectangle 50 50)))
@@ -74,15 +72,15 @@
          (colorize "blue" (rectangle 50 50))
          (colorize "green" (rectangle 50 50)))
 
-;; Wow--that is a lot of nested function calls. Let's make sure you understand how they work together.
+;; Wow--that is a lot of nested function calls. Let's make sure we understand how they work together.
 
-;; Put your cursor on a `50` inside the `rectangle` call, then evaluate it. You should get `50`: a number evaluates to itself.
+;; Put the cursor on a `50` inside the `rectangle` call, then evaluate it. We should get `50`: a number evaluates to itself.
 
-;; Now put your cursor after a `(rectangle 50 50)`, to the right of the first close-parenthesis. Evaluate it. You should get a black square.
+;; Now put the cursor after a `(rectangle 50 50)`, to the right of the first close-parenthesis. Evaluate it. We should get a black square.
 
-;; Now put your cursor at the end of the first line and evaluate it. You should get a red square.
+;; Now put the cursor at the end of the first line and evaluate it. We should get a red square.
 
-;; OK, now that you're experienced with evaluating individual expressions inside a big nested expression, let's combine `stack` and `line-up`:
+;; OK, now that we're experienced with evaluating individual expressions inside a big nested expression, let's combine `stack` and `line-up`:
 
 (stack
  (stack (colorize "red" (rectangle 50 50))
@@ -98,7 +96,7 @@
 
 ;;;; Powers of fun
 
-;; What if you want to draw a whole bunch of shapes? Typing "rectangle" over and over again is a chore. You don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
+;; What if we want to draw a whole bunch of shapes? Typing "rectangle" over and over again is a chore. We don't have to live like that. Our friend the computer wants to help us, and it is REALLY GOOD at repetitive chores.
 
 (map circle [2 4 8 16 32 64 128])
 
@@ -120,7 +118,7 @@
 
 (doc map)
 
-;; Oof. Maybe that's a bit technical. Let's break it down for what you're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
+;; Oof. Maybe that's a bit technical. Let's break it down for what we're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
 
 ;; So let's look again at our code from above:
 
@@ -140,7 +138,7 @@
      [5 5 5 5 5 5 5 5 5 5 5 5]
      [10 20 5 50 100 70 76 33 20 90])
 
-;; Does it annoy you that you had to type out `5` a bunch of times? It annoys me. It's so tedious. Did I even get the number of `5`s right? Thankfully, our friend the computer LOVES doing things over and over, and we can just ask it to `repeat` as many `5`s as we need:
+;; Does it annoy you that we had to type out `5` a bunch of times? It annoys me. It's so tedious. Did I even get the number of `5`s right? Thankfully, our friend the computer LOVES doing things over and over, and we can just ask it to `repeat` as many `5`s as we need:
 
 (map rectangle
      (repeat 5)
@@ -152,7 +150,7 @@
 
 ;; Wow. Infinity.😲😯😵
 
-;; We can do the same thing with colors: `colorize` takes a color and a shape. That means that if you want to `map` with the `colorize` function, you can give it a vector of colors and then a vector of shapes. Then `map` will execute `colorize` using the first element of each vector, then the second element of each vector, then the third, and so on. So:
+;; We can do the same thing with colors: `colorize` takes a color and a shape. That means that if we want to `map` with the `colorize` function, we can give it a vector of colors and then a vector of shapes. Then `map` will execute `colorize` using the first element of each vector, then the second element of each vector, then the third, and so on. So:
 (map colorize
      ["red" "blue" "yellow"]
      [(rectangle 20 20) (rectangle 50 50) (rectangle 100 100)])
@@ -166,25 +164,25 @@
 
 ;;;; The power of names
 
-;; Often when programming you need to name something you've created. For instance, you can let the name "palette" be a vector of colors:;; FIXME
+;; Often when programming we need to name something we've created. For instance, we can let the name "palette" be a vector of colors:;; FIXME
 
 (let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
   (map colorize
        palette
        (repeat (circle 50))))
 
-;; And there's our color palette. Lovely. You can read this as saying, "Let 'palette' be the name for this vector, ['red' 'orange' blah blah blah] while we evaluate the next expression."
+;; And there's our color palette. Lovely. We can read this as saying, "Let 'palette' be the name for this vector, ['red' 'orange' blah blah blah] while we evaluate the next expression."
 
-;; Names can be helpful, but too many names scattered across your code gets hard to keep track of. That's why we use `let` to create names we only need for right now. Watch--try to use `palette` outside the `let`:
+;; Names can be helpful, but too many names scattered across our code gets hard to keep track of. That's why we use `let` to create names we only need for right now. Watch--try to use `palette` outside the `let`:
 
 palette
 
 ;; The name `palette` only means something *inside the `let`*. That way we know it won't cause trouble somewhere else.
 
-;; If you need a name that you'll use over and over, you need to define it with `def`:
+;; If we need a name that we'll use over and over, we need to define it with `def`:
 (def palette ["red" "orange" "yellow" "green" "blue" "purple"])
 
-;; Now you can use `palette` anywhere. You can blindly grab a color from our palette with `rand-nth`, which is a random-picker function:
+;; Now we can use `palette` anywhere. We can blindly grab a color from our palette with `rand-nth`, which is a random-picker function:
 (colorize (rand-nth palette) (circle 50))
 
 ;; Let's make a more complex shape with our new color palette.
@@ -194,7 +192,7 @@ palette
             ;; FIXME requires creating triangle function
             [(circle 50) (triangle 100) (rectangle 100 100)]))
 
-;; It's kind of annoying that we must repeat ourselves for those random colors. And we don't have to! Just like `repeat` will give you as many "nouns" you need, `repeatedly` will give you as many "verby" function calls you need.
+;; It's kind of annoying that we must repeat ourselves for those random colors. And we don't have to! Just like `repeat` will give us as many "nouns" we need, `repeatedly` will give us as many "verby" function calls we need.
 
 (doc repeatedly)
 
@@ -205,16 +203,16 @@ palette
 ;; What we need to do is create a function, which we can do `fn`:
 (what-is (fn [] (rand-nth palette)))
 
-;; All the functions you've used so far have had names, but this one doesn't, because we're just using it once.
+;; All the functions we've used so far have had names, but this one doesn't, because we're just using it once.
 
-;; Your anonymous function has square brackets to declare its parameters, of which it has none. Now you can call this anonymous function `repeatedly`:
+;; Our anonymous function has square brackets to declare its parameters, of which it has none. Now we can call this anonymous function `repeatedly`:
 (apply stack
        (map colorize
             (repeatedly (fn [] (rand-nth palette)))
             ;; FIXME requires creating triangle function
             [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
 
-;; `repeatedly` will go on forever just like `repeat` if you let it, but it knows you only need to call that function as many times as there are shapes. (Clojure is crafty like that.)
+;; `repeatedly` will go on forever just like `repeat` if we let it, but it knows we only need to call that function as many times as there are shapes. (Clojure is crafty like that.)
 
 ;; We can use an infinite number of circles alongside our infinite random color choices, as long as we say how many we want to `take` from the infinite bucket:
 (apply line-up
@@ -228,7 +226,7 @@ palette
 ;; Now `rand-color` stands shoulder-to-shoulder with `circle` and `map`:
 (what-is rand-color)
 
-;; And now it's much more concise to get a random color in your expression:
+;; And now it's much more concise to get a random color in our expression:
 (apply line-up
        (map colorize
             (take 10 (rand-color))
@@ -238,13 +236,13 @@ palette
 (defn rand-color []
   (rand-nth palette))
 
-;; You use the result of `defn` exactly the same way as the result of `def fn...`:
+;; We use the result of `defn` exactly the same way as the result of `def fn...`:
 ;; FIXME insert operatic amazing concluding shape here
 (apply line-up
        (map colorize
             (take 10 (rand-color))
             (repeat (rectangle 50))))
 
-;; Congratulations! Now that you've created a function, you are a True Programmer. Give yourself a high-five.
+;; Congratulations! Now that we've created a function, you are a True Programmer. Give yourself a high-five. I am right now giving you a high-five.
 
 ;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Where to go with that power is up to you: the next step is finding interesting ways to put functions together to create cool stuff.
