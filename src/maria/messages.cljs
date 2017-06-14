@@ -33,56 +33,56 @@
 ;; check to the trie builder to prevent this.
 (defn match-in-tokens
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
-  ([trie tokens] (match-in-tokens trie tokens {}))
+  ([trie tokens] (match-in-tokens trie tokens []))
   ([trie [token & remaining-tokens] context]
-   (let [capture    (first (filter symbol? (keys trie)))
+   (let [capture    (first (filter (partial = "%") (keys trie)))
          context    (if capture
-                      (assoc context capture token)
+                      (conj context token)
                       context)]
      (if-let [trie-match (or (trie token) (trie capture))]
        (let [next-match (match-in-tokens trie-match remaining-tokens context)]
          (if (:message trie-match)
-           (merge trie-match context)
+           (assoc trie-match :context context)
            next-match))
        context))))
+
+(defn tokenize
+  "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
+  [s]
+  (->> (string/split (string/lower-case s) #"[^a-z%0-9]")
+       (remove empty?)
+       (into [])))
 
 (defn build-error-message-trie
   "Convert a sequence of pattern/output `templates` into a search trie."
   [templates]
   (reduce (fn [trie [pattern output]]
-            (assoc-in trie (conj pattern :message) output))
+            (assoc-in trie (conj (tokenize pattern) :message) output))
           {}
           templates))
-
-(defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
-  [s]
-  (->> (string/split (string/lower-case s) #"[^a-z0-9]")
-       (remove empty?)
-       (into [])))
 
 (def error-message-trie
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-   '[[["cannot" "read" "property" "call" "of" the-value]
-      ["It looks like you're trying to call a function that hasn't been defined."]]
-     [["invalid" "arity" the-value] 
-      [the-value " is too many arguments!"]]
-     [["no" "protocol" "method" "icollection" "conj" "defined" "for" "type" the-type the-value]
-      ["The " the-type " `" the-value "` can't be used as a collection."]]
-     [[the-value "is" "not" "iseqable"]
-      ["The value `" the-value "` can't be used as a sequence or collection."]]
-     [[the-value "call" "is" "not" "a" "function"]
-      ["The value `" the-value "` isn't a function, but it's being called like one."]]]))
+   [["cannot read property call of %"
+     "It looks like you're trying to call a function that has not been defined yet."]
+    ["invalid arity %" 
+     "%1 is too many arguments!"]
+    ["no protocol method icollection conj defined for type % %"
+     "The %1 `%2` can't be used as a collection."]
+    ["% is not iseqable" "The value `%1` can't be used as a sequence or collection."]
+    ["% call is not a function"
+     "The value `%1` isn't a function, but it's being called like one."]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
   [message]
   (if-let [match (match-in-tokens error-message-trie (tokenize message))]
-    (apply str (map #(if (symbol? %)
-                       (get match %)
-                       %)
-                    (:message match)))
+    (reduce
+     (fn [message [i replacement]]
+       (string/replace message (str "%" (inc i)) replacement))
+     (:message match)
+     (map vector (range) (:context match)))
     message))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
