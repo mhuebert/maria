@@ -14,6 +14,8 @@
       (fn? thing)      "a function: something you call with input that returns output"
       (keyword? thing) "a keyword: a special symbolic identifier"
       (list? thing)    "a list: a sequence, possibly 'lazy'"
+      (and (map? thing)
+           (= :shape (:is-a thing))) "a shape: some geometry that Maria can draw"
       (map? thing)     "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"
       (nil? thing)     "nil: a special value meaning nothing"
       (number? thing)  "a number: it can be whole, a decimal, or even a ratio"
