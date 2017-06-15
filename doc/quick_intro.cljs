@@ -184,10 +184,12 @@
 (map (fn [n] (circle n))
      [16 32 64 128])
 
-;; Functions are a bit different to the other expressions that we have
-;; been using because we can't evaluate their sub-expressions in
-;; place. That's because they need to be called with arguments to know
-;; what the value of, for example, `n` is within their expressions.
+;; TODO this could be better...
+;; By the way: functions are a bit different to the other expressions
+;; that we have been using because we can't evaluate their
+;; sub-expressions in place. That's because they need to be called
+;; with arguments to know what the value of, for example, `n` is
+;; within their expressions.
 
 ;; This function just wraps the `circle` function, and so doesn't do
 ;; anything different than calling circle directly. Boring! But we can
@@ -198,12 +200,45 @@
 
 ;; 💜
 
+;; What if we wanted a vector with two rows of purple circles in
+;; different sizes?  We could do this:
+
+[(map (fn [n] (colorize "purple" (circle n)))
+      [16 32 64 128])
+ (map (fn [n] (colorize "purple" (circle n)))
+      [16 8 4 2])]
+
+;; It works, but it's kind of a shame that we have to type our purple
+;; circle function twice like that. The good news is that we can use
+;; `let` to give it a name, then call it by that name whenever we need
+;; it:
+
+(let [purple-circle (colorize "purple" (circle n))]
+  [(map purple-circle [16 32 64 128])
+   (map purple-circle [16 8 4 2])])
+
+;; Ah, that's better.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; some kind of build-a-face example?
+
+(group
+ (colorize "aqua" (circle 40))
+ (position [10 10] (colorize "magenta" (triangle 24)))
+ (position [45 10] (colorize "magenta" (triangle 24)))
+ (position [40 55] (colorize "white" (circle 10))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; XXX dragons
 
 (doc map)
 
-;; Oof. Maybe that's a bit technical. Let's break it down for what we're doing right now: `map` applies a function to every value in a collection. That means `(map circle [10 20 30])` returns the result of evaluating the function `circle` on the value 10, then on the value 20, then on the value 30: once for each element in the vector.
+;; Oof. Maybe that's a bit technical. Let's break it down for what
+;; we're doing right now: `map` applies a function to every value in a
+;; collection. That means `(map circle [10 20 30])` returns the result
+;; of evaluating the function `circle` on the value 10, then on the
+;; value 20, then on the value 30: once for each element in the
+;; vector.
 
 ;; So let's look again at our code from above:
 
