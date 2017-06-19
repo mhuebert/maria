@@ -17,7 +17,7 @@
 ;; Ok! It's a _string_, which is a funny way of saying "some
 ;; text". There are several other kinds of things in Clojure that
 ;; we'll get to know later, but in the meantime let's talk about those
-;; parenthesis.
+;; parentheses.
 
 ;; Whenever you see an expression in parentheses, it's kind of like a
 ;; sentence where the first thing after the `(` is treated as the
@@ -25,36 +25,24 @@
 ;; in parens it _calls_ the function at the beginning of the
 ;; expression on the _arguments_ that follow.
 
-;; What do you think a `circle` function might do?
+;; What do you think a `circle` function with an argument of `50`
+;; might do? Try evaluating it to find out:
 
 (circle 50)
 
-;; Here, we're calling the `circle` function on the number 50. And look!
-;; Now we have a circle with a 50-pixel radius.
+;; Look! Now we have a circle with a 50-pixel radius (because we gave
+;; it `50` as an argument).
 
-;; We can examine all the different pieces of that expression with `what-is`:
+;; Try giving `circle` two arguments, just to see what happens:
 
-(what-is 50)
+(circle 20 10)
 
-(what-is circle)
-
-;; We can even apply the `what-is` function to the `what-is` function
-;; itself to find out what `what-is` is! 😹
-
-(what-is what-is)
-
-;;;; Asking the computer to do things
-
-;; A moment ago we made a circle with the expression `(circle
-;; 50)`. Try creating your own expression to use some other numbers
-;; with `circle`.
-
-;; vvv your code goes here 😀
-
-;; ^^^ your code goes here
+;; We got an error! Don't worry if you create errors. It happens to
+;; everyone. When we write code that Clojure can't understand, it will
+;; tell us. It will even try to tell us how to fix our code. 💪✌️
 
 ;; What if we hadn't already known that `circle` needed to be given a
-;; radius? How would we find out the parameters to a function? Why, we
+;; radius? How would we find out the arguments to a function? Why, we
 ;; can ask our friend the computer!
 
 (doc circle)
@@ -64,17 +52,28 @@
 ;; parameter `circle`, so it gives us documentation for the `circle`
 ;; function. The computer wants to help us.
 
+;; Also, we can examine the different pieces of that expression with
+;; `what-is`:
+
+(what-is 50)
+
+(what-is circle)
+
 ;; TODO (once we have nice results) try and fail (doc "puppy")
 
-;; Try giving circle the wrong number of parameters, just to see what
-;; happens:
+;; We can even apply the `what-is` function to the `what-is` function
+;; itself to find out what `what-is` is! 😹
 
-(circle 20 10)
+(what-is what-is)
 
-;; We got an error! Don't worry if you create errors. It happens to
-;; everyone. When we write code that Clojure can't understand, it will
-;; tell us. It will even try to say how to fix our code.
+;;;; Asking the computer to do things
 
+;; Try creating your own expression to use some other numbers with
+;; `circle`.
+
+;; ⬇ your code goes here 😀
+
+;; ⬆ your code goes here
 
 ;;;; Shapes and Colors
 
@@ -88,42 +87,44 @@
 
 (rectangle 200 50)
 
-;; Well, that's not too surprising. These one-tone shapes are a little
+;; Well, that's not too surprising. These black shapes are a little
 ;; boring. Let's add some color!
+
+;; You can nest expressions inside other expressions to create bigger
+;; ones. Like this, for example
 
 (colorize "blue" (rectangle 250 100))
 
-;; You can nest expressions inside other expressions to create bigger
-;; ones. Try putting your cursor after the `rectangle` expression, but
-;; before the last `)`, and then use your powers of evaluation.
+;; Now try putting your cursor after each closing paren `)`, one at a
+;; time, using your powers of evaluation on each sub-expression.
 
 (colorize "blue" (rectangle 250 (* 2 50)))
 
-;; Try evaluating each of these sub-expressions, starting from the
-;; numbers, one at a time from the inside out. Do you now know what
-;; `*` does?
+;; Do you now know what `*` does?
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another
-;; color too.
+;; color. For a list of colors that Maria understands, try evaluating:
 
-;; We can also combine several expressions to create a `stack` of
-;; shapes:
+color-names
+
+;; We can also combine expressions to create a stack of shapes with
+;; the `stack` function:
 
 (stack (colorize "red" (circle 25))
-       (colorize "blue" (rectangle 50 50)))
+       (colorize "blue" (sqaure 50)))
 
-;; or line them up side by side `line-up`:
+;; ... or line them up side by side with the `line-up` function:
 
 (line-up (colorize "red" (circle 25))
-         (colorize "blue" (rectangle 50 50))
+         (colorize "blue" (square 50))
          (colorize "green" (circle 25)))
 
 ;; Wow--that is a lot of nested expressions. Why not try evaluating
 ;; each of these sub-expressions too?
 
-;; OK, now that you are experienced with evaluating individual
-;; expressions inside a big nested expression, let's combine `stack`
-;; and `line-up`:
+;; Now that you are experienced with evaluating individual expressions
+;; inside a big nested expression, let's combine `stack` and `line-up`
+;; into one giant expression:
 
 (stack
  (stack (colorize "red" (rectangle 50 50))
@@ -135,7 +136,7 @@
           (colorize "green" (rectangle 50 50))))
 
 ;; If you have some time, take a minute and play around a little. Make
-;; your own composite shapes, evaluating inner expressions to make
+;; your own shape combinations, evaluating inner expressions to make
 ;; sure you know how they fit into the expression containing them.
 
 
@@ -150,9 +151,9 @@
 
 (what-is [1 2 3 4])
 
-;; Vectors a great way to write down some things in order. Vectors
-;; evaluate to themselves, like strings and numbers do. Try evaluating
-;; this one:
+;; Vectors are written using square braces `[]`, and they're a great
+;; way to write down some things in order. Vectors evaluate to
+;; themselves, like strings and numbers do. Try evaluating this one:
 
 [1 2 3 4]
 
@@ -161,21 +162,30 @@
 
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
-;; But there's a better way! When we want to call a function on every
-;; item in a sequence and get back the results in a new sequence, we
-;; can use a special function called `map`:
+;; But there's a better, shorter way! When we want to call a function
+;; on every item in a sequence and get back the results from each of
+;; those calls in a new sequence, we can use a special function called
+;; `map`:
 
 (map circle [16 32 64 128])
 
-;; What if we wanted purple circles? It would be nice if there was a
-;; function to turn a number into a purple circle. Let's make one!
+;; Have a look at both of those expressions. As far as the computer is
+;; concerned, it's the same, but with the magic of 'map', you can
+;; repeat a function without extra typing. Map is a great way to do
+;; avoid repeating yourself.
 
-;; Here's a really simple example of a function:
+;; What if we wanted purple circles? It would be nice if there was a
+;; function to turn a number into a purple circle. Let's make a new
+;; function right now! To start with, here's a really simple example
+;; of a function:
 
 (what-is (fn [n] (circle n)))
 
-;; `(fn [n] (circle n))` means:
-;; (1) make a new function that takes a single argument;
+;; ... it's a function! But what does it mean?
+
+;; TODO draw a picture, it'll be way easier
+;; `fn` is a special kind of function that returns a brand new function. 
+;;(1) make a new function that takes a single argument;
 ;; (2) give that argument the name `n` in expressions within the function;
 ;; (3) return a circle of radius `n` when this function is called.
 
@@ -184,40 +194,35 @@
 (map (fn [n] (circle n))
      [16 32 64 128])
 
-;; TODO this could be better...
-;; By the way: functions are a bit different to the other expressions
-;; that we have been using because we can't evaluate their
-;; sub-expressions in place. That's because they need to be called
-;; with arguments to know what the value of, for example, `n` is
-;; within their expressions.
-
-;; This function just wraps the `circle` function, and so doesn't do
-;; anything different than calling circle directly. Boring! But we can
-;; change it to also call `colorize` on each circle:
+;; This function just wraps the `circle` function, so it doesn't do
+;; anything different than calling circle directly. BUT we can change
+;; it to also call `colorize` on each circle:
 
 (map (fn [n] (colorize "purple" (circle n)))
      [16 32 64 128])
 
 ;; 💜
 
-;; What if we wanted a vector with two rows of purple circles in
-;; different sizes?  We could do this:
+;; Great! Now we have the power to map colors! But what if we wanted
+;; two sets of purple circles in different sizes? One idea: we could
+;; use the 'map' function on two different vectors like this:
 
 [(map (fn [n] (colorize "purple" (circle n)))
       [16 32 64 128])
  (map (fn [n] (colorize "purple" (circle n)))
       [16 8 4 2])]
 
-;; It works, but it's kind of a shame that we have to type our purple
-;; circle function twice like that. The good news is that we can use
-;; `let` to give it a name, then call it by that name whenever we need
-;; it:
+;; It works, but it's kind of a shame that we have to type our
+;; function to make a purple circle twice like that. The good news is
+;; that we can use `let` to give it a name, then call it by that name
+;; whenever we need it:
 
-(let [purple-circle (colorize "purple" (circle n))]
-  [(map purple-circle [16 32 64 128])
-   (map purple-circle [16 8 4 2])])
+(let [make-purple-circle (fn [n] (colorize "purple" (circle n)))]
+  [(map make-purple-circle [16 32 64 128])
+   (map make-purple-circle [16 8 4 2])])
 
-;; Ah, that's better.
+;; Remember, though, that names we give with let only apply within the
+;; `let` expression (up until the last paren).
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; some kind of build-a-face example?
