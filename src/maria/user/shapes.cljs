@@ -36,7 +36,6 @@
 
 (defn rectangle
   "Returns a rectangle of `width` and `height`. If given a single parameter, returns a square of dimension `side`."
-  ([side] (rectangle side side))
   ([width height]
    {:is-a   :shape
     :kind   :rect
@@ -46,6 +45,11 @@
     :height height
     :stroke "none"
     :fill   "black"}))
+
+(defn square
+  "Returns a square of dimension `side`."
+  [side]
+  (rectangle side side))
 
 (defn triangle
   "Returns an equilateral triangle with sides of `size`."
@@ -204,7 +208,7 @@
 (def color-names
   "Recognized SVG color keyword names, mapped to their RGB value."
   (mapv (fn [[color-name _]]
-          [color-name (colorize color-name (rectangle 25))])
+          [color-name (colorize color-name (square 25))])
         {"aliceblue"            [240, 248, 255]
          "antiquewhite"         [250, 235, 215]
          "aqua"                 [0, 255, 255]
