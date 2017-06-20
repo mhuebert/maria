@@ -22,6 +22,8 @@
 (defspecial doc
   "Show documentation for given symbol"
   [c-state c-env name]
+  ;; TODO this should actually show doc for anything with the right
+  ;; meta-data, rather than only working on functions
   (if (fn? name)
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}

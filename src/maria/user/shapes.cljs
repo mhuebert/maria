@@ -67,6 +67,23 @@
       :stroke "none"
       :fill   "black"})))
 
+;;font-family="Verdana" 
+
+(defn text
+  "Add a label containing `the-text` to a drawing."
+  [the-text]
+  {:is-a   :shape
+   :kind   :text
+   :text   the-text
+   :x      0
+   :y      18
+   :font-family "Fira Code"
+   :font-size 15
+   :font-weight "normal"
+   :width  (* 9 (count the-text))
+   :height 18
+   :fill   "#3f4245"})
+
 ;; TODO add general polygon fn
 ;; TODO add spec annotations!
 
@@ -117,7 +134,8 @@
                      :scale     (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
                      m))
                  unkinded
-                 (select-keys unkinded [:points :rotate :translate :scale]))]
+                 (select-keys unkinded [:points :rotate :translate :scale]))
+           (:text shape)]
           (mapv shape->vector children))))
 
 ;; TODO becomes a method of the shape protocol
@@ -135,6 +153,11 @@
     (assoc shape :children (mapv (partial colorize color) (:children shape)))
     (assoc shape :fill color)))
 
+(defn rotate
+  "Return `shape` with rotated by `amount`."
+  [amount shape]
+  (assoc shape :rotate amount))
+
 (defn move-points [m new-x new-y]
   (let [old-x (:x m)
         old-y (:y m)]
@@ -144,8 +167,8 @@
                            (:points m)))))
 
 (defn position
-  "Return `shape` with its position set to `[x y]`."
-  [[x y] shape]
+  "Return `shape` with its x and y positions set to `x` and `y`."
+  [x y shape]
   (case (:kind shape)
     :circle  (-> shape
                  (assoc :cx x)

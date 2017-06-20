@@ -59,8 +59,6 @@
 
 (what-is circle)
 
-;; TODO (once we have nice results) try and fail (doc "puppy")
-
 ;; We can even apply the `what-is` function to the `what-is` function
 ;; itself to find out what `what-is` is! 😹
 
@@ -107,38 +105,35 @@
 
 color-names
 
-;; We can also combine expressions to create a stack of shapes with
-;; the `stack` function:
+;; We can also combine expressions to create a group of shapes with
+;; the `group` function:
 
-(stack (colorize "red" (circle 25))
-       (colorize "blue" (sqaure 50)))
+(group 
+ (colorize "aqua" (square 50))
+ (colorize "magenta" (circle 25)))
 
-;; ... or line them up side by side with the `line-up` function:
+;; ... and position them within a group using the `position` function,
+;; which takes an `x` and `y` position and a shape:
 
-(line-up (colorize "red" (circle 25))
-         (colorize "blue" (square 50))
-         (colorize "green" (circle 25)))
+(group
+ (colorize "springgreen" (circle 25))
+ (position 50 25 (colorize "pink" (circle 25))))
 
-;; Wow--that is a lot of nested expressions. Why not try evaluating
-;; each of these sub-expressions too?
+;; Why not try evaluating each of these sub-expressions too?
 
 ;; Now that you are experienced with evaluating individual expressions
-;; inside a big nested expression, let's combine `stack` and `line-up`
-;; into one giant expression:
+;; inside a big nested expression, let's draw a face with an
+;; expression:
 
-(stack
- (stack (colorize "red" (rectangle 50 50))
-        (colorize "blue" (circle 25))
-        (colorize "green" (rectangle 50 50)))
- (line-up (colorize "orange" (triangle 50))
-          (colorize "red" (rectangle 50 50))
-          (colorize "blue" (circle 25))
-          (colorize "green" (rectangle 50 50))))
+(group
+ (colorize "aqua" (circle 40))
+ (position 10 10 (colorize "magenta" (triangle 24)))
+ (position 45 10 (colorize "magenta" (triangle 24)))
+ (position 40 55 (colorize "white" (circle 10))))
 
 ;; If you have some time, take a minute and play around a little. Make
 ;; your own shape combinations, evaluating inner expressions to make
 ;; sure you know how they fit into the expression containing them.
-
 
 ;;;; Powers of fun
 
@@ -179,26 +174,50 @@ color-names
 ;; function right now! To start with, here's a really simple example
 ;; of a function:
 
-(what-is (fn [n] (circle n)))
+(what-is (fn [radius] (circle radius)))
 
-;; ... it's a function! But what does it mean?
+;; ... it's a function! But what does it mean? First, evaluate this
+;; giant expression, which will draw a small diagram to help explain
+;; how functions work:
 
-;; TODO draw a picture, it'll be way easier
-;; `fn` is a special kind of function that returns a brand new function. 
-;;(1) make a new function that takes a single argument;
-;; (2) give that argument the name `n` in expressions within the function;
-;; (3) return a circle of radius `n` when this function is called.
+(group
+  (position 50 60 (text "(fn [radius] (circle radius))"))
+  (colorize "grey" (position 60 70 (triangle 10)))
+  (position 0 102 (text "function"))
+  (position 30 -3
+    (group (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
+  (position 90 20 (text "argument(s)"))
+  (colorize "grey" (position 170 70 (triangle 10)))
+  (position 170 102 (text "expression")))
+
+;; Take a look at the diagram Maria just drew for us.
+
+;; `fn` is a special kind of function that returns a brand new
+;; function. Whenever you see an expression that starts with `fn`,
+;; that's what it's doing.
+
+;; The part in square brackets `[]` shows the arguments that this
+;; function will accept, and the order in which it will expect
+;; them. In this case, it's only one argument called
+;; `radius`. Arguments are a kind of placeholder that will be filled
+;; in when someone calls this function later.
+
+;; Finally, every function contains an expression that will be
+;; evaluated for us when we call it. Inside this expression the
+;; arguments used to call this function will be available by the names
+;; they were given in the square bracket part before.
 
 ;; Try to guess what this expression will return, then evaluate it!
 
-(map (fn [n] (circle n))
+(map (fn [radius] (circle radius))
      [16 32 64 128])
 
-;; This function just wraps the `circle` function, so it doesn't do
-;; anything different than calling circle directly. BUT we can change
-;; it to also call `colorize` on each circle:
+;; This function just wraps the `circle` function in another function,
+;; so it doesn't do anything different than calling circle
+;; directly. But we can change it to also call `colorize` on each
+;; circle like this:
 
-(map (fn [n] (colorize "purple" (circle n)))
+(map (fn [radius] (colorize "purple" (circle radius)))
      [16 32 64 128])
 
 ;; 💜
@@ -207,9 +226,9 @@ color-names
 ;; two sets of purple circles in different sizes? One idea: we could
 ;; use the 'map' function on two different vectors like this:
 
-[(map (fn [n] (colorize "purple" (circle n)))
+[(map (fn [radius] (colorize "purple" (circle radius)))
       [16 32 64 128])
- (map (fn [n] (colorize "purple" (circle n)))
+ (map (fn [radius] (colorize "purple" (circle radius)))
       [16 8 4 2])]
 
 ;; It works, but it's kind of a shame that we have to type our
@@ -217,21 +236,12 @@ color-names
 ;; that we can use `let` to give it a name, then call it by that name
 ;; whenever we need it:
 
-(let [make-purple-circle (fn [n] (colorize "purple" (circle n)))]
+(let [make-purple-circle (fn [radius] (colorize "purple" (circle radius)))]
   [(map make-purple-circle [16 32 64 128])
    (map make-purple-circle [16 8 4 2])])
 
 ;; Remember, though, that names we give with let only apply within the
 ;; `let` expression (up until the last paren).
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; some kind of build-a-face example?
-
-(group
- (colorize "aqua" (circle 40))
- (position [10 10] (colorize "magenta" (triangle 24)))
- (position [45 10] (colorize "magenta" (triangle 24)))
- (position [40 55] (colorize "white" (circle 10))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; XXX dragons

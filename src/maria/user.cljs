@@ -7,6 +7,8 @@
                                                   square
                                                   rectangle
                                                   triangle
+                                                  text
+                                                  rotate
                                                   assure-shape-seq
                                                   shape-bounds
                                                   bounds
