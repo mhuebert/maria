@@ -1,8 +1,6 @@
 (ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
-            [re-view.util :as v-util]
             [re-db.d :as d]
-            [re-view.hoc :as hoc]
             [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
@@ -14,7 +12,6 @@
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
-            [clojure.string :as string]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]))
 
@@ -83,7 +80,7 @@
                            (when gist-id
                              (loaders/get-gist gist-id (fn [{:keys [value error]}]
                                                          (.setValue editor (or (some-> value (loaders/gist-source))
-                                                                               (str "\nError loading gist:  " error))))))))}
+                                                                                (str "\nError loading gist:  " error))))))))}
   [{:keys [view/state gist-id] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column

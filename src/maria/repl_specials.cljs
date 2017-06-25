@@ -21,11 +21,13 @@
 (defspecial what-is
   "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
   [c-state c-env thing]
-  (let [macro (when (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))]
-    (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond macro :maria.kinds/macro
-                                                                   (and (symbol? thing)
-                                                                        (contains? e/repl-specials thing)) :maria.kinds/function
-                                                                   :else thing))))))
+  (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
+                                                                 :maria.kinds/macro
+
+                                                                 (contains? e/repl-specials thing)
+                                                                 :maria.kinds/function
+
+                                                                 :else thing)))))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"
