@@ -80,7 +80,7 @@
                            (when gist-id
                              (loaders/get-gist gist-id (fn [{:keys [value error]}]
                                                          (.setValue editor (or (some-> value (loaders/gist-source))
-                                                                                (str "\nError loading gist:  " error))))))))}
+                                                                               (str "\nError loading gist:  " error))))))))}
   [{:keys [view/state gist-id] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column

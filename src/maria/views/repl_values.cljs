@@ -32,17 +32,24 @@
                   error (str error)
                   :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
+(defview format-collection
+  {:life/initial-state 20}
+  [{limit :view/state} value]
+  (let [[lb rb] (bracket-type value)
+        more? (= (count (take (inc @limit) value)) (inc @limit))]
+    [:div
+     [:span.output-bracket lb]
+     (interpose " " (v-util/map-with-keys format-value (take @limit value)))
+     (when more? [:span.bg-darken.pa1.ma1.br2.pointer {:on-click #(swap! limit + 20)} "..."])
+     [:span.output-bracket rb]]))
+
 (defn format-value [value]
   [:span
    (cond
      (= :shape (:is-a value)) (shapes/show value)           ; synthesize component for shape
      (or (vector? value)
          (seq? value)
-         (set? value)) (let [[lb rb] (bracket-type value)]
-                         (list
-                           [:span.output-bracket lb]
-                           (interpose " " (v-util/map-with-keys format-value value))
-                           [:span.output-bracket rb]))
+         (set? value)) (format-collection value)
      (v/is-react-element? value) value
      (instance? cljs.core/Namespace value) (str value)
      (instance? Deferred value) (display-deferred {:deferred value})
