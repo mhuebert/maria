@@ -36,7 +36,6 @@
 
 (defn rectangle
   "Returns a rectangle of `width` and `height`. If given a single parameter, returns a square of dimension `side`."
-  ([side] (rectangle side side))
   ([width height]
    {:is-a   :shape
     :kind   :rect
@@ -47,20 +46,43 @@
     :stroke "none"
     :fill   "black"}))
 
+(defn square
+  "Returns a square of dimension `side`."
+  [side]
+  (rectangle side side))
+
 (defn triangle
   "Returns an equilateral triangle with sides of `size`."
   ([size]
-   {:is-a   :shape
-    :kind   :polygon
-    :x      0
-    :y      0
-    :width  size
-    :height size
-    :points (str 0 "," size " "
-                 (/ size 2) "," (- size (* 0.8660259 size)) " "
-                 size "," size)
-    :stroke "none"
-    :fill   "black"}))
+   (let [h (* 0.8660259 size)]
+     {:is-a   :shape
+      :kind   :polygon
+      :x      0
+      :y      0
+      :width  size
+      :height h
+      :points [[0 size]
+               [(/ size 2) (- size h)]
+               [size size]]
+      :stroke "none"
+      :fill   "black"})))
+
+;;font-family="Verdana" 
+
+(defn text
+  "Add a label containing `the-text` to a drawing."
+  [the-text]
+  {:is-a   :shape
+   :kind   :text
+   :text   the-text
+   :x      0
+   :y      18
+   :font-family "Fira Code"
+   :font-size 15
+   :font-weight "normal"
+   :width  (* 9 (count the-text))
+   :height 18
+   :fill   "#3f4245"})
 
 ;; TODO add general polygon fn
 ;; TODO add spec annotations!
@@ -92,9 +114,29 @@
     {:width  (:width (apply max-key :width bounds))
      :height (:height (apply max-key :height bounds))}))
 
+(defn points->string [pts]
+  (->> (map (partial interpose ",") pts)
+       (interpose " ")
+       flatten
+       (apply str)))
+
+;; TODO rotate can take two more numbers for the centrum, would
+;; probably be better for each thing to rotate around itself
+;; TODO SVG translation/rotation causes slipping, may need to re-calc bounds
 (defn shape->vector [{:keys [kind children] :as shape}]
-  (-> [kind (dissoc shape :is-a :kind)]
-      (into (mapv shape->vector children))))
+  (let [unkinded (dissoc shape :is-a :kind)]
+    (into [kind (reduce ;; clean up/preprocess the string-y bits of the SVG element
+                 (fn [m [k v]]
+                   (case k
+                     :points    (update m :points points->string)
+                     :rotate    (update m :transform #(str (or % "") " rotate(" (:rotate m) ")"))
+                     :translate (update m :transform #(str (or % "") " translate(" (apply str (interpose "," (:translate m))) ")"))
+                     :scale     (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
+                     m))
+                 unkinded
+                 (select-keys unkinded [:points :rotate :translate :scale]))
+           (:text shape)]
+          (mapv shape->vector children))))
 
 ;; TODO becomes a method of the shape protocol
 (defn show
@@ -107,15 +149,33 @@
 (defn colorize
   "Return `shape` with its color changed to `color`."
   [color shape]
-  (assoc shape :fill color))
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv (partial colorize color) (:children shape)))
+    (assoc shape :fill color)))
+
+(defn rotate
+  "Return `shape` with rotated by `amount`."
+  [amount shape]
+  (assoc shape :rotate amount))
+
+(defn move-points [m new-x new-y]
+  (let [old-x (:x m)
+        old-y (:y m)]
+    (assoc m :points (mapv (fn [[x y]]
+                             [(+ new-x (- x old-x))
+                              (+ new-y (- y old-y))])
+                           (:points m)))))
 
 (defn position
-  "Return `shape` with its position set to `[x y]`."
-  [[x y] shape]
-  (if (= :circle (:kind shape))
-    (-> shape
-        (assoc :cx x)
-        (assoc :cy y))
+  "Return `shape` with its x and y positions set to `x` and `y`."
+  [x y shape]
+  (case (:kind shape)
+    :circle  (-> shape
+                 (assoc :cx x)
+                 (assoc :cy y))
+    :polygon (-> (move-points shape x y)
+                 (assoc :x x)
+                 (assoc :y y))
     (-> shape
         (assoc :x x)
         (assoc :y y))))
@@ -170,160 +230,161 @@
 
 (def color-names
   "Recognized SVG color keyword names, mapped to their RGB value."
-  {"aliceblue"            [240, 248, 255]
-   "antiquewhite"         [250, 235, 215]
-   "aqua"                 [0, 255, 255]
-   "aquamarine"           [127, 255, 212]
-   "azure"                [240, 255, 255]
-   "beige"                [245, 245, 220]
-   "bisque"               [255, 228, 196]
-   "black"                [0, 0, 0]
-   "blanchedalmond"       [255, 235, 205]
-   "blue"                 [0, 0, 255]
-   "blueviolet"           [138, 43, 226]
-   "brown"                [165, 42, 42]
-   "burlywood"            [222, 184, 135]
-   "cadetblue"            [95, 158, 160]
-   "chartreuse"           [127, 255, 0]
-   "chocolate"            [210, 105, 30]
-   "coral"                [255, 127, 80]
-   "cornflowerblue"       [100, 149, 237]
-   "cornsilk"             [255, 248, 220]
-   "crimson"              [220, 20, 60]
+  (mapv (fn [[color-name _]]
+          [color-name (colorize color-name (square 25))])
+        {"aliceblue"            [240, 248, 255]
+         "antiquewhite"         [250, 235, 215]
+         "aqua"                 [0, 255, 255]
+         "aquamarine"           [127, 255, 212]
+         "azure"                [240, 255, 255]
+         "beige"                [245, 245, 220]
+         "bisque"               [255, 228, 196]
+         "black"                [0, 0, 0]
+         "blanchedalmond"       [255, 235, 205]
+         "blue"                 [0, 0, 255]
+         "blueviolet"           [138, 43, 226]
+         "brown"                [165, 42, 42]
+         "burlywood"            [222, 184, 135]
+         "cadetblue"            [95, 158, 160]
+         "chartreuse"           [127, 255, 0]
+         "chocolate"            [210, 105, 30]
+         "coral"                [255, 127, 80]
+         "cornflowerblue"       [100, 149, 237]
+         "cornsilk"             [255, 248, 220]
+         "crimson"              [220, 20, 60]
 
-   "cyan"                 [0, 255, 255]
-   "darkblue"             [0, 0, 139]
-   "darkcyan"             [0, 139, 139]
-   "darkgoldenrod"        [184, 134, 11]
-   "darkgray"             [169, 169, 169]
-   "darkgreen"            [0, 100, 0]
-   "darkgrey"             [169, 169, 169]
-   "darkkhaki"            [189, 183, 107]
-   "darkmagenta"          [139, 0, 139]
-   "darkolivegreen"       [85, 107, 47]
-   "darkorange"           [255, 140, 0]
-   "darkorchid"           [153, 50, 204]
-   "darkred"              [139, 0, 0]
-   "darksalmon"           [233, 150, 122]
-   "darkseagreen"         [143, 188, 143]
-   "darkslateblue"        [72, 61, 139]
-   "darkslategray"        [47, 79, 79]
-   "darkslategrey"        [47, 79, 79]
-   "darkturquoise"        [0, 206, 209]
+         "cyan"                 [0, 255, 255]
+         "darkblue"             [0, 0, 139]
+         "darkcyan"             [0, 139, 139]
+         "darkgoldenrod"        [184, 134, 11]
+         "darkgray"             [169, 169, 169]
+         "darkgreen"            [0, 100, 0]
+         "darkgrey"             [169, 169, 169]
+         "darkkhaki"            [189, 183, 107]
+         "darkmagenta"          [139, 0, 139]
+         "darkolivegreen"       [85, 107, 47]
+         "darkorange"           [255, 140, 0]
+         "darkorchid"           [153, 50, 204]
+         "darkred"              [139, 0, 0]
+         "darksalmon"           [233, 150, 122]
+         "darkseagreen"         [143, 188, 143]
+         "darkslateblue"        [72, 61, 139]
+         "darkslategray"        [47, 79, 79]
+         "darkslategrey"        [47, 79, 79]
+         "darkturquoise"        [0, 206, 209]
 
-   "darkviolet"           [148, 0, 211]
-   "deeppink"             [255, 20, 147]
-   "deepskyblue"          [0, 191, 255]
-   "dimgray"              [105, 105, 105]
-   "dimgrey"              [105, 105, 105]
-   "dodgerblue"           [30, 144, 255]
-   "firebrick"            [178, 34, 34]
-   "floralwhite"          [255, 250, 240]
-   "forestgreen"          [34, 139, 34]
-   "fuchsia"              [255, 0, 255]
-   "gainsboro"            [220, 220, 220]
-   "ghostwhite"           [248, 248, 255]
-   "gold"                 [255, 215, 0]
-   "goldenrod"            [218, 165, 32]
-   "gray"                 [128, 128, 128]
-   "grey"                 [128, 128, 128]
-   "green"                [0, 128, 0]
-   "greenyellow"          [173, 255, 47]
-   "honeydew"             [240, 255, 240]
+         "darkviolet"           [148, 0, 211]
+         "deeppink"             [255, 20, 147]
+         "deepskyblue"          [0, 191, 255]
+         "dimgray"              [105, 105, 105]
+         "dimgrey"              [105, 105, 105]
+         "dodgerblue"           [30, 144, 255]
+         "firebrick"            [178, 34, 34]
+         "floralwhite"          [255, 250, 240]
+         "forestgreen"          [34, 139, 34]
+         "fuchsia"              [255, 0, 255]
+         "gainsboro"            [220, 220, 220]
+         "ghostwhite"           [248, 248, 255]
+         "gold"                 [255, 215, 0]
+         "goldenrod"            [218, 165, 32]
+         "gray"                 [128, 128, 128]
+         "grey"                 [128, 128, 128]
+         "green"                [0, 128, 0]
+         "greenyellow"          [173, 255, 47]
+         "honeydew"             [240, 255, 240]
 
-   "hotpink"              [255, 105, 180]
-   "indianred"            [205, 92, 92]
-   "indigo"               [75, 0, 130]
-   "ivory"                [255, 255, 240]
-   "khaki"                [240, 230, 140]
-   "lavender"             [230, 230, 250]
-   "lavenderblush"        [255, 240, 245]
-   "lawngreen"            [124, 252, 0]
-   "lemonchiffon"         [255, 250, 205]
-   "lightblue"            [173, 216, 230]
-   "lightcoral"           [240, 128, 128]
-   "lightcyan"            [224, 255, 255]
-   "lightgoldenrodyellow" [250, 250, 210]
-   "lightgray"            [211, 211, 211]
-   "lightgreen"           [144, 238, 144]
-   "lightgrey"            [211, 211, 211]
-   "lightpink"            [255, 182, 193]
-   "lightsalmon"          [255, 160, 122]
-   "lightseagreen"        [32, 178, 170]
-   "lightskyblue"         [135, 206, 250]
-   "lightslategray"       [119, 136, 153]
+         "hotpink"              [255, 105, 180]
+         "indianred"            [205, 92, 92]
+         "indigo"               [75, 0, 130]
+         "ivory"                [255, 255, 240]
+         "khaki"                [240, 230, 140]
+         "lavender"             [230, 230, 250]
+         "lavenderblush"        [255, 240, 245]
+         "lawngreen"            [124, 252, 0]
+         "lemonchiffon"         [255, 250, 205]
+         "lightblue"            [173, 216, 230]
+         "lightcoral"           [240, 128, 128]
+         "lightcyan"            [224, 255, 255]
+         "lightgoldenrodyellow" [250, 250, 210]
+         "lightgray"            [211, 211, 211]
+         "lightgreen"           [144, 238, 144]
+         "lightgrey"            [211, 211, 211]
+         "lightpink"            [255, 182, 193]
+         "lightsalmon"          [255, 160, 122]
+         "lightseagreen"        [32, 178, 170]
+         "lightskyblue"         [135, 206, 250]
+         "lightslategray"       [119, 136, 153]
 
-   "lightslategrey"       [119, 136, 153]
-   "lightsteelblue"       [176, 196, 222]
-   "lightyellow"          [255, 255, 224]
-   "lime"                 [0, 255, 0]
-   "limegreen"            [50, 205, 50]
-   "linen"                [250, 240, 230]
-   "magenta"              [255, 0, 255]
-   "maroon"               [128, 0, 0]
-   "mediumaquamarine"     [102, 205, 170]
-   "mediumblue"           [0, 0, 205]
-   "mediumorchid"         [186, 85, 211]
-   "mediumpurple"         [147, 112, 219]
-   "mediumseagreen"       [60, 179, 113]
-   "mediumslateblue"      [123, 104, 238]
-   "mediumspringgreen"    [0, 250, 154]
-   "mediumturquoise"      [72, 209, 204]
-   "mediumvioletred"      [199, 21, 133]
-   "midnightblue"         [25, 25, 112]
-   "mintcream"            [245, 255, 250]
-   "mistyrose"            [255, 228, 225]
-   "moccasin"             [255, 228, 181]
-   "navajowhite"          [255, 222, 173]
-   "navy"                 [0, 0, 128]
+         "lightslategrey"       [119, 136, 153]
+         "lightsteelblue"       [176, 196, 222]
+         "lightyellow"          [255, 255, 224]
+         "lime"                 [0, 255, 0]
+         "limegreen"            [50, 205, 50]
+         "linen"                [250, 240, 230]
+         "magenta"              [255, 0, 255]
+         "maroon"               [128, 0, 0]
+         "mediumaquamarine"     [102, 205, 170]
+         "mediumblue"           [0, 0, 205]
+         "mediumorchid"         [186, 85, 211]
+         "mediumpurple"         [147, 112, 219]
+         "mediumseagreen"       [60, 179, 113]
+         "mediumslateblue"      [123, 104, 238]
+         "mediumspringgreen"    [0, 250, 154]
+         "mediumturquoise"      [72, 209, 204]
+         "mediumvioletred"      [199, 21, 133]
+         "midnightblue"         [25, 25, 112]
+         "mintcream"            [245, 255, 250]
+         "mistyrose"            [255, 228, 225]
+         "moccasin"             [255, 228, 181]
+         "navajowhite"          [255, 222, 173]
+         "navy"                 [0, 0, 128]
 
-   "oldlace"              [253, 245, 230]
-   "olive"                [128, 128, 0]
-   "olivedrab"            [107, 142, 35]
-   "orange"               [255, 165, 0]
-   "orangered"            [255, 69, 0]
-   "orchid"               [218, 112, 214]
-   "palegoldenrod"        [238, 232, 170]
-   "palegreen"            [152, 251, 152]
-   "paleturquoise"        [175, 238, 238]
-   "palevioletred"        [219, 112, 147]
-   "papayawhip"           [255, 239, 213]
-   "peachpuff"            [255, 218, 185]
-   "peru"                 [205, 133, 63]
-   "pink"                 [255, 192, 203]
-   "plum"                 [221, 160, 221]
-   "powderblue"           [176, 224, 230]
-   "purple"               [128, 0, 128]
-   "red"                  [255, 0, 0]
-   "rosybrown"            [188, 143, 143]
-   "royalblue"            [65, 105, 225]
-   "saddlebrown"          [139, 69, 19]
-   "salmon"               [250, 128, 114]
-   "sandybrown"           [244, 164, 96]
-   "seagreen"             [46, 139, 87]
-   "seashell"             [255, 245, 238]
-   "sienna"               [160, 82, 45]
+         "oldlace"              [253, 245, 230]
+         "olive"                [128, 128, 0]
+         "olivedrab"            [107, 142, 35]
+         "orange"               [255, 165, 0]
+         "orangered"            [255, 69, 0]
+         "orchid"               [218, 112, 214]
+         "palegoldenrod"        [238, 232, 170]
+         "palegreen"            [152, 251, 152]
+         "paleturquoise"        [175, 238, 238]
+         "palevioletred"        [219, 112, 147]
+         "papayawhip"           [255, 239, 213]
+         "peachpuff"            [255, 218, 185]
+         "peru"                 [205, 133, 63]
+         "pink"                 [255, 192, 203]
+         "plum"                 [221, 160, 221]
+         "powderblue"           [176, 224, 230]
+         "purple"               [128, 0, 128]
+         "red"                  [255, 0, 0]
+         "rosybrown"            [188, 143, 143]
+         "royalblue"            [65, 105, 225]
+         "saddlebrown"          [139, 69, 19]
+         "salmon"               [250, 128, 114]
+         "sandybrown"           [244, 164, 96]
+         "seagreen"             [46, 139, 87]
+         "seashell"             [255, 245, 238]
+         "sienna"               [160, 82, 45]
 
-   "silver"               [192, 192, 192]
-   "skyblue"              [135, 206, 235]
-   "slateblue"            [106, 90, 205]
-   "slategray"            [112, 128, 144]
-   "slategrey"            [112, 128, 144]
-   "snow"                 [255, 250, 250]
-   "springgreen"          [0, 255, 127]
-   "steelblue"            [70, 130, 180]
-   "tan"                  [210, 180, 140]
-   "teal"                 [0, 128, 128]
-   "thistle"              [216, 191, 216]
-   "tomato"               [255, 99, 71]
-   "turquoise"            [64, 224, 208]
-   "violet"               [238, 130, 238]
-   "wheat"                [245, 222, 179]
-   "white"                [255, 255, 255]
-   "whitesmoke"           [245, 245, 245]
-   "yellow"               [255, 255, 0]
-   "yellowgreen"          [154, 205, 50]})
-
+         "silver"               [192, 192, 192]
+         "skyblue"              [135, 206, 235]
+         "slateblue"            [106, 90, 205]
+         "slategray"            [112, 128, 144]
+         "slategrey"            [112, 128, 144]
+         "snow"                 [255, 250, 250]
+         "springgreen"          [0, 255, 127]
+         "steelblue"            [70, 130, 180]
+         "tan"                  [210, 180, 140]
+         "teal"                 [0, 128, 128]
+         "thistle"              [216, 191, 216]
+         "tomato"               [255, 99, 71]
+         "turquoise"            [64, 224, 208]
+         "violet"               [238, 130, 238]
+         "wheat"                [245, 222, 179]
+         "white"                [255, 255, 255]
+         "whitesmoke"           [245, 245, 245]
+         "yellow"               [255, 255, 0]
+         "yellowgreen"          [154, 205, 50]}))
 
 ;; some examples using the above functions
 (comment

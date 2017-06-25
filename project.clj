@@ -56,7 +56,8 @@
                                        :optimizations  :simple}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
-             :css-dirs     ["resources/public/css"]}
+             :css-dirs     ["resources/public/css"]
+             :nrepl-port   7888}
 
   :deploy-via :clojars
 

@@ -4,8 +4,11 @@
             maria.user.loaders
             [maria.user.shapes :as shapes :refer [show
                                                   circle
+                                                  square
                                                   rectangle
                                                   triangle
+                                                  text
+                                                  rotate
                                                   assure-shape-seq
                                                   shape-bounds
                                                   bounds
