@@ -3,6 +3,7 @@
             [maria.ns-utils :as ns-utils]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
+            [cljs.pprint :refer [pprint]]
             [maria.views.repl-utils :as repl-ui]))
 
 (defn docs-link [namespace name]
@@ -16,11 +17,12 @@
   {:life/initial-state #(:expanded? %)
    :key                :name}
   [{:keys [doc
+           meta
            arglists
            view/state
            standalone?] :as this}]
   (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
-    [:.ph3.bt.b--near-white
+    [:.ph3.bt.b--near-white.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
      [:.code.flex.items-center.pointer.mv1
       {:on-click #(swap! state not)}
@@ -33,7 +35,7 @@
                   icons/ArrowDropDown)]]
      (when @state
        (list
-         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote arglists)))]
+         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or (:arglists meta) arglists))))]
          [:.gray.mv2 doc]
          (docs-link namespace name)))]))
 

@@ -26,17 +26,13 @@
   [c-state c-env name]
   ;; TODO this should actually show doc for anything with the right
   ;; meta-data, rather than only working on functions
-  (if (fn? name)
+  (if-let [the-var (or (ns-utils/resolve-var c-state c-env name)
+                       (some-> (get e/repl-specials name) (meta)))]
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
                                       (or (ns-utils/resolve-var c-state c-env name)
                                           (some-> (get e/repl-specials name) (meta)))))}
-    ;; XXX ugly copy/paste because macros are weird in cljs
-    (let [macro (when (symbol? name) (:macro (ns-utils/resolve-var c-state c-env name)))]
-      (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond macro :maria.kinds/macro
-                                                                     (and (symbol? name)
-                                                                          (contains? e/repl-specials name)) :maria.kinds/function
-                                                                     :else name)))))))
+    {:error {:message (str "No documentation available for `" name "`")}}))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"
