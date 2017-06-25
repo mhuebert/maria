@@ -1,31 +1,51 @@
 (ns maria.messages
   (:require [clojure.string :as string]))
 
+(def kinds
+  {:maria.kinds/character {:doc "a character: a unit of writing (letter, emoji, and so on)"}
+   :maria.kinds/false     {:doc "false: the Boolean value 'false'"}
+   :maria.kinds/function  {:doc "a function: something you call with input that returns output"}
+   :maria.kinds/keyword   {:doc "a keyword: a special symbolic identifier"}
+   :maria.kinds/list      {:doc "a list: a sequence, possibly 'lazy'"}
+   :maria.kinds/shape     {:doc "a shape: some geometry that Maria can draw"}
+   :maria.kinds/map       {:doc "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"}
+   :maria.kinds/nil       {:doc "nil: a special value meaning nothing"}
+   :maria.kinds/number    {:doc "a number: it can be whole, a decimal, or even a ratio"}
+   :maria.kinds/sequence  {:doc "a sequence: a sequence of values, each followed by the next"}
+   :maria.kinds/set       {:doc "a set: a collection of unique values"}
+   :maria.kinds/string    {:doc "a string: a run of characters that can make up a text"}
+   :maria.kinds/symbol    {:doc "a symbol: a name that usually refers to something"}
+   :maria.kinds/true      {:doc "true: the Boolean value 'true'"}
+   :maria.kinds/vector    {:doc "a vector: a collection of values, indexable by number"}
+   :maria.kinds/object    {:doc "a javascript object: a collection of key/value pairs"}})
+
+(defn kind [thing]
+  (if (contains? kinds thing)
+    thing
+    (cond
+      (char? thing) :maria.kinds/character
+      (false? thing) :maria.kinds/false
+      (fn? thing) :maria.kinds/function
+      (keyword? thing) :maria.kinds/keyword
+      (list? thing) :maria.kinds/list
+      (and (map? thing) (= :shape (:is-a thing))) :maria.kinds/shape
+      (map? thing) :maria.kinds/map
+      (nil? thing) :maria.kinds/nil
+      (number? thing) :maria.kinds/number
+      (seq? thing) :maria.kinds/sequence
+      (set? thing) :maria.kinds/set
+      (string? thing) :maria.kinds/string
+      (symbol? thing) :maria.kinds/symbol
+      (true? thing) :maria.kinds/true
+      (vector? thing) :maria.kinds/vector
+      (object? thing) :maria.kinds/object
+      :else nil)))
+
 ;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."
   [thing]
-  (case thing
-    :maria.kinds/macro "a macro: a function that transforms source code before it is evaluated."
-    :maria.kinds/function (what-is (fn []))
-    (cond
-      (char? thing)    "a character: a unit of writing (letter, emoji, and so on)"
-      (false? thing)   "false: the Boolean value 'false'"
-      (fn? thing)      "a function: something you call with input that returns output"
-      (keyword? thing) "a keyword: a special symbolic identifier"
-      (list? thing)    "a list: a sequence, possibly 'lazy'"
-      (and (map? thing)
-           (= :shape (:is-a thing))) "a shape: some geometry that Maria can draw"
-      (map? thing)     "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"
-      (nil? thing)     "nil: a special value meaning nothing"
-      (number? thing)  "a number: it can be whole, a decimal, or even a ratio"
-      (seq? thing)     "a sequence: a sequence of values, each followed by the next"
-      (set? thing)     "a set: a collection of unique values"
-      (string? thing)  "a string: a run of characters that can make up a text"
-      (symbol? thing)  "a symbol: a name that usually refers to something"
-      (true? thing)    "true: the Boolean value 'true'"
-      (vector? thing)  "a vector: a collection of values, indexable by number"
-      :else (type thing))))
+  (get-in kinds [(kind thing) :doc] (type thing)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier
@@ -37,10 +57,10 @@
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
   ([trie tokens] (match-in-tokens trie tokens []))
   ([trie [token & remaining-tokens] context]
-   (let [capture    (first (filter (partial = "%") (keys trie)))
-         context    (if capture
-                      (conj context token)
-                      context)]
+   (let [capture (first (filter (partial = "%") (keys trie)))
+         context (if capture
+                   (conj context token)
+                   context)]
      (if-let [trie-match (or (trie token) (trie capture))]
        (let [next-match (match-in-tokens trie-match remaining-tokens context)]
          (if (:message trie-match)
@@ -66,15 +86,15 @@
 (def error-message-trie
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-   [["cannot read property call of %"
-     "It looks like you're trying to call a function that has not been defined yet."]
-    ["invalid arity %" 
-     "%1 is too many arguments!"]
-    ["no protocol method icollection conj defined for type % %"
-     "The %1 `%2` can't be used as a collection."]
-    ["% is not iseqable" "The value `%1` can't be used as a sequence or collection."]
-    ["% call is not a function"
-     "The value `%1` isn't a function, but it's being called like one."]]))
+    [["cannot read property call of %"
+      "It looks like you're trying to call a function that has not been defined yet."]
+     ["invalid arity %"
+      "%1 is too many arguments!"]
+     ["no protocol method icollection conj defined for type % %"
+      "The %1 `%2` can't be used as a collection."]
+     ["% is not iseqable" "The value `%1` can't be used as a sequence or collection."]
+     ["% call is not a function"
+      "The value `%1` isn't a function, but it's being called like one."]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
@@ -133,7 +153,7 @@
        :fn-arity (str "The function `"
                       (name (-> w :extra :name))
                       "` in the expression above needs "
-                      (if (= 0 (-> w :extra :argc)) ;; TODO get arity from meta
+                      (if (= 0 (-> w :extra :argc))         ;; TODO get arity from meta
                         "more"
                         "a different number of")
                       " arguments.")

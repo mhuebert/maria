@@ -2,6 +2,7 @@
   "Special forms that exist only in the REPL."
   (:require [cljs-live.eval :as e :refer [defspecial]]
             [maria.views.repl-specials :as special-views]
+            [maria.messages :as messages]
             [maria.ns-utils :as ns-utils]
             [clojure.string :as string]))
 
@@ -31,7 +32,8 @@
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
                                       the-var))}
-    {:error (js/Error. (str "No documentation exists for `" (string/trim-newline (with-out-str (prn name))) "`"))}))
+    {:error (js/Error. (if (symbol? name) (str "No documentation exists for `" (string/trim-newline (with-out-str (prn name))) "`")
+                                          (str (str "`doc` requires a symbol, but a " (cljs.core/name (messages/kind name)) " was passed."))))}))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"
