@@ -20,6 +20,7 @@
            meta
            arglists
            view/state
+           view/props
            standalone?] :as this}]
   (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
     [:.ph3.bt.b--near-white.ws-normal

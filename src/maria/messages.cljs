@@ -79,13 +79,14 @@
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
   [message]
-  (if-let [match (match-in-tokens error-message-trie (tokenize message))]
-    (reduce
-     (fn [message [i replacement]]
-       (string/replace message (str "%" (inc i)) replacement))
-     (:message match)
-     (map vector (range) (:context match)))
-    message))
+  (let [match (match-in-tokens error-message-trie (tokenize message))]
+    (if (some-> match (contains? :message))
+      (reduce
+        (fn [message [i replacement]]
+          (string/replace message (str "%" (inc i)) replacement))
+        (:message match)
+        (map vector (range) (:context match)))
+      message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -2,7 +2,8 @@
   "Special forms that exist only in the REPL."
   (:require [cljs-live.eval :as e :refer [defspecial]]
             [maria.views.repl-specials :as special-views]
-            [maria.ns-utils :as ns-utils]))
+            [maria.ns-utils :as ns-utils]
+            [clojure.string :as string]))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -24,15 +25,13 @@
 (defspecial doc
   "Show documentation for given symbol"
   [c-state c-env name]
-  ;; TODO this should actually show doc for anything with the right
-  ;; meta-data, rather than only working on functions
-  (if-let [the-var (or (ns-utils/resolve-var c-state c-env name)
-                       (some-> (get e/repl-specials name) (meta)))]
+  (let [the-var (when (symbol? name)
+                     (or (ns-utils/resolve-var c-state c-env name)
+                         (some-> (get e/repl-specials name) (meta))))]
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
-                                      (or (ns-utils/resolve-var c-state c-env name)
-                                          (some-> (get e/repl-specials name) (meta)))))}
-    {:error {:message (str "No documentation available for `" name "`")}}))
+                                      the-var))}
+    {:error (js/Error. (str "No documentation exists for `" (string/trim-newline (with-out-str (prn name))) "`"))}))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"
