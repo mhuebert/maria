@@ -71,6 +71,8 @@
 
 ;; ⬇ your code goes here 😀
 
+
+
 ;; ⬆ your code goes here
 
 ;;;; Shapes and Colors
@@ -108,12 +110,18 @@ color-names
 ;; We can also combine expressions to create a group of shapes with
 ;; the `group` function:
 
+(doc group)
+
+;; By default, things in groups all share the same top/left corner,
+;; and thus often overlap:
+
 (group 
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
-;; ... and position them within a group using the `position` function,
-;; which takes an `x` and `y` position and a shape:
+;; But we can also position them within a group using the `position`
+;; function, which takes an `x` and a `y` to tell it where to put a
+;; shape:
 
 (group
  (colorize "springgreen" (circle 25))
@@ -135,7 +143,7 @@ color-names
 ;; your own shape combinations, evaluating inner expressions to make
 ;; sure you know how they fit into the expression containing them.
 
-;;;; Powers of fun
+;;;; The computer is good at repetition
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
 ;; over and over again is a chore. We don't have time for that! Our
