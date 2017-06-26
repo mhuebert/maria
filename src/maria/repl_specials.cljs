@@ -23,17 +23,27 @@
 
                                                                  :else thing)))))
 
+(defn resolve-var-or-special [c-state c-env name]
+  (when (symbol? name)
+    (or (ns-utils/resolve-var c-state c-env name)
+        (some-> (get e/repl-specials name) (meta)))))
+
 (defspecial doc
   "Show documentation for given symbol"
   [c-state c-env name]
-  (let [the-var (when (symbol? name)
-                     (or (ns-utils/resolve-var c-state c-env name)
-                         (some-> (get e/repl-specials name) (meta))))]
+  (if-let [the-var (resolve-var-or-special c-state c-env name)]
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
                                       the-var))}
-    {:error (js/Error. (if (symbol? name) (str "No documentation exists for `" (string/trim-newline (with-out-str (prn name))) "`")
+    {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
                                           (str (str "`doc` requires a symbol, but a " (cljs.core/name (messages/kind name)) " was passed."))))}))
+
+(defspecial source
+  "Show source code for given symbol"
+  [c-state c-env name]
+  (if-let [the-var (resolve-var-or-special c-state c-env name)]
+    {:value (special-views/source the-var)}
+    {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"

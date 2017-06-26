@@ -1,10 +1,15 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.ns-utils :as ns-utils]
+            [maria.editor :as editor]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
-            [maria.views.repl-utils :as repl-ui]))
+            [cljs-live.compiler :as c]
+            [cljs.tools.reader :as r]
+            [cljs.tools.reader.reader-types :as rt]
+            [maria.views.repl-utils :as repl-ui])
+  (:import goog.string.StringBuffer))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
@@ -39,6 +44,26 @@
          [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or (:arglists meta) arglists))))]
          [:.gray.mv2 doc]
          (docs-link namespace name)))]))
+
+(defn source-of-form-at-position [source line column]
+  (let [reader (rt/SourceLoggingPushbackReader.
+                 (rt/string-push-back-reader source 1)
+                 line
+                 column
+                 true
+                 nil
+                 0
+                 "temp-clj"
+                 (atom {:buffer (StringBuffer.) :offset '(0)}))
+        form (r/read reader)]
+    (:source (meta form))))
+
+(defview source
+  [{:keys [meta line column]}]
+  (repl-ui/card
+    (if-let [source (get @c/cljs-cache (:file meta))]
+      (editor/viewer (source-of-form-at-position source line column))
+      [:.pa2 "Source not found"])))
 
 (defview dir
   {:life/initial-state {:expanded? false}}
