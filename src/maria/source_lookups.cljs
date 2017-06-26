@@ -49,13 +49,18 @@
                   (update :column inc))]
       (source-of-form-at-position source pos))))
 
+(defn demunge-symbol-str [s]
+  (when s
+    (let [parts (string/split (demunge s) "/")]
+      (if (> (count parts) 1)
+        (str (string/join "." (drop-last parts)) "/" (last parts))
+        (first parts)))))
+
 (defn fn-var
   "Look up the var for a function using its `name` property"
   [f]
   (when-let [munged-sym (aget f "name")]
-    (let [parts (string/split (demunge munged-sym) "/")
-          sym (symbol (string/join "." (drop-last parts)) (last parts))]
-      (cljs-eval/resolve-var sym))))
+    (cljs-eval/resolve-var (symbol (demunge-symbol-str munged-sym)))))
 
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
@@ -67,4 +72,14 @@
   "Look up the source for a function, preferring ClojureScript source over JavaScript"
   [f]
   (or (some-> (fn-var f) (var-source))
-      (js-source->clj-source (.toString f))))
+      (js-source->clj-source (.toString f))
+      (.toString f)))
+
+(defn ensure-str [s]
+  (when (and (string? s) (not (identical? s "")))
+    s))
+
+(defn fn-name
+  [f]
+  (or (some-> (aget f "name") (demunge-symbol-str))
+      (:name (fn-var f))))

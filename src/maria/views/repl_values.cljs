@@ -1,6 +1,7 @@
 (ns maria.views.repl-values
   (:require [clojure.string :as string]
             [maria.messages :as messages]
+            [re-view-material.icons :as icons]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
@@ -32,7 +33,7 @@
                   error (str error)
                   :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
-(def expander-element :span.bg-darken.pa1.ma1.br2.pointer)
+(def expander-element :span.bg-darken.ph2.pv1.ma1.br2.pointer.inline-flex.items-center)
 
 (defview format-collection
   {:life/initial-state 20}
@@ -47,12 +48,23 @@
 
 (defview format-function
   {:life/initial-state (fn [_ value] {:expanded? false
-                                      :source (source-lookups/fn-source value)})}
+                                      :source    (source-lookups/fn-source value)})}
   [{:keys [view/state]} value]
-  (let [{:keys [expanded? source]} @state]
-    (if expanded?
-      (editor/viewer source)
-      [:span.i "Function" (when source [expander-element {:on-click #(swap! state update :expanded? not)} "…"])])))
+  (let [{:keys [expanded? source]} @state
+        fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
+
+    [:span.i
+
+     [expander-element {:on-click #(swap! state update :expanded? not)}
+      (if (and fn-name (not= "" fn-name))
+        (some-> (source-lookups/fn-name value) (symbol) (name))
+        [:span.o-50.mr1 "ƒ"])
+      (-> (if expanded? icons/ArrowDropUp
+                        icons/ArrowDropDown)
+          (icons/size 20)
+          (icons/class "mln1 mrn1 o-50"))]
+     (when expanded?
+       (editor/viewer (source-lookups/fn-source value)))]))
 
 (defn format-value [value]
   [:span
