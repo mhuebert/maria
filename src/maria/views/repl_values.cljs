@@ -42,7 +42,7 @@
         more? (= (count (take (inc @limit) value)) (inc @limit))]
     [:div
      [:span.output-bracket lb]
-     (interpose ", " (v-util/map-with-keys format-value (take @limit value)))
+     (interpose " " (v-util/map-with-keys format-value (take @limit value)))
      (when more? [expander-element {:on-click #(swap! limit + 20)} "…"])
      [:span.output-bracket rb]]))
 
@@ -62,9 +62,9 @@
       (-> (if expanded? icons/ArrowDropUp
                         icons/ArrowDropDown)
           (icons/size 20)
-          (icons/class "mln1 mrn1 o-50"))]
-     (when expanded?
-       (editor/viewer (source-lookups/fn-source value)))]))
+          (icons/class "mln1 mrn1 o-50"))
+      (when expanded?
+        (editor/viewer (source-lookups/fn-source value)))]]))
 
 (defn format-value [value]
   [:span
