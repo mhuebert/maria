@@ -20,7 +20,7 @@
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.3"]
 
-                 [cljs-live "0.1.19-SNAPSHOT"]
+                 [cljs-live "0.1.20-SNAPSHOT"]
                  [magic-tree "0.0.6-SNAPSHOT"]
 
                  [cljsjs/react "15.5.4-0"]

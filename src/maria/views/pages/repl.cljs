@@ -1,8 +1,6 @@
 (ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
-            [re-view.util :as v-util]
             [re-db.d :as d]
-            [re-view.hoc :as hoc]
             [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
@@ -10,22 +8,37 @@
             [cljs.pprint :refer [pprint]]
 
             [maria.user.loaders :as loaders]
-
+            [cljs-live.compiler :as c]
+            [maria.repl-specials]
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
-            [clojure.string :as string]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]))
 
 (defonce _
-         (add-watch eval/c-env :notice-namespace-changes
-                    (fn [_ _ {prev-ns :ns} {ns :ns}]
-                      (when (not= prev-ns ns)
-                        (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
-                                                       (fnil conj [])
-                                                       {:id    (d/unique-id)
-                                                        :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0)))))
+         (do
+           (add-watch eval/c-env :notice-namespace-changes
+                      (fn [_ _ {prev-ns :ns} {ns :ns}]
+                        (when (not= prev-ns ns)
+                          (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
+                                                         (fnil conj [])
+                                                         {:id    (d/unique-id)
+                                                          :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))
+
+           (set! cljs-live.compiler/debug? true)
+           (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
+                             "/js/cljs_bundles/maria.user.json"
+                             "/js/cljs_bundles/cljs.spec.alpha.json"]
+                            (fn []
+                              (eval/eval '(require '[cljs.core :include-macros true]))
+                              (eval/eval '(require '[maria.user :include-macros true]))
+                              (eval/eval '(inject 'cljs.core '{what-is   maria.messages/what-is
+                                                               load-gist maria.user.loaders/load-gist
+                                                               load-js   maria.user.loaders/load-js
+                                                               load-npm  maria.user.loaders/load-npm
+                                                               html      re-view-hiccup.core/element}))
+                              (eval/eval '(in-ns maria.user))))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}

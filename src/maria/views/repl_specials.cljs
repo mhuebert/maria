@@ -1,8 +1,12 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.ns-utils :as ns-utils]
+            [maria.editor :as editor]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
+            [cljs.pprint :refer [pprint]]
+            [cljs-live.compiler :as c]
+            [maria.source-lookups :as reader]
             [maria.views.repl-utils :as repl-ui]))
 
 (defn docs-link [namespace name]
@@ -16,11 +20,13 @@
   {:life/initial-state #(:expanded? %)
    :key                :name}
   [{:keys [doc
+           meta
            arglists
            view/state
+           view/props
            standalone?] :as this}]
   (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
-    [:.ph3.bt.b--near-white
+    [:.ph3.bt.b--near-white.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
      [:.code.flex.items-center.pointer.mv1
       {:on-click #(swap! state not)}
@@ -33,9 +39,16 @@
                   icons/ArrowDropDown)]]
      (when @state
        (list
-         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote arglists)))]
+         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or (:arglists meta) arglists))))]
          [:.gray.mv2 doc]
          (docs-link namespace name)))]))
+
+(defview var-source
+  [the-var]
+  (repl-ui/card
+    (if-let [source (reader/var-source the-var)]
+      (editor/viewer source)
+      [:.pa2 "Source not found"])))
 
 (defview dir
   {:life/initial-state {:expanded? false}}

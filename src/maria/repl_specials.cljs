@@ -2,7 +2,10 @@
   "Special forms that exist only in the REPL."
   (:require [cljs-live.eval :as e :refer [defspecial]]
             [maria.views.repl-specials :as special-views]
-            [maria.ns-utils :as ns-utils]))
+            [maria.messages :as messages]
+            [maria.ns-utils :as ns-utils]
+            [clojure.string :as string]
+            [maria.source-lookups :as source-lookups]))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -13,28 +16,43 @@
 (defspecial what-is
   "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
   [c-state c-env thing]
-  (let [macro (when (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))]
-    (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond macro :maria.kinds/macro
-                                                                   (and (symbol? thing)
-                                                                        (contains? e/repl-specials thing)) :maria.kinds/function
-                                                                   :else thing))))))
+  (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
+                                                                 :maria.kinds/macro
+
+                                                                 (contains? e/repl-specials thing)
+                                                                 :maria.kinds/function
+
+                                                                 :else thing)))))
+
+(defn resolve-var-or-special [c-state c-env name]
+  (when (symbol? name)
+    (or (ns-utils/resolve-var c-state c-env name)
+        (some-> (get e/repl-specials name) (meta)))))
 
 (defspecial doc
   "Show documentation for given symbol"
   [c-state c-env name]
-  ;; TODO this should actually show doc for anything with the right
-  ;; meta-data, rather than only working on functions
-  (if (fn? name)
+  (if-let [the-var (resolve-var-or-special c-state c-env name)]
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
-                                      (or (ns-utils/resolve-var c-state c-env name)
-                                          (some-> (get e/repl-specials name) (meta)))))}
-    ;; XXX ugly copy/paste because macros are weird in cljs
-    (let [macro (when (symbol? name) (:macro (ns-utils/resolve-var c-state c-env name)))]
-      (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond macro :maria.kinds/macro
-                                                                     (and (symbol? name)
-                                                                          (contains? e/repl-specials name)) :maria.kinds/function
-                                                                     :else name)))))))
+                                      the-var))}
+    {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
+                                          (str (str "`doc` requires a symbol, but a " (cljs.core/name (messages/kind name)) " was passed."))))}))
+
+(defspecial source
+  "Show source code for given symbol"
+  [c-state c-env name]
+  ;; get value of thing
+  (let [{:keys [error value] :as val} (e/eval-str c-state c-env (str name))]
+    (if error
+      val
+      ;; try getting value from var
+      (if-let [the-var (and (symbol? name) (resolve-var-or-special c-state c-env name))]
+        {:value (special-views/var-source the-var)}
+        ;; try getting value as function
+        (if-let [fn-source (and (fn? value) (source-lookups/fn-source value))]
+          {:value fn-source}
+          {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))})))))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"
