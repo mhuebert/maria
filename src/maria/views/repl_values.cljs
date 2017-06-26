@@ -5,9 +5,9 @@
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
             [cljs.pprint :refer [pprint]]
-            [re-view-material.icons :as icons]
             [maria.magic-tree :as magic]
-            [maria.editor :as editor])
+            [maria.editor :as editor]
+            [maria.source-lookups :as source-lookups])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -32,6 +32,8 @@
                   error (str error)
                   :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
+(def expander-element :span.bg-darken.pa1.ma1.br2.pointer)
+
 (defview format-collection
   {:life/initial-state 20}
   [{limit :view/state} value]
@@ -39,9 +41,18 @@
         more? (= (count (take (inc @limit) value)) (inc @limit))]
     [:div
      [:span.output-bracket lb]
-     (interpose " " (v-util/map-with-keys format-value (take @limit value)))
-     (when more? [:span.bg-darken.pa1.ma1.br2.pointer {:on-click #(swap! limit + 20)} "..."])
+     (interpose ", " (v-util/map-with-keys format-value (take @limit value)))
+     (when more? [expander-element {:on-click #(swap! limit + 20)} "…"])
      [:span.output-bracket rb]]))
+
+(defview format-function
+  {:life/initial-state (fn [_ value] {:expanded? false
+                                      :source (source-lookups/fn-source value)})}
+  [{:keys [view/state]} value]
+  (let [{:keys [expanded? source]} @state]
+    (if expanded?
+      (editor/viewer source)
+      [:span.i "Function" (when source [expander-element {:on-click #(swap! state update :expanded? not)} "…"])])))
 
 (defn format-value [value]
   [:span
@@ -50,6 +61,8 @@
      (or (vector? value)
          (seq? value)
          (set? value)) (format-collection value)
+     (var? value) (.toString value)
+     (fn? value) (format-function value)
      (v/is-react-element? value) value
      (instance? cljs.core/Namespace value) (str value)
      (instance? Deferred value) (display-deferred {:deferred value})

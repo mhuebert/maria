@@ -6,10 +6,8 @@
             [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
             [cljs-live.compiler :as c]
-            [cljs.tools.reader :as r]
-            [cljs.tools.reader.reader-types :as rt]
-            [maria.views.repl-utils :as repl-ui])
-  (:import goog.string.StringBuffer))
+            [maria.source-lookups :as reader]
+            [maria.views.repl-utils :as repl-ui]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
@@ -45,24 +43,11 @@
          [:.gray.mv2 doc]
          (docs-link namespace name)))]))
 
-(defn source-of-form-at-position [source line column]
-  (let [reader (rt/SourceLoggingPushbackReader.
-                 (rt/string-push-back-reader source 1)
-                 line
-                 column
-                 true
-                 nil
-                 0
-                 "temp-clj"
-                 (atom {:buffer (StringBuffer.) :offset '(0)}))
-        form (r/read reader)]
-    (:source (meta form))))
-
-(defview source
-  [{:keys [meta line column]}]
+(defview var-source
+  [the-var]
   (repl-ui/card
-    (if-let [source (get @c/cljs-cache (:file meta))]
-      (editor/viewer (source-of-form-at-position source line column))
+    (if-let [source (reader/var-source the-var)]
+      (editor/viewer source)
       [:.pa2 "Source not found"])))
 
 (defview dir
