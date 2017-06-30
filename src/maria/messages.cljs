@@ -2,23 +2,24 @@
   (:require [clojure.string :as string]))
 
 (def kinds
-  {:maria.kinds/character {:doc "a character: a unit of writing (letter, emoji, and so on)"}
-   :maria.kinds/false     {:doc "false: the Boolean value 'false'"}
-   :maria.kinds/function  {:doc "a function: something you call with input that returns output"}
-   :maria.kinds/macro     {:doc "a macro: a function that transforms source code before it is evaluated."}
-   :maria.kinds/keyword   {:doc "a keyword: a special symbolic identifier"}
-   :maria.kinds/list      {:doc "a list: a sequence, possibly 'lazy'"}
-   :maria.kinds/shape     {:doc "a shape: some geometry that Maria can draw"}
-   :maria.kinds/map       {:doc "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"}
-   :maria.kinds/nil       {:doc "nil: a special value meaning nothing"}
-   :maria.kinds/number    {:doc "a number: it can be whole, a decimal, or even a ratio"}
-   :maria.kinds/sequence  {:doc "a sequence: a sequence of values, each followed by the next"}
-   :maria.kinds/set       {:doc "a set: a collection of unique values"}
-   :maria.kinds/string    {:doc "a string: a run of characters that can make up a text"}
-   :maria.kinds/symbol    {:doc "a symbol: a name that usually refers to something"}
-   :maria.kinds/true      {:doc "true: the Boolean value 'true'"}
-   :maria.kinds/vector    {:doc "a vector: a collection of values, indexable by number"}
-   :maria.kinds/object    {:doc "a javascript object: a collection of key/value pairs"}})
+  {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
+   :maria.kinds/false        {:doc "false: the Boolean value 'false'"}
+   :maria.kinds/function     {:doc "a function: something you call with input that returns output"}
+   :maria.kinds/macro        {:doc "a macro: a function that transforms source code before it is evaluated."}
+   :maria.kinds/keyword      {:doc "a keyword: a special symbolic identifier"}
+   :maria.kinds/list         {:doc "a list: a sequence, possibly 'lazy'"}
+   :maria.kinds/shape        {:doc "a shape: some geometry that Maria can draw"}
+   :maria.kinds/map          {:doc "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"}
+   :maria.kinds/nil          {:doc "nil: a special value meaning nothing"}
+   :maria.kinds/number       {:doc "a number: it can be whole, a decimal, or even a ratio"}
+   :maria.kinds/sequence     {:doc "a sequence: a sequence of values, each followed by the next"}
+   :maria.kinds/set          {:doc "a set: a collection of unique values"}
+   :maria.kinds/string       {:doc "a string: a run of characters that can make up a text"}
+   :maria.kinds/symbol       {:doc "a symbol: a name that usually refers to something"}
+   :maria.kinds/true         {:doc "true: the Boolean value 'true'"}
+   :maria.kinds/vector       {:doc "a vector: a collection of values, indexable by number"}
+   :maria.kinds/object       {:doc "a javascript object: a collection of key/value pairs"}
+   :maria.kinds/special-form {:doc "a special form: a primitive which is evaluated in a special way"}})
 
 (defn kind [thing]
   (if (contains? kinds thing)
