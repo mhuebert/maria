@@ -39,13 +39,13 @@ These are highly recommended reading to understand where our approach comes from
  - [How to Design Programs, 2nd Ed.](http://www.ccs.neu.edu/home/matthias/HtDP2e/)
  - [Creative Scala](http://www.scalabridge.org/creative-scala.html), as a longer and more winding but still playful picture-based exploration of a language
  - Various
-   [Constructivist](https://en.wikiwand.com/wiki/Constructivism_(philosophy_of_education))
+   [Constructivist](https://wikiwand.com/en/Constructivism_(philosophy_of_education))
    theories of education
    from
-   [Maria Montessori](https://en.wikiwand.com/wiki/Maria_Montessori),
-   [Jean Piaget](https://en.wikiwand.com/wiki/Jean_Piaget),
-   [Jerome Bruner](https://en.wikiwand.com/wiki/Jerome_Bruner)
-   and [Seymour Papert](https://en.wikiwand.com/wiki/Seymour_Papert).
+   [Maria Montessori](https://wikiwand.com/en/Maria_Montessori),
+   [Jean Piaget](https://wikiwand.com/en/Jean_Piaget),
+   [Jerome Bruner](https://wikiwand.com/en/Jerome_Bruner)
+   and [Seymour Papert](https://wikiwand.com/en/Seymour_Papert).
 
 
 ## Guiding principles ##
