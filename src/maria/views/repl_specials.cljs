@@ -22,6 +22,7 @@
   [{:keys [doc
            meta
            arglists
+           forms
            view/state
            view/props
            standalone?] :as this}]
@@ -39,7 +40,9 @@
                   icons/ArrowDropDown)]]
      (when @state
        (list
-         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or (:arglists meta) arglists))))]
+         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or forms
+                                                                          (:arglists meta)
+                                                                          arglists))))]
          [:.gray.mv2 doc]
          (docs-link namespace name)))]))
 
