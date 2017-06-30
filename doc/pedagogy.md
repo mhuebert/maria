@@ -2,12 +2,11 @@
 
 >*Needless help is an actual hindrance to the development of natural forces.* –Maria Montessori
 
-
 ## Curriculum overview ##
 
  1. A quick introduction, modeled after a blatant loving rewrite of [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/). The goal is to walk the learner through the basics of working in Maria using an *absolute minimum* of syntax and programming concepts.
 
- Someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this introduction definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour, relying sometimes on a nearby knowledgeable coaching.
+Someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this introduction definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour, relying sometimes on a nearby knowledgeable coach.
 
   The goal is to use shapes to introduce the learner to a bare-bones list of programming concepts, which for us means:
     - evaluating expressions and functions, including evaluating different parts of compound and nested expressions
@@ -25,7 +24,6 @@
     - word or programming puzzles
     - **??? your idea goes here**
 
-
 ## Primary inspiration ##
 
 These are highly recommended reading to understand where our approach comes from.
@@ -33,14 +31,21 @@ These are highly recommended reading to understand where our approach comes from
  - [An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/), for how fast the on-ramp is, and for the simple LEGO-like fun of learning language features (e.g. define, functions as first-class objects) through simple pictures
  - [The Little Schemer, 4th Ed.](https://mitpress.mit.edu/books/little-schemer), for its minimal Socratic approach towards its single-minded goal of teaching recursion; for its emphasis on direct manipulation and forming one’s own mental computer; and for how its considered omission of theory, explanation, and instruction
 
-
 ## Secondary resources ##
 
+ - Alan Kay, [A Personal Computer for Children of All Ages](http://www.vpri.org/pdf/hc_pers_comp_for_children.pdf)
  - [Bootstrap Introduction to Programming](http://www.bootstrapworld.org/materials/spring2016/tutorial/)
  - [SICP](https://mitpress.mit.edu/sicp/full-text/book/book-Z-H-10.html), especially the presentation of its [introductory lecture](https://www.youtube.com/watch?v=2Op3QLzMgSY) and its principled step-by-step syntax-ignorant progression from idea to idea
  - [How to Design Programs, 2nd Ed.](http://www.ccs.neu.edu/home/matthias/HtDP2e/)
- - Alan Kay, [A Personal Computer for Children of All Ages](http://www.vpri.org/pdf/hc_pers_comp_for_children.pdf)
  - [Creative Scala](http://www.scalabridge.org/creative-scala.html), as a longer and more winding but still playful picture-based exploration of a language
+ - Various
+   [Constructivist](https://en.wikiwand.com/wiki/Constructivism_(philosophy_of_education))
+   theories of education
+   from
+   [Maria Montessori](https://en.wikiwand.com/wiki/Maria_Montessori),
+   [Jean Piaget](https://en.wikiwand.com/wiki/Jean_Piaget),
+   [Jerome Bruner](https://en.wikiwand.com/wiki/Jerome_Bruner)
+   and [Seymour Papert](https://en.wikiwand.com/wiki/Seymour_Papert).
 
 
 ## Guiding principles ##
