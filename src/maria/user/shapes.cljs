@@ -67,8 +67,6 @@
       :stroke "none"
       :fill   "black"})))
 
-;;font-family="Verdana" 
-
 (defn text
   "Add a label containing `the-text` to a drawing."
   [the-text]
@@ -190,6 +188,7 @@
     :y 0
     :children shapes))
 
+;; "beside"
 (defn line-up
   "Return `shapes` with their positions adjusted so they're lined up horizontally."
   [& shapes]
@@ -209,6 +208,7 @@
        :out
        (apply group)))
 
+;; "above"
 (defn stack
   "Return `shapes` with their positions adjusted so they're stacked vertically."
   [& shapes]
@@ -227,6 +227,22 @@
                               (map shape-bounds (butlast shapes)))})
        :out
        (apply group)))
+
+;; from "Creative Scala" intro:
+
+;; "click to reveal" solutions are a good idea
+
+;; functions: below, under, on, hsl/rgb color functions? color fns
+;; make it easier to do parametric color examples, which can be simple
+;; and beautiful.
+
+;; stroke vs fill? more complicated, but useful.
+
+;; bullseye example:
+;; (apply group
+;;        (map #(colorize %1 (position 40 40 (circle %2)))
+;;             (cycle ["black" "white"])
+;;             (range 40 2 -2)))
 
 (def color-names
   "Recognized SVG color keyword names, mapped to their RGB value."
@@ -385,71 +401,3 @@
          "whitesmoke"           [245, 245, 245]
          "yellow"               [255, 255, 0]
          "yellowgreen"          [154, 205, 50]}))
-
-;; some examples using the above functions
-(comment
-
-  (stack (colorize "red" (rectangle 20 20))
-         (colorize "blue" (rectangle 20 20)))
-
-  (line-up (colorize "red" (rectangle 20 20))
-           (colorize "blue" (rectangle 20 20))
-           (colorize "green" (rectangle 20 20)))
-
-  (stack
-    (stack (colorize "red" (rectangle 20 20))
-           (colorize "blue" (rectangle 20 20))
-           (colorize "green" (rectangle 20 20)))
-    (line-up (colorize "orange" (rectangle 20 20))
-             (colorize "red" (rectangle 20 20))
-             (colorize "blue" (rectangle 20 20))
-             (colorize "green" (rectangle 20 20))))
-
-  ;; vector rainbow
-  (mapv colorize
-        ["red" "orange" "yellow" "green" "blue" "purple"]
-        (repeat (rectangle 20 20)))
-
-  ;; combined rainbow, no vector
-  (apply stack
-         (mapv colorize
-               ["red" "orange" "yellow" "green" "blue" "purple"]
-               (repeat (rectangle 20 20))))
-
-  ;; maybe nice way to talk about naming things?
-  (let [rainbow (fn [shape]
-                  (mapv colorize
-                        ["red" "orange" "yellow" "green" "blue" "purple"]
-                        (repeat shape)))]
-    (rainbow (rectangle 20 20)))
-
-  ;; mixed types
-  ["hi!"
-   (stack (colorize "red" (rectangle 20 20))
-          (colorize "blue" (rectangle 20 20)))
-   '🦄
-   (line-up (colorize "red" (rectangle 20 20))
-            (colorize "blue" (rectangle 20 20))
-            (colorize "green" (rectangle 20 20)))]
-
-  ;; parcheesi pieces!
-  (map stack
-       (map colorize
-            ["red" "orange" "yellow" "green" "blue" "purple"]
-            (repeat (circle 10)))
-       (map colorize
-            ["red" "orange" "yellow" "green" "blue" "purple"]
-            (repeat (rectangle 20 20))))
-
-  ;;... maybe gradually refactor this, by way of let, into:
-
-  (defn rainbow [shape]
-    (map colorize
-         ["red" "orange" "yellow" "green" "blue" "purple"]
-         (repeat shape)))
-
-  (map stack
-       (rainbow (circle 10))
-       (rainbow (rectangle 20 30)))
-
-  )                                                         ;/comment
