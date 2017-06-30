@@ -6,7 +6,7 @@
 
  1. A quick introduction, modeled after a blatant loving rewrite of [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/). The goal is to walk the learner through the basics of working in Maria using an *absolute minimum* of syntax and programming concepts.
 
-Someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this introduction definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour, relying sometimes on a nearby knowledgeable coach.
+  Someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this introduction definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour, relying sometimes on a nearby knowledgeable coach.
 
   The goal is to use shapes to introduce the learner to a bare-bones list of programming concepts, which for us means:
     - evaluating expressions and functions, including evaluating different parts of compound and nested expressions
