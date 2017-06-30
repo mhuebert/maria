@@ -22,6 +22,7 @@ Someone familiar with computers but who has never programmed (or used a command 
     - an exploration of Clojure features, e.g. laziness, infinite sequences, data types (this is the closest analogue to the existing ClojureBridge curriculum)
     - a wander through mathematics or statistics (Fibonnacci, Shannon's entropy, Markov chains)
     - word or programming puzzles
+    - "Brain tripping" (Matt's Markov impersonator)
     - **??? your idea goes here**
 
 ## Primary inspiration ##
@@ -29,7 +30,7 @@ Someone familiar with computers but who has never programmed (or used a command 
 These are highly recommended reading to understand where our approach comes from.
 
  - [An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/), for how fast the on-ramp is, and for the simple LEGO-like fun of learning language features (e.g. define, functions as first-class objects) through simple pictures
- - [The Little Schemer, 4th Ed.](https://mitpress.mit.edu/books/little-schemer), for its minimal Socratic approach towards its single-minded goal of teaching recursion; for its emphasis on direct manipulation and forming one’s own mental computer; and for how its considered omission of theory, explanation, and instruction
+ - [The Little Schemer, 4th Ed.](https://mitpress.mit.edu/books/little-schemer), for its minimal Socratic approach towards its single-minded goal of teaching recursion; for its emphasis on direct manipulation and forming one’s own mental computer; and for its considered omission of theory, explanation, and instruction
 
 ## Secondary resources ##
 
