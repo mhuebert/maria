@@ -5,6 +5,7 @@
   {:maria.kinds/character {:doc "a character: a unit of writing (letter, emoji, and so on)"}
    :maria.kinds/false     {:doc "false: the Boolean value 'false'"}
    :maria.kinds/function  {:doc "a function: something you call with input that returns output"}
+   :maria.kinds/macro     {:doc "a macro: a function that transforms source code before it is evaluated."}
    :maria.kinds/keyword   {:doc "a keyword: a special symbolic identifier"}
    :maria.kinds/list      {:doc "a list: a sequence, possibly 'lazy'"}
    :maria.kinds/shape     {:doc "a shape: some geometry that Maria can draw"}
