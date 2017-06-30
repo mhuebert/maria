@@ -6,15 +6,15 @@
 
  1. A quick introduction, modeled after a blatant loving rewrite of [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/). The goal is to walk the learner through the basics of working in Maria using an *absolute minimum* of syntax and programming concepts.
 
-  Someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) should be able to complete this introduction definitely in less than an hour, probably in less than half an hour, ideally within twenty minutes with coaching. Someone with no prior experience with programming should take an hour, relying sometimes on a nearby knowledgeable coach.
+    We would like our introduction to be short. Our hope is that with coaching, someone familiar with computers but who has never programmed (or used a command shell, or learned advanced maths, etc.) could be expected to complete this introduction in an hour.
 
-  The goal is to use shapes to introduce the learner to a bare-bones list of programming concepts, which for us means:
-    - evaluating expressions and functions, including evaluating different parts of compound and nested expressions
-    - asking the computer what stuff is and what it does with, e.g., `doc` and `what-is`
-    - having the computer do rote work for us, for instance, `map` over stuff
-    - writing our own functions (so, `fn`)
-    - naming our creations with `let`, `def`, and `defn`
-    - that's it, really; all the rest should come separately
+    The goal is to use shapes to introduce the learner to a bare-bones list of programming concepts, which for us means:
+     - evaluating expressions and functions, including evaluating different parts of compound and nested expressions
+     - asking the computer what stuff is and what it does with, e.g., `doc` and `what-is`
+     - having the computer do rote work for us, for instance, `map` over stuff
+     - writing our own functions (so, `fn`)
+     - naming our creations with `let`, `def`, and `defn`
+     - that's it, really; all the rest should come separately
  1. Present the learner with a choice of "modules" according to their interests. Possibilities for our "module library" include:
     - drawing/playing with shapes, using Quil or native Maria shapes
     - introduction to basics of computer science (recursion, higher order functions)
