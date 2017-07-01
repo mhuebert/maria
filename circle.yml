@@ -12,6 +12,6 @@ dependencies:
     - yarn
   post:
     - webpack -p
-    - lein cljsbuild once prod
+    - lein cljsbuild once prod index
     - node_modules/firebase-tools/bin/firebase deploy --only hosting --token $FIREBASE_TOKEN
 

@@ -6,6 +6,10 @@
     ],
     "rewrites": [
       {
+        "source": "/env",
+        "destination": "/env.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

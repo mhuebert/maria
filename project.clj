@@ -9,9 +9,10 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/clojurescript "1.9.562"]
 
-                 [fast-zip "0.7.0"]
                  [org.clojure/core.match "0.3.0-alpha4"]
+                 [com.cognitect/transit-cljs "0.8.239"]
 
+                 [fast-zip "0.7.0"]
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
 
@@ -39,7 +40,7 @@
                         :figwheel     true
                         :compiler     {:main           "maria.core"
                                        :asset-path     "/js/compiled/out"
-                                       :output-to      "resources/public/js/compiled/maria.js"
+                                       :output-to      "resources/public/js/compiled/env.js"
                                        :output-dir     "resources/public/js/compiled/out"
                                        ;:source-map-timestamp true
                                        :source-map     true
@@ -49,11 +50,18 @@
                         :source-paths ["src"]
                         :compiler     {:main           "maria.core"
                                        :asset-path     "/js/compiled/out"
-                                       :output-to      "resources/public/js/compiled/maria.js"
+                                       :output-to      "resources/public/js/compiled/env.js"
                                        :output-dir     "resources/public/js/compiled/out-prod"
                                        :cache-analysis true
                                        :dump-core      false
-                                       :optimizations  :simple}}]}
+                                       :optimizations  :simple}}
+                       {:id           "index"
+                        :source-paths ["src"]
+                        :compiler     {:main          "maria.index"
+                                       :output-to     "resources/public/js/compiled/index.js"
+                                       :output-dir    "resources/public/js/compiled/out-index"
+                                       :asset-path    "/js/compiled/out-index"
+                                       :optimizations :advanced}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
              :css-dirs     ["resources/public/css"]
