@@ -59,6 +59,8 @@
 
 (what-is circle)
 
+(what-is (circle 50))
+
 ;; We can even apply the `what-is` function to the `what-is` function
 ;; itself to find out what `what-is` is! 😹
 
@@ -71,9 +73,12 @@
 
 ;; ⬇ your code goes here 😀
 
-
-
 ;; ⬆ your code goes here
+
+;; In fact, you should feel free to experiment with this document
+;; at any time. Try absurd numbers! Move things around!
+;; This is *your* playground.
+
 
 ;;;; Shapes and Colors
 
@@ -87,11 +92,11 @@
 
 (rectangle 200 50)
 
-;; Well, that's not too surprising. These black shapes are a little
-;; boring. Let's add some color!
+;; Well, that's not too surprising.
 
-;; You can nest expressions inside other expressions to create bigger
-;; ones. Like this, for example
+;; You can also nest expressions inside other expressions to create
+;; bigger ones. For example, these black shapes are a little
+;; boring. Let's add some color!
 
 (colorize "blue" (rectangle 250 100))
 
@@ -107,15 +112,15 @@
 
 color-names
 
-;; We can also combine expressions to create a group of shapes with
-;; the `group` function:
+;; We can also combine expressions to create a group of shapes, by
+;; using the `group` function:
 
 (doc group)
 
 ;; By default, things in groups all share the same top/left corner,
 ;; and thus often overlap:
 
-(group 
+(group
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
@@ -143,7 +148,7 @@ color-names
 ;; your own shape combinations, evaluating inner expressions to make
 ;; sure you know how they fit into the expression containing them.
 
-;;;; The computer is good at repetition
+;;;; Powers of fun
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
 ;; over and over again is a chore. We don't have time for that! Our
@@ -160,15 +165,18 @@ color-names
 
 [1 2 3 4]
 
-;; Now suppose we wanted a sequence of circles in increasing sizes. We
+;; Now suppose we wanted a vector of circles in increasing sizes. We
 ;; could do something like this:
 
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
-;; But there's a better, shorter way! When we want to call a function
-;; on every item in a sequence and get back the results from each of
-;; those calls in a new sequence, we can use a special function called
-;; `map`:
+;; But there's a better, shorter way! When we have a bunch of things,
+;; and we want to call a function on each thing, we can use `map`,
+;; which is a special function. `map` gives us a new collection that
+;; is the result of calling our function on each thing.
+
+;; That means we can make a vector of all the sizes we want our
+;; circles to be, and then map the function `circle` over that vector:
 
 (map circle [16 32 64 128])
 
@@ -193,7 +201,7 @@ color-names
   (colorize "grey" (position 60 70 (triangle 10)))
   (position 0 102 (text "function"))
   (position 30 -3
-    (group (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
+            (group (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
   (position 90 20 (text "argument(s)"))
   (colorize "grey" (position 170 70 (triangle 10)))
   (position 170 102 (text "expression")))
@@ -202,7 +210,7 @@ color-names
 
 ;; `fn` is a special kind of function that returns a brand new
 ;; function. Whenever you see an expression that starts with `fn`,
-;; that's what it's doing.
+;; that's what it's doing: creating a function.
 
 ;; The part in square brackets `[]` shows the arguments that this
 ;; function will accept, and the order in which it will expect
@@ -228,28 +236,76 @@ color-names
 (map (fn [radius] (colorize "purple" (circle radius)))
      [16 32 64 128])
 
-;; 💜
+;; 💜 💜 💜 💜
 
-;; Great! Now we have the power to map colors! But what if we wanted
-;; two sets of purple circles in different sizes? One idea: we could
-;; use the 'map' function on two different vectors like this:
+;; Great! Now we have the power to map colors!
+
+;; But what if we wanted two sets of purple circles in different
+;; sizes? One idea: we could use the 'map' function on two different
+;; vectors like this:
 
 [(map (fn [radius] (colorize "purple" (circle radius)))
       [16 32 64 128])
  (map (fn [radius] (colorize "purple" (circle radius)))
       [16 8 4 2])]
 
-;; It works, but it's kind of a shame that we have to type our
-;; function to make a purple circle twice like that. The good news is
-;; that we can use `let` to give it a name, then call it by that name
-;; whenever we need it:
+;; It works, but it's kind of a shame that we have to type out our
+;; function twice just because we want two sequences of purple
+;; circles. There's a better way! We can use `let` to give our
+;; function a name.  Then we can call our function by that name as
+;; many times as we need:
 
 (let [make-purple-circle (fn [radius] (colorize "purple" (circle radius)))]
   [(map make-purple-circle [16 32 64 128])
    (map make-purple-circle [16 8 4 2])])
 
-;; Remember, though, that names we give with let only apply within the
-;; `let` expression (up until the last paren).
+;; That's great, but there's a catch. Names we give with `let` only
+;; apply within the `let` expression. That's useful, so that names we
+;; create while we're drawing cartoons don't mess up the names we
+;; create while we're drawing landscapes. Names are surprisingly
+;; tricky, so often it's better to keep them contained.
+
+;; Then again, sometimes we'll need a name for everything we
+;; do--cartoons, landscapes, portraits, all our work. Then things get
+;; serious. That's when we need to start defining things for
+;; certain. We define names that we need all over with `def`.
+
+;; Say we're going to draw a bunch of shapes, and we want to use just
+;; a few colors over and over. Picasso might choose five different
+;; blues. A fan of old movies might choose ten shades of black and
+;; white. Put a few color names into a vector, like this:
+
+["blue" "turquoise" "midnightblue"]
+
+;; (Remember you can use anything in `color-names`.)
+
+;; ⬇ your colors go here 😀
+
+;; ⬆ your colors go here
+
+;; Now, we'll define that as our color palette so we can use it over
+;; and over just by calling its name. All we need to do is use `def`,
+;; giving it a name and our vector:
+
+;; your vector of colors goes here ⬇
+(def palette                      )
+
+;; Once we evaluate that, our `palette` is in our toolbox, ready
+;; whenever we need it! Let's take a look at your palette:
+
+(map (fn [color] (colorize color (rectangle 20 20))) palette)
+
+;; Awesome.
+
+;; FIXME this transition is weak
+
+;; Now that we have our palette, we want to go wild with some
+;; shapes. Maybe we want to draw the same shape a bunch of different
+;; times, a bunch of different ways. For instance, hearts. So many, in
+;; fact, that we want a heart-drawing function. First, let's sketch
+;; out how to draw that.
+
+;; TODO heart shape function, which we then colorize with their palette for great justice
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; XXX dragons
