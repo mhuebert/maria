@@ -23,6 +23,7 @@
     - a wander through mathematics or statistics (Fibonnacci, Shannon's entropy, Markov chains)
     - word or programming puzzles
     - "Brain tripping" (Matt's Markov impersonator)
+    - REPL as an external brain pack for thinking during research (maybe dive into e.g. [lead-crime hypothesis](https://hapgood.us/2017/02/18/the-lead-hypothesis-and-a-gripe-about-mobile/))
     - **??? your idea goes here**
 
 ## Primary inspiration ##
