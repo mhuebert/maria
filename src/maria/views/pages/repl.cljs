@@ -14,7 +14,9 @@
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
             [maria.views.repl-values :as repl-values]
-            [maria.views.repl-utils :as repl-ui]))
+            [maria.views.repl-utils :as repl-ui]
+            [cognitect.transit :as t]
+            ))
 
 (defonce _
          (do
@@ -38,7 +40,8 @@
                                                                load-js   maria.user.loaders/load-js
                                                                load-npm  maria.user.loaders/load-npm
                                                                html      re-view-hiccup.core/element}))
-                              (eval/eval '(in-ns maria.user))))))
+                              (eval/eval '(in-ns maria.user))
+                              ))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}
@@ -114,8 +117,8 @@
                                         (case (.keyName js/CodeMirror e)
                                           ("Shift-Cmd-Enter"
                                             "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                           ("Cmd-Enter"
-                                             "Ctrl-Enter")  (eval-editor editor :bracket)
+                                          ("Cmd-Enter"
+                                            "Ctrl-Enter") (eval-editor editor :bracket)
                                           nil))})]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom

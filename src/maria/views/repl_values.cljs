@@ -47,14 +47,12 @@
      [:span.output-bracket rb]]))
 
 (defview format-function
-  {:life/initial-state (fn [_ value] {:expanded? false
-                                      :source    (source-lookups/fn-source value)})}
+  {:life/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
-  (let [{:keys [expanded? source]} @state
+  (let [{:keys [expanded?]} @state
         fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
 
     [:span.i
-
      [expander-element {:on-click #(swap! state update :expanded? not)}
       (if (and fn-name (not= "" fn-name))
         (some-> (source-lookups/fn-name value) (symbol) (name))
@@ -64,7 +62,7 @@
           (icons/size 20)
           (icons/class "mln1 mrn1 o-50"))
       (when expanded?
-        (editor/viewer (source-lookups/fn-source value)))]]))
+        (editor/viewer (source-lookups/fn-source-sync value)))]]))
 
 (defn format-value [value]
   [:span

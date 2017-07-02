@@ -4,7 +4,8 @@
             [clojure.string :as string]
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
-            [cljs-live.compiler :as c])
+            [cljs-live.compiler :as c]
+            [goog.net.XhrIo :as xhr])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -62,17 +63,33 @@
   (when-let [munged-sym (aget f "name")]
     (cljs-eval/resolve-var (symbol (demunge-symbol-str munged-sym)))))
 
+(def source-path "/js/cljs_bundles/sources")
+
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
-  [{:keys [meta] :as pos}]
-  (when-let [source (get @c/cljs-cache (:file meta))]
-    (source-of-form-at-position source pos)))
+  [{{meta-file :file :as meta} :meta file :file name :name :as the-var} cb]
+  (if-let [file (or file meta-file)]
+    (let [namespace-path (as-> (namespace name) path
+                               (string/split path ".")
+                               (map munge path)
+                               (string/join "/" path)
+                               (string/replace path "$macros" ""))
+          file (re-find (re-pattern (str namespace-path ".*")) file)]
+      (if-let [source (get @c/cljs-cache file)]
+        (cb {:value (source-of-form-at-position source the-var)})
+        (xhr/send (str source-path "/" file)
+                  (fn [e]
+                    (let [target (.-target e)]
+                      (if (.isSuccess target)
+                        (let [source (.getResponseText target)]
+                          ;; strip source to line/col from meta
+                          (cb {:value (source-of-form-at-position source meta)}))
+                        (cb {:error (.getLastError target)}))))
+                  "GET")))
+    (cb {:error "No file associated with this name."})))
 
-(defn fn-source
-  "Look up the source for a function, preferring ClojureScript source over JavaScript"
-  [f]
-  (or (some-> (fn-var f) (var-source))
-      (js-source->clj-source (.toString f))
+(defn fn-source-sync [f]
+  (or (js-source->clj-source (.toString f))
       (.toString f)))
 
 (defn ensure-str [s]

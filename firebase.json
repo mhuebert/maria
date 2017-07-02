@@ -6,8 +6,13 @@
     ],
     "rewrites": [
       {
+        "source": "/js/**",
+        "destination": "404.html"
+      },
+      {
         "source": "**",
-        "destination": "/index.html"
+        "destination": "/index.html",
+        "type": 302
       }
     ]
   }

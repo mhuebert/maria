@@ -64,9 +64,9 @@ fields, and Java class static fields."}
 itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 
 (defn- special-doc [name-symbol]
-  (assoc (or (special-doc-map name-symbol) (meta (e/resolve-var name-symbol)))
-    :name (symbol "clojure.core" (name name-symbol))
-    :special-form true))
+  (some-> (special-doc-map name-symbol)
+          (assoc :name (symbol "clojure.core" (name name-symbol))
+                 :special-form true)))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -91,7 +91,9 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 (defn resolve-var-or-special [c-state c-env name]
   (when (symbol? name)
     (or (ns-utils/resolve-var c-state c-env name)
-        (some-> (get e/repl-specials name) (meta))
+        (when-let [repl-special (get e/repl-specials name)]
+          (merge (meta repl-special)
+                 (ns-utils/resolve-var c-state c-env (:name (meta repl-special)))))
         (special-doc name))))
 
 (defspecial doc
@@ -107,15 +109,14 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 (defspecial source
   "Show source code for given symbol"
   [c-state c-env name]
-  ;; get value of thing
-  (let [{:keys [error value] :as val} (e/eval-str c-state c-env (str name))]
+  (let [{:keys [error value] :as val} (e/resolve-var c-state c-env name)]
     (if error
       val
-      ;; try getting value from var
-      (if-let [the-var (and (symbol? name) (resolve-var-or-special c-state c-env name))]
+      (if-let [the-var (or (and (symbol? name) (resolve-var-or-special c-state c-env name))
+                           (source-lookups/fn-var value))]
         {:value (special-views/var-source the-var)}
         ;; try getting value as function
-        (if-let [fn-source (and (fn? value) (source-lookups/fn-source value))]
+        (if-let [fn-source (and (fn? value) (source-lookups/fn-source-sync value))]
           {:value fn-source}
           {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))})))))
 
