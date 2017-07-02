@@ -5,7 +5,8 @@
             [maria.messages :as messages]
             [maria.ns-utils :as ns-utils]
             [clojure.string :as string]
-            [maria.source-lookups :as source-lookups]))
+            [maria.source-lookups :as source-lookups]
+            [maria.views.repl-utils :as repl-ui]))
 
 ;; lifted from https://github.com/clojure/clojure/blob/42a7fd42cfae973d2af16d4bed40c7594574b58b/src/clj/clojure/repl.clj#L19
 (def special-doc-map

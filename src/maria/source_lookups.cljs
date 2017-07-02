@@ -5,7 +5,8 @@
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
             [cljs-live.compiler :as c]
-            [goog.net.XhrIo :as xhr])
+            [goog.net.XhrIo :as xhr]
+            [goog.object :as gobj])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -57,11 +58,18 @@
         (str (string/join "." (drop-last parts)) "/" (last parts))
         (first parts)))))
 
-(defn fn-var
+(def fn-var
   "Look up the var for a function using its `name` property"
-  [f]
-  (when-let [munged-sym (aget f "name")]
-    (cljs-eval/resolve-var (symbol (demunge-symbol-str munged-sym)))))
+  (memoize
+    (fn [f]
+      (or (when-let [munged-sym (aget f "name")]
+              (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+        (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
+                     [_ {the-name :name :as var-data}] (ns-data :defs)
+                     :let [value (let [segments (concat (map munge (string/split (namespace the-name) ".")) (list (munge (name (:name var-data)))))]
+                                   (apply gobj/getValueByKeys js/window segments))]
+                     :when (= value f)]
+                 var-data))))))
 
 (def source-path "/js/cljs_bundles/sources")
 

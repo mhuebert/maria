@@ -51,9 +51,9 @@
                       (reader/var-source props (partial reset! state)))}
   [{:keys [view/state]}]
   (let [{:keys [value error] :as result} @state]
-    (cond (nil? result) [:.pa2 "Loading..."]
-          error [:.pa2 error]
-          value (repl-ui/card (editor/viewer value)))))
+    (cond (nil? result) "Loading..."
+          error error
+          value (editor/viewer value))))
 
 (defview dir
   {:life/initial-state {:expanded? false}}
