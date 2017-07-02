@@ -401,3 +401,51 @@
          "whitesmoke"           [245, 245, 245]
          "yellow"               [255, 255, 0]
          "yellowgreen"          [154, 205, 50]}))
+
+(defn rgb [red green blue]
+  (apply str "rgb(" red "," green "," blue ")"))
+
+(defn rgba [red green blue alpha]
+  (apply str "rgb(" red "," green "," blue "," alpha ")"))
+
+(defn hsl [hue saturation lightness]
+  (apply str "hsl(" hue "," saturation "," lightness ")"))
+
+(defn hsla [hue saturation lightness alpha]
+  (apply str "hsla(" hue "," saturation "," lightness "," alpha ")"))
+
+(comment
+
+  ;; Some nice demos here
+  (map #(colorize % (square 50))
+       (map #(hsl % "100%" "50%") (range 0 250 25)))
+
+  (map #(colorize % (square 50))
+       (map #(hsl 120 (str % "%") "50%") (range 0 250 25)))
+
+  (map #(colorize % (square 50))
+       (map #(hsl 120 "50%" (str % "%")) (range 0 100 10)))
+
+  (map #(colorize % (square 50))
+       (map #(rgb % 0 0) (range 0 250 25)))
+
+  (map #(colorize % (square 50))
+       (map #(rgb 0 % 0) (range 0 250 25)))
+
+  (map #(colorize % (square 50))
+       (map #(rgb 0 0 %) (range 0 250 25)))
+  )
+
+
+(comment
+  ;; pumpkin
+  (group
+   (position 40 60 (colorize "orange" (circle 40)))
+   (position 10 30 (colorize "black" (triangle 24)))
+   (position 45 30 (colorize "black" (triangle 24)))
+   (position 20 75 (colorize "black" (rectangle 40 10)))
+   (position 25 74 (colorize "orange" (rectangle 10 5)))
+   (position 45 74 (colorize "orange" (rectangle 10 5)))
+   (position 33 82 (colorize "orange" (rectangle 10 5)))
+   (position 35 2 (colorize "black" (rectangle 10 20))))
+  )

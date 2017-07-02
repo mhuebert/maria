@@ -92,8 +92,8 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
   (when (symbol? name)
     (or (ns-utils/resolve-var c-state c-env name)
         (when-let [repl-special (get e/repl-specials name)]
-          (meta repl-special)
-          #_(ns-utils/resolve-var c-state c-env (:name (meta repl-special))))
+          (merge (meta repl-special)
+                 (ns-utils/resolve-var c-state c-env (:name (meta repl-special)))))
         (special-doc name))))
 
 (defspecial doc
