@@ -8,7 +8,8 @@
             [cljs.pprint :refer [pprint]]
             [maria.magic-tree :as magic]
             [maria.editor :as editor]
-            [maria.source-lookups :as source-lookups])
+            [maria.source-lookups :as source-lookups]
+            [maria.views.repl-specials :as special-views])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -33,7 +34,8 @@
                   error (str error)
                   :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
-(def expander-element :span.bg-darken.ph2.pv1.ma1.br2.pointer.inline-flex.items-center)
+(def expander-outter :.dib.bg-darken.ph2.pv1.ma1.br2.pointer)
+(def expander-label :.inline-flex.items-center)
 
 (defview format-collection
   {:life/initial-state 20}
@@ -43,28 +45,30 @@
     [:div
      [:span.output-bracket lb]
      (interpose " " (v-util/map-with-keys format-value (take @limit value)))
-     (when more? [expander-element {:on-click #(swap! limit + 20)} "…"])
+     (when more? [expander-outter {:on-click #(swap! limit + 20)} [expander-label "…"]])
      [:span.output-bracket rb]]))
 
 (defview format-function
-  {:life/initial-state (fn [_ value] {:expanded? false
-                                      :source    (source-lookups/fn-source value)})}
+  {:life/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
-  (let [{:keys [expanded? source]} @state
+  (let [{:keys [expanded?]} @state
         fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
 
     [:span.i
-
-     [expander-element {:on-click #(swap! state update :expanded? not)}
-      (if (and fn-name (not= "" fn-name))
-        (some-> (source-lookups/fn-name value) (symbol) (name))
-        [:span.o-50.mr1 "ƒ"])
-      (-> (if expanded? icons/ArrowDropUp
-                        icons/ArrowDropDown)
-          (icons/size 20)
-          (icons/class "mln1 mrn1 o-50"))
+     [expander-outter {:on-click #(swap! state update :expanded? not)}
+      [expander-label
+       (if (and fn-name (not= "" fn-name))
+         (some-> (source-lookups/fn-name value) (symbol) (name))
+         [:span.o-50.mr1 "ƒ"])
+       (-> (if expanded? icons/ArrowDropUp
+                         icons/ArrowDropDown)
+           (icons/size 20)
+           (icons/class "mln1 mrn1 o-50"))]
       (when expanded?
-        (editor/viewer (source-lookups/fn-source value)))]]))
+        (or (some-> (source-lookups/js-source->clj-source (.toString value))
+                    (editor/viewer))
+            (some-> (source-lookups/fn-var value)
+                    (special-views/var-source))))]]))
 
 (defn format-value [value]
   [:span

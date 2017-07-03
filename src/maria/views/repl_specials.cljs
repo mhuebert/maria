@@ -5,7 +5,6 @@
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
-            [cljs-live.compiler :as c]
             [maria.source-lookups :as reader]
             [maria.views.repl-utils :as repl-ui]))
 
@@ -47,11 +46,15 @@
          (docs-link namespace name)))]))
 
 (defview var-source
-  [the-var]
-  (repl-ui/card
-    (if-let [source (reader/var-source the-var)]
-      (editor/viewer source)
-      [:.pa2 "Source not found"])))
+  {:life/will-mount (fn [{:keys [view/props view/state]}]
+                      (reader/var-source props (partial reset! state)))}
+  [{:keys [view/state special-form name]}]
+  (let [{:keys [value error] :as result} @state]
+    (cond (nil? result) [:.pa2 "Loading..."]
+          error  [:.ma3 (if special-form
+                          (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
+                          error)]
+          value (repl-ui/card (editor/viewer value)))))
 
 (defview dir
   {:life/initial-state {:expanded? false}}
