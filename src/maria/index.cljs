@@ -1,38 +1,41 @@
 (ns maria.index
-  (:require [re-view-routing.core :as routing]
-            [cljs.core.match :refer-macros [match]]
-            [cognitect.transit :as t]))
+  (:require
+    [cljsjs.react]
+    [cljsjs.react.dom]
+    [re-view-routing.core :as routing]
+    [re-view.core :as v :refer [defview]]
+    [maria.frame-communication :as frame]
+    [cljs.core.match :refer-macros [match]]
+    [clojure.string :as string]
+    [re-db.d :as d]))
 
 (enable-console-print!)
 
-(def deserialize (partial t/read (t/reader :json)))
-(def serialize (partial t/write  (t/writer :json)))
+(frame/listen "*"
+              (fn [message]
+                (match message
+                       ;; editor content has changed
+                       [:editor/update id source] (do (prn "got updated content: " id source)
+                                                      )
+                       [:editor/save id source] (do (prn "save updated source.." id source))
+                       [:url/navigate url] (if (string/starts-with? url "/")
+                                             (routing/nav! url)
+                                             (aset js/window "location" "href" url)))))
 
-(def env-origin (if (= (aget js/window "location" "origin") "https://maria.cloud")
-                  "https://env.maria.cloud"
-                  "http://env.maria.cloud.dev:5000"))
+(routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
 
-(def env-frame
-  (doto (.getElementById js/document "maria-env-frame")
-    (aset "src" (str env-origin "/env"))))
+(defview layout []
+  (match (d/get :router/location :segments)
+         [] (frame/editor-frame-view {:default-value ";; intro"
+                                      :id            "intro"})
+         ["gist" id] (let [id (str "gist/" id)]
+                       (frame/editor-frame-view {:default-value ";; put a gist here"
+                                                 :id            id}))))
 
-(.addEventListener js/window "message"
-                   (fn [e]
-                     (when (and (= (.-origin e) env-origin)
-                                (= (.-source e) (.-contentWindow env-frame)))
-                       (match (deserialize (.-data e))
-
-                              ;; editor content has changed
-                              [:editor/update-content source] (prn "got updated content: " source)))))
+(v/render-to-dom (layout) "maria-index")
 
 
-
-(def location (atom {}))
-(routing/listen (fn [{:keys [segments]}]
-                  (case segments
-                    ["gist" id] (.postMessage (.-contentWindow env-frame) (serialize [:editor/set-content "123"])))
-                    ))
-
+;["gist" id] (repl/layout {:gist-id id})
 
 ;; send editor content to app
 ;; receive updated editor content from app
@@ -46,10 +49,5 @@
 
 ;; forced to say, 'persistence is entirely orthogonal to the editing env'
 
-#_(match (d/get :router/location :segments)
-         (:or [] ["env"]) (repl/layout)
-         ["gist" id] (repl/layout {:gist-id id})
-         ["walkthrough"] (walkthrough/main)
-         ["paredit"] (paredit/examples)
-         :else (not-found))
+
 

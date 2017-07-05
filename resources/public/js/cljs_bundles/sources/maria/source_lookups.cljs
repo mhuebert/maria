@@ -86,9 +86,9 @@
                                  (let [source (.getResponseText target)]
                                    ;; strip source to line/col from meta
                                    (cb {:value (source-of-form-at-position source meta)}))
-                                 (cb {:error (.getLastError target)}))))
+                                 (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
                            "GET"))
-               (cb {:error "No file associated with this name."}))))
+               (cb {:error (str "File not specified for `" name "`")}))))
 
 (defn fn-source-sync [f]
   (or (js-source->clj-source (.toString f))

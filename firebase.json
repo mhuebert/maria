@@ -6,8 +6,8 @@
     ],
     "rewrites": [
       {
-        "source": "/env",
-        "destination": "/env.html"
+        "source": "/eval",
+        "destination": "/eval.html"
       },
       {
         "source": "**",

@@ -21,43 +21,32 @@
             [clojure.spec.alpha :include-macros true]
             [clojure.string :as string]
 
-            [cognitect.transit :as t]))
+            [goog.events :as events]
+
+            [maria.frame-communication :as frame]))
 
 (enable-console-print!)
-(def deserialize (partial t/read (t/reader :json)))
-(def serialize (partial t/write  (t/writer :json)))
+
+(defn navigate [href]
+  (frame/send frame/parent-window [:url/navigate href]))
+
+(events/listen js/window "click"
+               (fn [e]
+                 (when-let [href (and (= "A" (.. e -target -tagName))
+                                      (.. e -target -href))]
+                   (.preventDefault e)
+                   (navigate href))))
 
 (defview not-found []
   [:div "We couldn't find this page!"])
 
-(defonce _ (r/listen #(d/transact! [(assoc % :db/id :router/location)])))
-
-(defview layout []
-  [:.h-100
-   (match (d/get :router/location :segments)
-          (:or [] ["env"]) (repl/layout)
-          ["gist" id] (repl/layout {:gist-id id})
-          ["walkthrough"] (walkthrough/main)
-          ["paredit"] (paredit/examples)
-          :else (not-found))])
-
 (defn main []
-  (v/render-to-dom (layout {:x 1}) "maria-env"))
+  (v/render-to-dom (repl/layout {:x 1}) "maria-env"))
 
-(def parent-origin (if (string/includes? (.. js/window -location -origin) ":5000")
-                     "http://localhost:5000"
-                     "https://www.maria.cloud"))
+(frame/listen "*" (partial println :editor-listen-all))
 
-(.addEventListener js/window "message"
-                   (fn [e]
-                     (when (and (= parent-origin (.-origin e))
-                                (= (.-parent js/window) (.-source e)))
-
-                       (match (deserialize (.-data e))
-                              [:editor/set-content source] (prn :set-source! source))
-
-                       (.log js/console "env got the message" e))) false)
-
-(.postMessage (.-parent js/window) "env is ready" "http://localhost:5000")
+(frame/listen "parent"
+              (fn [message] (match message
+                                   [:source/reset data] (d/transact! [(assoc data :db/id :parent/source)]))))
 
 (main)

@@ -16,7 +16,7 @@
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cognitect.transit :as t]
-            ))
+            [maria.frame-communication :as frame]))
 
 (defonce _
          (do
@@ -93,33 +93,32 @@
   {:life/initial-state {:repl-editor nil}
    :get-editor         (fn [{:keys [view/state]}]
                          (some-> (:repl-editor @state) :view/state deref :editor))
-   :life/did-mount     (fn [{:keys [gist-id] :as this}]
-                         (let [editor (.getEditor this)]
-                           (some-> editor (.focus))
-                           (when gist-id
-                             (loaders/get-gist gist-id (fn [{:keys [value error]}]
-                                                         (.setValue editor (or (some-> value (loaders/gist-source))
-                                                                               (str "\nError loading gist:  " error))))))))}
-  [{:keys [view/state gist-id] :as this}]
+   #_:life/did-mount     #_(fn [{:keys [gist-id] :as this}]
+                             (let [editor (.getEditor this)]
+                               (some-> editor (.focus))
+                               (when gist-id
+                                 (loaders/get-gist gist-id (fn [{:keys [value error]}]
+                                                             (.setValue editor (or (some-> value (loaders/gist-source))
+                                                                                   (str "\nError loading gist:  " error))))))))}
+  [{:keys [view/state #_gist-id] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
     [:.flex-auto.overflow-auto.pb4
-     (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                     :local-storage   (if gist-id
-                                        [gist-id
-                                         ";; loading gist"]
-                                        ["maria-repl-left-pane"
-                                         ";; Type code here; press command-enter or command-click to evaluate forms.\n"])
-                     :event/mousedown #(when (.-metaKey %)
-                                         (.preventDefault %)
-                                         (eval-editor (.getEditor this) :bracket))
-                     :event/keydown   (fn [editor e]
-                                        (case (.keyName js/CodeMirror e)
-                                          ("Shift-Cmd-Enter"
-                                            "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                          ("Cmd-Enter"
-                                            "Ctrl-Enter") (eval-editor editor :bracket)
-                                          nil))})]]
+     (let [{:keys [local default id]} (d/entity :parent/source)]
+       (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                       :on-update       #(frame/send frame/parent-window [:editor/update (d/get :parent/source :id) %])
+                       :source-key      id
+                       :default-value   (or local default)
+                       :event/mousedown #(when (.-metaKey %)
+                                           (.preventDefault %)
+                                           (eval-editor (.getEditor this) :bracket))
+                       :event/keydown   (fn [editor e]
+                                          (case (.keyName js/CodeMirror e)
+                                            ("Shift-Cmd-Enter"
+                                              "Shift-Ctrl-Enter") (eval-editor editor :top-level)
+                                            ("Cmd-Enter"
+                                              "Ctrl-Enter") (eval-editor editor :bracket)
+                                            nil))}))]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

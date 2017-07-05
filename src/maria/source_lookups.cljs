@@ -11,6 +11,10 @@
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
 
+(defn ensure-str [s]
+  (when (and (string? s) (not (identical? s "")))
+    s))
+
 (defn index-position
   "Given an index into a string, returns the 1-indexed line+column position"
   [idx source]
@@ -62,14 +66,14 @@
   "Look up the var for a function using its `name` property"
   (memoize
     (fn [f]
-      (or (when-let [munged-sym (aget f "name")]
-              (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
-        (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
-                     [_ {the-name :name :as var-data}] (ns-data :defs)
-                     :let [value (let [segments (concat (map munge (string/split (namespace the-name) ".")) (list (munge (name (:name var-data)))))]
-                                   (apply gobj/getValueByKeys js/window segments))]
-                     :when (= value f)]
-                 var-data))))))
+      (or (when-let [munged-sym (ensure-str (aget f "name"))]
+            (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+          (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
+                       [_ {the-name :name :as var-data}] (ns-data :defs)
+                       :let [value (let [segments (concat (map munge (string/split (namespace the-name) ".")) (list (munge (name (:name var-data)))))]
+                                     (apply gobj/getValueByKeys js/window segments))]
+                       :when (= value f)]
+                   var-data))))))
 
 (def source-path "/js/cljs_bundles/sources")
 
@@ -92,17 +96,13 @@
                         (let [source (.getResponseText target)]
                           ;; strip source to line/col from meta
                           (cb {:value (source-of-form-at-position source meta)}))
-                        (cb {:error (.getLastError target)}))))
+                        (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
                   "GET")))
-    (cb {:error "No file associated with this name."})))
+    (cb {:error (str "File not specified for `" name "`")})))
 
 (defn fn-source-sync [f]
   (or (js-source->clj-source (.toString f))
       (.toString f)))
-
-(defn ensure-str [s]
-  (when (and (string? s) (not (identical? s "")))
-    s))
 
 (defn fn-name
   [f]

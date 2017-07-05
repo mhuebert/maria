@@ -35,33 +35,43 @@
 
   :source-paths ["src"]
 
-  :cljsbuild {:builds [{:id           "dev"
+  :cljsbuild {:builds [{:id           "eval"
                         :source-paths ["src"]
                         :figwheel     true
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "/js/compiled/out"
-                                       :output-to      "resources/public/js/compiled/env.js"
-                                       :output-dir     "resources/public/js/compiled/out"
+                                       :asset-path     "/js/compiled/out-eval"
+                                       :output-to      "resources/public/js/compiled/eval.js"
+                                       :output-dir     "resources/public/js/compiled/out-eval"
                                        ;:source-map-timestamp true
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
-                       {:id           "prod"
+                       {:id           "eval-prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "/js/compiled/out"
-                                       :output-to      "resources/public/js/compiled/env.js"
-                                       :output-dir     "resources/public/js/compiled/out-prod"
+                                       :asset-path     "/js/compiled/out-eval-prod"
+                                       :output-to      "resources/public/js/compiled/eval.js"
+                                       :output-dir     "resources/public/js/compiled/out-eval-prod"
                                        :cache-analysis true
                                        :dump-core      false
                                        :optimizations  :simple}}
                        {:id           "index"
                         :source-paths ["src"]
-                        :compiler     {:main          "maria.index"
-                                       :output-to     "resources/public/js/compiled/index.js"
-                                       :output-dir    "resources/public/js/compiled/out-index"
-                                       :asset-path    "/js/compiled/out-index"
-                                       :optimizations :advanced}}]}
+                        :compiler     {:main           "maria.index"
+                                       :output-to      "resources/public/js/compiled/index.js"
+                                       :output-dir     "resources/public/js/compiled/out-index"
+                                       :source-map     true
+                                       :asset-path     "/js/compiled/out-index"
+                                       :optimizations  :none
+                                       :parallel-build true}}
+                       {:id           "index-prod"
+                        :source-paths ["src"]
+                        :compiler     {:main           "maria.index"
+                                       :output-to      "resources/public/js/compiled/index.js"
+                                       :output-dir     "resources/public/js/compiled/out-index-prod"
+                                       :asset-path     "/js/compiled/out-index-prod"
+                                       :optimizations  :advanced
+                                       :parallel-build true}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
              :css-dirs     ["resources/public/css"]
