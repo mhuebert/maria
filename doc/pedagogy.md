@@ -15,15 +15,16 @@
      - writing our own functions (so, `fn`)
      - naming our creations with `let`, `def`, and `defn`
      - that's it, really; all the rest should come separately
- 1. Second, present the learner with a choice of "modules" according to their interests. Possibilities for our "module library" include:
+ 2. Second, present the learner with a choice of "modules" according to their interests. Possibilities for our "module library" include:
     - drawing/playing with shapes, using Quil or native Maria shapes
     - introduction to basics of computer science (recursion, higher order functions)
     - webdev (this may be complicated by the fact that Maria is a self-enclosed tool, so building a web app may not be within scope. Instead, perhaps it would be possible to make a remote API call?)
     - an exploration of Clojure features, e.g. laziness, infinite sequences, data types (this is the closest analogue to the existing ClojureBridge curriculum)
     - a wander through mathematics or statistics (Fibonnacci, Shannon's entropy, Markov chains)
-    - word or programming puzzles
+    - word or programming puzzles (see, for example, [ClojureBridge's Caesar cypher exercise](https://clojurebridge.github.io/community-docs/docs/exercises/caesar-cipher/))
     - "Brain tripping" (Matt's Markov impersonator)
     - REPL as an external brain pack for thinking during research (maybe dive into e.g. [lead-crime hypothesis](https://hapgood.us/2017/02/18/the-lead-hypothesis-and-a-gripe-about-mobile/))
+    - installing an environment for more standard project work, e.g. JVM/leiningen/editor of choice/git akin to the [ClojureBridge installfest](https://github.com/clojurebridge-berlin/curriculum/blob/gh-pages/outline/setup.md) followed by [an initially trivial first project](https://github.com/ClojureBridge/global-growth/blob/master/curriculum/first-program.md) touching on dependencies
     - **??? your idea goes here**
 
 ## Primary inspiration ##
