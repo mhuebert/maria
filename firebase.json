@@ -6,10 +6,6 @@
     ],
     "rewrites": [
       {
-        "source": "/eval",
-        "destination": "/eval.html"
-      },
-      {
         "source": "**",
         "destination": "/index.html"
       }

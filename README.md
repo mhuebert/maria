@@ -33,7 +33,8 @@ webpack -p;
 ### standard figwheel
 
 ``` shell
-lein figwheel
+;; compile project & run dev server
+lein dev
 ```
 
 ### emacs+nrepl figwheel

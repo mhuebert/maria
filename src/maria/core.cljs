@@ -1,10 +1,7 @@
 (ns maria.core
   (:require [cljsjs.react]
             [cljsjs.react.dom]
-
-            [maria.views.pages.walkthrough :as walkthrough]
             [maria.views.pages.repl :as repl]
-            [maria.views.pages.paredit-inspect :as paredit]
 
     ;; include to precompile for self-hosted env
             [clojure.set]
@@ -19,7 +16,6 @@
             [re-db.d :as d]
 
             [clojure.spec.alpha :include-macros true]
-            [clojure.string :as string]
 
             [goog.events :as events]
 
@@ -41,7 +37,7 @@
   [:div "We couldn't find this page!"])
 
 (defn main []
-  (v/render-to-dom (repl/layout {:x 1}) "maria-env"))
+  (v/render-to-dom (repl/layout) "maria-env"))
 
 (frame/listen "*" (partial println :editor-listen-all))
 

@@ -10,33 +10,45 @@
 ;; NOTES
 ;; - you can `console.log`, but not `print`, cross-origin windows.
 
-(def deserialize (partial t/read (t/reader :json)))
-(def serialize (partial t/write (t/writer :json)))
+(def transit-deserialize (partial t/read (t/reader :json)))
+(def transit-serialize (partial t/write (t/writer :json)))
 
-(def dev? (string/includes? (aget js/window "location" "origin") ":5000"))
+(def port (.. js/window -location -port))
+(def port-suffix (when (and port (not= "" port))
+                   (str ":" port)))
 
 (def is-parent? (= js/window (.-parent js/window)))
 (def is-child? (not is-parent?))
 
-(def parent-window (when is-child? (.-parent js/window)))
-(def parent-origin (if dev?
-                     "http://localhost:5000"
-                     "https://www.maria.cloud"))
 
-(def child-origin
-  (if dev?
-    "http://0.0.0.0:5000"
-    "https://env.maria.cloud"))
+(def current-hostname (.. js/window -location -hostname))
+
+(def other-hostname (get {"0.0.0.0"         "localhost"
+                          "localhost"       "0.0.0.0"
+                          "www.maria.cloud" "env.maria.cloud"
+                          "env.maria.cloud" "www.maria.cloud"} current-hostname))
+
+(def parent-hostname (if is-parent? current-hostname other-hostname))
+(def child-hostname (if is-child? current-hostname other-hostname))
+
+
+(def protocol-prefix (str (.. js/window -location -protocol) "//"))
+
+(def parent-window (when is-child? (.-parent js/window)))
+(def parent-origin (str protocol-prefix
+                        parent-hostname
+                        port-suffix))
+(def child-origin (str protocol-prefix
+                       child-hostname
+                       port-suffix))
 
 (def other-origin (if is-parent? child-origin parent-origin))
 
 (def current-frame-id (if is-parent?
                         "parent"
-                        (do
-
-                          (some->> (.. js/window -location -hash)
-                                   (re-find #"#frame_(.*)")
-                                   (second)))))
+                        (some->> (.. js/window -location -hash)
+                                 (re-find #"#frame_(.*)")
+                                 (second))))
 
 (def windows-loaded #js [(.-parent js/window) js/window])
 (defn js-contains? [c x] (> (.indexOf c x) -1))
@@ -48,7 +60,7 @@
   [target-window message]
   (if (js-contains? windows-loaded target-window)
     (.postMessage target-window
-                  (serialize [current-frame-id message])
+                  (transit-serialize [current-frame-id message])
                   other-origin)
     (swap! send-message-queue update target-window conj message)))
 
@@ -68,7 +80,7 @@
                      (let [event-data (.-data e)]
                        (when (and (string? event-data)
                                   (string/starts-with? event-data "["))
-                         (let [[id data] (deserialize (.-data e))
+                         (let [[id data] (transit-deserialize (.-data e))
                                source (.-source e)]
                            (if (= data ::ready)
                              (do (.push windows-loaded source)
@@ -81,6 +93,16 @@
 
 (when-not is-parent?
   (send (.-parent js/window) ::ready))
+
+
+(def init-local-storage
+  "Given a unique id, initialize a local-storage backed source"
+  (memoize (fn
+             [id]
+             (d/transact! [[:db/add id :local-value (aget js/window "localStorage" id)]])
+             (d/listen {:ea_ [[id :local-value]]}
+                       #(aset js/window "localStorage" id (d/get id :local-value)))
+             id)))
 
 (defview frame-view
   {:spec/props        {:id         {:spec :String
@@ -104,32 +126,20 @@
                         (unlisten id on-message))}
   [{:keys [id]}]
   [:iframe.maria-editor-frame
-   {:src     (str child-origin "/eval#frame_" id)
-    :sandbox "allow-scripts allow-same-origin allow-popups allow-top-navigation"}])
-
-(def init-local-storage
-  "Given a unique id, initialize a local-storage backed source"
-  (memoize (fn
-             [id]
-             (d/transact! [[:db/add id :local (aget js/window "localStorage" id)]])
-             (d/listen {:ea_ [[id :local]]}
-                       #(aset js/window "localStorage" id (d/get id :local)))
-             id)))
+   {:src     (str child-origin "/eval.html#frame_" id)}])
 
 (defview editor-frame-view
   {:spec/props              {:default-value :String}
-   :life/will-mount         #(init-local-storage (:id %))
-   :life/will-receive-props #(init-local-storage (:id %))}
-  [{:keys [id on-update on-save default-value]}]
-  (frame-view {:id         id
-               :messages   [[:source/reset {:id        id
-                                            :local     (d/get id :local)
-                                            :persisted (d/get id :persisted)
-                                            :default   default-value}]]
+   :life/will-mount         #(init-local-storage (:source-id %))
+   :life/will-receive-props #(init-local-storage (:source-id %))}
+  [{:keys [source-id on-update on-save view/props]}]
+  (frame-view {:id         source-id
+               :messages   [[:source/reset (merge props
+                                                  (d/entity source-id))]]
                :on-message (fn [message]
                              (match message
-                                    [:editor/update id value] (d/transact! [[:db/add id :local value]])
-                                    [:editor/save id value] (on-save value)))}))
+                                    [:editor/update source-id value] (d/transact! [[:db/add source-id :local-value value]])
+                                    [:editor/save source-id value] (on-save value)))}))
 
 ;; editor frames...
 ;; - pass source text

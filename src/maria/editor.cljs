@@ -59,18 +59,18 @@
    :reset-value        (fn [{:keys [default-value value view/state]}]
                          (.setValue (:editor @state) (or value default-value)))
    :life/will-receive-props
-                       (fn [{next-value                 :value
-                             next-source-key            :source-key
-                             {:keys [value source-key]} :view/prev-props
-                             :as                        this}]
-                         (cond (not= next-source-key source-key)
+                       (fn [{next-value                :value
+                             next-source-key           :source-id
+                             {:keys [value source-id]} :view/prev-props
+                             :as                       this}]
+                         (cond (not= next-source-key source-id)
                                (.resetValue this)
                                (not= next-value value)
                                (.setValue this)
                                :else nil))
    :life/should-update (fn [_] false)}
-  [{:keys [view/state] :as this}]
-  [:.h-100])
+  [{:keys [view/state style] :as this}]
+  [:.h-100 {:style style}])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true

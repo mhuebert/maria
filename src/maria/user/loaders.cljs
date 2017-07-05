@@ -7,6 +7,7 @@
 
             [maria.eval :as eval]
             [maria.views.repl-utils :as repl-ui]
+            [maria.editor :as editor]
 
             [goog.net.XhrIo :as xhr]
             [goog.net.jsloader :as jsl]
@@ -31,17 +32,19 @@
     (when source (if @state icons/ArrowDropUp icons/ArrowDropDown))]
 
    (when (and @state source)
-     [:.code.overflow-scroll.ph3.nl3.nr3.bt.bb.b--darken.pv2
-      {:style {:max-height 200}} source])
+     [:.overflow-scroll.ph3.nl3.nr3.bt.bb.b--darken.pv2
+      {:style {:max-height 200}} (editor/viewer source)])
 
    [:.gray.pv2.overflow-auto.w-100.pv2 {:style {:font-size 13}} url]
 
    (when error [:.bg-near-white.pa2.mv2 error])])
 
-(defn gist-source [gist-json]
-  (if-let [clojure-files (->> (js->clj (aget gist-json "files"))
+(defn gist-source [gist-data]
+  (prn :gist gist-data)
+  (if-let [clojure-files (->> gist-data
+                              :files
                               (vals)
-                              (keep (fn [{:strs [content language]}]
+                              (keep (fn [{:keys [content language]}]
                                       (when (= language "Clojure")
                                         content)))
                               (seq))]
@@ -53,7 +56,7 @@
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (cb {:value (.getResponseJson target)})
+                  (cb {:value (js->clj (.getResponseJson target) :keywordize-keys true)})
                   (cb {:error (.getLastError target)}))))))
 
 (defn load-gist

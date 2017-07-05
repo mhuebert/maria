@@ -4,10 +4,7 @@
             [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
-
             [cljs.pprint :refer [pprint]]
-
-            [maria.user.loaders :as loaders]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
             [magic-tree.core :as tree]
@@ -92,33 +89,42 @@
 (defview layout
   {:life/initial-state {:repl-editor nil}
    :get-editor         (fn [{:keys [view/state]}]
-                         (some-> (:repl-editor @state) :view/state deref :editor))
-   #_:life/did-mount     #_(fn [{:keys [gist-id] :as this}]
-                             (let [editor (.getEditor this)]
-                               (some-> editor (.focus))
-                               (when gist-id
-                                 (loaders/get-gist gist-id (fn [{:keys [value error]}]
-                                                             (.setValue editor (or (some-> value (loaders/gist-source))
-                                                                                   (str "\nError loading gist:  " error))))))))}
-  [{:keys [view/state #_gist-id] :as this}]
+                         (some-> (:repl-editor @state) :view/state deref :editor))}
+  [{:keys [view/state] :as this}]
   [:.h-100.flex.items-stretch
    [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
     [:.flex-auto.overflow-auto.pb4
-     (let [{:keys [local default id]} (d/entity :parent/source)]
-       (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                       :on-update       #(frame/send frame/parent-window [:editor/update (d/get :parent/source :id) %])
-                       :source-key      id
-                       :default-value   (or local default)
-                       :event/mousedown #(when (.-metaKey %)
-                                           (.preventDefault %)
-                                           (eval-editor (.getEditor this) :bracket))
-                       :event/keydown   (fn [editor e]
-                                          (case (.keyName js/CodeMirror e)
-                                            ("Shift-Cmd-Enter"
-                                              "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                            ("Cmd-Enter"
-                                              "Ctrl-Enter") (eval-editor editor :bracket)
-                                            nil))}))]]
+     (let [{:keys [local-value default-value persisted-value source-id loading-message]} (d/entity :parent/source)]
+       (if loading-message
+         [:.w-100
+          [:.b.progress-indeterminate]
+          [:.pa2.gray loading-message]]
+         [:div
+          (when (and local-value
+                     persisted-value
+                     (not= local-value persisted-value))
+            "can-save")
+          (let [revertible-value (or persisted-value default-value)]
+            (when (and local-value
+                       (not= local-value revertible-value))
+              [:.dib.pointer {:on-click #(.setValue (.getEditor this) revertible-value)} "revert"]))
+          (prn :the-s source-id)
+          (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                          :on-update       #(do
+                                              (prn :sending-to source-id)
+                                              (frame/send frame/parent-window [:editor/update (d/get :parent/source :source-id) %]))
+                          :source-id       source-id
+                          :default-value   (or local-value default-value)
+                          :event/mousedown #(when (.-metaKey %)
+                                              (.preventDefault %)
+                                              (eval-editor (.getEditor this) :bracket))
+                          :event/keydown   (fn [editor e]
+                                             (case (.keyName js/CodeMirror e)
+                                               ("Shift-Cmd-Enter"
+                                                 "Shift-Ctrl-Enter") (eval-editor editor :top-level)
+                                               ("Cmd-Enter"
+                                                 "Ctrl-Enter") (eval-editor editor :bracket)
+                                               nil))})]))]]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

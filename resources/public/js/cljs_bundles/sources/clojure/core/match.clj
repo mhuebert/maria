@@ -641,7 +641,7 @@
 
 (defn non-local-literal-pattern? [p]
   (and (literal-pattern? p)
-       (not (-> p :l meta :local))))
+       (not (-> p :l meta :local-value))))
 
 (defn literal-case-matrix-splitter [matrix]
   (let [ocrs  (occurrences matrix)
@@ -935,7 +935,7 @@ col with the first column and compile the result"
      (= l ())
      `(empty? ~ocr)
 
-     (and (symbol? l) (not (-> l meta :local)))
+     (and (symbol? l) (not (-> l meta :local-value)))
      `(= ~ocr '~l)
 
      (and *clojurescript*
@@ -1798,7 +1798,7 @@ col with the first column and compile the result"
 (defmethod emit-pattern ::symbol
   [pat]
   (if (not= (get *locals* pat ::not-found) ::not-found)
-    (literal-pattern (with-meta pat (assoc (meta pat) :local true)))
+    (literal-pattern (with-meta pat (assoc (meta pat) :local-value true)))
     (wildcard-pattern pat)))
 
 (defmethod emit-pattern :default

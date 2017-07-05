@@ -33,7 +33,7 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :source-paths ["src"]
+  :source-paths ["src" "script"]
 
   :cljsbuild {:builds [{:id           "eval"
                         :source-paths ["src"]
@@ -57,6 +57,7 @@
                                        :optimizations  :simple}}
                        {:id           "index"
                         :source-paths ["src"]
+                        :figwheel     true
                         :compiler     {:main           "maria.index"
                                        :output-to      "resources/public/js/compiled/index.js"
                                        :output-dir     "resources/public/js/compiled/out-index"
@@ -77,9 +78,11 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
+  :aliases {"dev" ["figwheel" "eval" "index"] }
+
   :deploy-via :clojars
 
-  :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.0"]
+  :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.1-SNAPSHOT"]
                                   [binaryage/devtools "0.8.2"]
                                   [figwheel-sidecar "0.5.10"]
                                   [com.cemerick/piggieback "0.2.1"]]

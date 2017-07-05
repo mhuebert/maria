@@ -11,26 +11,38 @@
 
 (enable-console-print!)
 
-(frame/listen "*"
-              (fn [message]
-                (match message
-                       ;; editor content has changed
-                       [:editor/update id source] (do (prn "got updated content: " id source)
-                                                      )
-                       [:editor/save id source] (do (prn "save updated source.." id source))
-                       [:url/navigate url] (if (string/starts-with? url "/")
-                                             (routing/nav! url)
-                                             (aset js/window "location" "href" url)))))
+#_(fn [{:keys [gist-id] :as this}]
+    (let [editor (.getEditor this)]
+      (some-> editor (.focus))
+      (when gist-id
+        (loaders/get-gist gist-id (fn [{:keys [value error]}]
+                                    (.setValue editor (or (some-> value (loaders/gist-source))
+                                                          (str "\nError loading gist:  " error))))))))
 
-(routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
+(defonce _
+         (do
+           (frame/listen "*"
+                         (fn [message]
+                           (match message
+                                  ;; editor content has changed
+                                  [:editor/update id source] (do (prn "got updated content: " id source)
+                                                                 )
+                                  [:editor/save id source] (do (prn "save updated source.." id source))
+                                  [:url/navigate url] (if (string/starts-with? url "/")
+                                                        (routing/nav! url)
+                                                        (aset js/window "location" "href" url)))))
+
+           (routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
+           (d/transact! [{:db/id         "intro"
+                          :default-value ";; intro"
+                          :immutable?    true}])))
 
 (defview layout []
   (match (d/get :router/location :segments)
-         [] (frame/editor-frame-view {:default-value ";; intro"
-                                      :id            "intro"})
+         [] (frame/editor-frame-view {:source-id "intro"})
          ["gist" id] (let [id (str "gist/" id)]
                        (frame/editor-frame-view {:default-value ";; put a gist here"
-                                                 :id            id}))))
+                                                 :source-id     id}))))
 
 (v/render-to-dom (layout) "maria-index")
 
