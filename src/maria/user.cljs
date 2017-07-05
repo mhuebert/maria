@@ -19,7 +19,8 @@
                                                   group
                                                   line-up
                                                   stack
-                                                  color-names]]
+                                                  color-names
+                                                  rgb rgba
+                                                  hsl hsla]]
             [re-view.core :include-macros true])
   (:require-macros [maria.user :refer [user-macro]]))
-
