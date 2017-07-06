@@ -14,7 +14,8 @@
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cognitect.transit :as t]
-            [maria.frames.communication :as frame]))
+            [maria.frames.communication :as frame]
+            [clojure.string :as string]))
 
 (defonce _
          (do
@@ -106,22 +107,24 @@
         :else (list
                 [:.pa3.bb.b--light-gray.flex.items-center.sans-serif.f6
                  (when title
-                   [:.flex-auto.b (cond->> title
-                                           url (conj [:a {:href   url
-                                                          :target "_blank"}]))])
+                   [:.flex-auto.b (cond->> (string/replace title #"\.clj[cs]?$" "")
+                                           url (conj [:a.no-underline.black {:href   url
+                                                                             :target "_blank"}]))])
 
-                 (when (and local-value
-                            persisted-value
-                            (not= local-value persisted-value))
-                   (some->> (cond save? [{:on-click #(prn "Save")} icons/Save]
-                                  fork? [{:on-click #(prn "Fork")} icons/Fork]
-                                  :else nil)
-                            (into [:.ph2.pointer])))
 
-                 (let [revertible-value (or persisted-value default-value)]
-                   (when (and local-value
-                              (not= local-value revertible-value))
-                     [:pointer.ph2 {:on-click #(.setValue (.getEditor this) revertible-value)} icons/Undo]))]
+                 (->> [(when (and local-value
+                                  persisted-value
+                                  (not= local-value persisted-value))
+                         [{:on-click #(prn "Save")} icons/Save])
+
+                       [{:on-click #(prn "Fork")} icons/Fork]
+
+                       (let [revertible-value (or persisted-value default-value)]
+                         (when (and local-value
+                                    (not= local-value revertible-value))
+                           [{:on-click #(.setValue (.getEditor this) revertible-value)} icons/Undo]))]
+                      (keep identity)
+                      (map #(into [:.ph2.pointer] %)))]
                 (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                                 :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
                                 :source-id       source-id
