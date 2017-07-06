@@ -108,8 +108,6 @@
                                               error (conj (magic/error-range source error-location))
                                               (seq warnings) (into (map #(magic/error-range source (:env %)) warnings)))} source)])
      [:.ws-prewrap.relative.mv3
-      {:style {:max-height 500
-               :overflow-y "auto"}}
       (cond error?
             [:.ph3.overflow-auto
              (for [message (cons (when error (messages/reformat-error result))

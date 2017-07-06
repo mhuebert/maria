@@ -1,4 +1,4 @@
-{:cljsbuild-out "resources/public/js/compiled/out"
+{:cljsbuild-out "resources/public/js/compiled/out-eval-dev"
  :output-dir    "resources/public/js/cljs_bundles"
  :bundles       [#_{:name          cljs.core
                   :require-cache [cljs.core cljs.core$macros]}
@@ -8,6 +8,7 @@
                   :require-macros [magic-tree.backtick]
                   :provided       [maria.core]
                   :require-cache  [maria.eval
+                                   maria.editor
                                    maria.repl-specials]}
                  #_{:name     cljs.spec.alpha
                   :require  [[cljs.spec.alpha :include-macros true]

@@ -35,34 +35,34 @@
 
   :source-paths ["src" "script"]
 
-  :cljsbuild {:builds [{:id           "eval"
+  :cljsbuild {:builds [{:id           "eval-dev"
                         :source-paths ["src"]
                         :figwheel     true
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "/js/compiled/out-eval"
                                        :output-to      "resources/public/js/compiled/eval.js"
-                                       :output-dir     "resources/public/js/compiled/out-eval"
-                                       ;:source-map-timestamp true
+                                       :output-dir     "resources/public/js/compiled/out-eval-dev"
+                                       :asset-path     "/js/compiled/out-eval-dev"
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
                        {:id           "eval-prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.core"
-                                       :asset-path     "/js/compiled/out-eval-prod"
                                        :output-to      "resources/public/js/compiled/eval.js"
                                        :output-dir     "resources/public/js/compiled/out-eval-prod"
+                                       :asset-path     "/js/compiled/out-eval-prod"
                                        :cache-analysis true
                                        :dump-core      false
+                                       :parallel-build true
                                        :optimizations  :simple}}
-                       {:id           "index"
+                       {:id           "index-dev"
                         :source-paths ["src"]
                         :figwheel     true
                         :compiler     {:main           "maria.index"
                                        :output-to      "resources/public/js/compiled/index.js"
-                                       :output-dir     "resources/public/js/compiled/out-index"
+                                       :output-dir     "resources/public/js/compiled/out-index-dev"
+                                       :asset-path     "/js/compiled/out-index-dev"
                                        :source-map     true
-                                       :asset-path     "/js/compiled/out-index"
                                        :optimizations  :none
                                        :parallel-build true}}
                        {:id           "index-prod"
@@ -78,7 +78,8 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
-  :aliases {"dev" ["figwheel" "eval" "index"] }
+  :aliases {"dev"   ["figwheel" "eval-dev" "index-dev"]
+            "build" ["cljsbuild" "once" "eval-prod" "index-prod"]}
 
   :deploy-via :clojars
 

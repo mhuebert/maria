@@ -217,7 +217,7 @@
   (or (some-> (aget element "type") (aget (v-util/camelCase k)))
       (get (mock element) k)))
 
-(defn init-element
+(defn element-constructor
   "Body of constructor function for ReView component."
   [this $props]
   (init-props this $props)
@@ -232,7 +232,7 @@
   "Extend React.Component with lifecycle methods of a view"
   [lifecycle-methods]
   (doto (fn ReView [$props]
-          (init-element (js-this) $props))
+          (element-constructor (js-this) $props))
     (aset "prototype" (->> lifecycle-methods
                            (reduce-kv (fn [m k v]
                                         (doto m (aset (get kmap k) v))) (new js/React.Component))))))

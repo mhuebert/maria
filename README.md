@@ -33,9 +33,23 @@ webpack -p;
 ### standard figwheel
 
 ``` shell
-;; compile project & run dev server
 lein dev
 ```
+
+### cursive/IntelliJ figwheel+repl
+
+One-time setup:
+
+1. menu command 'Run > Edit Configurations...'
+2. click "+" to add a new configuration
+3. choose 'Clojure REPL > local'
+5. give it a name, eg/ "Figwheel REPL"
+5. choose 'Use clojure.main in normal JVM process'
+6. under 'Parameters', enter `script/repl.clj`
+
+Now, you can run the REPL using a hotkey (default is shift+F10), menu command (Run > Run 'Figwheel REPL') or toolbar button.
+
+This will start a development build and webserver, by default accessible at `http://0.0.0.0:3449/`.
 
 ### emacs+nrepl figwheel
 
@@ -66,20 +80,51 @@ there:
 At that stage, you should have both a running figwheel and the ability
 to evaluate forms in the browser from emacs.
 
-### cljs-live deps
+## Dependencies
+
+In order to work in an ordinary web browser, ClojureScript needs to be
+'compiled' (or _converted_) to javascript. During compilation, all project
+ files (eg. source code you've written, plus dependencies) are gathered,
+ converted to javascript, and mashed into a single file.
+
+ The process of compilation is designed for maximum efficiency: a lot of
+ information is stripped out of the original ClojureScript files because it
+ isn't necessary for the program to be run. This is optimal for most apps, but
+ development tools like Maria are different: we need access to all the original
+ information so that we can provide a fully-functioning 'live environment'.
+
+[cljs-live](https://www.github.com/mhuebert/cljs-live) is a tool for bundling
+dependencies for the self-hosted ClojureScript compiler while including all of this
+extra information. Its general goals are:
+
+1. Determine _all_ necessary dependencies for a project
+2. Include precompiled javascript where possible (much faster than compiling
+from source in the browser)
+3. Include cached data from the ClojureScript compiler ('analysis cache'), to allow
+ the compiler to make sense of precompiled data
+4. Put all of this information in a single, publicly available file for browsers
+ to load
+5. Copy original source files to a publicly available directory, for Maria to access
+ when looking up the source code for compiled javascript
+
+### Bundling dependencies
 
 ///\\\///\\\
 
-warning, cljs-live is still unstable and difficult to use
+warning, cljs-live is not yet fully documented and tested. making changes here is not
+for the faint of heart.
 
 ///\\\///\\\
 
-Dependencies for the self-hosted ClojureScript compiler are compiled using
-[cljs-live](https://www.github.com/mhuebert/cljs-live), with deps specified
- in `live-deps.clj` and compiled to `resources/public/js/cljs_live_cache_core.js`.
+ 1. Make sure planck is installed (this has been tested with version `2.4.0`)
+ 2. Clone (git@github.com:mhuebert/cljs-live.git) into the same parent directory as maria
+ 3. Compile maria in development mode at least once (via `lein dev` or one of the
+ repl builds specified above in this readme)
+ 4. In this directory (maria), run `../cljs_live/bundle.sh live-deps.clj` to update
+ bundles.
 
- 1. Make sure planck is installed
- 2. Clone (git@github.com:mhuebert/cljs-live.git) and put a symlink to bundle.sh on your path
- 3. In this directory (maria), run `bootstrap.cljs --deps live-deps.clj` to generate an updated version of `resources/public/js/cljs_live_cache.js`
+ Dependencies are specified in `live-deps.clj`; This is the file you would edit if
+ you wanted to include new dependencies.
 
- (Inspect live-deps.clj to see what is included in the cache)
+ Bundles are written to `resources/public/js/cljs_bundles` and are checked into
+ version control (this may change in the future as cljs-live stabilizes).

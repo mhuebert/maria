@@ -19,12 +19,12 @@
 
             [goog.events :as events]
 
-            [maria.frame-communication :as frame]))
+            [maria.frames.communication :as frame]))
 
 (enable-console-print!)
 
 (defn navigate [href]
-  (frame/send frame/parent-window [:url/navigate href]))
+  (frame/send frame/parent-frame [:window/navigate href]))
 
 (events/listen js/window "click"
                (fn [e]
@@ -37,12 +37,12 @@
   [:div "We couldn't find this page!"])
 
 (defn main []
-  (v/render-to-dom (repl/layout) "maria-env"))
+  (v/render-to-dom (repl/layout {:window-id 1}) "maria-env"))
 
 (frame/listen "*" (partial println :editor-listen-all))
 
 (frame/listen "parent"
               (fn [message] (match message
-                                   [:source/reset data] (d/transact! [(assoc data :db/id :parent/source)]))))
+                                   [:db/transactions txs] (d/transact! txs))))
 
 (main)

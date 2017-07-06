@@ -7,17 +7,7 @@
             [re-view.core :as v :refer-macros [defview]]
 
             [goog.events :as events]
-            [cljs.pprint :refer [pprint]]
-            [re-db.d :as d]))
-
-;; to support multiple editors
-(defn init-local-storage
-  "Given a unique id, initialize a local-storage backed source"
-  [uid default-src]
-  (d/transact! [[:db/add uid :source (or (aget js/window "localStorage" uid) default-src)]])
-  (d/listen {:ea_ [[uid :source]]} (fn []
-                                     (aset js/window "localStorage" uid (d/get uid :source))))
-  uid)
+            [cljs.pprint :refer [pprint]]))
 
 (def options
   {:theme             "maria-light"
@@ -30,17 +20,11 @@
    :magicEdit         true})
 
 (defview editor
-  {:view/spec          {:props {:local-storage   :Vector
-                                :event/mousedown :Function
+  {:view/spec          {:props {:event/mousedown :Function
                                 :event/keydown   :Function}}
    :life/initial-state {:editor nil}
-   :life/will-mount
-                       #(some->> (:local-storage %)
-                                 (apply init-local-storage))
-   :life/did-mount
-                       (fn [{:keys                [value read-only? on-mount cm-opts view/state view/props error-ranges]
-                             [local-storage-id _] :local-storage
-                             :as                  this}]
+   :life/did-mount     (fn [{:keys [default-value value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
+                             :as   this}]
                          (let [dom-node (v/dom-node this)
                                editor (js/CodeMirror dom-node
                                                      (clj->js (merge cm-opts
@@ -63,23 +47,30 @@
                                    (.on editor event-key f))))
                              (when on-mount (on-mount editor this)))
 
-                           (when-let [initial-source (or value (d/get local-storage-id :source))]
-                             (.setValue editor (str initial-source)))
-                           (when local-storage-id
-                             (.on editor "change" #(d/transact! [[:db/add local-storage-id :source (.getValue %1)]])))
+                           (some->> (or value default-value) (str) (.setValue editor))
+
+                           (when on-update
+                             (.on editor "change" #(on-update (.getValue %1))))
+
                            (cm/mark-ranges! editor error-ranges #js {"className" "error-text"})))
    :set-value          (fn [{:keys [view/state value]}]
                          (when-let [editor (:editor @state)]
                            (cm/set-preserve-cursor editor value)))
+   :reset-value        (fn [{:keys [default-value value view/state]}]
+                         (.setValue (:editor @state) (or value default-value)))
    :life/will-receive-props
-                       (fn [{next-value      :value
-                             {:keys [value]} :view/prev-props
-                             :as             this}]
-                         (when (not= next-value value)
-                           (.setValue this)))
+                       (fn [{next-value                :value
+                             next-source-key           :source-id
+                             {:keys [value source-id]} :view/prev-props
+                             :as                       this}]
+                         (cond (not= next-source-key source-id)
+                               (.resetValue this)
+                               (not= next-value value)
+                               (.setValue this)
+                               :else nil))
    :life/should-update (fn [_] false)}
-  [{:keys [view/state] :as this}]
-  [:.h-100])
+  [{:keys [view/state style] :as this}]
+  [:.h-100 {:style style}])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true

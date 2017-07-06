@@ -1,6 +1,7 @@
 target
 *.log
 *.iml
+pom.xml
 .idea
 node_modules
 resources/public/js/compiled

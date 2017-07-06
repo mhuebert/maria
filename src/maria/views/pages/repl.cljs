@@ -13,11 +13,11 @@
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cognitect.transit :as t]
-            [maria.frame-communication :as frame]))
+            [maria.frames.communication :as frame]))
 
 (defonce _
          (do
-           (add-watch eval/c-env :notice-namespace-changes
+           (add-watch eval/c-env :log-namespace-changes
                       (fn [_ _ {prev-ns :ns} {ns :ns}]
                         (when (not= prev-ns ns)
                           (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
@@ -90,16 +90,18 @@
   {:life/initial-state {:repl-editor nil}
    :get-editor         (fn [{:keys [view/state]}]
                          (some-> (:repl-editor @state) :view/state deref :editor))}
-  [{:keys [view/state] :as this}]
+  [{:keys [view/state window-id] :as this}]
   [:.h-100.flex.items-stretch
-   [:.w-50.bg-solarized-light.relative.border-box.flex.flex-column
-    [:.flex-auto.overflow-auto.pb4
-     (let [{:keys [local-value default-value persisted-value source-id loading-message]} (d/entity :parent/source)]
-       (if loading-message
-         [:.w-100
-          [:.b.progress-indeterminate]
-          [:.pa2.gray loading-message]]
-         [:div
+   [:.w-50.relative.border-box.flex.flex-column
+    (let [source-id (d/get :layout window-id)
+          {:keys [local-value default-value persisted-value loading-message]} (d/entity source-id)]
+      (prn :layout {:source source-id
+                    :entity (d/entity source-id)})
+      (if loading-message
+        [:.w-100
+         [:.b.progress-indeterminate]
+         [:.pa2.gray loading-message]]
+        (list
           (when (and local-value
                      persisted-value
                      (not= local-value persisted-value))
@@ -107,12 +109,10 @@
           (let [revertible-value (or persisted-value default-value)]
             (when (and local-value
                        (not= local-value revertible-value))
+              (prn :loc local-value :rev revertible-value)
               [:.dib.pointer {:on-click #(.setValue (.getEditor this) revertible-value)} "revert"]))
-          (prn :the-s source-id)
           (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                          :on-update       #(do
-                                              (prn :sending-to source-id)
-                                              (frame/send frame/parent-window [:editor/update (d/get :parent/source :source-id) %]))
+                          :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
                           :source-id       source-id
                           :default-value   (or local-value default-value)
                           :event/mousedown #(when (.-metaKey %)
@@ -124,8 +124,8 @@
                                                  "Shift-Ctrl-Enter") (eval-editor editor :top-level)
                                                ("Cmd-Enter"
                                                  "Ctrl-Enter") (eval-editor editor :bracket)
-                                               nil))})]))]]
-   [:.w-50.h-100.bg-near-white.relative.flex.flex-column
+                                               nil))}))))]
+   [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
        (if-let [eval-log (d/get :repl/state :eval-log)]

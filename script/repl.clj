@@ -1,3 +1,3 @@
 (use 'figwheel-sidecar.repl-api)
-(start-figwheel!) ;; <-- fetches configuration
+(start-figwheel! "eval" "index") ;; <-- fetches configuration
 (cljs-repl)
