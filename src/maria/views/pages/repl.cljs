@@ -10,6 +10,7 @@
             [magic-tree.core :as tree]
             [maria.ns-utils :as ns-utils]
             [re-view-material.core :as ui]
+            [re-view-material.icons :as icons]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cognitect.transit :as t]
@@ -94,36 +95,48 @@
   [:.h-100.flex.items-stretch
    [:.w-50.relative.border-box.flex.flex-column
     (let [source-id (d/get :layout window-id)
-          {:keys [local-value default-value persisted-value loading-message]} (d/entity source-id)]
-      (prn :yo loading-message persisted-value)
-      (if loading-message
-        [:.w-100
-         [:.b.progress-indeterminate]
-         [:.pa2.gray loading-message]]
-        (list
-          (when (and local-value
-                     persisted-value
-                     (not= local-value persisted-value))
-            "can-save")
-          (let [revertible-value (or persisted-value default-value)]
-            (when (and local-value
-                       (not= local-value revertible-value))
-              [:.dib.pointer {:on-click #(.setValue (.getEditor this) revertible-value)} "revert"]))
-          (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                          :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
-                          :source-id       source-id
-                          :value           (or local-value persisted-value)
-                          :default-value   default-value
-                          :event/mousedown #(when (.-metaKey %)
-                                              (.preventDefault %)
-                                              (eval-editor (.getEditor this) :bracket))
-                          :event/keydown   (fn [editor e]
-                                             (case (.keyName js/CodeMirror e)
-                                               ("Shift-Cmd-Enter"
-                                                 "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                               ("Cmd-Enter"
-                                                 "Ctrl-Enter") (eval-editor editor :bracket)
-                                               nil))}))))]
+          {:keys [local-value default-value persisted-value loading-message title url error
+                  save?
+                  fork?]} (d/entity source-id)]
+      (cond
+        loading-message [:.w-100
+                         [:.b.progress-indeterminate]
+                         [:.pa2.gray loading-message]]
+        error [:.pa2.dark-red error]
+        :else (list
+                [:.pa3.bb.b--light-gray.flex.items-center.sans-serif.f6
+                 (when title
+                   [:.flex-auto.b (cond->> title
+                                           url (conj [:a {:href   url
+                                                          :target "_blank"}]))])
+
+                 (when (and local-value
+                            persisted-value
+                            (not= local-value persisted-value))
+                   (some->> (cond save? [{:on-click #(prn "Save")} icons/Save]
+                                  fork? [{:on-click #(prn "Fork")} icons/Fork]
+                                  :else nil)
+                            (into [:.ph2.pointer])))
+
+                 (let [revertible-value (or persisted-value default-value)]
+                   (when (and local-value
+                              (not= local-value revertible-value))
+                     [:pointer.ph2 {:on-click #(.setValue (.getEditor this) revertible-value)} icons/Undo]))]
+                (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                                :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
+                                :source-id       source-id
+                                :value           (or local-value persisted-value)
+                                :default-value   default-value
+                                :event/mousedown #(when (.-metaKey %)
+                                                    (.preventDefault %)
+                                                    (eval-editor (.getEditor this) :bracket))
+                                :event/keydown   (fn [editor e]
+                                                   (case (.keyName js/CodeMirror e)
+                                                     ("Shift-Cmd-Enter"
+                                                       "Shift-Ctrl-Enter") (eval-editor editor :top-level)
+                                                     ("Cmd-Enter"
+                                                       "Ctrl-Enter") (eval-editor editor :bracket)
+                                                     nil))}))))]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

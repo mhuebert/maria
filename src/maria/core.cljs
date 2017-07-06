@@ -12,8 +12,6 @@
             [maria.user :include-macros true]
             [re-view-routing.core :as r]
             [re-view.core :as v :refer [defview]]
-            [cljs.core.match :refer-macros [match]]
-            [re-db.d :as d]
 
             [clojure.spec.alpha :include-macros true]
 
@@ -23,15 +21,14 @@
 
 (enable-console-print!)
 
-(defn navigate [href]
-  (frame/send frame/parent-frame [:window/navigate href]))
+(defn navigate [a]
+  (frame/send frame/parent-frame [:window/navigate (.-href a) {:popup? (= (.-target a) "_blank")}]))
 
 (events/listen js/window "click"
                (fn [e]
-                 (when-let [href (and (= "A" (.. e -target -tagName))
-                                      (.. e -target -href))]
+                 (when-let [a (r/closest (.-target e) r/link?)]
                    (.preventDefault e)
-                   (navigate href))))
+                   (navigate a))))
 
 (defview not-found []
   [:div "We couldn't find this page!"])
@@ -41,8 +38,6 @@
 
 #_(frame/listen "*" (partial println :editor-listen-all))
 
-(frame/listen "parent"
-              (fn [message] (match message
-                                   [:db/transactions txs] (d/transact! txs))))
+
 
 (main)

@@ -50,7 +50,7 @@
                      (swap! status assoc
                             :status [:.dark-red "Error:"]
                             :error error)
-                     (let [source (remote/gist-source value)]
+                     (let [{source :persisted-data} (remote/parse-gist value)]
                        (eval/eval-str source)
                        (swap! status assoc
                               :status "Gist loaded."

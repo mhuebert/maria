@@ -59,14 +59,13 @@
    :reset-value        (fn [{:keys [default-value value view/state]}]
                          (.setValue (:editor @state) (or value default-value)))
    :life/will-receive-props
-                       (fn [{next-value                :value
-                             next-source-key           :source-id
-                             {:keys [value source-id]} :view/prev-props
-                             :as                       this}]
-                         (cond (not= next-source-key source-id)
+                       (fn [{value                       :value
+                             source-id                   :source-id
+                             {prev-source-id :source-id} :view/prev-props
+                             state                       :view/state
+                             :as                         this}]
+                         (cond (not= source-id prev-source-id)
                                (.resetValue this)
-                               (not= next-value value)
-                               (.setValue this)
                                :else nil))
    :life/should-update (fn [_] false)}
   [{:keys [view/state style] :as this}]

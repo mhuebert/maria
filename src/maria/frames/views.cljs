@@ -4,7 +4,9 @@
             [maria.frames.communication :as frame]
             [maria.persistence.local :as local]
             [cljs.core.match :refer-macros [match]]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [re-view-routing.core :as routing]
+            [clojure.string :as string]))
 
 
 
@@ -30,7 +32,7 @@
                               (when-not (= id prev-id)
                                 (frame/unlisten id on-message)
                                 (frame/listen id on-message))
-                              (when-not (= transactions prev-tx)
+                              (when (not= transactions prev-tx)
                                 (.sendTransactions this)))
    :life/will-unmount       (fn [{:keys [id on-message]}]
                               (frame/unlisten id on-message))}
@@ -45,14 +47,18 @@
    :life/will-receive-props (fn [{source-id :source-id {prev-source-id :source-id} :view/prev-props}]
                               (when-not (= source-id prev-source-id)
                                 (local/init-storage source-id)))}
-  [{:keys [source-id on-save loading-message]}]
+  [{:keys [source-id on-save loading-message error]}]
   (frame-view {:id              source-id
-               :db/transactions [(d/entity source-id)
-                                 [:db/add :layout 1 source-id]
-                                 (if loading-message
-                                   [:db/add source-id :loading-message loading-message]
-                                   [:db/retract-attr source-id :loading-message])]
+               :db/transactions [(merge (d/entity source-id)
+                                        {:loading-message loading-message
+                                         :error           error})
+                                 [:db/add :layout 1 source-id]]
                :on-message      (fn [message]
                                   (match message
                                          [:source/update-local source-id value] (d/transact! [[:db/add source-id :local-value value]])
-                                         [:source/persist source-id value] (on-save value)))}))
+                                         [:source/persist source-id value] (on-save value)
+                                         [:window/navigate url opts] (if (string/starts-with? url "/")
+                                                                       (routing/nav! url)
+                                                                       (if (:popup? opts)
+                                                                         (.open js/window url)
+                                                                         (aset js/window "location" "href" url)))))}))

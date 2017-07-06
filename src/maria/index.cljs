@@ -13,38 +13,26 @@
 
 (enable-console-print!)
 
-#_(fn [{:keys [gist-id] :as this}]
-    (let [editor (.getEditor this)]
-      (some-> editor (.focus))
-      (when gist-id
-        (loaders/get-gist gist-id (fn [{:keys [value error]}]
-                                    (.setValue editor (or (some-> value (loaders/gist-source))
-                                                          (str "\nError loading gist:  " error))))))))
-
 (defview layout []
   (match (d/get :router/location :segments)
          [] (frame-view/editor-frame-view {:source-id "intro"})
          ["gist" id] (remote/load
                        {:load-fn    (partial remote/get-gist id)
-                        :on-success #(let [source (remote/gist-source %)]
-                                       (d/transact! [[:db/add id :persisted-value source]])
+                        :on-success #(let [gist-data (remote/parse-gist %)]
+                                       (d/transact! [(merge gist-data
+                                                            {:db/id id
+                                                             :url   (str "https://gist.github.com/" id)
+                                                             :save? true
+                                                             :fork? true})])
                                        (frame-view/editor-frame-view {:default-value ";; put a gist here"
                                                                       :source-id     id}))
-                        :loading    (frame-view/editor-frame-view {:loading-message "Loading gist..."})
-                        :on-error   identity})))
+                        :on-loading #(frame-view/editor-frame-view {:source-id       id
+                                                                    :loading-message "Loading gist..."})
+                        :on-error   #(frame-view/editor-frame-view {:source-id id
+                                                                    :error     %})})))
 
 (defonce _
          (do
-           (frame/listen "*"
-                         (fn [message]
-                           (match message
-                                  ;; editor content has changed
-                                  [:source/update-local id source] (d/transact! [[:db/add id :local-value source]])
-                                  [:source/persist id] (do (prn "save updated source.." id))
-                                  [:window/navigate url] (if (string/starts-with? url "/")
-                                                           (routing/nav! url)
-                                                           (aset js/window "location" "href" url)))))
-
            (routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
            (d/transact! [{:db/id         "intro"
                           :default-value ";; intro"}])

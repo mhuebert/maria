@@ -1,6 +1,7 @@
 (ns maria.frames.communication
   (:require [maria.transit :as t]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [cljs.core.match :refer-macros [match]]))
 
 (enable-console-print!)
 
@@ -17,6 +18,12 @@
 (def is-child?
   (not is-parent?))
 
+(def queue (atom {}))
+(defn queue-add [the-queue id item] (swap! queue update-in [the-queue id] (fnil conj []) item))
+(defn queue-process [the-queue id f]
+  (doseq [item (get-in @queue [the-queue id])]
+    (f item))
+  (swap! queue update the-queue dissoc id))
 
 (let [this-hostname (.. js/window -location -hostname)
       other-hostname-lookup {"0.0.0.0"         "localhost"
@@ -46,16 +53,15 @@
 
   (def child-origin child-origin)
 
-  (defonce send-queue (atom {}))
-
   (defn send
     "Send a message to the another frame. If the frame is not yet register, queue the message."
     [frame-id message]
-    (if-let [the-window (@frame-index frame-id)]
+    {:pre [frame-id]}
+    (if-let [the-window (get @frame-index frame-id)]
       (.postMessage the-window
                     (t/serialize [current-frame-id message])
                     other-origin)
-      (swap! send-queue update frame-id conj message)))
+      (queue-add :send frame-id message)))
 
   (def listeners (atom {}))
 
@@ -72,13 +78,14 @@
                      (fn [e]
                        (when-let [[id data] (t/deserialize (.-data e))]
                          (if (= data ::ready)
-                           (let [source (.-source e)]
-                             (swap! frame-index assoc id source)
-                             (doseq [message (get @send-queue id)]
-                               (send id message)))
+                           (do
+                             (swap! frame-index assoc id (.-source e))
+                             (queue-process :send id #(send id %)))
                            (when (= (.-origin e) other-origin)
                              (doseq [f (concat (get @listeners id) (get @listeners "*"))]
                                (f data)))))))
 
   (when-not is-parent?
-    (send parent-frame ::ready)))
+    (do
+      (listen "parent" #(match % [:db/transactions txs] (d/transact! txs)))
+      (send parent-frame ::ready))))
