@@ -19,6 +19,9 @@
      (map #(rgb 0 0 %) (range 0 250 25)))
 
 
+;; TODO incorporate example ideas from http://www.tylerlhobbs.com/writings/generative-colors
+
+
 ;; Halloween pumpkin
 (group
  (position 40 60 (colorize "orange" (circle 40)))

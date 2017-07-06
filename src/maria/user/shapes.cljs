@@ -413,3 +413,5 @@
 
 (defn hsla [hue saturation lightness alpha]
   (apply str "hsla(" hue "," saturation "," lightness "," alpha ")"))
+
+;; TODO steal scaling fn from http://www.tylerlhobbs.com/writings/generative-colors
