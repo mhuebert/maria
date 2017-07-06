@@ -8,6 +8,7 @@
     [maria.frames.views :as frame-view]
     [cljs.core.match :refer-macros [match]]
     [clojure.string :as string]
+    [maria.persistence.remote :as remote]
     [re-db.d :as d]))
 
 (enable-console-print!)
@@ -23,9 +24,14 @@
 (defview layout []
   (match (d/get :router/location :segments)
          [] (frame-view/editor-frame-view {:source-id "intro"})
-         ["gist" id] (let [id (str "gist/" id)]
-                       (frame-view/editor-frame-view {:default-value ";; put a gist here"
-                                                      :source-id     id}))))
+         ["gist" id] (remote/load
+                       {:load-fn    (partial remote/get-gist id)
+                        :on-success #(let [source (remote/gist-source %)]
+                                       (d/transact! [[:db/add id :persisted-value source]])
+                                       (frame-view/editor-frame-view {:default-value ";; put a gist here"
+                                                                      :source-id     id}))
+                        :loading    (frame-view/editor-frame-view {:loading-message "Loading gist..."})
+                        :on-error   identity})))
 
 (defonce _
          (do
@@ -36,13 +42,12 @@
                                   [:source/update-local id source] (d/transact! [[:db/add id :local-value source]])
                                   [:source/persist id] (do (prn "save updated source.." id))
                                   [:window/navigate url] (if (string/starts-with? url "/")
-                                                        (routing/nav! url)
-                                                        (aset js/window "location" "href" url)))))
+                                                           (routing/nav! url)
+                                                           (aset js/window "location" "href" url)))))
 
            (routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
            (d/transact! [{:db/id         "intro"
-                          :default-value ";; intro"
-                          :immutable?    true}])
+                          :default-value ";; intro"}])
            (v/render-to-dom (layout) "maria-index")))
 
 

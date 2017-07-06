@@ -45,10 +45,13 @@
    :life/will-receive-props (fn [{source-id :source-id {prev-source-id :source-id} :view/prev-props}]
                               (when-not (= source-id prev-source-id)
                                 (local/init-storage source-id)))}
-  [{:keys [source-id on-save view/props]}]
+  [{:keys [source-id on-save loading-message]}]
   (frame-view {:id              source-id
-               :db/transactions [(merge props (d/entity source-id))
-                                 [:db/add :layout 1 source-id]]
+               :db/transactions [(d/entity source-id)
+                                 [:db/add :layout 1 source-id]
+                                 (if loading-message
+                                   [:db/add source-id :loading-message loading-message]
+                                   [:db/retract-attr source-id :loading-message])]
                :on-message      (fn [message]
                                   (match message
                                          [:source/update-local source-id value] (d/transact! [[:db/add source-id :local-value value]])

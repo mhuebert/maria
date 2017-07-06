@@ -39,7 +39,7 @@
 (defn main []
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env"))
 
-(frame/listen "*" (partial println :editor-listen-all))
+#_(frame/listen "*" (partial println :editor-listen-all))
 
 (frame/listen "parent"
               (fn [message] (match message

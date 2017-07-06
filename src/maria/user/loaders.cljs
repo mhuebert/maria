@@ -9,10 +9,9 @@
             [maria.views.repl-utils :as repl-ui]
             [maria.editor :as editor]
 
-            [goog.net.XhrIo :as xhr]
+            [maria.persistence.remote :as remote]
             [goog.net.jsloader :as jsl]
 
-            [clojure.string :as string]
             [clojure.set :as set]))
 
 (defview gist-loader-status
@@ -39,25 +38,6 @@
 
    (when error [:.bg-near-white.pa2.mv2 error])])
 
-(defn gist-source [gist-data]
-  (prn :gist gist-data)
-  (if-let [clojure-files (->> gist-data
-                              :files
-                              (vals)
-                              (keep (fn [{:keys [content language]}]
-                                      (when (= language "Clojure")
-                                        content)))
-                              (seq))]
-    (string/join "\n" clojure-files)
-    ";; No Clojure files found in gist."))
-
-(defn get-gist [id cb]
-  (xhr/send (str "https://api.github.com/gists/" id)
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (cb {:value (js->clj (.getResponseJson target) :keywordize-keys true)})
-                  (cb {:error (.getLastError target)}))))))
 
 (defn load-gist
   "Loads gist content, evaluating as ClojureScript code."
@@ -65,12 +45,12 @@
   [id]
   (let [status (atom {:url    id
                       :status "Loading gist..."})]
-    (get-gist id (fn [{:keys [value error]}]
+    (remote/get-gist id (fn [{:keys [value error]}]
                    (if error
                      (swap! status assoc
                             :status [:.dark-red "Error:"]
                             :error error)
-                     (let [source (gist-source value)]
+                     (let [source (remote/gist-source value)]
                        (eval/eval-str source)
                        (swap! status assoc
                               :status "Gist loaded."
@@ -95,3 +75,4 @@
    Usage: `(load-npm \"my-package@0.2.0\")` or `(load-npm \"my-package@latest\")`"
   [package]
   (load-js (str "https://wzrd.in/standalone/" package)))
+

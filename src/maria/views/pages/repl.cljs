@@ -95,8 +95,7 @@
    [:.w-50.relative.border-box.flex.flex-column
     (let [source-id (d/get :layout window-id)
           {:keys [local-value default-value persisted-value loading-message]} (d/entity source-id)]
-      (prn :layout {:source source-id
-                    :entity (d/entity source-id)})
+      (prn :yo loading-message persisted-value)
       (if loading-message
         [:.w-100
          [:.b.progress-indeterminate]
@@ -109,12 +108,12 @@
           (let [revertible-value (or persisted-value default-value)]
             (when (and local-value
                        (not= local-value revertible-value))
-              (prn :loc local-value :rev revertible-value)
               [:.dib.pointer {:on-click #(.setValue (.getEditor this) revertible-value)} "revert"]))
           (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                           :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
                           :source-id       source-id
-                          :default-value   (or local-value default-value)
+                          :value           (or local-value persisted-value)
+                          :default-value   default-value
                           :event/mousedown #(when (.-metaKey %)
                                               (.preventDefault %)
                                               (eval-editor (.getEditor this) :bracket))
