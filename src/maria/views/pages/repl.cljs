@@ -13,7 +13,7 @@
             [re-view-material.icons :as icons]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
-            [cognitect.transit :as t]
+            [re-view-material.core :as ui]
             [maria.frames.communication :as frame]
             [clojure.string :as string]))
 
@@ -96,37 +96,67 @@
   [:.h-100.flex.items-stretch
    [:.w-50.relative.border-box.flex.flex-column
     (let [source-id (d/get :layout window-id)
-          {:keys [local-value default-value persisted-value loading-message title url error
-                  save?
-                  fork?]} (d/entity source-id)]
+          {:keys [local-value
+                  default-value
+                  persisted-value
+                  persistence-mode
+                  loading-message
+                  title
+                  url
+                  error
+                  owner-display-name
+                  owner-url]} (d/entity source-id)
+          {:keys [signed-in? providerId]} (d/entity :auth-public)
+          toolbar-button :.pointer.hover-bg-near-white.pa2.flex.items-center
+          toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center
+          toolbar-item (fn [[action icon]]
+                         [toolbar-button {:on-click action} (icons/size icon 20)])]
       (cond
         loading-message [:.w-100
                          [:.b.progress-indeterminate]
                          [:.pa2.gray loading-message]]
         error [:.pa2.dark-red error]
         :else (list
-                [:.pa3.bb.b--light-gray.flex.items-center.sans-serif.f6
-                 (when title
-                   [:.flex-auto.b (cond->> (string/replace title #"\.clj[cs]?$" "")
-                                           url (conj [:a.no-underline.black {:href   url
-                                                                             :target "_blank"}]))])
+                [:.bb.b--light-gray.flex.items-center.sans-serif.f6.items-stretch.flex-none.br.b--light-gray
 
+                 [:.ph2.flex-auto.flex.items-center
+                  (cond->> [:span.b (string/replace (or title "") #"\.clj[cs]?$" "")]
+                           url (conj [:a.no-underline.black.hover-underline
+                                      {:href   url
+                                       :target "_blank"}]))
+                  (when owner-display-name
+                    (cond->> [:span.gray.f7.ph2 owner-display-name]
+                             owner-url (conj [:a.hover-underline.gray.no-underline
+                                              {:href   owner-url
+                                               :target "_blank"}])))
+                  ]
 
-                 (->> [(when (and local-value
-                                  persisted-value
-                                  (not= local-value persisted-value))
-                         [{:on-click #(prn "Save")} icons/Save])
+                 ;[:.green icons/Check]
 
-                       [{:on-click #(prn "Fork")} icons/Fork]
+                 (let [revertible-value (or persisted-value default-value)]
+                   (when (and local-value
+                              (not= local-value (or persisted-value default-value)))
+                     (toolbar-item [#(.setValue (.getEditor this) revertible-value) (icons/class icons/Undo "gold") "Revert to saved copy"])))
 
-                       (let [revertible-value (or persisted-value default-value)]
-                         (when (and local-value
-                                    (not= local-value revertible-value))
-                           [{:on-click #(.setValue (.getEditor this) revertible-value)} icons/Undo]))]
-                      (keep identity)
-                      (map #(into [:.ph2.pointer] %)))]
+                 (if signed-in?
+                   (->> [[#(prn "New") (icons/class icons/Add "gold") "New namespace"]
+                         (when persisted-value
+                           #_(when (and local-value
+                                      (not= local-value persisted-value)) "0-50")
+                           (case persistence-mode
+                             :save [#(prn "Save") (icons/class icons/Save "gold") "Save"]
+                             :fork [#(prn "Fork") (icons/class icons/Fork "gold") "Create your own fork of this gist"]))]
+                        (keep identity)
+                        (map toolbar-item))
+                   [toolbar-text {:on-click #(frame/send :parent [:auth/sign-in])} "Sign in"])
+                 (when signed-in? (ui/SimpleMenuWithTrigger
+                                    {:open-from :top-left}
+                                    [toolbar-button (icons/class icons/MoreHorizontal "gold")]
+                                    (ui/SimpleMenuItem {:text-primary "Sign out"
+                                                        :on-click     #(frame/send :parent [:auth/sign-out])
+                                                        :dense        true})))]
                 (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                                :on-update       #(frame/send frame/parent-frame [:source/update-local (d/get :layout window-id) %])
+                                :on-update       #(frame/send frame/parent-frame [:source/save-local (d/get :layout window-id) %])
                                 :source-id       source-id
                                 :value           (or local-value persisted-value)
                                 :default-value   default-value

@@ -20,10 +20,11 @@
                        {:load-fn    (partial remote/get-gist id)
                         :on-success #(let [gist-data (remote/parse-gist %)]
                                        (d/transact! [(merge gist-data
-                                                            {:db/id id
-                                                             :url   (str "https://gist.github.com/" id)
-                                                             :save? true
-                                                             :fork? true})])
+                                                            {:db/id            id
+                                                             :url              (str "https://gist.github.com/" id)
+                                                             :persistence-mode (if (= (:owner-id (meta gist-data)) (d/get :auth-secret :uid))
+                                                                                 :save
+                                                                                 :fork)})])
                                        (frame-view/editor-frame-view {:default-value ";; put a gist here"
                                                                       :source-id     id}))
                         :on-loading #(frame-view/editor-frame-view {:source-id       id

@@ -5,7 +5,7 @@
     "css-loader": "^0.28.2",
     "extract-text-webpack-plugin": "^2.1.0",
     "firebase-tools": "^3.9.0",
-    "material-components-web": "^0.11.1",
+    "material-components-web": "^0.14.0",
     "node-sass": "^4.5.3",
     "postcss": "^6.0.1",
     "postcss-loader": "^2.0.5",

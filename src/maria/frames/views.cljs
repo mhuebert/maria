@@ -6,7 +6,8 @@
             [cljs.core.match :refer-macros [match]]
             [clojure.set :as set]
             [re-view-routing.core :as routing]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [maria.persistence.firebase :as firebase]))
 
 
 
@@ -52,13 +53,18 @@
                :db/transactions [(merge (d/entity source-id)
                                         {:loading-message loading-message
                                          :error           error})
-                                 [:db/add :layout 1 source-id]]
+                                 [:db/add :layout 1 source-id]
+                                 (or (d/entity :auth-public)
+                                     [:db/retract-entity :auth-public])]
                :on-message      (fn [message]
                                   (match message
-                                         [:source/update-local source-id value] (d/transact! [[:db/add source-id :local-value value]])
-                                         [:source/persist source-id value] (on-save value)
+                                         [:source/save-local source-id value] (d/transact! [[:db/add source-id :local-value value]])
+                                         [:source/save-persisted source-id value] (prn :persist! source-id)
+                                         [:auth/sign-in] (firebase/sign-in :github)
+                                         [:auth/sign-out] (firebase/sign-out)
                                          [:window/navigate url opts] (if (string/starts-with? url "/")
                                                                        (routing/nav! url)
                                                                        (if (:popup? opts)
                                                                          (.open js/window url)
-                                                                         (aset js/window "location" "href" url)))))}))
+                                                                         (aset js/window "location" "href" url)))
+                                         :else (prn "Unknown message: " message)))}))

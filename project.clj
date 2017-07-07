@@ -17,15 +17,18 @@
                  [cljsjs/marked "0.3.5-0"]
 
 
-                 [re-view "0.3.16"]
+                 [re-view "0.3.18"]
                  [re-view-routing "0.1.3"]
-                 [re-view-material "0.1.3"]
+                 [re-view-material "0.1.5"]
 
                  [cljs-live "0.1.20-SNAPSHOT"]
                  [magic-tree "0.0.6-SNAPSHOT"]
 
                  [cljsjs/react "15.5.4-0"]
-                 [cljsjs/react-dom "15.5.4-0"]]
+                 [cljsjs/react-dom "15.5.4-0"]
+
+
+                 [cljsjs/firebase "4.0.0-0"]]
 
   :plugins [[lein-figwheel "0.5.10"]
             [lein-cljsbuild "1.1.6" :exclusions [org.clojure/clojure]]]

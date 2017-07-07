@@ -57,22 +57,22 @@
     "Send a message to the another frame. If the frame is not yet register, queue the message."
     [frame-id message]
     {:pre [frame-id]}
-    (if-let [the-window (get @frame-index frame-id)]
+    (if-let [the-window (get @frame-index (name frame-id))]
       (.postMessage the-window
                     (t/serialize [current-frame-id message])
                     other-origin)
-      (queue-add :send frame-id message)))
+      (queue-add :send (name frame-id) message)))
 
   (def listeners (atom {}))
 
   (defn listen
     "Listen for messages from another frame, given its id."
     [id f]
-    (swap! listeners update id (fnil conj #{}) f))
+    (swap! listeners update (name id) (fnil conj #{}) f))
 
   (defn unlisten
     [id f]
-    (swap! listeners update id disj f))
+    (swap! listeners update (name id) disj f))
 
   (.addEventListener js/window "message"
                      (fn [e]
