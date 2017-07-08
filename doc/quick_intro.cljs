@@ -120,15 +120,15 @@ color-names
 ;; By default, things in groups all share the same top/left corner,
 ;; and thus often overlap:
 
-(group
+(layer
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
-;; But we can also position them within a group using the `position`
+;; But we can also position them within a layer using the `position`
 ;; function, which takes an `x` and a `y` to tell it where to put a
 ;; shape:
 
-(group
+(layer
  (colorize "springgreen" (circle 25))
  (position 50 25 (colorize "pink" (circle 25))))
 
@@ -138,7 +138,7 @@ color-names
 ;; inside a big nested expression, let's draw a face with an
 ;; expression:
 
-(group
+(layer
  (colorize "aqua" (circle 40))
  (position 10 10 (colorize "magenta" (triangle 24)))
  (position 45 10 (colorize "magenta" (triangle 24)))
@@ -196,12 +196,12 @@ color-names
 ;; giant expression, which will draw a small diagram to help explain
 ;; how functions work:
 
-(group
+(layer
   (position 50 60 (text "(fn [radius] (circle radius))"))
   (colorize "grey" (position 60 70 (triangle 10)))
   (position 0 102 (text "function"))
   (position 30 -3
-            (group (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
+            (layer (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
   (position 90 20 (text "argument(s)"))
   (colorize "grey" (position 170 70 (triangle 10)))
   (position 170 102 (text "expression")))
@@ -385,7 +385,7 @@ palette
 (colorize (rand-nth palette) (circle 50))
 
 ;; Let's make a more complex shape with our new color palette.
-(apply stack
+(apply above
        (map colorize
             [(rand-nth palette) (rand-nth palette) (rand-nth palette)]
             ;; FIXME requires creating triangle function
@@ -405,7 +405,7 @@ palette
 ;; All the functions we've used so far have had names, but this one doesn't, because we're just using it once.
 
 ;; Our anonymous function has square brackets to declare its parameters, of which it has none. Now we can call this anonymous function `repeatedly`:
-(apply stack
+(apply above
        (map colorize
             (repeatedly (fn [] (rand-nth palette)))
             ;; FIXME requires creating triangle function

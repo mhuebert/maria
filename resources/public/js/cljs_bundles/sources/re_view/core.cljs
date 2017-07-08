@@ -174,12 +174,10 @@
   (when-not (gobj/containsKey (aget this "re$view") "state")
     (init-state this nil)))
 
-(defn class-key [k]
+(defn view-var [k]
   (and (keyword? k)
-       (case (namespace k)
-         "view" (v-util/camelCase k)
-         "spec" (str "spec__" (v-util/camelCase k))
-         nil)))
+       (= "view" (namespace k))
+       (v-util/camelCase k)))
 
 (defn specify-protocols
   "Implement ILookup protocol to read prop keys and `view`-namespaced keys on a component."
@@ -188,13 +186,13 @@
     ILookup
     (-lookup
       ([this k]
-       (if-let [re-view-var (class-key k)]
+       (if-let [re-view-var (view-var k)]
          (do (when (= re-view-var "state") (ensure-state this))
              (aget this "re$view" re-view-var))
          (get (aget this "re$view" "props") k)))
       ([this k not-found]
        (if (or (contains? (aget this "re$view" "props") k)
-               (.hasOwnProperty (aget this "re$view") (class-key k)))
+               (.hasOwnProperty (aget this "re$view") (view-var k)))
          (get this k)
          not-found)))))
 
@@ -241,13 +239,10 @@
   "Return a function which returns a React element when called with props and children."
   [constructor class-keys instance-keys]
   (let [{{defaults :props/defaults
-          :as      prop-spec} :spec/props
-         children-spec        :spec/children
-         :as                  class-keys} (-> class-keys
-                                              (update :spec/props vspec/normalize-props-map)
-                                              (update :spec/children vspec/resolve-spec-vector))
+          :as      spec} :view/spec
+         :as             class-keys} (update class-keys :view/spec vspec/normalize-spec-map)
         class-keys (reduce-kv (fn [m k v]
-                                (doto m (aset (class-key k) v))) #js {} class-keys)
+                                (doto m (aset (v-util/camelCase (name k)) v))) #js {} class-keys)
         class-react-key (aget constructor "key")
         display-name (aget constructor "displayName")]
     (fn [props & children]
@@ -261,13 +256,13 @@
                     (when class-react-key
                       (cond (string? class-react-key) class-react-key
                             (keyword? class-react-key) (get props class-react-key)
-                            (fn? class-react-key) (apply class-react-key (assoc props :view/children children) children)
+                            (fn? class-react-key) (apply class-react-key props children)
                             :else (throw (js/Error "Invalid key supplied to component"))))
                     display-name)]
 
         (when (true? INSTRUMENT!)
-          (vspec/validate-props display-name prop-spec props)
-          (vspec/validate-children display-name children-spec children))
+          (vspec/validate-props display-name spec props)
+          (vspec/validate-children display-name spec children))
 
         (.createElement js/React constructor #js {"key"      key
                                                   "ref"      (get props :ref)
@@ -348,6 +343,6 @@
   By default, removes all keys listed in the component's :spec/props map. Set `:consume false` for props
   that should be passed through."
   [this]
-  (apply dissoc (get this :view/props) (get-in this [:spec/props :props/consumed])))
+  (apply dissoc (get this :view/props) (get-in this [:view/spec :props/consume-keys])))
 
 (def is-react-element? v-util/is-react-element?)

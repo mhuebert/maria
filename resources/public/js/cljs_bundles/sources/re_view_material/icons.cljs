@@ -3,8 +3,8 @@
 (defn size [icon size]
   (update icon 1 assoc :width size :height size))
 
-(defn style [icon styles]
-  (apply update-in icon [1 :style] merge styles))
+(defn styles [icon & args]
+  (apply update-in icon [1 :style] assoc args))
 
 (defn class [icon class]
   (update-in icon [1 :class] str " " class))
@@ -33,11 +33,6 @@
   ;; https://materialdesignicons.com/icon/arrow-expand
   [:svg {:fill "currentColor", :xmlns "http://www.w3.org/2000/svg", :width "24", :height "24", :view-box "0 0 24 24"}
    [:path {:d "M10,21V19H6.41L10.91,14.5L9.5,13.09L5,17.59V14H3V21H10M14.5,10.91L19,6.41V10H21V3H14V5H17.59L13.09,9.5L14.5,10.91Z"}]])
-
-(def Build
-  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
-   [:path {:clip-rule "evenodd", :d "M0 0h24v24H0z", :fill "none"}]
-   [:path {:d "M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"}]])
 
 (def Cancel
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
@@ -118,31 +113,9 @@
    [:path {:d "M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"}]
    [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
-(def GitHub
-  [:svg {:fill              "currentColor"
-         :width             "24"
-         :height            "24"
-         :view-box          "0 0 16 16",
-         :xmlns             "http://www.w3.org/2000/svg",
-         :fill-rule         "evenodd",
-         :clip-rule         "evenodd",
-         :stroke-linejoin   "round",
-         :stroke-miterlimit "1.414"}
-   [:path {:d "M8 0C3.58 0 0 3.582 0 8c0 3.535 2.292 6.533 5.47 7.59.4.075.547-.172.547-.385 0-.19-.007-.693-.01-1.36-2.226.483-2.695-1.073-2.695-1.073-.364-.924-.89-1.17-.89-1.17-.725-.496.056-.486.056-.486.803.056 1.225.824 1.225.824.714 1.223 1.873.87 2.33.665.072-.517.278-.87.507-1.07-1.777-.2-3.644-.888-3.644-3.953 0-.873.31-1.587.823-2.147-.09-.202-.36-1.015.07-2.117 0 0 .67-.215 2.2.82.64-.178 1.32-.266 2-.27.68.004 1.36.092 2 .27 1.52-1.035 2.19-.82 2.19-.82.43 1.102.16 1.915.08 2.117.51.56.82 1.274.82 2.147 0 3.073-1.87 3.75-3.65 3.947.28.24.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.14.46.55.38C13.71 14.53 16 11.53 16 8c0-4.418-3.582-8-8-8"}]])
-
 (def Home
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
    [:path {:d "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"}]
-   [:path {:d "M0 0h24v24H0z", :fill "none"}]])
-
-(def Link
-  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
-   [:path {:d "M0 0h24v24H0z", :fill "none"}]
-   [:path {:d "M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"}]])
-
-(def Mail
-  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
-   [:path {:d "M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"}]
    [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
 (def Menu
@@ -159,7 +132,3 @@
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 18 18", :width "24", :xmlns "http://www.w3.org/2000/svg"}
    [:path {:d "M9 11.3l3.71 2.7-1.42-4.36L15 7h-4.55L9 2.5 7.55 7H3l3.71 2.64L5.29 14z"}]
    [:path {:d "M0 0h18v18H0z", :fill "none"}]])
-
-(def Twitter
-  [:svg {:fill "currentColor" :xmlns "http://www.w3.org/2000/svg", :xmlns:xlink "http://www.w3.org/1999/xlink", :version "1.1", :width "24", :height "24", :view-box "0 0 24 24"}
-   [:path {:d "M22.46,6C21.69,6.35 20.86,6.58 20,6.69C20.88,6.16 21.56,5.32 21.88,4.31C21.05,4.81 20.13,5.16 19.16,5.36C18.37,4.5 17.26,4 16,4C13.65,4 11.73,5.92 11.73,8.29C11.73,8.63 11.77,8.96 11.84,9.27C8.28,9.09 5.11,7.38 3,4.79C2.63,5.42 2.42,6.16 2.42,6.94C2.42,8.43 3.17,9.75 4.33,10.5C3.62,10.5 2.96,10.3 2.38,10C2.38,10 2.38,10 2.38,10.03C2.38,12.11 3.86,13.85 5.82,14.24C5.46,14.34 5.08,14.39 4.69,14.39C4.42,14.39 4.15,14.36 3.89,14.31C4.43,16 6,17.26 7.89,17.29C6.43,18.45 4.58,19.13 2.56,19.13C2.22,19.13 1.88,19.11 1.54,19.07C3.44,20.29 5.7,21 8.12,21C16,21 20.33,14.46 20.33,8.79C20.33,8.6 20.33,8.42 20.32,8.23C21.16,7.63 21.88,6.87 22.46,6Z"}]])

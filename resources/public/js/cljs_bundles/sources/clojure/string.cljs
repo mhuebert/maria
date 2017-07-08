@@ -26,12 +26,7 @@
 
 (defn- replace-all
   [s re replacement]
-  (let [r (js/RegExp. (.-source re)
-                      (cond-> "g"
-                        (.-ignoreCase re) (str "i")
-                        (.-multiline re) (str "m")
-                        (.-unicode re) (str "u")))]
-    (.replace s r replacement)))
+  (.replace s (js/RegExp. (.-source re) "g") replacement))
 
 (defn- replace-with
   [f]

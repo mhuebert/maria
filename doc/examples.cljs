@@ -1,13 +1,12 @@
-
 ;; Colorization functions, demonstrated with ranges
 (map #(colorize % (square 50))
-     (map #(hsl % "100%" "50%") (range 0 250 25)))
+     (map #(hsl % 100 50) (range 0 250 25)))
 
 (map #(colorize % (square 50))
-     (map #(hsl 120 (str % "%") "50%") (range 0 250 25)))
+     (map #(hsl 120 % 50) (range 0 250 25)))
 
 (map #(colorize % (square 50))
-     (map #(hsl 120 "50%" (str % "%")) (range 0 100 10)))
+     (map #(hsl 120 50 %) (range 0 100 10)))
 
 (map #(colorize % (square 50))
      (map #(rgb % 0 0) (range 0 250 25)))
@@ -18,12 +17,19 @@
 (map #(colorize % (square 50))
      (map #(rgb 0 0 %) (range 0 250 25)))
 
-
-;; TODO incorporate example ideas from http://www.tylerlhobbs.com/writings/generative-colors
-
+;; color gradient
+(apply above
+  (map #(colorize (hsl (rescale % 0 1000 120 220) 90 90)
+                (rectangle 500 5))
+     (range 0 1000 5)))
+ 
+;; variable opacity
+(map
+  #(opacity % (colorize "blue" (square 10)))
+  (range 0 1 0.1))
 
 ;; Halloween pumpkin
-(group
+(layer
  (position 40 60 (colorize "orange" (circle 40)))
  (position 10 30 (colorize "black" (triangle 24)))
  (position 45 30 (colorize "black" (triangle 24)))
@@ -35,7 +41,7 @@
 
 
 ;; Berlin Fernseheturm
-(group (position 35 60 (colorize "grey" (circle 25)))
+(layer (position 35 60 (colorize "grey" (circle 25)))
        (position 34 0 (colorize "grey" (rectangle 2 300)))
        (position 29 78 (colorize "grey" (rectangle 12 222)))
        (position 29 20 (colorize "grey" (rectangle 12 16)))
@@ -48,7 +54,7 @@
 
 
 ;; Berlin Fernseheturm, with lighting effects (beta)
-(group (position 35 90 (colorize "grey" (circle 25)))
+(layer (position 35 90 (colorize "grey" (circle 25)))
        (position 34 0 (colorize "grey" (rectangle 4 300)))
        (position 29 108 (colorize "grey" (rectangle 12 222)))
        (position 29 50 (colorize "grey" (rectangle 12 16)))
