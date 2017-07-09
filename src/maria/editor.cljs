@@ -68,8 +68,13 @@
                                (.resetValue this)
                                :else nil))
    :life/should-update (fn [_] false)}
-  [{:keys [view/state style] :as this}]
-  [:.h-100 {:style style}])
+  [{:keys [view/state view/props] :as this}]
+  [:div (-> (select-keys props [:style :class :classes])
+            (assoc :on-click #(when (= (.-target %) (.-currentTarget %))
+                                (let [editor (:editor @state)]
+                                  (doto editor
+                                    (.setCursor (.lineCount editor) 0)
+                                    (.focus))))))])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true

@@ -1,4 +1,4 @@
-(ns maria.transit
+(ns maria.persistence.transit
   (:require [cognitect.transit :as t]
             [clojure.string :as string]))
 

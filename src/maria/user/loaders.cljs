@@ -9,10 +9,10 @@
             [maria.views.repl-utils :as repl-ui]
             [maria.editor :as editor]
 
-            [maria.persistence.remote :as remote]
             [goog.net.jsloader :as jsl]
 
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [maria.persistence.github :as github]))
 
 (defview gist-loader-status
   [{:keys [status
@@ -45,16 +45,20 @@
   [id]
   (let [status (atom {:url    id
                       :status "Loading gist..."})]
-    (remote/get-gist id (fn [{:keys [value error]}]
-                   (if error
-                     (swap! status assoc
-                            :status [:.dark-red "Error:"]
-                            :error error)
-                     (let [{source :persisted-data} (remote/parse-gist value)]
-                       (eval/eval-str source)
-                       (swap! status assoc
-                              :status "Gist loaded."
-                              :source source)))))
+    (github/get-gist id (fn [{:keys [value error]}]
+                          (if error
+                            (swap! status assoc
+                                   :status [:.dark-red "Error:"]
+                                   :error error)
+                            (let [project value
+                                  source (or (some-> (:files project)
+                                                     (first)
+                                                     (:content))
+                                             "")]
+                              (eval/eval-str source)
+                              (swap! status assoc
+                                     :status "Gist loaded."
+                                     :source source)))))
     (-> gist-loader-status
         (hoc/bind-atom status))))
 

@@ -1,7 +1,5 @@
-(ns maria.frames.communication
-  (:require [maria.transit :as t]
-            [re-db.d :as d]
-            [cljs.core.match :refer-macros [match]]))
+(ns maria.frame-communication
+  (:require [maria.persistence.transit :as t]))
 
 (enable-console-print!)
 
@@ -11,7 +9,7 @@
 (def port-suffix (when (and port (not= "" port))
                    (str ":" port)))
 
-(def parent-frame "parent")
+(def trusted-frame "trusted")
 
 (def is-parent?
   (= js/window (.-parent js/window)))
@@ -43,13 +41,13 @@
                         port-suffix)
       other-origin (if is-parent? child-origin parent-origin)
       current-frame-id (if is-parent?
-                         "parent"
+                         "trusted"
                          (some->> (.. js/window -location -hash)
                                   (re-find #"#frame_(.*)")
                                   (second)))
       frame-index (atom (cond-> {}
                                 is-child?
-                                (assoc "parent" (.. js/window -parent))))]
+                                (assoc "trusted" (.. js/window -parent))))]
 
   (def child-origin child-origin)
 
@@ -77,15 +75,10 @@
   (.addEventListener js/window "message"
                      (fn [e]
                        (when-let [[id data] (t/deserialize (.-data e))]
-                         (if (= data ::ready)
+                         (if (= data :frame/ready)
                            (do
                              (swap! frame-index assoc id (.-source e))
                              (queue-process :send id #(send id %)))
                            (when (= (.-origin e) other-origin)
                              (doseq [f (concat (get @listeners id) (get @listeners "*"))]
-                               (f data)))))))
-
-  (when-not is-parent?
-    (do
-      (listen "parent" #(match % [:db/transactions txs] (d/transact! txs)))
-      (send parent-frame ::ready))))
+                               (f data))))))))

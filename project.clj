@@ -38,42 +38,42 @@
 
   :source-paths ["src" "script"]
 
-  :cljsbuild {:builds [{:id           "eval-dev"
+  :cljsbuild {:builds [{:id           "user-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.core"
-                                       :output-to      "resources/public/js/compiled/eval.js"
-                                       :output-dir     "resources/public/js/compiled/out-eval-dev"
-                                       :asset-path     "/js/compiled/out-eval-dev"
+                        :compiler     {:main           "maria.user-frame"
+                                       :output-to      "resources/public/js/compiled/user.js"
+                                       :output-dir     "resources/public/js/compiled/out-user-dev"
+                                       :asset-path     "/js/compiled/out-user-dev"
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
-                       {:id           "eval-prod"
+                       {:id           "user-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.core"
-                                       :output-to      "resources/public/js/compiled/eval.js"
-                                       :output-dir     "resources/public/js/compiled/out-eval-prod"
-                                       :asset-path     "/js/compiled/out-eval-prod"
+                        :compiler     {:main           "maria.user-frame"
+                                       :output-to      "resources/public/js/compiled/user.js"
+                                       :output-dir     "resources/public/js/compiled/out-user-prod"
+                                       :asset-path     "/js/compiled/out-user-prod"
                                        :cache-analysis true
                                        :dump-core      false
                                        :parallel-build true
                                        :optimizations  :simple}}
-                       {:id           "index-dev"
+                       {:id           "trusted-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.index"
-                                       :output-to      "resources/public/js/compiled/index.js"
-                                       :output-dir     "resources/public/js/compiled/out-index-dev"
-                                       :asset-path     "/js/compiled/out-index-dev"
+                        :compiler     {:main           "maria.trusted.trusted-frame"
+                                       :output-to      "resources/public/js/compiled/trusted.js"
+                                       :output-dir     "resources/public/js/compiled/out-trusted-dev"
+                                       :asset-path     "/js/compiled/out-trusted-dev"
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
-                       {:id           "index-prod"
+                       {:id           "trusted-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.index"
-                                       :output-to      "resources/public/js/compiled/index.js"
-                                       :output-dir     "resources/public/js/compiled/out-index-prod"
-                                       :asset-path     "/js/compiled/out-index-prod"
+                        :compiler     {:main           "maria.trusted.trusted-frame"
+                                       :output-to      "resources/public/js/compiled/trusted.js"
+                                       :output-dir     "resources/public/js/compiled/out-trusted-prod"
+                                       :asset-path     "/js/compiled/out-trusted-prod"
                                        :optimizations  :advanced
                                        :parallel-build true}}]}
 
@@ -81,8 +81,8 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
-  :aliases {"dev"   ["figwheel" "eval-dev" "index-dev"]
-            "build" ["cljsbuild" "once" "eval-prod" "index-prod"]}
+  :aliases {"dev"   ["figwheel" "user-dev" "trusted-dev"]
+            "build" ["cljsbuild" "once" "user-prod" "trusted-prod"]}
 
   :deploy-via :clojars
 

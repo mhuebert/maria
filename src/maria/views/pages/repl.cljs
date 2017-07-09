@@ -14,8 +14,14 @@
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [re-view-material.core :as ui]
-            [maria.frames.communication :as frame]
-            [clojure.string :as string]))
+            [maria.frame-communication :as frame]
+            [clojure.string :as string]
+            [cljs.core.match :refer-macros [match]]
+            [maria.persistence.github :as github]))
+
+(defn strip-clj-ext [s]
+  (some-> s
+          (string/replace #"\.clj[cs]?$" "")))
 
 (defonce _
          (do
@@ -87,89 +93,149 @@
    ;; ...toolbar items
    ])
 
+(defn user-menu []
+  (ui/SimpleMenuWithTrigger
+    {:open-from :top-left}
+    [:.flex.items-center.b.h-100.pointer.ph2.hover-bg-near-white (d/get :auth-public :display-name)]
+    (ui/SimpleMenuItem {:text-primary "Sign out"
+                        :on-click     #(frame/send frame/trusted-frame [:auth/sign-out])
+                        :dense        true})))
+
+(def toolbar-button :.pa2.flex.items-center)
+(v/defn toolbar-item [props [action icon]]
+  [toolbar-button (merge {:on-click action}
+                         (cond-> props
+                                 action (update :classes conj "pointer hover-bg-near-white"))) (icons/size icon 20)])
+
+(defview toolbar
+  [{{{:keys [html-url id]} :persisted
+     :keys                 [local persisted]
+     :as                   project} :project
+    :keys                           [filename owner]}]
+
+  (let [owner (or owner (get-in project [:persisted :owner]))
+        {:keys [signed-in?]} (d/entity :auth-public)]
+    [:.bb.b--light-gray.flex.items-center.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none
+     [:.ph2.flex-auto.flex.items-center
+      [:.ph2.flex.items-center
+       [:a.hover-underline.gray.no-underline
+        {:href (:index-url owner)} (:username owner)]
+       [:.ph1.gray "/"]
+       (when filename
+         [:a.no-underline.black.hover-underline.b.mr1
+          {:href   html-url
+           :target "_blank"}
+          (strip-clj-ext filename)])]
+
+      (comment
+        (toolbar-item [#(prn "New") (icons/class icons/Add "gold") "New namespace"]))
+      ]
+     (when signed-in? (user-menu))
+
+     (let [unsaved-changes? (and filename
+                                 (contains? (:files local) filename)
+                                 (not= (get-in local [:files filename :content])
+                                       (get-in persisted [:files filename :content])))]
+       (if unsaved-changes?
+         (toolbar-item {:class (when-not unsaved-changes? "o-50")}
+                       [(if signed-in? #(frame/send frame/trusted-frame [:project/publish id])
+                                       #(frame/send frame/trusted-frame [:auth/sign-in])) (icons/class icons/Backup "gold") "Save"])
+         (toolbar-item {:class "o-50"}
+                       [nil (icons/class icons/Backup "gold") ""])))]
+    ))
+
+(defn loader [message]
+  [:.w-100.sans-serif.tc
+   [:.b.progress-indeterminate]
+   [:.pa3.gray message]])
+
+(defview list-gists [{:keys [username]}]
+  (let [gists (d/get username :gists)]
+    [:.flex-auto.flex.flex-column
+     (toolbar {:project (first gists)
+               :owner   (:owner (first gists))})
+     (if-let [message (d/get username :loading-message)]
+       (loader message)
+       [:.flex-auto.overflow-scroll.sans-serif.f6
+        (for [{:keys [id title files]} gists
+              :let [[_ {:keys [filename]}] (first files)]]
+          [:a.db.ph3.pv2.bb.b--near-white.black.no-underline.b.hover-bg-washed-blue.pointer
+           {:href (str "/gist/" id "/" filename)}
+           (strip-clj-ext filename)
+           (some->> title (conj [:.gray.f7.mt1.normal]))])])]))
+
+(defview edit-file
+  {:get-editor    (fn [{:keys [view/state]}]
+                    (some-> (:repl-editor @state) :view/state deref :editor))
+   :project-files (fn [{:keys [id]}]
+                    (-> (set (keys (d/get-in id [:local :files])))
+                        (into (keys (d/get-in id [:persisted :files])))))
+   :current-file  (fn [{:keys [filename] :as this}]
+                    (or filename (first (.projectFiles this))))
+   }
+  [{:keys [view/state id] :as this}]
+  (let [{:keys [default-value
+                loading-message
+                error]
+         :as   project} (d/entity id)
+        filenames (.projectFiles this)
+        filename (.currentFile this)]
+    (cond loading-message (loader loading-message)
+          error [:.pa2.dark-red (str error)]
+          (empty? filenames) [:.pa2 "Empty gist."]
+          :else
+          (let [local-value (get-in project [:local :files filename :content])
+                persisted-value (get-in project [:persisted :files filename :content])]
+            [:.flex.flex-column
+             (toolbar {:project  project
+                       :owner    (:owner project)
+                       :filename filename})
+             (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
+                             :class           "flex-auto overflow-scroll"
+                             :on-update       #(do
+                                                 (prn :update-id id)
+                                                 (frame/send frame/trusted-frame [:project/update-file
+                                                                                  (:id this)
+                                                                                  (.currentFile this)
+                                                                                  :content
+                                                                                  %]))
+                             :source-id       id
+                             :value           (or local-value persisted-value)
+                             :default-value   default-value
+                             :event/mousedown #(when (.-metaKey %)
+                                                 (.preventDefault %)
+                                                 (eval-editor (.getEditor this) :bracket))
+                             :event/keydown   (fn [editor e]
+                                                (case (.keyName js/CodeMirror e)
+                                                  ("Shift-Cmd-Enter"
+                                                    "Shift-Ctrl-Enter") (eval-editor editor :top-level)
+                                                  ("Cmd-Enter"
+                                                    "Ctrl-Enter") (eval-editor editor :bracket)
+                                                  nil))})]))
+
+
+    #_(do
+        (and (> (count filenames) 1)
+             (nil? filename))
+        [:.sans-serif
+         (toolbar project)
+         (when title [:.f5.b.pa2.bb.b--near-white title])
+         (for [filename filenames]
+           [:a.db.pa3.bb.b--near-white.black.no-underline.b.hover-underline
+            {:href (str "/gist/" id "/" filename)}
+            (strip-clj-ext filename)])]
+        )))
 
 (defview layout
-  {:life/initial-state {:repl-editor nil}
-   :get-editor         (fn [{:keys [view/state]}]
-                         (some-> (:repl-editor @state) :view/state deref :editor))}
-  [{:keys [view/state window-id] :as this}]
+  [{:keys [window-id]}]
   [:.h-100.flex.items-stretch
    [:.w-50.relative.border-box.flex.flex-column
-    (let [source-id (d/get :layout window-id)
-          {:keys [local-value
-                  default-value
-                  persisted-value
-                  persistence-mode
-                  loading-message
-                  title
-                  url
-                  error
-                  owner-display-name
-                  owner-url]} (d/entity source-id)
-          {:keys [signed-in? providerId]} (d/entity :auth-public)
-          toolbar-button :.pointer.hover-bg-near-white.pa2.flex.items-center
-          toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center
-          toolbar-item (fn [[action icon]]
-                         [toolbar-button {:on-click action} (icons/size icon 20)])]
-      (cond
-        loading-message [:.w-100
-                         [:.b.progress-indeterminate]
-                         [:.pa2.gray loading-message]]
-        error [:.pa2.dark-red error]
-        :else (list
-                [:.bb.b--light-gray.flex.items-center.sans-serif.f6.items-stretch.flex-none.br.b--light-gray
-
-                 [:.ph2.flex-auto.flex.items-center
-                  (cond->> [:span.b (string/replace (or title "") #"\.clj[cs]?$" "")]
-                           url (conj [:a.no-underline.black.hover-underline
-                                      {:href   url
-                                       :target "_blank"}]))
-                  (when owner-display-name
-                    (cond->> [:span.gray.f7.ph2 owner-display-name]
-                             owner-url (conj [:a.hover-underline.gray.no-underline
-                                              {:href   owner-url
-                                               :target "_blank"}])))
-                  ]
-
-                 ;[:.green icons/Check]
-
-                 (let [revertible-value (or persisted-value default-value)]
-                   (when (and local-value
-                              (not= local-value (or persisted-value default-value)))
-                     (toolbar-item [#(.setValue (.getEditor this) revertible-value) (icons/class icons/Undo "gold") "Revert to saved copy"])))
-
-                 (if signed-in?
-                   (->> [[#(prn "New") (icons/class icons/Add "gold") "New namespace"]
-                         (when persisted-value
-                           #_(when (and local-value
-                                      (not= local-value persisted-value)) "0-50")
-                           (case persistence-mode
-                             :save [#(prn "Save") (icons/class icons/Save "gold") "Save"]
-                             :fork [#(prn "Fork") (icons/class icons/Fork "gold") "Create your own fork of this gist"]))]
-                        (keep identity)
-                        (map toolbar-item))
-                   [toolbar-text {:on-click #(frame/send :parent [:auth/sign-in])} "Sign in"])
-                 (when signed-in? (ui/SimpleMenuWithTrigger
-                                    {:open-from :top-left}
-                                    [toolbar-button (icons/class icons/MoreHorizontal "gold")]
-                                    (ui/SimpleMenuItem {:text-primary "Sign out"
-                                                        :on-click     #(frame/send :parent [:auth/sign-out])
-                                                        :dense        true})))]
-                (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                                :on-update       #(frame/send frame/parent-frame [:source/save-local (d/get :layout window-id) %])
-                                :source-id       source-id
-                                :value           (or local-value persisted-value)
-                                :default-value   default-value
-                                :event/mousedown #(when (.-metaKey %)
-                                                    (.preventDefault %)
-                                                    (eval-editor (.getEditor this) :bracket))
-                                :event/keydown   (fn [editor e]
-                                                   (case (.keyName js/CodeMirror e)
-                                                     ("Shift-Cmd-Enter"
-                                                       "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                                     ("Cmd-Enter"
-                                                       "Ctrl-Enter") (eval-editor editor :bracket)
-                                                     nil))}))))]
+    (when-let [segments (d/get :layout window-id)]
+      (match segments
+             ["gist" id filename] (edit-file {:id       id
+                                              :filename filename})
+             ["gists" username] (list-gists {:username username})))
+    ]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
