@@ -24,10 +24,12 @@
   (swap! queue update the-queue dissoc id))
 
 (let [this-hostname (.. js/window -location -hostname)
-      other-hostname-lookup {"0.0.0.0"         "localhost"
-                             "localhost"       "0.0.0.0"
-                             "www.maria.cloud" "env.maria.cloud"
-                             "env.maria.cloud" "www.maria.cloud"}
+      other-hostname-lookup {"0.0.0.0"              "localhost"
+                             "localhost"            "0.0.0.0"
+                             "www.maria.cloud"      "user.maria.cloud"
+                             "user.maria.cloud"     "www.maria.cloud"
+                             "dev.maria.cloud"      "dev-user.maria.cloud"
+                             "dev-user.maria.cloud" "dev.maria.cloud"}
       parent-hostname (cond->> this-hostname
                                is-child? (get other-hostname-lookup))
       child-hostname (cond->> this-hostname

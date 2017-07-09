@@ -107,6 +107,8 @@
                          (cond-> props
                                  action (update :classes conj "pointer hover-bg-near-white"))) (icons/size icon 20)])
 
+(def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
+
 (defview toolbar
   [{{{:keys [html-url id]} :persisted
      :keys                 [local persisted]
@@ -114,10 +116,12 @@
     :keys                           [filename owner]}]
 
   (let [owner (or owner (get-in project [:persisted :owner]))
+        owned-by-user? (= (str (:id owner))
+                          (str (d/get :auth-public :id)))
         {:keys [signed-in?]} (d/entity :auth-public)]
     [:.bb.b--light-gray.flex.items-center.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none
      [:.ph2.flex-auto.flex.items-center
-      [:.ph2.flex.items-center
+      [:.pl2.flex.items-center
        [:a.hover-underline.gray.no-underline
         {:href (:index-url owner)} (:username owner)]
        [:.ph1.gray "/"]
@@ -129,19 +133,21 @@
 
       (comment
         (toolbar-item [#(prn "New") (icons/class icons/Add "gold") "New namespace"]))
+      (when signed-in?
+        (if owned-by-user?
+          (let [unsaved-changes? (and filename
+                                      (contains? (:files local) filename)
+                                      (not= (get-in local [:files filename :content])
+                                            (get-in persisted [:files filename :content])))]
+            (if unsaved-changes?
+              (toolbar-item {:class (when-not unsaved-changes? "o-50")}
+                            [#(frame/send frame/trusted-frame [:project/publish id]) (icons/class icons/Backup "gold") "Save"])
+              (toolbar-item {:class "o-50"}
+                            [nil (icons/class icons/Backup "gold") ""])))
+          (toolbar-item [#(frame/send frame/trusted-frame [:project/publish id]) (icons/class icons/Fork "gold")])))
       ]
-     (when signed-in? (user-menu))
-
-     (let [unsaved-changes? (and filename
-                                 (contains? (:files local) filename)
-                                 (not= (get-in local [:files filename :content])
-                                       (get-in persisted [:files filename :content])))]
-       (if unsaved-changes?
-         (toolbar-item {:class (when-not unsaved-changes? "o-50")}
-                       [(if signed-in? #(frame/send frame/trusted-frame [:project/publish id])
-                                       #(frame/send frame/trusted-frame [:auth/sign-in])) (icons/class icons/Backup "gold") "Save"])
-         (toolbar-item {:class "o-50"}
-                       [nil (icons/class icons/Backup "gold") ""])))]
+     (if signed-in? (user-menu)
+                    [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in"])]
     ))
 
 (defn loader [message]
@@ -186,7 +192,7 @@
           :else
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
-            [:.flex.flex-column
+            [:.flex.flex-column.flex-auto
              (toolbar {:project  project
                        :owner    (:owner project)
                        :filename filename})

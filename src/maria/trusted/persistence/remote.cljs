@@ -13,6 +13,7 @@
                                      (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
                                                     [{:db/id        :auth-public
                                                       :display-name displayName
+                                                      :id           (get-in providerData [0 :uid])
                                                       :signed-in?   true}
                                                      (merge {:db/id         :auth-secret
                                                              :uid           uid

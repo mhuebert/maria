@@ -1,12 +1,15 @@
 (ns maria.persistence.github
   (:require [goog.net.XhrIo :as xhr]
             [maria.persistence.tokens :as tokens]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [re-view-routing.core :as r]
+            [maria.persistence.local :as local]))
 
-(defn gist-person [{:keys [html_url url login gists_url] :as person}]
+(defn gist-person [{:keys [html_url url id login gists_url] :as person}]
   {:html-url  (str "https://gist.github.com/" login)
    :index-url (str "/gists/" login)
-   :username  login})
+   :username  login
+   :id        id})
 
 (defn gist->project
   "Convert a gist to local project format"
@@ -25,8 +28,7 @@
 
 (defn project->gist
   "Convert a project to gist format, for persistence"
-  [{:keys           [title]
-    {:keys [files]} :local}]
+  [{:keys [files title]}]
   (cond->
     {:files (reduce-kv (fn [m filename file]
                          (assoc m filename (select-keys file [:filename :content]))) {} files)}
@@ -72,14 +74,37 @@
                                              [:db/add username :loading-message false]]
                                             [{:error error}])))))
 
-(defn gist-patch [id data]
+(defn patch-gist [id data]
   (xhr/send (str "https://api.github.com/gists/" id)
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (prn (-> (.getResponseJson target)
-                           (js->clj :keywordize-keys true)
-                           (gist->project)))
+                  (do
+                    (prn (-> (.getResponseJson target)
+                             (js->clj :keywordize-keys true)
+                             (gist->project)))
+                    (d/transact! [[:db/add id :persisted (-> (.getResponseJson target)
+                                                             (js->clj :keywordize-keys true)
+                                                             (gist->project))]]))
                   (prn :error-saving-gist (.getLastError target)))))
             "PATCH"
-            (clj->js data)))
+            (->> data (clj->js) (.stringify js/JSON))
+            (tokens/auth-headers :github)))
+
+(defn fork-gist [id]
+  (xhr/send (str "https://api.github.com/gists/" id "/forks")
+            (fn [e]
+              (let [target (.-target e)]
+                (if (.isSuccess target)
+                  (let [{new-id :id
+                         :as    gist-data} (-> (.getResponseJson target)
+                                               (js->clj :keywordize-keys true))]
+                    (local/init-storage new-id)
+                    (d/transact! [{:db/id     new-id
+                                   :persisted (gist->project gist-data)
+                                   :local     (d/get id :local)}])
+                    (r/nav! (str "/gist/" new-id)))
+                  (prn :error-saving-gist (.getLastError target)))))
+            "POST"
+            nil
+            (tokens/auth-headers :github)))
