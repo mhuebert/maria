@@ -7,7 +7,7 @@
     "rewrites": [
       {
         "source": "**",
-        "destination": "/trusted.html"
+        "destination": "/index.html"
       }
     ]
   }

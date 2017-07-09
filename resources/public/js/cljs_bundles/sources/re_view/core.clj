@@ -26,13 +26,13 @@
   [methods]
   (-> (reduce-kv (fn [m k v]
                    (assoc-in m [(case (namespace k)
-                                      "life" :lifecycle-keys
-                                      "react" :react-keys
-                                      ("spec" "view") :class-keys
-                                      (case k
-                                            (:key :display-name)
-                                            :react-keys
-                                            :instance-keys)) k] v)) {} methods)
+                                  "life" :lifecycle-keys
+                                  "react" :react-keys
+                                  ("spec" "view") :class-keys
+                                  (case k
+                                    (:key :display-name)
+                                    :react-keys
+                                    :instance-keys)) k] v)) {} methods)
       ;; instance keys are accessed via dot notation.
       ;; must use set! for the keys, otherwise they will
       ;; be modified in advanced compilation.
@@ -45,27 +45,27 @@
 (clojure.core/defn parse-view-args
   "Parse args for optional docstring and method map"
   [args]
-  (let [out [(if (string? (first args)) (first args) nil)]
-        remaining (if (string? (first args)) (next args) args)
-        out (conj out (if (map? (first remaining)) (first remaining) nil))
-        remaining (if (map? (first remaining)) (next remaining) remaining)]
-    (conj out remaining)))
+  (let [out []
+        out (conj out (if (symbol? (first args)) (first args) (gensym)))
+        args (if (symbol? (first args)) (next args) args)
+        out (conj out (if (string? (first args)) (first args) nil))
+        args (if (string? (first args)) (next args) args)
+        out (conj out (if (map? (first args)) (first args) nil))
+        args (if (map? (first args)) (next args) args)]
+    (conj out args)))
 
 (clojure.core/defn display-name
   "Generate a meaningful name to identify React components while debugging"
-  ([ns] (str (gensym (display-name ns "view"))))
-  ([ns given-name]
-   (str (last (string/split (name (ns-name ns)) #"\.")) "/" given-name)))
+  [ns given-name]
+  (str (last (string/split (name (ns-name ns)) #"\.")) "/" given-name))
 
 (clojure.core/defn wrap-body
   "Wrap body in anonymous function form."
-  [name body]
-  (cond (vector? (first body))
-        `(~'fn ~name ~(first body) (~'re-view-hiccup.core/element (do ~@(rest body))))
-        (list? (first body))
-        `(~'fn ~name ~@(mapv (fn [body]
-                               `(~(first body) (~'re-view-hiccup.core/element (do ~@(rest body))))) body))
-        :else `(~'throw (~'js/Error ~(str "Invalid render function: " body)))))
+  [name [args & body]]
+  (assert (vector? args))
+  `(~'fn ~name ~args
+     (do ~@(drop-last body)
+         (~'re-view-hiccup.core/element ~(last body)))))
 
 (defmacro defview
   "Define a view function.
@@ -73,49 +73,47 @@
    Expects optional docstring and methods map, followed by
     the argslist and body for the render function, which should
     return a Hiccup vector or React element."
-  [view-name & args]
-  (let [[docstring methods body] (parse-view-args args)
+  [& args]
+  (let [[view-name docstring methods body] (parse-view-args args)
+        _ (assert (symbol? view-name))
         methods (-> methods
                     (merge {:react/docstring docstring
                             :display-name    (display-name *ns* view-name)
                             :life/render     (wrap-body view-name body)})
                     (group-methods))]
-    `(def ~view-name ~docstring (~'re-view.core/view* ~methods))))
+    `(def ~view-name ~@(some-> docstring (list)) (~'re-view.core/view* ~methods))))
 
 (defmacro view
   "Returns anonymous view, given the same args as `defview`."
   [& args]
-  (let [view-name (if (symbol? (first args))
-                    (first args)
-                    nil)
-        [docstring methods body] (parse-view-args (if view-name (rest args) args))
+  (let [[view-name docstring methods body] (parse-view-args args)
         methods (-> methods
                     (merge {:react/docstring docstring
-                            :display-name    (if view-name (display-name *ns* view-name) (display-name *ns*))
+                            :display-name    (display-name *ns* view-name)
                             :life/render     (wrap-body view-name body)})
                     (group-methods))]
     `(~'re-view.core/view* ~methods)))
 
 (defmacro defn
   "Defines a stateless view function"
-  [name & args]
-  (let [[docstring methods body] (parse-view-args args)]
-    `(clojure.core/defn ~name ~@(if docstring [docstring] [])
+  [& args]
+  (let [[view-name docstring methods body] (parse-view-args args)]
+    `(clojure.core/defn ~view-name ~@(if docstring [docstring] [])
        [& args#]
-       (apply ~(wrap-body name body) (if (map? (first args#)) args# (cons {} args#))))))
+       (apply ~(wrap-body view-name body) (if (map? (first args#)) args# (cons {} args#))))))
 
 (comment
-  (assert (= (parse-view-args '("a" {:b 1} [c] 1 2))
-             '["a" {:b 1} ([c] 1 2)]))
+  (assert (= (parse-view-args '(name "a" {:b 1} [c] 1 2))
+             '[name "a" {:b 1} ([c] 1 2)]))
 
-  (assert (= (parse-view-args '({} [] 1 2))
-             '[nil {} ([] 1 2)]))
+  (assert (= (parse-view-args '(name {} [] 1 2))
+             '[name nil {} ([] 1 2)]))
 
-  (assert (= (parse-view-args '("a" [] 1 2))
-             '["a" nil ([] 1 2)]))
+  (assert (= (parse-view-args '(name "a" [] 1 2))
+             '[name "a" nil ([] 1 2)]))
 
-  (assert (= (parse-view-args '([] 1 2))
-             '[nil nil ([] 1 2)]))
+  (assert (= (parse-view-args '(name [] 1 2))
+             '[name nil nil ([] 1 2)]))
 
-  (assert (= (parse-view-args '([]))
-             '[nil nil ([])])))
+  (assert (= (parse-view-args '(name []))
+             '[name nil nil ([])])))
