@@ -17,16 +17,32 @@
 (map #(colorize % (square 50))
      (map #(rgb 0 0 %) (range 0 250 25)))
 
+;; variable opacity
+(map
+  #(opacity % (colorize "blue" (square 10)))
+  (range 0 1 0.1))
+
 ;; color gradient
 (apply above
   (map #(colorize (hsl (rescale % 0 1000 120 220) 90 90)
                 (rectangle 500 5))
      (range 0 1000 5)))
  
-;; variable opacity
-(map
-  #(opacity % (colorize "blue" (square 10)))
-  (range 0 1 0.1))
+;; rolling triangle rainbow
+(apply layer 
+  (concat [(colorize "white" (rectangle 750 75))]
+          (map #(->> (triangle 25)
+                     (position (* 2 %) 20)
+                     (rotate %)
+   	                 (colorize (hsl % 90 75)))
+               (range 0 360 15))))
+
+;; confetti
+(let [palette (cycle ["aqua" "springgreen" "magenta"])]
+  (->> (repeat 20 (triangle 20))
+     (map #(position [(rand-int 500) (rand-int 500)] %))
+     (map colorize palette)
+     (apply group)))
 
 ;; Halloween pumpkin
 (layer
@@ -39,7 +55,6 @@
  (position 33 82 (colorize "orange" (rectangle 10 5)))
  (position 35 2 (colorize "black" (rectangle 10 20))))
 
-
 ;; Berlin Fernseheturm
 (layer (position 35 60 (colorize "grey" (circle 25)))
        (position 34 0 (colorize "grey" (rectangle 2 300)))
@@ -51,7 +66,6 @@
        (position 41 152 (colorize "grey" (rectangle 5 158)))
        (position 41 140 (colorize "grey" (rectangle 2 158)))
        (position 27 140 (colorize "grey" (rectangle 2 158))))
-
 
 ;; Berlin Fernseheturm, with lighting effects (beta)
 (layer (position 35 90 (colorize "grey" (circle 25)))

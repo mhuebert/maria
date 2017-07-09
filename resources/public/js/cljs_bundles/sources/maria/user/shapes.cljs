@@ -193,12 +193,39 @@
     (element (-> [:svg (assoc (bounds shapes) :x 0 :y 0)]
                  (into (mapv shape->vector shapes))))))
 
-(defn colorize
-  "Return `shape` with its color changed to `color`."
+(defn stroke
+  "Return `shape` with its stroke set to `color`."
   [color shape]
   (if (= :svg (:kind shape))
-    (assoc shape :children (mapv (partial colorize color) (:children shape)))
+    (assoc shape :children (mapv (partial stroke color) (:children shape)))
+    (assoc shape :stroke color)))
+
+(defn no-stroke
+  "Return `shape` with its stroke color turned off."
+  [shape]
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv no-stroke (:children shape)))
+    (assoc shape :stroke "none")))
+
+(defn fill
+  "Return `shape` with its fill set to `color`."
+  [color shape]
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv (partial fill color) (:children shape)))
     (assoc shape :fill color)))
+
+(defn no-fill
+  "Return `shape` with its fill color turned off."
+  [shape]
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv no-fill (:children shape)))
+    (assoc shape :fill "none")))
+
+(defn colorize
+  "Return `shape` with its color set to `color`."
+  [color shape]
+  (stroke color shape)
+  (fill color shape))
 
 ;; XXX SVG transforms are a fucking mess, so this needs to be fixed
 (defn scale

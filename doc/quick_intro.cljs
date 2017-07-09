@@ -5,12 +5,15 @@
 
 "puppy"
 
-;; You just evaluated a puppy! 🐶
+;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate means
+;; something special. It's what happens when you tell the computer
+;; to "run" your code and tell you what it thinks it means.
 
-;; Clojure is a language full of things called expressions, and this
-;; is one. All expressions can be evaluated, as you just did with this
-;; one. What kind of expression is "puppy"? Evaluate this expression
-;; to find out:
+;; Clojure is a language full of things called expressions, and
+;; "puppy" is one of them. All expressions can be evaluated, as you
+;; just did. What kind of expression is "puppy"?
+
+;; Evaluate this expression to find out:
 
 (what-is "puppy")
 
@@ -23,7 +26,9 @@
 ;; sentence where the first thing after the `(` is treated as the
 ;; verb. We call these verbs "functions", and when we evaluate a form
 ;; in parens it _calls_ the function at the beginning of the
-;; expression on the _arguments_ that follow.
+;; expression on the _arguments_ that follow. (These arguments don't
+;; have anything to do with arguing, it's just a word from maths for
+;; what's given to a function).
 
 ;; What do you think a `circle` function with an argument of `50`
 ;; might do? Try evaluating it to find out:
@@ -258,6 +263,10 @@ color-names
 (let [make-purple-circle (fn [radius] (colorize "purple" (circle radius)))]
   [(map make-purple-circle [16 32 64 128])
    (map make-purple-circle [16 8 4 2])])
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; XXX dragons
 
 ;; That's great, but there's a catch. Names we give with `let` only
 ;; apply within the `let` expression. That's useful, so that names we
