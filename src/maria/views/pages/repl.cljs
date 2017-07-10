@@ -51,7 +51,8 @@
                                                                             conj
                                                                             {:id    (d/unique-id)
                                                                              :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))
-                              (d/transact! [[:db/add :repl/state :eval-log []]])))))
+                              (d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
+                                                                             :value (repl-ui/plain [:span.gray "Ready."])}]]])))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}
