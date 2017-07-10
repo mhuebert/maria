@@ -4,9 +4,6 @@
             [goog.functions :as gf]
             [goog.object :as gobj]))
 
-(defn update-local-gist [id filename attr value]
-  (d/transact! [[:db/update-attr id :local #(assoc-in % [:files filename attr] value)]]))
-
 (defn local-id [id] (str "maria.local/" id))
 
 (defn local-put [id data]
@@ -26,7 +23,7 @@
               (d/listen {:ea_ [[id :local]]}
                         (gf/debounce #(local-put id (d/get id :local)) 500)))
              ([id initial-content]
-               (when (and (nil? (local-get id)) initial-content)
-                 (local-put id initial-content))
-               (init-storage id)))))
+              (when (and (nil? (local-get id)) initial-content)
+                (local-put id initial-content))
+              (init-storage id)))))
 

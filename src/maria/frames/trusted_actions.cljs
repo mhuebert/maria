@@ -1,15 +1,13 @@
-(ns maria.trusted.trusted-actions
+(ns maria.frames.trusted-actions
   (:require [re-db.d :as d]
-            [maria.trusted.persistence.remote :as remote]
+            [maria.persistence.firebase :as remote]
             [clojure.string :as string]
             [re-view-routing.core :as routing]
             [cljs.pprint :refer [pprint]]
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]
-            [maria.frame-communication :as frame]
+            [maria.frames.communication :as frame]
             [re-view-routing.core :as r]))
-
-
 
 (defn navigate! [url opts]
   (if (string/starts-with? url "/")
@@ -18,7 +16,7 @@
       (.open js/window url)
       (aset js/window "location" "href" url))))
 
-(def editor-message-handler
+(def handle-message
   (memoize (fn [project-id]
              (fn [frame-id message]
                (match message

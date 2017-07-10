@@ -89,7 +89,6 @@
   {:display-name    "AutosizeText"
    :life/did-mount  (fn [this] (update-size this))
    :life/did-update (fn [this] (update-size this))
-   :value           (fn [{:keys [value]}] value)
    :cols            (fn [{:keys [view/state]}]
                       (let [fake (:fake-element @state)
                             sample "Order. When I switched action-handling to a timeout"

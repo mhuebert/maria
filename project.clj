@@ -41,7 +41,7 @@
   :cljsbuild {:builds [{:id           "user-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.user-frame"
+                        :compiler     {:main           "maria.frames.user"
                                        :output-to      "resources/public/js/compiled/user.js"
                                        :output-dir     "resources/public/js/compiled/out-user-dev"
                                        :asset-path     "/js/compiled/out-user-dev"
@@ -50,7 +50,7 @@
                                        :parallel-build true}}
                        {:id           "user-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.user-frame"
+                        :compiler     {:main           "maria.frames.user"
                                        :output-to      "resources/public/js/compiled/user.js"
                                        :output-dir     "resources/public/js/compiled/out-user-prod"
                                        :asset-path     "/js/compiled/out-user-prod"
@@ -61,7 +61,7 @@
                        {:id           "trusted-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.trusted.trusted-frame"
+                        :compiler     {:main           "maria.frames.trusted"
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-dev"
                                        :asset-path     "/js/compiled/out-trusted-dev"
@@ -70,7 +70,7 @@
                                        :parallel-build true}}
                        {:id           "trusted-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.trusted.trusted-frame"
+                        :compiler     {:main           "maria.frames.trusted"
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-prod"
                                        :asset-path     "/js/compiled/out-trusted-prod"

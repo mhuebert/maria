@@ -1,5 +1,5 @@
-(ns maria.trusted.routes
-  (:require [maria.trusted.frame-views :as frame-view]
+(ns maria.frames.trusted-routes
+  (:require [maria.frames.views :as frame-view]
             [re-view.core :as v :refer [defview]]
             [cljs.core.match :refer-macros [match]]
             [maria.curriculum :as curriculum]

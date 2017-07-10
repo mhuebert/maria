@@ -5,7 +5,7 @@
             [re-db.d :as d]
             [re-view-routing.core :as r]
             [maria.persistence.local :as local]
-            [maria.frame-communication :as frame]
+            [maria.frames.communication :as frame]
             [maria.curriculum :as curriculum]))
 
 (defn gist-person [{:keys [html_url url id login gists_url] :as person}]
@@ -135,9 +135,7 @@
             nil
             (tokens/auth-headers :github)))
 
-
-
-(def blank {:files {"" {:content ";; type here"}}})
+(def blank {:files {"" {:content ""}}})
 
 (defn clear-new! []
   (d/transact! [{:db/id     "new"

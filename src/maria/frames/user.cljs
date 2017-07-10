@@ -1,4 +1,4 @@
-(ns maria.user-frame
+(ns maria.frames.user
   (:require [cljsjs.react]
             [cljsjs.react.dom]
             [maria.views.pages.repl :as repl]
@@ -18,11 +18,12 @@
 
             [goog.events :as events]
 
-            [maria.frame-communication :as frame]
+            [maria.frames.communication :as frame]
             [re-db.d :as d]
             [clojure.string :as string]
             [maria.persistence.local :as local]
-            [maria.persistence.github :as github]))
+            [maria.persistence.github :as github]
+            [maria.frames.user-actions :as user-actions]))
 
 (enable-console-print!)
 
@@ -46,14 +47,11 @@
 
   (local/init-storage "new" github/blank)
 
+  (repl/init)
+
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")
 
-  (frame/listen frame/trusted-frame (fn [_ message]
-                                      (match message
-                                             [:db/transactions txs] (d/transact! txs)
-                                             [:db/copy-local from-id to-id]
-                                             (local/init-storage to-id (d/get from-id :local))
-                                             [:project/clear-new!] (github/clear-new!))))
+  (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))
 
 

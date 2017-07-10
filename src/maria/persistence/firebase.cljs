@@ -1,4 +1,4 @@
-(ns maria.trusted.persistence.remote
+(ns maria.persistence.firebase
   (:require [re-view.core :as v :refer [defview]]
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
@@ -6,12 +6,10 @@
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]))
 
-
-
 (def firebase-auth (.auth js/firebase))
 
 (.onAuthStateChanged firebase-auth (fn [user]
-                                     (d/transact! (if-let [{:keys [displayName uid providerData] :as user} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
+                                     (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
                                                     (let [github-id (get-in providerData [0 :uid])]
                                                       (github/get-username github-id (fn [{:keys [value error]}]
                                                                                        (if value (d/transact! [{:db/id     :auth-public

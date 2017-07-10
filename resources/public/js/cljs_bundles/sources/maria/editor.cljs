@@ -22,7 +22,6 @@
 (defview editor
   {:view/spec          {:props {:event/mousedown :Function
                                 :event/keydown   :Function}}
-   :life/initial-state {:editor nil}
    :life/did-mount     (fn [{:keys [default-value value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
                              :as   this}]
                          (let [dom-node (v/dom-node this)

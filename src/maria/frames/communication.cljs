@@ -1,4 +1,4 @@
-(ns maria.frame-communication
+(ns maria.frames.communication
   (:require [maria.persistence.transit :as t]))
 
 (enable-console-print!)

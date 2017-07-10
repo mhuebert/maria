@@ -1,11 +1,10 @@
-(ns maria.trusted.trusted-frame
+(ns maria.frames.trusted
   (:require
     [cljsjs.react]
     [cljsjs.react.dom]
     [re-view-routing.core :as routing]
     [re-view.core :as v :refer [defview]]
-    [maria.trusted.frame-views :as frame-view]
-    [maria.trusted.routes :as routes]
+    [maria.frames.trusted-routes :as routes]
     [re-db.d :as d]))
 
 (enable-console-print!)

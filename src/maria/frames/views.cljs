@@ -1,10 +1,10 @@
-(ns maria.trusted.frame-views
+(ns maria.frames.views
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.frame-communication :as frame]
+            [maria.frames.communication :as frame]
             [maria.persistence.local :as local]
             [cljs.core.match :refer-macros [match]]
-            [maria.trusted.trusted-actions :as actions]))
+            [maria.frames.trusted-actions :as actions]))
 
 (defview frame-view
   {:life/initial-state      #(do {:frame-id (str (gensym))})
@@ -45,4 +45,4 @@
                                            [:db/retract-entity :auth-public])
                                        (some-> entity-id (d/entity))]
                                       transactions)
-               :on-message      (actions/editor-message-handler entity-id)}))
+               :on-message      (actions/handle-message entity-id)}))
