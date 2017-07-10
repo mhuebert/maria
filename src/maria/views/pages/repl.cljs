@@ -145,8 +145,8 @@
         persist-icon (case persist-mode (:publish :create) icons/Backup
                                         :fork icons/ContentDuplicate)
         persist! #(send (case persist-mode
-                          :publish [:project/publish persisted-id {:files {filename {:filename local-filename
-                                                                                     :content  local-content}}}]
+                          :publish [:project/publish persisted-id {:files {filename {:filename (or local-filename filename)
+                                                                                     :content  (or local-content persisted-content)}}}]
                           :create [:project/create (d/get "new" :local)]
                           :fork [:project/fork persisted-id]))]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
@@ -172,9 +172,9 @@
           (toolbar-item [persist! persist-icon])
           (let [unsaved-changes? (and filename
                                       (contains? (:files local) filename)
-                                      local-content
-                                      (or (not= local-content persisted-content)
-                                          (not= filename local-filename))
+                                      (or local-content local-filename)
+                                      (or (and local-content (not= local-content persisted-content))
+                                          (and local-filename (not= filename local-filename)))
                                       (not (re-find #"^\s*$" local-content)))]
             (list
               (if-not unsaved-changes?
