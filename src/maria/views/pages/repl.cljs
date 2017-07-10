@@ -96,10 +96,10 @@
 
 (defn user-menu []
   (ui/SimpleMenuWithTrigger
-    {:open-from :top-left
+    {:open-from         :top-left
      :container-classes ["mdc-menu-anchor" "flex" "items-stretch"]
      }
-    [:.flex.items-center.b.pointer.ph2.hover-bg-near-white (d/get :auth-public :display-name)]
+    [:.flex.items-center.b.pointer.ph2.hover-bg-near-white (d/get :auth-public :username)]
     (ui/SimpleMenuItem {:text-primary "Sign out"
                         :on-click     #(frame/send frame/trusted-frame [:auth/sign-out])
                         :dense        true})))
@@ -113,41 +113,58 @@
 (def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
 
 (defview toolbar
-  [{{{:keys [html-url id]} :persisted
-     :keys                 [local persisted]
-     :as                   project} :project
-    :keys                           [filename owner]}]
+  [{{:keys [persisted local] :as project} :project
+    :keys                                 [filename get-editor id owner]}]
 
-  (let [owner (or owner (get-in project [:persisted :owner]))
-        owned-by-user? (= (str (:id owner))
-                          (str (d/get :auth-public :id)))
-        {:keys [signed-in?]} (d/entity :auth-public)]
+  (let [signed-in? (d/get :auth-public :signed-in?)
+        {:keys [maria-url] :as owner} (cond owner owner
+                                            persisted (:owner persisted)
+                                            :else (d/entity :auth-public))
+        owned-by-current-user? (= (str (:id owner)) (d/get :auth-public :id))
+        current-filename (or (get-in local [:files filename :filename]) filename)]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
      [:.ph2.flex-auto.flex.items-center
       [:.pl2.flex.items-center
-       [:a.hover-underline.gray.no-underline
-        {:href (:index-url owner)} (:username owner)]
+       [:a.hover-underline.gray.no-underline {:href maria-url} (:username owner)]
        [:.ph1.gray "/"]
        (when filename
-         [:a.no-underline.black.hover-underline.b.mr1
-          {:href   html-url
-           :target "_blank"}
-          (strip-clj-ext filename)])]
+         [:input {:value     (strip-clj-ext current-filename)
+                  :on-change #(let [next-value (str (.-value (.-target %)) ".cljs")]
+                                (prn :update next-value (d/entity id))
+                                (d/transact! [[:db/update-attr id :local (fn [local]
+                                                                           (assoc-in local [:files filename :filename] (str (.-value (.-target %)) ".cljs")))]]))}]
+         #_(cond->> [:span.b.mr1 (strip-clj-ext filename)]
+                    persisted (conj [:a.no-underline.black.hover-underline
+                                     {:href   (:html-url persisted)
+                                      :target "_blank"}])))]
 
       (when (and filename signed-in?)
-        (if owned-by-user?
-          (let [unsaved-changes? (and filename
-                                      (contains? (:files local) filename)
-                                      (not= (get-in local [:files filename :content])
-                                            (get-in persisted [:files filename :content])))]
-            (if unsaved-changes?
-              (toolbar-item {:class (when-not unsaved-changes? "o-50")}
-                            [#(frame/send frame/trusted-frame [:project/publish id (d/get id :local)]) (icons/class icons/Backup "gold") "Save"])
-              (toolbar-item {:class "o-50"}
-                            [nil (icons/class icons/Backup "gold") ""])))
-          (toolbar-item [#(frame/send frame/trusted-frame [:project/fork id]) (icons/class icons/ContentDuplicate "gold")])))
+        (let [unsaved-changes? (and filename
+                                    (contains? (:files local) filename)
+                                    (not= (get-in local [:files filename :content])
+                                          (get-in persisted [:files filename :content])))
+              save-action (match [(boolean persisted) owned-by-current-user?]
+                                 [true true] :publish
+                                 [true false] :fork
+                                 [false _] :create)
+              save-icon (case save-action (:publish :create) (icons/class icons/Backup "gold")
+                                          :fork (icons/class icons/ContentDuplicate "gold"))]
+          (if-not unsaved-changes?
+            (toolbar-item {:class "o-50"} [nil save-icon ""])
+            (toolbar-item [#(frame/send frame/trusted-frame (case save-action
+                                                              :publish [:project/publish (:id persisted) (d/get (:id persisted) :local)]
+                                                              :create [:project/create (d/get "new" :local)]
+                                                              :fork [:project/fork (:id persisted)])) save-icon]))))
 
-      (toolbar-item [#(prn "Blank") (icons/class icons/Add "gold") "New namespace"])
+      (toolbar-item [#(do
+                        (github/clear-new!)
+                        (some-> get-editor
+                                (apply [])
+                                :view/state
+                                (deref)
+                                :editor
+                                (.setValue ";; type here"))
+                        (frame/send frame/trusted-frame [:window/navigate "/new" {}])) (icons/class icons/Add "gold") "New namespace"])
       ]
      (if signed-in? (user-menu)
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]
@@ -158,20 +175,19 @@
    [:.b.progress-indeterminate]
    [:.pa3.gray message]])
 
-(defview list-gists [{:keys [username]}]
+(defview gists-list [{:keys [username]}]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar {:project (first gists)
-               :owner   (:owner (first gists))})
-     (if-let [message (d/get username :loading-message)]
-       (loader message)
-       [:.flex-auto.overflow-scroll.sans-serif.f6
-        (for [{:keys [id title files]} gists
-              :let [[_ {:keys [filename]}] (first files)]]
+     (toolbar {:owner (:owner (first gists))})
+     [:.flex-auto.overflow-scroll.sans-serif.f6
+      (if-let [message (d/get username :loading-message)]
+        (loader message)
+        (for [{:keys [id description files]} gists
+              :let [[filename _] (first files)]]
           [:a.db.ph3.pv2.bb.b--near-white.black.no-underline.b.hover-bg-washed-blue.pointer
-           {:href (str "/gist/" id "/" filename)}
+           {:href (str "/gist/" id)}
            (strip-clj-ext filename)
-           (some->> title (conj [:.gray.f7.mt1.normal]))])])]))
+           (some->> description (conj [:.gray.f7.mt1.normal]))]))]]))
 
 (defview edit-file
   {:get-editor              (fn [{:keys [view/state]}]
@@ -185,8 +201,7 @@
                               (-> (set (keys (d/get-in id [:local :files])))
                                   (into (keys (d/get-in id [:persisted :files])))))
    :current-file            (fn [{:keys [filename] :as this}]
-                              (or filename (first (.projectFiles this))))
-   }
+                              (or filename (first (.projectFiles this))))}
   [{:keys [view/state id] :as this}]
   (let [{:keys [default-value
                 loading-message
@@ -201,9 +216,11 @@
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
             [:.flex.flex-column.flex-auto.relative
-             (toolbar {:project  project
-                       :owner    (:owner project)
-                       :filename filename})
+             (toolbar {:project    project
+                       :owner      (:owner project)
+                       :filename   filename
+                       :id         id
+                       :get-editor #(:repl-editor @state)})
              (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                              :class           "flex-auto overflow-scroll"
                              :on-update       #(local/update-local-gist (:id this) (.currentFile this) :content %)
@@ -240,9 +257,10 @@
    [:.w-50.relative.border-box.flex.flex-column
     (when-let [segments (d/get :layout window-id)]
       (match segments
+             ["new"] (edit-file {:id "new"})
              ["gist" id filename] (edit-file {:id       id
                                               :filename filename})
-             ["gists" username] (list-gists {:username username})))
+             ["gists" username] (gists-list {:username username})))
     ]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
     (repl-ui/ScrollBottom

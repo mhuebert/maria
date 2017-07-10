@@ -26,6 +26,8 @@
                         (if owned?
                           (github/patch-gist project-id (github/project->gist project))
                           (throw (js/Error. "Cannot publish project owned by another user."))))
+                      [:project/create project]
+                      (github/create-gist frame-id (github/project->gist project))
                       [:project/fork project-id] (github/fork-gist frame-id project-id)
                       [:auth/sign-in] (remote/sign-in :github)
                       [:auth/sign-out] (remote/sign-out)

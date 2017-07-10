@@ -21,7 +21,8 @@
             [maria.frame-communication :as frame]
             [re-db.d :as d]
             [clojure.string :as string]
-            [maria.persistence.local :as local]))
+            [maria.persistence.local :as local]
+            [maria.persistence.github :as github]))
 
 (enable-console-print!)
 
@@ -43,6 +44,8 @@
 
 (defn main []
 
+  (local/init-storage "new")
+
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")
 
   (frame/listen frame/trusted-frame (fn [_ message]
@@ -52,6 +55,7 @@
                                              (do
                                                (local/local-put to-id (d/get from-id :local))
                                                (local/init-storage to-id))
+                                             [:project/clear-new!] (github/clear-new!)
                                              )))
   (frame/send frame/trusted-frame :frame/ready))
 
