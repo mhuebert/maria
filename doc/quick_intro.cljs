@@ -1,16 +1,24 @@
-;;;; Asking the Computer Questions
+;; Hi! This environment is called Maria, and we're going to show you
+;; some things you can do with it. Don't worry if anything's new and a
+;; little confusing at first, we're going to explain everything as we
+;; go.
+
+;; First, let's ask the computer some questions...
 
 ;; Put your cursor at the end of the line with "puppy" and press
 ;; `control-enter` (`command-enter` on Mac):
 
 "puppy"
 
-;; You just evaluated a puppy! 🐶
+;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate means
+;; something special. It's what happens when you tell the computer
+;; to "run" your code and tell you what it thinks it means.
 
-;; Clojure is a language full of things called expressions, and this
-;; is one. All expressions can be evaluated, as you just did with this
-;; one. What kind of expression is "puppy"? Evaluate this expression
-;; to find out:
+;; Clojure is a language full of things called expressions, and
+;; "puppy" is one of them. All expressions can be evaluated, as you
+;; just did. What kind of expression is "puppy"?
+
+;; Evaluate this expression to find out:
 
 (what-is "puppy")
 
@@ -23,7 +31,9 @@
 ;; sentence where the first thing after the `(` is treated as the
 ;; verb. We call these verbs "functions", and when we evaluate a form
 ;; in parens it _calls_ the function at the beginning of the
-;; expression on the _arguments_ that follow.
+;; expression on the _arguments_ that follow. (These arguments don't
+;; have anything to do with arguing, it's just a word from maths for
+;; what's given to a function).
 
 ;; What do you think a `circle` function with an argument of `50`
 ;; might do? Try evaluating it to find out:
@@ -120,15 +130,15 @@ color-names
 ;; By default, things in groups all share the same top/left corner,
 ;; and thus often overlap:
 
-(group
+(layer
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
-;; But we can also position them within a group using the `position`
+;; But we can also position them within a layer using the `position`
 ;; function, which takes an `x` and a `y` to tell it where to put a
 ;; shape:
 
-(group
+(layer
  (colorize "springgreen" (circle 25))
  (position 50 25 (colorize "pink" (circle 25))))
 
@@ -138,7 +148,7 @@ color-names
 ;; inside a big nested expression, let's draw a face with an
 ;; expression:
 
-(group
+(layer
  (colorize "aqua" (circle 40))
  (position 10 10 (colorize "magenta" (triangle 24)))
  (position 45 10 (colorize "magenta" (triangle 24)))
@@ -196,12 +206,12 @@ color-names
 ;; giant expression, which will draw a small diagram to help explain
 ;; how functions work:
 
-(group
+(layer
   (position 50 60 (text "(fn [radius] (circle radius))"))
   (colorize "grey" (position 60 70 (triangle 10)))
   (position 0 102 (text "function"))
   (position 30 -3
-            (group (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
+            (layer (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
   (position 90 20 (text "argument(s)"))
   (colorize "grey" (position 170 70 (triangle 10)))
   (position 170 102 (text "expression")))
@@ -258,6 +268,10 @@ color-names
 (let [make-purple-circle (fn [radius] (colorize "purple" (circle radius)))]
   [(map make-purple-circle [16 32 64 128])
    (map make-purple-circle [16 8 4 2])])
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; XXX dragons
 
 ;; That's great, but there's a catch. Names we give with `let` only
 ;; apply within the `let` expression. That's useful, so that names we
@@ -385,7 +399,7 @@ palette
 (colorize (rand-nth palette) (circle 50))
 
 ;; Let's make a more complex shape with our new color palette.
-(apply stack
+(apply above
        (map colorize
             [(rand-nth palette) (rand-nth palette) (rand-nth palette)]
             ;; FIXME requires creating triangle function
@@ -405,7 +419,7 @@ palette
 ;; All the functions we've used so far have had names, but this one doesn't, because we're just using it once.
 
 ;; Our anonymous function has square brackets to declare its parameters, of which it has none. Now we can call this anonymous function `repeatedly`:
-(apply stack
+(apply above
        (map colorize
             (repeatedly (fn [] (rand-nth palette)))
             ;; FIXME requires creating triangle function
