@@ -28,13 +28,7 @@
 
 (defonce _
          (do
-           (add-watch eval/c-env :log-namespace-changes
-                      (fn [_ _ {prev-ns :ns} {ns :ns}]
-                        (when (not= prev-ns ns)
-                          (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
-                                                         (fnil conj [])
-                                                         {:id    (d/unique-id)
-                                                          :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))
+
 
            (set! cljs-live.compiler/debug? true)
            (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
@@ -49,7 +43,15 @@
                                                                load-npm  maria.user.loaders/load-npm
                                                                html      re-view-hiccup.core/element}))
                               (eval/eval '(in-ns maria.user))
-                              ))))
+
+                              (add-watch eval/c-env :log-namespace-changes
+                                         (fn [_ _ {prev-ns :ns} {ns :ns}]
+                                           (when (not= prev-ns ns)
+                                             (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
+                                                                            conj
+                                                                            {:id    (d/unique-id)
+                                                                             :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))
+                              (d/transact! [[:db/add :repl/state :eval-log []]])))))
 
 (defview current-namespace
   {:view/spec {:props {:ns symbol?}}}
