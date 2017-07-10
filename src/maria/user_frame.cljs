@@ -44,7 +44,7 @@
 
 (defn main []
 
-  (local/init-storage "new")
+  (local/init-storage "new" github/blank)
 
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")
 
@@ -55,8 +55,7 @@
                                              (do
                                                (local/local-put to-id (d/get from-id :local))
                                                (local/init-storage to-id))
-                                             [:project/clear-new!] (github/clear-new!)
-                                             )))
+                                             [:project/clear-new!] (github/clear-new!))))
   (frame/send frame/trusted-frame :frame/ready))
 
 

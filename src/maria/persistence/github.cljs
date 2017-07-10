@@ -90,13 +90,9 @@
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (do
-                    (prn (-> (.getResponseJson target)
-                             (js->clj :keywordize-keys true)
-                             (gist->project)))
-                    (d/transact! [[:db/add id :persisted (-> (.getResponseJson target)
-                                                             (js->clj :keywordize-keys true)
-                                                             (gist->project))]]))
+                  (d/transact! [[:db/add id :persisted (-> (.getResponseJson target)
+                                                           (js->clj :keywordize-keys true)
+                                                           (gist->project))]])
                   (prn :error-saving-gist (.getLastError target)))))
             "PATCH"
             (->> data (clj->js) (.stringify js/JSON))
@@ -146,7 +142,11 @@
             nil
             (tokens/auth-headers :github)))
 
+
+
+(def blank {:files {"untitled.cljs" {:content ";; type here"}}})
+
 (defn clear-new! []
   (d/transact! [{:db/id     "new"
                  :persisted nil
-                 :local     {:files {"untitled.cljs" {:content ";; type here"}}}}]))
+                 :local     blank}]))

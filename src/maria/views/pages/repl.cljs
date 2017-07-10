@@ -24,6 +24,8 @@
   (some-> s
           (string/replace #"\.clj[cs]?$" "")))
 
+(def send (partial frame/send frame/trusted-frame))
+
 (defonce _
          (do
            (add-watch eval/c-env :log-namespace-changes
@@ -97,42 +99,66 @@
 (defn user-menu []
   (ui/SimpleMenuWithTrigger
     {:open-from         :top-left
-     :container-classes ["mdc-menu-anchor" "flex" "items-stretch"]
-     }
+     :container-classes ["mdc-menu-anchor" "flex" "items-stretch"]}
     [:.flex.items-center.b.pointer.ph2.hover-bg-near-white (d/get :auth-public :username)]
+    (ui/SimpleMenuItem {:text-primary "My gists"
+                        :href         (str "/gists/" (d/get :auth-public :username))
+                        :dense        true})
     (ui/SimpleMenuItem {:text-primary "Sign out"
-                        :on-click     #(frame/send frame/trusted-frame [:auth/sign-out])
+                        :on-click     #(send [:auth/sign-out])
                         :dense        true})))
 
 (def toolbar-button :.pa2.flex.items-center)
 (v/defn toolbar-item [props [action icon]]
   [toolbar-button (merge {:on-click action}
                          (cond-> props
-                                 action (update :classes conj "pointer hover-bg-near-white"))) (icons/size icon 20)])
+                                 action (update :classes conj "pointer hover-bg-near-white"))) (-> icon
+                                                                                                   (icons/size 20)
+                                                                                                   (icons/class "gold"))])
 
 (def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
+
+(defn save [id]
+  )
 
 (defview toolbar
   [{{:keys [persisted local] :as project} :project
     :keys                                 [filename get-editor id owner]}]
 
   (let [signed-in? (d/get :auth-public :signed-in?)
+        persisted-id (:id persisted)
         {:keys [maria-url] :as owner} (cond owner owner
                                             persisted (:owner persisted)
                                             :else (d/entity :auth-public))
         owned-by-current-user? (= (str (:id owner)) (d/get :auth-public :id))
-        current-filename (or (get-in local [:files filename :filename]) filename)]
+        current-filename (or (get-in local [:files filename :filename]) filename)
+        {local-content  :content
+         local-filename :filename} (get-in local [:files filename])
+        persisted-content (get-in persisted [:files filename :content])
+        persist-mode (match [(boolean persisted) owned-by-current-user?]
+                            [true true] :publish
+                            [true false] :fork
+                            [false _] :create)
+        persist-icon (case persist-mode (:publish :create) icons/Backup
+                                        :fork icons/ContentDuplicate)
+        persist! #(send (case persist-mode
+                          :publish [:project/publish persisted-id {:files {filename {:filename local-filename
+                                                                                     :content  local-content}}}]
+                          :create [:project/create (d/get "new" :local)]
+                          :fork [:project/fork persisted-id]))]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
      [:.ph2.flex-auto.flex.items-center
       [:.pl2.flex.items-center
        [:a.hover-underline.gray.no-underline {:href maria-url} (:username owner)]
        [:.ph1.gray "/"]
        (when filename
-         [:input {:value     (strip-clj-ext current-filename)
-                  :on-change #(let [next-value (str (.-value (.-target %)) ".cljs")]
-                                (prn :update next-value (d/entity id))
-                                (d/transact! [[:db/update-attr id :local (fn [local]
-                                                                           (assoc-in local [:files filename :filename] (str (.-value (.-target %)) ".cljs")))]]))}]
+         [:input {:value       (strip-clj-ext current-filename)
+                  :on-key-down #(when (= 13 (.-which %))
+                                  (persist!))
+                  :on-change   #(let [next-value (str (.-value (.-target %)) ".cljs")]
+                                  (d/transact! [[:db/update-attr id :local (fn [local]
+                                                                             (assoc-in local [:files filename] {:filename next-value
+                                                                                                                :content  (or local-content persisted-content)}))]]))}]
          #_(cond->> [:span.b.mr1 (strip-clj-ext filename)]
                     persisted (conj [:a.no-underline.black.hover-underline
                                      {:href   (:html-url persisted)
@@ -141,31 +167,27 @@
       (when (and filename signed-in?)
         (let [unsaved-changes? (and filename
                                     (contains? (:files local) filename)
-                                    (not= (get-in local [:files filename :content])
-                                          (get-in persisted [:files filename :content])))
-              save-action (match [(boolean persisted) owned-by-current-user?]
-                                 [true true] :publish
-                                 [true false] :fork
-                                 [false _] :create)
-              save-icon (case save-action (:publish :create) (icons/class icons/Backup "gold")
-                                          :fork (icons/class icons/ContentDuplicate "gold"))]
-          (if-not unsaved-changes?
-            (toolbar-item {:class "o-50"} [nil save-icon ""])
-            (toolbar-item [#(frame/send frame/trusted-frame (case save-action
-                                                              :publish [:project/publish (:id persisted) (d/get (:id persisted) :local)]
-                                                              :create [:project/create (d/get "new" :local)]
-                                                              :fork [:project/fork (:id persisted)])) save-icon]))))
+                                    local-content
+                                    (or (not= local-content persisted-content)
+                                        (not= filename local-filename))
+                                    (not (re-find #"^\s*$" local-content)))]
+          (list
+            (if-not unsaved-changes?
+              (toolbar-item {:class "o-50"} [nil persist-icon ""])
 
-      (toolbar-item [#(do
-                        (github/clear-new!)
-                        (some-> get-editor
-                                (apply [])
-                                :view/state
-                                (deref)
-                                :editor
-                                (.setValue ";; type here"))
-                        (frame/send frame/trusted-frame [:window/navigate "/new" {}])) (icons/class icons/Add "gold") "New namespace"])
-      ]
+              (toolbar-item [persist! persist-icon]))
+            (when (and persisted unsaved-changes?)
+              (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
+                                  (.setValue (get-editor) persisted-content)) icons/Undo])))))]
+     (toolbar-item [#(do
+                       (github/clear-new!)
+                       (some-> get-editor
+                               (apply [])
+                               :view/state
+                               (deref)
+                               :editor
+                               (.setValue ";; type here"))
+                       (frame/send frame/trusted-frame [:window/navigate "/new" {}])) icons/Add "New namespace"])
      (if signed-in? (user-menu)
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]
     ))
@@ -198,8 +220,8 @@
    :life/will-mount         (fn [{:keys [id]}]
                               (local/init-storage id))
    :project-files           (fn [{:keys [id]}]
-                              (-> (set (keys (d/get-in id [:local :files])))
-                                  (into (keys (d/get-in id [:persisted :files])))))
+                              (-> (concat (keys (d/get-in id [:persisted :files])) (keys (d/get-in id [:local :files])))
+                                  (distinct)))
    :current-file            (fn [{:keys [filename] :as this}]
                               (or filename (first (.projectFiles this))))}
   [{:keys [view/state id] :as this}]
@@ -220,7 +242,7 @@
                        :owner      (:owner project)
                        :filename   filename
                        :id         id
-                       :get-editor #(:repl-editor @state)})
+                       :get-editor #(.getEditor this)})
              (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                              :class           "flex-auto overflow-scroll"
                              :on-update       #(local/update-local-gist (:id this) (.currentFile this) :content %)

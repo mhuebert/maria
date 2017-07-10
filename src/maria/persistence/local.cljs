@@ -19,10 +19,14 @@
 
 (def init-storage
   "Given a unique id, initialize a local-storage backed source"
-  (memoize (fn [id]
-             (d/transact! [{:local (local-get id)
-                            :db/id id}])
-             (d/listen {:ea_ [[id :local]]}
-                       (gf/debounce #(local-put id (d/get id :local)) 500))
-             id)))
+  (memoize (fn
+             ([id]
+              (d/transact! [{:local (local-get id)
+                             :db/id id}])
+              (d/listen {:ea_ [[id :local]]}
+                        (gf/debounce #(local-put id (d/get id :local)) 500)))
+             ([id initial-content]
+               (when (nil? (local-get id))
+                 (local-put id initial-content))
+               (init-storage id)))))
 

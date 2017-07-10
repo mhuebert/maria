@@ -14,7 +14,9 @@
                                      (d/transact! (if-let [{:keys [displayName uid providerData] :as user} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
                                                     (let [github-id (get-in providerData [0 :uid])]
                                                       (github/get-username github-id (fn [{:keys [value error]}]
-                                                                                       (if value (d/transact! [[:db/add :auth-public :username value]])
+                                                                                       (if value (d/transact! [{:db/id     :auth-public
+                                                                                                                :username  value
+                                                                                                                :maria-url (str "/gists/" value)}])
                                                                                                  (.error js/console "Unable to retrieve GitHub username" error))))
                                                       [{:db/id        :auth-public
                                                         :display-name displayName
