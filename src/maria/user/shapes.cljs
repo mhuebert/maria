@@ -164,6 +164,7 @@
 ;; TODO rotate can take two more numbers for the centrum, would
 ;; probably be better for each thing to rotate around itself
 ;; TODO SVG translation/rotation causes slipping, may need to re-calc bounds
+;; TODO re-implement this mess using a transform matrix
 (defn shape->vector [{:keys [kind children] :as shape}]
   (let [unkinded (dissoc shape :is-a :kind)]
     (into [kind (reduce ;; clean up/preprocess the string-y bits of the SVG element
@@ -277,6 +278,7 @@
     :y 0
     :children shapes))
 
+;; XXX broken for triangles!
 (defn beside
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
   [& shapes]

@@ -37,6 +37,16 @@
    	                 (colorize (hsl % 90 75)))
                (range 0 360 15))))
 
+;; cartwheel rectangles
+(layer
+  (fill "white" (rectangle 750 70))
+  (apply beside  
+       (map #(->> (rectangle 30 50)                                          
+                  (rotate %)                    	 
+                  (opacity 0.5) 	                 
+                  (fill (hsl % 90 45)))               
+            (range 0 375 15))))
+
 ;; confetti
 (let [palette (cycle ["aqua" "springgreen" "magenta"])]
   (->> (repeat 20 (triangle 20))
