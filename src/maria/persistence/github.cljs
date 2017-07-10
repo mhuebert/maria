@@ -85,48 +85,41 @@
                                                  [:db/add username :loading-message false]]
                                                 [{:error error}])))))))
 
-(defn patch-gist [id data]
-  (xhr/send (str "https://api.github.com/gists/" id)
+(defn patch-gist [gist-id gist-data cb]
+  (xhr/send (str "https://api.github.com/gists/" gist-id)
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (d/transact! [[:db/add id :persisted (-> (.getResponseJson target)
-                                                           (js->clj :keywordize-keys true)
-                                                           (gist->project))]])
-                  (prn :error-saving-gist (.getLastError target)))))
+                  (cb {:value (-> (.getResponseJson target)
+                                  (js->clj :keywordize-keys true)
+                                  (gist->project))})
+                  (cb {:error (.getLastError target)}))))
             "PATCH"
-            (->> data (clj->js) (.stringify js/JSON))
+            (->> gist-data (clj->js) (.stringify js/JSON))
             (tokens/auth-headers :github)))
 
-(defn create-gist [child-id gist-data]
+(defn create-gist [gist-data cb]
   (xhr/send (str "https://api.github.com/gists")
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (let [{id :id :as project} (-> (.getResponseJson target)
-                                                 (js->clj :keywordize-keys true)
-                                                 (gist->project))]
-                    (d/transact! [[:db/add id :persisted project]])
-                    (frame/send child-id [:project/clear-new!])
-                    (r/nav! (str "/gist/" id)))
-                  (prn :error-creating-gist (.getLastError target)))))
+                  (cb {:value (-> (.getResponseJson target)
+                                  (js->clj :keywordize-keys true)
+                                  (gist->project))})
+                  (cb {:error (.getLastError target)}))))
             "POST"
             (->> gist-data (clj->js) (.stringify js/JSON))
             (tokens/auth-headers :github)))
 
-(defn fork-gist [child-id gist-id]
+(defn fork-gist [gist-id cb]
   (xhr/send (str "https://api.github.com/gists/" gist-id "/forks")
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
-                  (let [{new-id :id
-                         :as    gist-data} (-> (.getResponseJson target)
-                                               (js->clj :keywordize-keys true))]
-                    (frame/send child-id [:db/copy-local gist-id new-id])
-                    (d/transact! [{:db/id     new-id
-                                   :persisted (gist->project gist-data)}])
-                    (r/nav! (str "/gist/" new-id)))
-                  (prn :error-saving-gist (.getLastError target)))))
+                  (cb {:value (-> (.getResponseJson target)
+                                  (js->clj :keywordize-keys true)
+                                  (gist->project))})
+                  (cb {:error (.getLastError target)}))))
             "POST"
             nil
             (tokens/auth-headers :github)))

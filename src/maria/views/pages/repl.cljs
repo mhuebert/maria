@@ -122,18 +122,21 @@
   )
 
 (defview toolbar
-  [{{:keys [persisted local] :as project} :project
-    :keys                                 [filename get-editor id owner]}]
+  [{{:keys [persisted local]} :project
+    :keys                     [filename get-editor id owner]}]
 
   (let [signed-in? (d/get :auth-public :signed-in?)
-        persisted-id (:id persisted)
+
         {:keys [maria-url] :as owner} (cond owner owner
                                             persisted (:owner persisted)
                                             :else (d/entity :auth-public))
         owned-by-current-user? (= (str (:id owner)) (d/get :auth-public :id))
         current-filename (or (get-in local [:files filename :filename]) filename)
+
         {local-content  :content
          local-filename :filename} (get-in local [:files filename])
+
+        persisted-id (:id persisted)
         persisted-content (get-in persisted [:files filename :content])
         persist-mode (match [(boolean persisted) owned-by-current-user?]
                             [true true] :publish
@@ -165,20 +168,21 @@
                                       :target "_blank"}])))]
 
       (when (and filename signed-in?)
-        (let [unsaved-changes? (and filename
-                                    (contains? (:files local) filename)
-                                    local-content
-                                    (or (not= local-content persisted-content)
-                                        (not= filename local-filename))
-                                    (not (re-find #"^\s*$" local-content)))]
-          (list
-            (if-not unsaved-changes?
-              (toolbar-item {:class "o-50"} [nil persist-icon ""])
-
-              (toolbar-item [persist! persist-icon]))
-            (when (and persisted unsaved-changes?)
-              (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
-                                  (.setValue (get-editor) persisted-content)) icons/Undo])))))]
+        (if (= :fork persist-mode)
+          (toolbar-item [persist! persist-icon])
+          (let [unsaved-changes? (and filename
+                                      (contains? (:files local) filename)
+                                      local-content
+                                      (or (not= local-content persisted-content)
+                                          (not= filename local-filename))
+                                      (not (re-find #"^\s*$" local-content)))]
+            (list
+              (if-not unsaved-changes?
+                (toolbar-item {:class "o-50"} [nil persist-icon ""])
+                (toolbar-item [persist! persist-icon]))
+              (when (and persisted unsaved-changes?)
+                (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
+                                    (.setValue (get-editor) persisted-content)) icons/Undo]))))))]
      (toolbar-item [#(do
                        (github/clear-new!)
                        (some-> get-editor

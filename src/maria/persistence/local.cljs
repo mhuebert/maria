@@ -26,7 +26,7 @@
               (d/listen {:ea_ [[id :local]]}
                         (gf/debounce #(local-put id (d/get id :local)) 500)))
              ([id initial-content]
-               (when (nil? (local-get id))
+               (when (and (nil? (local-get id)) initial-content)
                  (local-put id initial-content))
                (init-storage id)))))
 

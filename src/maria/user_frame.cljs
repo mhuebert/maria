@@ -52,9 +52,7 @@
                                       (match message
                                              [:db/transactions txs] (d/transact! txs)
                                              [:db/copy-local from-id to-id]
-                                             (do
-                                               (local/local-put to-id (d/get from-id :local))
-                                               (local/init-storage to-id))
+                                             (local/init-storage to-id (d/get from-id :local))
                                              [:project/clear-new!] (github/clear-new!))))
   (frame/send frame/trusted-frame :frame/ready))
 
