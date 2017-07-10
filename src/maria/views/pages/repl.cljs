@@ -1,6 +1,7 @@
 (ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
+            [maria.views.text :as text]
             [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
@@ -23,6 +24,11 @@
 (defn strip-clj-ext [s]
   (some-> s
           (string/replace #"\.clj[cs]?$" "")))
+
+(defn add-clj-ext [s]
+  (when s
+    (cond-> s
+            (not (re-find #"\.clj[cs]?$" s)) (str ".cljs"))))
 
 (def send (partial frame/send frame/trusted-frame))
 
@@ -54,23 +60,7 @@
                               (d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
                                                                              :value (repl-ui/plain [:span.gray "Ready."])}]]])))))
 
-(defview current-namespace
-  {:view/spec {:props {:ns symbol?}}}
-  [{:keys [ns]}]
-  [:.dib
-   (ui/SimpleMenuWithTrigger
-     (ui/Button {:label   (str ns)
-                 :compact true
-                 :dense   true
-                 :style   {:margin-left "-0.25rem"}})
-     (map (fn [item-ns] (ui/SimpleMenuItem {:text-primary (str item-ns)
-                                            :ripple       false
-                                            :style        (when (= item-ns ns)
-                                                            {:background-color "rgba(0,0,0,0.05)"})
-                                            :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
-                                                                                                            (distinct))))
-   (when-let [ns-doc (:doc (ns-utils/analyzer-ns @eval/c-state ns))]
-     [:span.pl2.f7.o-50 ns-doc])])
+
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -88,7 +78,6 @@
       (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
                                                                             :id (d/unique-id)
                                                                             :source source)]]))))
-
 
 
 (def result-toolbar
@@ -121,12 +110,9 @@
 
 (def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
 
-(defn save [id]
-  )
-
 (defview toolbar
   [{{:keys [persisted local]} :project
-    :keys                     [filename get-editor id owner]}]
+    :keys                     [filename get-editor id owner view/state] :as this}]
 
   (let [signed-in? (d/get :auth-public :signed-in?)
 
@@ -151,24 +137,22 @@
                           :publish [:project/publish persisted-id {:files {filename {:filename (or local-filename filename)
                                                                                      :content  (or local-content persisted-content)}}}]
                           :create [:project/create (d/get "new" :local)]
-                          :fork [:project/fork persisted-id]))]
+                          :fork [:project/fork persisted-id]))
+        update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
+                                                                    (assoc-in local [:files filename] {:filename %
+                                                                                                       :content  (or local-content persisted-content)}))]])]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
      [:.ph2.flex-auto.flex.items-center
       [:.pl2.flex.items-center
        [:a.hover-underline.gray.no-underline {:href maria-url} (:username owner)]
        [:.ph1.gray "/"]
        (when filename
-         [:input {:value       (strip-clj-ext current-filename)
-                  :on-key-down #(when (= 13 (.-which %))
-                                  (persist!))
-                  :on-change   #(let [next-value (str (.-value (.-target %)) ".cljs")]
-                                  (d/transact! [[:db/update-attr id :local (fn [local]
-                                                                             (assoc-in local [:files filename] {:filename next-value
-                                                                                                                :content  (or local-content persisted-content)}))]]))}]
-         #_(cond->> [:span.b.mr1 (strip-clj-ext filename)]
-                    persisted (conj [:a.no-underline.black.hover-underline
-                                     {:href   (:html-url persisted)
-                                      :target "_blank"}])))]
+         (text/autosize-text {:value       (strip-clj-ext current-filename)
+                              :on-key-down #(when (= 13 (.-which %))
+                                              (persist!))
+                              :ref         #(when % (swap! state assoc :title-input %))
+                              :placeholder "Enter a title..."
+                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))]
 
       (when (and filename signed-in?)
         (if (= :fork persist-mode)
@@ -194,6 +178,7 @@
                                (deref)
                                :editor
                                (.setValue ";; type here"))
+                       (.focus (:title-input @state))
                        (frame/send frame/trusted-frame [:window/navigate "/new" {}])) icons/Add "New namespace"])
      (if signed-in? (user-menu)
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]
@@ -299,3 +284,21 @@
          (map repl-values/display-result (last-n 50 eval-log))
          [:.pa3.gray "Loading..."])])
     result-toolbar]])
+
+#_(defview current-namespace
+    {:view/spec {:props {:ns symbol?}}}
+    [{:keys [ns]}]
+    [:.dib
+     (ui/SimpleMenuWithTrigger
+       (ui/Button {:label   (str ns)
+                   :compact true
+                   :dense   true
+                   :style   {:margin-left "-0.25rem"}})
+       (map (fn [item-ns] (ui/SimpleMenuItem {:text-primary (str item-ns)
+                                              :ripple       false
+                                              :style        (when (= item-ns ns)
+                                                              {:background-color "rgba(0,0,0,0.05)"})
+                                              :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
+                                                                                                              (distinct))))
+     (when-let [ns-doc (:doc (ns-utils/analyzer-ns @eval/c-state ns))]
+       [:span.pl2.f7.o-50 ns-doc])])

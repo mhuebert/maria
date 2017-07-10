@@ -137,7 +137,7 @@
 
 
 
-(def blank {:files {"untitled.cljs" {:content ";; type here"}}})
+(def blank {:files {"" {:content ";; type here"}}})
 
 (defn clear-new! []
   (d/transact! [{:db/id     "new"
