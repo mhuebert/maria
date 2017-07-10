@@ -1,4 +1,9 @@
-;;;; Asking the Computer Questions
+;; Hi! This environment is called Maria, and we're going to show you
+;; some things you can do with it. Don't worry if anything's new and a
+;; little confusing at first, we're going to explain everything as we
+;; go.
+
+;; First, let's ask the computer some questions...
 
 ;; Put your cursor at the end of the line with "puppy" and press
 ;; `control-enter` (`command-enter` on Mac):
