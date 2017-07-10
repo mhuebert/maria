@@ -32,8 +32,14 @@ webpack -p;
 
 ### standard figwheel
 
-``` shell
+```shell
 lein dev
+```
+
+## production build
+
+```shell
+lein build
 ```
 
 ### cursive/IntelliJ figwheel+repl

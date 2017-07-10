@@ -201,7 +201,7 @@
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
      (toolbar {:owner (:owner (first gists))})
-     [:.flex-auto.overflow-scroll.sans-serif.f6
+     [:.flex-auto.overflow-auto.sans-serif.f6
       (if-let [message (d/get username :loading-message)]
         (loader message)
         (for [{:keys [id description files]} gists
@@ -244,7 +244,7 @@
                        :id         id
                        :get-editor #(.getEditor this)})
              (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                             :class           "flex-auto overflow-scroll"
+                             :class           "flex-auto overflow-auto"
                              :on-update       #(local/update-local-gist (:id this) (.currentFile this) :content %)
                              :source-id       id
                              :value           (or local-value persisted-value)
@@ -285,6 +285,7 @@
              ["gists" username] (gists-list {:username username})))
     ]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
+    {:style {:box-shadow "-1px -1px 0 0 #eee"}}
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
        (if-let [eval-log (d/get :repl/state :eval-log)]
