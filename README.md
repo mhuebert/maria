@@ -16,7 +16,7 @@ The [curriculum](https://github.com/mhuebert/maria/blob/master/doc/pedagogy.md) 
 
 ## Play
 
-So...please go to [maria.cloud](maria.cloud) and play around with it live! :)
+So...please go to [maria.cloud](https://maria.cloud) and play around with it live! :)
 
 
 ## Development
