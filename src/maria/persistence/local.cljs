@@ -4,6 +4,9 @@
             [goog.functions :as gf]
             [goog.object :as gobj]))
 
+(defn update-local-gist [id filename attr value]
+  (d/transact! [[:db/update-attr id :local #(assoc-in % [:files filename attr] value)]]))
+
 (defn local-id [id] (str "maria.local/" id))
 
 (defn local-put [id data]

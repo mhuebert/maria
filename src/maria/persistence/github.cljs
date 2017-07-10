@@ -3,7 +3,8 @@
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
             [re-view-routing.core :as r]
-            [maria.persistence.local :as local]))
+            [maria.persistence.local :as local]
+            [maria.frame-communication :as frame]))
 
 (defn gist-person [{:keys [html_url url id login gists_url] :as person}]
   {:html-url  (str "https://gist.github.com/" login)
@@ -91,18 +92,17 @@
             (->> data (clj->js) (.stringify js/JSON))
             (tokens/auth-headers :github)))
 
-(defn fork-gist [id]
-  (xhr/send (str "https://api.github.com/gists/" id "/forks")
+(defn fork-gist [child-id gist-id]
+  (xhr/send (str "https://api.github.com/gists/" gist-id "/forks")
             (fn [e]
               (let [target (.-target e)]
                 (if (.isSuccess target)
                   (let [{new-id :id
                          :as    gist-data} (-> (.getResponseJson target)
                                                (js->clj :keywordize-keys true))]
-                    (local/init-storage new-id)
+                    (frame/send child-id [:db/copy-local gist-id new-id])
                     (d/transact! [{:db/id     new-id
-                                   :persisted (gist->project gist-data)
-                                   :local     (d/get id :local)}])
+                                   :persisted (gist->project gist-data)}])
                     (r/nav! (str "/gist/" new-id)))
                   (prn :error-saving-gist (.getLastError target)))))
             "POST"

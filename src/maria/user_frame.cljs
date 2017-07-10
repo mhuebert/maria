@@ -20,7 +20,8 @@
 
             [maria.frame-communication :as frame]
             [re-db.d :as d]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [maria.persistence.local :as local]))
 
 (enable-console-print!)
 
@@ -44,8 +45,14 @@
 
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")
 
-  (frame/listen frame/trusted-frame #(match % [:db/transactions txs]
-                                            (d/transact! txs)))
+  (frame/listen frame/trusted-frame (fn [_ message]
+                                      (match message
+                                             [:db/transactions txs] (d/transact! txs)
+                                             [:db/copy-local from-id to-id]
+                                             (do
+                                               (local/local-put to-id (d/get from-id :local))
+                                               (local/init-storage to-id))
+                                             )))
   (frame/send frame/trusted-frame :frame/ready))
 
 

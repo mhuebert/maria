@@ -83,4 +83,4 @@
                              (queue-process :send id #(send id %)))
                            (when (= (.-origin e) other-origin)
                              (doseq [f (concat (get @listeners id) (get @listeners "*"))]
-                               (f data))))))))
+                               (f id data))))))))

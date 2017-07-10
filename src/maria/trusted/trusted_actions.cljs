@@ -7,8 +7,7 @@
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]))
 
-(defn update-local-gist [id filename attr value]
-  (d/transact! [[:db/update-attr id :local #(assoc-in % [:files filename attr] value)]]))
+
 
 (defn navigate! [url opts]
   (if (string/starts-with? url "/")
@@ -19,16 +18,15 @@
 
 (def editor-message-handler
   (memoize (fn [project-id]
-             (fn [message]
+             (fn [frame-id message]
                (match message
-                      [:project/update-file project-id filename attr value]
-                      (update-local-gist project-id filename attr value)
-                      [:project/publish project-id]
+                      [:project/publish project-id project]
                       (let [owned? (= (str (d/get-in project-id [:persisted :owner :id]))
                                       (str (d/get-in :auth-secret [:provider-data 0 :uid])))]
                         (if owned?
-                          (github/patch-gist project-id (github/project->gist (d/get project-id :local)))
-                          (github/fork-gist project-id)))
+                          (github/patch-gist project-id (github/project->gist project))
+                          (throw (js/Error. "Cannot publish project owned by another user."))))
+                      [:project/fork project-id] (github/fork-gist frame-id project-id)
                       [:auth/sign-in] (remote/sign-in :github)
                       [:auth/sign-out] (remote/sign-out)
                       [:window/navigate url opts] (navigate! url opts)

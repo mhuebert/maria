@@ -26,11 +26,12 @@
                               (.sendTransactions this))
    :life/will-receive-props (fn [{:keys [on-message view/state db/transactions] {prev-tx         :db/transactions
                                                                                  prev-on-message :on-message} :view/prev-props :as this}]
-                              (when-not (= on-message prev-on-message)
-                                (frame/unlisten (:frame-id @state) prev-on-message)
-                                (frame/listen (:frame-id @state) on-message))
-                              (when (not= transactions prev-tx)
-                                (.sendTransactions this)))
+                              (let [{:keys [frame-id]} @state]
+                                (when-not (= on-message prev-on-message)
+                                  (frame/unlisten frame-id prev-on-message)
+                                  (frame/listen frame-id on-message))
+                                (when (not= transactions prev-tx)
+                                  (.sendTransactions this))))
    :life/will-unmount       (fn [{:keys [view/state on-message]}]
                               (frame/unlisten (:frame-id @state) on-message))}
   [{:keys [view/state]}]
@@ -38,12 +39,7 @@
    {:src (str frame/child-origin "/user.html#frame_" (:frame-id @state))}])
 
 (defview editor-frame-view
-  {:spec/props              {:default-value :String}
-   :life/will-mount         (fn [{:keys [entity-id]}]
-                              (local/init-storage entity-id))
-   :life/will-receive-props (fn [{entity-id :entity-id {prev-entity-id :entity-id} :view/prev-props}]
-                              (when-not (= entity-id prev-entity-id)
-                                (local/init-storage entity-id)))}
+  {:spec/props {:default-value :String}}
   [{:keys [entity-id db/transactions]}]
   (frame-view {:db/transactions (into [(or (d/entity :auth-public)
                                            [:db/retract-entity :auth-public])

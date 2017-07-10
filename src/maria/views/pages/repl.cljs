@@ -17,7 +17,8 @@
             [maria.frame-communication :as frame]
             [clojure.string :as string]
             [cljs.core.match :refer-macros [match]]
-            [maria.persistence.github :as github]))
+            [maria.persistence.github :as github]
+            [maria.persistence.local :as local]))
 
 (defn strip-clj-ext [s]
   (some-> s
@@ -95,8 +96,10 @@
 
 (defn user-menu []
   (ui/SimpleMenuWithTrigger
-    {:open-from :top-left}
-    [:.flex.items-center.b.h-100.pointer.ph2.hover-bg-near-white (d/get :auth-public :display-name)]
+    {:open-from :top-left
+     :container-classes ["mdc-menu-anchor" "flex" "items-stretch"]
+     }
+    [:.flex.items-center.b.pointer.ph2.hover-bg-near-white (d/get :auth-public :display-name)]
     (ui/SimpleMenuItem {:text-primary "Sign out"
                         :on-click     #(frame/send frame/trusted-frame [:auth/sign-out])
                         :dense        true})))
@@ -119,7 +122,7 @@
         owned-by-user? (= (str (:id owner))
                           (str (d/get :auth-public :id)))
         {:keys [signed-in?]} (d/entity :auth-public)]
-    [:.bb.b--light-gray.flex.items-center.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none
+    [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
      [:.ph2.flex-auto.flex.items-center
       [:.pl2.flex.items-center
        [:a.hover-underline.gray.no-underline
@@ -131,9 +134,7 @@
            :target "_blank"}
           (strip-clj-ext filename)])]
 
-      (comment
-        (toolbar-item [#(prn "New") (icons/class icons/Add "gold") "New namespace"]))
-      (when signed-in?
+      (when (and filename signed-in?)
         (if owned-by-user?
           (let [unsaved-changes? (and filename
                                       (contains? (:files local) filename)
@@ -141,13 +142,15 @@
                                             (get-in persisted [:files filename :content])))]
             (if unsaved-changes?
               (toolbar-item {:class (when-not unsaved-changes? "o-50")}
-                            [#(frame/send frame/trusted-frame [:project/publish id]) (icons/class icons/Backup "gold") "Save"])
+                            [#(frame/send frame/trusted-frame [:project/publish id (d/get id :local)]) (icons/class icons/Backup "gold") "Save"])
               (toolbar-item {:class "o-50"}
                             [nil (icons/class icons/Backup "gold") ""])))
-          (toolbar-item [#(frame/send frame/trusted-frame [:project/publish id]) (icons/class icons/Fork "gold")])))
+          (toolbar-item [#(frame/send frame/trusted-frame [:project/fork id]) (icons/class icons/ContentDuplicate "gold")])))
+
+      (toolbar-item [#(prn "Blank") (icons/class icons/Add "gold") "New namespace"])
       ]
      (if signed-in? (user-menu)
-                    [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in"])]
+                    [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]
     ))
 
 (defn loader [message]
@@ -157,7 +160,7 @@
 
 (defview list-gists [{:keys [username]}]
   (let [gists (d/get username :gists)]
-    [:.flex-auto.flex.flex-column
+    [:.flex-auto.flex.flex-column.relative
      (toolbar {:project (first gists)
                :owner   (:owner (first gists))})
      (if-let [message (d/get username :loading-message)]
@@ -171,13 +174,18 @@
            (some->> title (conj [:.gray.f7.mt1.normal]))])])]))
 
 (defview edit-file
-  {:get-editor    (fn [{:keys [view/state]}]
-                    (some-> (:repl-editor @state) :view/state deref :editor))
-   :project-files (fn [{:keys [id]}]
-                    (-> (set (keys (d/get-in id [:local :files])))
-                        (into (keys (d/get-in id [:persisted :files])))))
-   :current-file  (fn [{:keys [filename] :as this}]
-                    (or filename (first (.projectFiles this))))
+  {:get-editor              (fn [{:keys [view/state]}]
+                              (some-> (:repl-editor @state) :view/state deref :editor))
+   :life/will-receive-props (fn [{id :id {prev-id :id} :view/prev-props}]
+                              (when-not (= id prev-id)
+                                (local/init-storage id)))
+   :life/will-mount         (fn [{:keys [id]}]
+                              (local/init-storage id))
+   :project-files           (fn [{:keys [id]}]
+                              (-> (set (keys (d/get-in id [:local :files])))
+                                  (into (keys (d/get-in id [:persisted :files])))))
+   :current-file            (fn [{:keys [filename] :as this}]
+                              (or filename (first (.projectFiles this))))
    }
   [{:keys [view/state id] :as this}]
   (let [{:keys [default-value
@@ -192,19 +200,13 @@
           :else
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
-            [:.flex.flex-column.flex-auto
+            [:.flex.flex-column.flex-auto.relative
              (toolbar {:project  project
                        :owner    (:owner project)
                        :filename filename})
              (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
                              :class           "flex-auto overflow-scroll"
-                             :on-update       #(do
-                                                 (prn :update-id id)
-                                                 (frame/send frame/trusted-frame [:project/update-file
-                                                                                  (:id this)
-                                                                                  (.currentFile this)
-                                                                                  :content
-                                                                                  %]))
+                             :on-update       #(local/update-local-gist (:id this) (.currentFile this) :content %)
                              :source-id       id
                              :value           (or local-value persisted-value)
                              :default-value   default-value
