@@ -16,11 +16,12 @@
                          {:keys [display-name doc]} (@commands/commands exec)]
                      [:.w-third.dib.f6.mv1
                       [:.flex.items-center
-                       [:.dib.w3.tr.b.flex-none (->> (set/difference keyset modifiers-down)
-                                                     (map #(commands/show-key %))
-                                                     (sort)
-                                                     (reverse))]
-                       [:.o-20.inline-flex.items-center.justify-around.w1 {:style {:font-size 8}} "▶"]
+                       [:.dib.w3.tr.flex-none.mr2
+                        [:.dib.bg-near-white.ph1.br2.pv05 (->> (set/difference keyset modifiers-down)
+                                                               (map #(commands/show-key %))
+                                                               (sort-by compare)
+                                                               (reverse))]]
+
                        display-name]
                       ;; TODO: add tooltip with doc
                       #_(when doc [:.gray.f7 [:.dib.w1] [:.dib.w3] doc])]))))]
