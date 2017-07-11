@@ -2,11 +2,9 @@
   (:require [clojure.set :as set]
             [magic-tree-codemirror.edit :as edit]
             [goog.events :as events]
-            [goog.events.KeyCodes :as key-codes]
             [cljs.pprint :refer [pprint]]
             [re-db.d :as d]
-            [clojure.string :as string]
-            [re-view-material.icons :as icons])
+            [clojure.string :as string])
   (:require-macros [maria.commands.core :refer [defcommand]])
   (:import [goog.events KeyCodes]))
 
@@ -80,60 +78,60 @@
               {:keyset  keyset
                :results results}))) @mappings))
 
-(defcommand :copy-at-point
+(defcommand :copy-form
             ["Cmd-C"]
             ""
-            (:copy-at-point edit/commands))
+            (:copy-form edit/commands))
 
 (defcommand :kill
             ["Ctrl-K"]
             "Cut to end of line / node"
             (:kill edit/commands))
 
-(defcommand :cut-at-point
+(defcommand :cut-form
             ["Cmd-X"]
             "Cuts current highlight"
-            (:cut-at-point edit/commands))
+            (:cut-form edit/commands))
 
-(defcommand :delete-at-point
+(defcommand :delete-form
             ["Cmd-Backspace"]
             "Deletes current highlight"
-            (:delete-at-point edit/commands))
-
-(defcommand :copy-at-point
-            ["Cmd-C"]
-            "Copies current highlight"
-            (:copy-at-point edit/commands))
+            (:delete-form edit/commands))
 
 (defcommand :hop-left
             ["Alt-Left"]
-            "Hop cursor left"
+            "Move cursor left one form"
             (:hop-left edit/commands))
 
 (defcommand :hop-right
             ["Alt-Right"]
-            ""
+            "Move cursor right one form"
             (:hop-right edit/commands))
 
 (defcommand :expand-selection
             ["Cmd-1"]
-            ""
+            "Select parent form, or form under cursor"
             (:expand-selection edit/commands))
 
 (defcommand :shrink-selection
             ["Cmd-2"]
-            ""
+            "Select child of current form (remembers :expand-selection history)"
             (:shrink-selection edit/commands))
 
 (defcommand :comment-line
             ["Cmd-/"]
-            ""
+            "Comment the current line"
             (:comment-line edit/commands))
 
-(defcommand :uneval-at-point
-            ["Cmd-."]
+(defcommand :uneval-form
+            ["Cmd-;"]
             ""
-            (:uneval-at-point edit/commands))
+            (:uneval-form edit/commands))
+
+(defcommand :uneval-top-level-form
+            ["Cmd-Shift-;"]
+            ""
+            (:uneval-top-level-form edit/commands))
 
 (defcommand :slurp
             ["Shift-Cmd-K"]
@@ -154,3 +152,4 @@
 ;; https://stackoverflow.com/questions/10527983/best-way-to-detect-mac-os-x-or-windows-computers-with-javascript-or-jquery
 ;; Mac*  MacIntel
 ;; iOs - iP* iPad, iPhone, iPod
+

@@ -22,7 +22,7 @@
                  [re-view-material "0.1.6-SNAPSHOT"]
 
                  [cljs-live "0.1.20-SNAPSHOT"]
-                 [magic-tree "0.0.6-SNAPSHOT"]
+                 [magic-tree "0.0.7-SNAPSHOT"]
 
                  [cljsjs/react "15.5.4-0"]
                  [cljsjs/react-dom "15.5.4-0"]
