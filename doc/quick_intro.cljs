@@ -287,8 +287,9 @@ color-names
 
 ;; Say we're going to draw a bunch of shapes, and we want to use just
 ;; a few colors over and over. Picasso might choose five different
-;; blues. A fan of old movies might choose ten shades of black and
-;; white. Put a few color names into a vector, like this:
+;; blues...a fan of old movies might choose ten shades of black and
+;; white. Yours is up to you. Put a few color names into a vector,
+;; like this:
 
 ["blue" "turquoise" "midnightblue"]
 
