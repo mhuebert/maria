@@ -43,6 +43,14 @@
 (def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
 
 (defview toolbar
+  {:life/did-mount          #(.updateWindowTitle %)
+   :update-window-title     (fn [{:keys [filename]}]
+                              (frame/send frame/trusted-frame [:window/set-title filename]))
+   :life/will-receive-props (fn [{filename                  :filename
+                                  {prev-filename :filename} :view/prev-props
+                                  :as                       this}]
+                              (when-not (= filename prev-filename)
+                                (.updateWindowTitle this)))}
   [{{:keys [persisted local]} :project
     :keys                     [filename get-editor id owner view/state] :as this}]
 

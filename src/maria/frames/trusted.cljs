@@ -28,6 +28,7 @@
 (defonce _
          (do
            (routing/listen #(d/transact! [(assoc % :db/id :router/location)]))
+           (d/listen {:ea_ [[:window :title]]} #(set! (.-title js/document) (or (d/get :window :title) "Maria")))
            (d/transact! [{:db/id         "intro"
                           :default-value ";; intro"}])
            (v/render-to-dom (layout) "maria-index")))
