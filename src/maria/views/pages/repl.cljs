@@ -61,7 +61,7 @@
 (defview gists-list [{:keys [username]}]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar/toolbar {:owner (:owner (first gists))})
+     (toolbar/toolbar {:parent (:owner (first gists))})
      [:.flex-auto.overflow-auto.sans-serif.f6
       (if-let [message (d/get username :loading-message)]
         (loader message)
