@@ -21,8 +21,6 @@ So...please go to [maria.cloud](https://maria.cloud) and play around with it liv
 
 ## Development
 
-[![CircleCI](https://circleci.com/gh/mhuebert/maria.svg?style=svg)](https://circleci.com/gh/mhuebert/maria)
-
 First, compile stylesheets:
 
 ```
