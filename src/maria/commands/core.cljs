@@ -38,7 +38,8 @@
               "DOWN"           "↓"
               "HOME"           "↖"
               "END"            "↘"
-              "CLICK"          (icons/size mouse-icon 14)})
+              "CLICK"          (with-meta (icons/size mouse-icon 14)
+                                          {:name "z"})})
 
 (defn keystring->code [k]
   (let [k (string/upper-case k)
@@ -47,7 +48,28 @@
                 "CONTROL" "CTRL" #_"CTRL"
                 "CTRL"    "CTRL"
                 "OPT"     "ALT"
-                "OPTION"  "ALT"} k k)]
+                "OPTION"  "ALT"
+                "1"       "ONE"
+                "2"       "TWO"
+                "3"       "THREE"
+                "4"       "FOUR"
+                "5"       "FIVE"
+                "6"       "SIX"
+                "7"       "SEVEN"
+                "8"       "EIGHT"
+                "9"       "NINE"
+                "["       "OPEN_SQUARE_BRACKET"
+                "]"       "CLOSE_SQUARE_BRACKET"
+                "/"       "BACKSLASH"
+                \\        "SLASH"
+                "'"       "APOSTROPHE"
+                ","       "COMMA"
+                "."       "PERIOD"
+                "="       "EQUALS"
+                "+"       "PLUS"
+                "-"       "DASH"
+                ";"       "SEMICOLON"
+                "`"       "TILDE"} k k)]
     (or (gobj/get KeyCodes k)
         k)))
 
@@ -86,30 +108,52 @@
   (let [key-code (.-keyCode e)]
     (get {91 17} key-code key-code)))
 
+;; google closure KeyHandler does not support holding down the meta key & pressing multiple keys.
+;; so we keep track of when the meta key is 'stuck', and track this manually.
+;; probably leads to inconsistencies in some browsers.
+(def meta-key-down? false)
+(def meta-key-stuck? false)
+(defn init-meta-key-management []
+  (let [clear! #(do (set! meta-key-down? false)
+                    (set! meta-key-stuck? false))
+        meta? #(= (.-keyCode %) (.-META KeyCodes))
+        meta-is-down! (fn []
+                        (set! meta-key-down? true)
+                        (events/listenOnce js/document "keydown" #(when meta-key-down? (set! meta-key-stuck? true)) true))]
+
+    (events/listen js/document "keydown" #(when (meta? %) (meta-is-down!)) true)
+    (events/listen js/document "keyup" #(when (meta? %) (clear!)) true)
+    (events/listen js/document "blur" clear!)))
+
+
 (defn init-listeners []
-  (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
-                                  [:db/add :commands :which-key/active? false]])
+  (let [clear-keys #(do (set! meta-key-down? false)
+                        (set! meta-key-stuck? false)
+                        (d/transact! [[:db/add :commands :modifiers-down #{}]
+                                      [:db/add :commands :which-key/active? false]]))
         which-key-delay 500
-        key-handling-element (new KeyHandler js/document true)]
+        key-handling-element (new KeyHandler js/document true)
+        handle-key-event (fn [e]
+                           (let [keycode (event-keycode e)
+                                 keys-down (d/get :commands :modifiers-down)
+                                 modifier? (contains? modifiers keycode)]
+                             (if-let [command-name (get-keyset-command (conj keys-down keycode))]
+                               (let [{:keys [command]} (get @commands command-name)]
+                                 (some-> editor/current-editor (command))
+                                 (.stopPropagation e)
+                                 (.preventDefault e))
+                               (when modifier?
+                                 (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
+                                               [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
+                                                                                                           (when (and (seq keys-down)
+                                                                                                                      (not= keys-down #{(keystring->code "shift")}))
+                                                                                                             (d/transact! [[:db/add :commands :which-key/active? true]]))) which-key-delay)]])))))]
 
     (clear-keys)
 
-    (events/listen key-handling-element "key"
-                   (fn [e]
-                     (let [keycode (event-keycode e)
-                           keys-down (d/get :commands :modifiers-down)
-                           modifier? (contains? modifiers keycode)]
-                       (if-let [command-name (get-keyset-command (conj keys-down keycode))]
-                         (let [{:keys [command name]} (get @commands command-name)]
-                           (some-> editor/current-editor (command))
-                           (.stopPropagation e)
-                           (.preventDefault e))
-                         (when modifier?
-                           (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
-                                         [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
-                                                                                                     (when (and (seq keys-down)
-                                                                                                                (not= keys-down #{(keystring->code "shift")}))
-                                                                                                       (d/transact! [[:db/add :commands :which-key/active? true]]))) which-key-delay)]]))))))
+    (events/listen key-handling-element "key" handle-key-event)
+    (events/listen js/window "keydown" #(when meta-key-stuck?
+                                          (handle-key-event %)) true)
 
     (events/listen js/window "mousedown"
                    (fn [e]
@@ -133,7 +177,8 @@
     (events/listen js/window #js ["blur" "focus"] #(when (= (.-target %) (.-currentTarget %))
                                                      (clear-keys)))))
 
-(defonce _ (init-listeners))
+(defonce _ (do (init-listeners)
+               (init-meta-key-management)))
 
 (defn get-hints [keys-pressed]
   (keep (fn [[keyset results]]
@@ -173,12 +218,12 @@
             edit/hop-right)
 
 (defcommand :expand-selection
-            ["Cmd-1"]
+            ["Cmd-]" "Cmd-1"]
             "Select parent form, or form under cursor"
             edit/expand-selection)
 
 (defcommand :shrink-selection
-            ["Cmd-2"]
+            ["Cmd-[" "Cmd-2"]
             "Select child of current form (remembers :expand-selection history)"
             edit/shrink-selection)
 

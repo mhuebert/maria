@@ -19,7 +19,7 @@
                        [:.dib.w3.tr.flex-none.mr2
                         [:.dib.bg-near-white.ph1.br2.pv05 (->> (set/difference keyset modifiers-down)
                                                                (map #(commands/show-key %))
-                                                               (sort-by compare)
+                                                               (sort-by (fn [x] (if (string? x) x (:name (meta x)))))
                                                                (reverse))]]
 
                        display-name]
