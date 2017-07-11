@@ -83,7 +83,7 @@
                                                                                                        :content  (or local-content persisted-content)}))]])
         new-file #(let [{:keys [title-input]} @state]
                     (github/clear-new!)
-                    (.focus title-input)
+                    (some-> title-input (.focus))
                     (when get-editor
                       (some-> (get-editor)
                               (.setValue "")))
@@ -102,14 +102,14 @@
        [:a.hover-underline.gray.no-underline {:href maria-url} (:username owner)]
        [:.ph1.gray "/"]
        (when filename
-         (-> (text/autosize-text {:auto-focus  true
-                                  :ref         #(when % (swap! state assoc :title-input %))
-                                  :value       (strip-clj-ext current-filename)
-                                  :on-key-down #(when (= 13 (.-which %))
-                                                  (persist!))
-                                  :placeholder "Enter a title..."
-                                  :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))})
-             ))]
+         (text/autosize-text {:auto-focus  true
+                              :ref         #(when % (swap! state assoc :title-input %))
+                              :value       (strip-clj-ext current-filename)
+                              :on-key-down #(when (= 13 (.-which %))
+                                              (persist!))
+                              :placeholder "Enter a title..."
+                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))})
+         )]
 
       (when (and filename signed-in?)
         (if (= :fork persist-mode)
