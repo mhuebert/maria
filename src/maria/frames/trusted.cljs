@@ -9,8 +9,21 @@
 
 (enable-console-print!)
 
+(defview remote-progress []
+  [:div {:style {:width    "50%"
+                 :height   10
+                 :left     0
+                 :top      0
+                 :position "absolute"}}
+
+   (when (> (d/get :remote/status :in-progress) 0)
+     [:.progress-indeterminate])])
+
 (defview layout []
-  (routes/match-route-segments (d/get :router/location :segments)))
+  [:div {:style {:width  "100%"
+                 :height "100%"}}
+   (remote-progress)
+   (routes/match-route-segments (d/get :router/location :segments))])
 
 (defonce _
          (do

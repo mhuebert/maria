@@ -1,6 +1,7 @@
 (ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
+            [maria.commands.which-key :as which-key]
             [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
@@ -13,8 +14,6 @@
             [cljs.core.match :refer-macros [match]]
             [maria.views.toolbar :as toolbar]
             [maria.persistence.local :as local]))
-
-
 
 (defn init []
   ;(set! cljs-live.compiler/debug? true)
@@ -71,7 +70,6 @@
 
 (defn loader [message]
   [:.w-100.sans-serif.tc
-   [:.b.progress-indeterminate]
    [:.pa3.gray message]])
 
 (defview gists-list [{:keys [username]}]
@@ -138,6 +136,8 @@
                                                     "Ctrl-Enter") (eval-editor editor :bracket)
                                                   nil))})]))))
 
+
+
 (defview layout
   [{:keys [window-id]}]
   [:.h-100.flex.items-stretch
@@ -151,6 +151,10 @@
     ]
    [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
     {:style {:box-shadow "-1px -1px 0 0 #eee"}}
+
+    (when (d/get :commands :which-key/active?)
+      (which-key/hints))
+
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
        (if-let [eval-log (d/get :repl/state :eval-log)]

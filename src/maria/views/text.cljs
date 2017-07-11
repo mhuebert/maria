@@ -87,7 +87,10 @@
 
 (defview autosize-text
   {:display-name    "AutosizeText"
-   :life/did-mount  (fn [this] (update-size this))
+   :life/did-mount  (fn [{:keys [auto-focus view/state] :as this}]
+                      (update-size this)
+                      (when auto-focus (.focus (:input-element @state)))
+                      )
    :life/did-update (fn [this] (update-size this))
    :cols            (fn [{:keys [view/state]}]
                       (let [fake (:fake-element @state)

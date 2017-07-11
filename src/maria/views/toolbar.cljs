@@ -73,11 +73,12 @@
         update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
-        new-file #(let [{:keys [title-input]} @state
-                        cm-editor (get-editor)]
+        new-file #(let [{:keys [title-input]} @state]
                     (github/clear-new!)
                     (.focus title-input)
-                    (.setValue cm-editor "")
+                    (when get-editor
+                      (some-> (get-editor)
+                              (.setValue "")))
                     (frame/send frame/trusted-frame [:window/navigate "/new" {}]))
         sufficient-content-to-save? (and (not (empty? (or local-content persisted-content)))
                                          (not (empty? (some-> (or local-filename filename)
@@ -93,12 +94,14 @@
        [:a.hover-underline.gray.no-underline {:href maria-url} (:username owner)]
        [:.ph1.gray "/"]
        (when filename
-         (text/autosize-text {:value       (strip-clj-ext current-filename)
-                              :on-key-down #(when (= 13 (.-which %))
-                                              (persist!))
-                              :ref         #(when % (swap! state assoc :title-input %))
-                              :placeholder "Enter a title..."
-                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))]
+         (-> (text/autosize-text {:auto-focus  true
+                                  :ref         #(when % (swap! state assoc :title-input %))
+                                  :value       (strip-clj-ext current-filename)
+                                  :on-key-down #(when (= 13 (.-which %))
+                                                  (persist!))
+                                  :placeholder "Enter a title..."
+                                  :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))})
+             ))]
 
       (when (and filename signed-in?)
         (if (= :fork persist-mode)
