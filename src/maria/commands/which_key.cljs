@@ -14,25 +14,35 @@
         (sort-by (fn [x] (if (string? x) x (:name (meta x)))))
         (reverse))])
 
-(defview hints
+(defn show-hint [modifiers-down {:keys [display-name namespace doc key-patterns]}]
+  [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first key-patterns))])
+
+(defn show-namespace-hints [modifiers-down [namespace hints]]
+  (let [row-height 24]
+    [:.c-avoid.bt.b--near-white.pv1
+     [:.flex
+      [:.pr2.flex-none.tr.b.pv2.flex.items-center.justify-end
+       {:style {:min-width 70
+                :height    row-height}}
+       namespace]
+      [:.flex-auto
+       (for [{:keys [display-name key-patterns]} hints]
+         [:.flex.items-center.ws-nowrap
+          {:style {:height row-height}}
+          display-name
+          [:.flex-auto]
+          (show-keyset modifiers-down (first key-patterns))])]]]))
+
+(defview show-hints
   []
-  (let [modifiers-down (d/get :commands :modifiers-down)
-        show-keyset #(show-keyset modifiers-down %)]
+  (let [modifiers-down (d/get :commands :modifiers-down)]
     (if-let [hints (seq (commands/get-hints modifiers-down))]
-      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.pv2.cc3
+      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns.overflow-auto
+       {:max-height 150}
        (->> hints
-            (keep (fn [{{command-name :exec} :results
-                        keyset :keyset}]
+            (keep (fn [{{command-name :exec} :results}]
                     (@commands/commands command-name)))
             (distinct)
-            (sort-by :name)
-            (map (fn [{:keys [display-name namespace doc key-patterns]}]
-                   [:.pv1
-                    [:.flex.items-center
-                     [:.dib.w3.tr.flex-none.mr2
-                      (show-keyset (first key-patterns))]
-                     (if namespace [:span [:.dib.b.mr1 namespace ":"] display-name]
-                                   [:span.b display-name])]
-                    ;; TODO: add tooltip with doc
-                    #_(when doc [:.gray.f7 [:.dib.w1] [:.dib.w3] doc])])))]
+            (group-by :namespace)
+            (map (partial show-namespace-hints modifiers-down)))]
       [:.fixed])))

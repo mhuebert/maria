@@ -129,7 +129,7 @@
     {:style {:box-shadow "-1px -1px 0 0 #eee"}}
 
     (when (d/get :commands :which-key/active?)
-      (which-key/hints))
+      (which-key/show-hints))
 
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

@@ -61,7 +61,7 @@
             ""
             edit/uneval-top-level-form)
 
-(defcommand :slurp
+(defcommand :form/slurp
             ["Shift-Cmd-K"]
             ""
             edit/slurp)

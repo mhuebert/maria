@@ -214,7 +214,10 @@ div.CodeMirror {
     padding-top: 0.125rem;
     padding-bottom: 0.125rem;
 }
-.cc3 {
-    column-gap: 10px;
-    column-count: 3;
+
+.hint-columns {
+    column-width: 14rem;
+}
+.c-avoid {
+    break-inside: avoid;
 }

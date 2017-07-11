@@ -1,6 +1,6 @@
 (ns maria.views.toolbar
   (:require [re-view.core :as v :refer [defview]]
-            [maria.commands.registry :refer [defcommand]]
+            [maria.commands.registry :refer-macros [defcommand]]
             [maria.views.text :as text]
             [maria.frames.communication :as frame]
             [re-view-material.icons :as icons]
