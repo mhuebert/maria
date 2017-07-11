@@ -40,8 +40,10 @@
                         (.-SHIFT KeyCodes) :shift})
 
 (defn init-listeners []
-  (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]])
+  (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
+                                  [:db/add :commands :which-key/active? false]])
         which-key-delay 500]
+
     (clear-keys)
 
     (events/listen js/window "keydown"
@@ -62,7 +64,8 @@
                        (when (empty? (d/get :commands :modifiers-down))
                          (d/transact! [[:db/add :commands :which-key/active? false]])))))
 
-    (events/listen js/window "blur" clear-keys)))
+    (events/listen js/window #js ["blur" "focus"] #(when (= (.-target %) (.-currentTarget %))
+                                                     (clear-keys)))))
 
 (defonce _ (init-listeners))
 
