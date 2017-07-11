@@ -1,7 +1,7 @@
 (ns maria.commands.which-key
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.commands.core :as commands]
+            [maria.commands.registry :as commands]
             [clojure.set :as set]))
 
 (defn show-keyset
