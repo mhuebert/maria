@@ -25,21 +25,33 @@
                  [:path {:d "M0 0h24v24H0z", :fill "none"}]
                  [:path {:d "M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"}]])
 
-(def symbols {"CONTROL"        (if mac? "⌘" "^")
-              "COMMAND"        (if mac? "⌘" "^")
-              "SHIFT"          "⇧"
-              "OPTION"         "⎇"
-              "ENTER"          "↩"
-              "BACKSPACE"      "⌫"
-              "FORWARD_DELETE" "⌦"
-              "LEFT"           "←"
-              "RIGHT"          "→"
-              "UP"             "↑"
-              "DOWN"           "↓"
-              "HOME"           "↖"
-              "END"            "↘"
-              "CLICK"          (with-meta (icons/size mouse-icon 14)
-                                          {:name "z"})})
+(def symbols {"CONTROL"              (if mac? "⌘" "^")
+              "COMMAND"              (if mac? "⌘" "^")
+              "SHIFT"                "⇧"
+              "OPTION"               "⎇"
+              "ENTER"                "↩"
+              "BACKSPACE"            "⌫"
+              "FORWARD_DELETE"       "⌦"
+              "LEFT"                 "←"
+              "RIGHT"                "→"
+              "UP"                   "↑"
+              "DOWN"                 "↓"
+              "HOME"                 "↖"
+              "END"                  "↘"
+              "CLICK"                (with-meta (icons/size mouse-icon 14)
+                                                {:name "z"})
+              "OPEN_SQUARE_BRACKET"  "["
+              "CLOSE_SQUARE_BRACKET" "]"
+              "BACKSLASH"            "/"
+              "SLASH"                \\
+              "APOSTROPHE"           "'"
+              "COMMA"                ","
+              "PERIOD"               "."
+              "EQUALS"               "="
+              "PLUS"                 "+"
+              "DASH"                 "-"
+              "SEMICOLON"            ";"
+              "TILDE"                "`"})
 
 (defn keystring->code [k]
   (let [k (string/upper-case k)
@@ -79,12 +91,11 @@
           1 "CLICK_MIDDLE"))
 
 (defn normalize-keyset-string [patterns]
-  (conj (->> (string/split patterns #"\s")
-             (map (fn [s] (->> (string/split s #"[-+]")
-                               (map keystring->code)
-                               (set))))
-             (interpose :keys)
-             (vec)) :exec))
+  (->> (string/split patterns #"\s")
+       (map (fn [s] (->> (string/split s #"[-+]")
+                         (map keystring->code)
+                         (set))))
+       (interpose :keys)))
 
 (def code->symbol
   (reduce-kv (fn [m k sym]
@@ -187,57 +198,57 @@
               {:keyset  keyset
                :results results}))) @mappings))
 
-(defcommand :copy-form
+(defcommand :copy/form
             ["Cmd-C"]
             ""
             edit/copy-form)
 
-(defcommand :kill
+(defcommand :cut/line
             ["Ctrl-K"]
             "Cut to end of line / node"
             edit/kill)
 
-(defcommand :cut-form
+(defcommand :cut/form
             ["Cmd-X"]
             "Cuts current highlight"
             edit/cut-form)
 
-(defcommand :delete-form
+(defcommand :delete/form
             ["Cmd-Backspace"]
             "Deletes current highlight"
             edit/delete-form)
 
-(defcommand :hop-left
+(defcommand :cursor/hop-left
             ["Alt-Left"]
             "Move cursor left one form"
             edit/hop-left)
 
-(defcommand :hop-right
+(defcommand :cursor/hop-right
             ["Alt-Right"]
             "Move cursor right one form"
             edit/hop-right)
 
-(defcommand :expand-selection
+(defcommand :selection/expand
             ["Cmd-]" "Cmd-1"]
             "Select parent form, or form under cursor"
             edit/expand-selection)
 
-(defcommand :shrink-selection
+(defcommand :selection/shrink
             ["Cmd-[" "Cmd-2"]
             "Select child of current form (remembers :expand-selection history)"
             edit/shrink-selection)
 
-(defcommand :comment-line
+(defcommand :comment/line
             ["Cmd-/"]
             "Comment the current line"
             edit/comment-line)
 
-(defcommand :uneval-form
+(defcommand :comment/uneval-form
             ["Cmd-;"]
             ""
             edit/uneval-form)
 
-(defcommand :uneval-top-level-form
+(defcommand :comment/uneval-top-level-form
             ["Cmd-Shift-;"]
             ""
             edit/uneval-top-level-form)
@@ -261,17 +272,17 @@
                                                                             :id (d/unique-id)
                                                                             :source source)]]))))
 
-(defcommand :eval-top-level
+(defcommand :eval/top-level
             ["Shift-Cmd-Enter"]
             "Evaluate the top-level form"
             (fn [editor] (eval-editor editor :top-level)))
 
-(defcommand :eval-form
+(defcommand :eval/form
             ["Cmd-Enter"]
             "Evaluate the current form"
             (fn [editor] (eval-editor editor :bracket)))
 
-(defcommand :eval-on-click
+(defcommand :eval/on-click
             ["Option-Click"]
             "Evaluate the clicked form"
             (fn [editor]

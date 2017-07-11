@@ -1,9 +1,8 @@
 (ns maria.commands.core
   (:require [clojure.string :as string]))
 
-(defn spaced-name [k]
-  (let [s (name k)]
-    (str (string/upper-case (first s)) (string/replace (subs s 1) "-" " "))))
+(defn spaced-name [the-name]
+  (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
 
 (defmacro defcommand [name-as-keyword
                       key-patterns
@@ -13,14 +12,16 @@
         mappings 'maria.commands.core/mappings
         normalize-keyset-string 'maria.commands.core/normalize-keyset-string
         form `(let [parsed-key-patterns# (mapv ~normalize-keyset-string ~normalized-key-patterns)]
-                (swap! ~commands assoc ~name-as-keyword {:name         ~name-as-keyword
-                                                         :display-name ~(spaced-name name-as-keyword)
-                                                         :doc          ~docstring
-                                                         :key-pattern  ~normalized-key-patterns
-                                                         :command      ~(if
-                                                                          (vector? (first body))
-                                                                          `(fn ~(name name-as-keyword) ~@body)
-                                                                          (first body))})
+                (swap! ~commands assoc ~name-as-keyword {:name                ~name-as-keyword
+                                                         :namespace           ~(some-> (namespace name-as-keyword) (spaced-name))
+                                                         :display-name        ~(spaced-name (name name-as-keyword))
+                                                         :doc                 ~docstring
+                                                         :key-pattern-strings ~normalized-key-patterns
+                                                         :key-patterns        parsed-key-patterns#
+                                                         :command             ~(if
+                                                                                 (vector? (first body))
+                                                                                 `(fn ~(name name-as-keyword) ~@body)
+                                                                                 (first body))})
                 (doseq [pattern# parsed-key-patterns#]
-                  (swap! ~mappings assoc-in pattern# ~name-as-keyword)))]
+                  (swap! ~mappings update-in pattern# assoc :exec ~name-as-keyword)))]
     form))

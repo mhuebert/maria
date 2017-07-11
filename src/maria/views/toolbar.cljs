@@ -95,12 +95,12 @@
               (.setValue "")))
     (frame/send frame/trusted-frame [:window/navigate "/new" {}])))
 
-(defcommand :create-blank-doc
+(defcommand :doc/create-blank
             ["Cmd-B"]
             "Create a blank doc"
             (fn [] (some-> current-toolbar (new-file!))))
 
-(defcommand :publish-doc
+(defcommand :doc/publish
             ["Cmd-Shift-P"]
             "Publish the current doc"
             (fn [] (when current-toolbar
