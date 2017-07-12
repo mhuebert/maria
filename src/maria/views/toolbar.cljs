@@ -89,11 +89,13 @@
               :create [:project/create (d/get "new" :local)]
               :fork [:project/fork (:id persisted)])))))
 
-(defn new-file! [{:keys [view/state get-editor] :as toolbar}]
+(defn new-file! [{:keys [view/state get-editor id] :as toolbar}]
   (let [{:keys [title-input]} @state]
     (github/clear-new!)
-    (some-> title-input (.focus))
-    (when get-editor
+    ;(some-> title-input (.focus))
+    (when (and (= id "new") get-editor)
+      ;; if we are already in the document with the id "new", clear the editor.
+      ;; otherwise, we will get a blank editor by switching ids.
       (some-> (get-editor)
               (.setValue "")))
     (frame/send frame/trusted-frame [:window/navigate "/new" {}])))
