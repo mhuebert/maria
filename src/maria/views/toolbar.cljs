@@ -141,7 +141,7 @@
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
         has-unsaved-changes (unsaved-changes? project filename)]
-    [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.flex-none.br.b--light-gray.f7.flex-none.relative
+    [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.br.b--light-gray.f7.flex-none
      [:.ph2.flex-auto.flex.items-center
       [:.pl2.flex.items-center
        [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]

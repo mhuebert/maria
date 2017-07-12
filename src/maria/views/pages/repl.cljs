@@ -99,19 +99,20 @@
           :else
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
-            [:.flex.flex-column.flex-auto.relative
+            [:.h-100.flex.flex-column
              (toolbar/toolbar {:project    project
                                :owner      (:owner project)
                                :filename   filename
                                :id         id
                                :get-editor #(.getEditor this)})
-             (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-                             :class         "flex-auto overflow-auto"
-                             :on-update     (fn [source]
-                                              (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                             :source-id     id
-                             :value         (or local-value persisted-value)
-                             :default-value default-value})]))))
+             [:.flex.flex-auto
+              (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+
+                              :on-update     (fn [source]
+                                               (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                              :source-id     id
+                              :value         (or local-value persisted-value)
+                              :default-value default-value})]]))))
 
 
 

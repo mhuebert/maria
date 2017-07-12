@@ -5,6 +5,7 @@
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
+            [maria.show-comments :as show-comments]
 
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]))
@@ -38,6 +39,7 @@
                                                                        (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
+                                (swap! editor assoc :on-ast-update show-comments/handle-ast-update)
 
                                 (when-not read-only?
 
@@ -74,16 +76,17 @@
                                     :else nil))
    :life/should-update      (fn [_] false)}
   [{:keys [view/state on-focus on-blur view/props] :as this}]
-  [:div (-> (select-keys props [:style :class :classes])
-            (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
-                                 (let [editor (:editor @state)]
-                                   (doto editor
-                                     (.setCursor (.lineCount editor) 0)
-                                     (.focus))))
-                    :on-blur  #(do (set! current-editor nil)
-                                   (when on-blur (on-blur %)))
-                    :on-focus #(do (set! current-editor (:editor @state))
-                                   (when on-focus (on-focus %)))}))])
+  [:.flex-auto
+   (-> (select-keys props [:style :class :classes])
+       (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
+                            (let [editor (:editor @state)]
+                              (doto editor
+                                (.setCursor (.lineCount editor) 0)
+                                (.focus))))
+               :on-blur  #(do (set! current-editor nil)
+                              (when on-blur (on-blur %)))
+               :on-focus #(do (set! current-editor (:editor @state))
+                              (when on-focus (on-focus %)))}))])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true
