@@ -61,6 +61,10 @@ div.CodeMirror {
         color: #777;
         //cursor: pointer;
     }
+    span.CodeMirror-unmatchedBracket {
+        background-color: #c00000;
+        color: white;
+    }
 
     .CodeMirror-evalRegion {
         background: rgba(0, 0, 0, 0.1);
