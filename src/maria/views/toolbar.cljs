@@ -100,7 +100,7 @@
               (.setValue "")))
     (frame/send frame/trusted-frame [:window/navigate "/new" {}])))
 
-(defcommand :doc/create-blank
+(defcommand :doc/new
             ["Cmd-B"]
             "Create a blank doc"
             (fn [] (some-> current-toolbar (new-file!))))
