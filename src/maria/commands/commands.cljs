@@ -66,7 +66,12 @@
             ""
             edit/slurp)
 
-(defn eval-editor [cm scope]
+(defn eval-to-repl [source]
+  (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
+                                                                        :id (d/unique-id)
+                                                                        :source source)]]))
+
+(defn eval-scope [cm scope]
   (let [traverse (case scope :top-level tree/top-loc
                              :bracket identity)]
     (when-let [source (or (cm/selection-text cm)
@@ -76,23 +81,26 @@
                                (traverse)
                                (tree/string (:ns @eval/c-env))))]
 
-      (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
-                                                                            :id (d/unique-id)
-                                                                            :source source)]]))))
-
-(defcommand :eval/top-level
-            ["Shift-Cmd-Enter"]
-            "Evaluate the top-level form"
-            (fn [editor] (eval-editor editor :top-level)))
+      (eval-to-repl source))))
 
 (defcommand :eval/form
             ["Cmd-Enter"]
             "Evaluate the current form"
-            (fn [editor] (eval-editor editor :bracket)))
+            (fn [editor] (eval-scope editor :bracket)))
+
+(defcommand :eval/top-level
+            ["Shift-Cmd-Enter"]
+            "Evaluate the top-level form"
+            (fn [editor] (eval-scope editor :top-level)))
+
+(defcommand :eval/doc
+            ["Option-Cmd-Enter"]
+            "Evaluate whole doc"
+            (fn [editor] (eval-to-repl (.getValue editor))))
 
 (defcommand :eval/on-click
             ["Option-Click"]
             "Evaluate the clicked form"
             (fn [editor]
-              (eval-editor editor :bracket)
+              (eval-scope editor :bracket)
               true))
