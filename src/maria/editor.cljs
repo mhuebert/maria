@@ -33,6 +33,9 @@
                                                                                   read-only? (-> (select-keys [:theme :mode :lineWrapping])
                                                                                                  (assoc :readOnly "nocursor"))))))]
                                 (set! (.-view editor) this)
+                                (set! (.-setValueAndRefresh editor) #(do
+                                                                       (.setValue editor %)
+                                                                       (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
 
@@ -48,7 +51,9 @@
                                         (.on editor event-key f))))
                                   (when on-mount (on-mount editor this)))
 
-                                (some->> (or value default-value) (str) (.setValue editor))
+                                (some->> (or value default-value) (str) (.setValueAndRefresh editor))
+
+                                (.focus editor)
 
                                 (when on-update
                                   (.on editor "change" #(on-update (.getValue %1))))
@@ -58,7 +63,7 @@
                               (when-let [editor (:editor @state)]
                                 (cm/set-preserve-cursor editor value)))
    :reset-value             (fn [{:keys [default-value value view/state]}]
-                              (.setValue (:editor @state) (or value default-value)))
+                              (.setValueAndRefresh (:editor @state) (or value default-value)))
    :life/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props

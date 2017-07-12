@@ -38,7 +38,7 @@
   (let [modifiers-down (d/get :commands :modifiers-down)]
     (if-let [hints (seq (commands/get-hints modifiers-down))]
       [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns.overflow-auto
-       {:max-height 150}
+       {:style {:max-height 150}}
        (->> hints
             (keep (fn [{{command-name :exec} :results}]
                     (@commands/commands command-name)))

@@ -8,7 +8,7 @@
 (defn match-route-segments [segments]
   (match segments
          []
-         (match-route-segments ["new"])
+         (match-route-segments ["modules" "intro"])
          #_(match-route-segments ["modules" "intro"])
 
          ["modules"]

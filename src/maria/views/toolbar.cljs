@@ -63,16 +63,19 @@
     (and filename
          local-file
          (or (and local-content (not= local-content persisted-content))
-             (and local-filename (not= local-filename filename)))
-         (not (re-find #"^\s*$" local-content)))))
+             (and local-filename (not= local-filename filename))))))
 
 (defn valid-content? [project filename]
   (let [{local-content  :content
          local-filename :filename} (get-in project [:local :files filename])
-        persisted-content (get-in project [:persisted :files filename :content])]
-    (and (not (empty? (or local-content persisted-content)))
-         (not (empty? (some-> (or local-filename filename)
-                              (strip-clj-ext)))))))
+        persisted-content (get-in project [:persisted :files filename :content])
+        content-to-persist (or local-content persisted-content)
+        filename-to-persist (some-> (or local-filename filename)
+                                    (strip-clj-ext))]
+    (and (not (empty? content-to-persist))
+         (not (re-find #"^\s*$" content-to-persist))
+         (not (empty? filename-to-persist))
+         (not (re-find #"^\s*$" filename-to-persist)))))
 
 (defn persist! [{:keys [local persisted] :as project} filename]
   (when (and (unsaved-changes? project filename)
@@ -157,10 +160,10 @@
             (if (and (valid-content? project filename)
                      has-unsaved-changes)
               (toolbar-item [persist! icons/Backup])
-              (toolbar-item {:class "o-50"} [nil icons/Backup ""]))
-            (when (and persisted has-unsaved-changes)
-              (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
-                                  (.setValue (get-editor) persisted-content)) icons/Undo])))))]
+              (toolbar-item {:class "o-50"} [nil icons/Backup ""])))))
+      (when (and persisted has-unsaved-changes)
+        (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
+                            (.setValueAndRefresh (get-editor) persisted-content)) icons/Undo]))]
 
      (toolbar-item [#(new-file! this) icons/Add "New namespace"])
      (if signed-in? (user-menu)
