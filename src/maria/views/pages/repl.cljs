@@ -2,13 +2,11 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
-            [magic-tree-codemirror.util :as cm]
             [maria.editor :as editor]
             [maria.eval :as eval]
             [cljs.pprint :refer [pprint]]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
-            [magic-tree.core :as tree]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cljs.core.match :refer-macros [match]]
@@ -44,19 +42,7 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
-(defn eval-editor [cm scope]
-  (let [traverse (case scope :top-level tree/top-loc
-                             :bracket identity)]
-    (when-let [source (or (cm/selection-text cm)
-                          (->> cm
-                               :magic/cursor
-                               :bracket-loc
-                               (traverse)
-                               (tree/string (:ns @eval/c-env))))]
 
-      (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
-                                                                            :id (d/unique-id)
-                                                                            :source source)]]))))
 
 
 (def result-toolbar
@@ -75,7 +61,7 @@
 (defview gists-list [{:keys [username]}]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar/toolbar {:owner (:owner (first gists))})
+     (toolbar/toolbar {:parent (:owner (first gists))})
      [:.flex-auto.overflow-auto.sans-serif.f6
       (if-let [message (d/get username :loading-message)]
         (loader message)
@@ -124,17 +110,7 @@
                                                 (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                              :source-id       id
                              :value           (or local-value persisted-value)
-                             :default-value   default-value
-                             :event/mousedown #(when (.-metaKey %)
-                                                 (.preventDefault %)
-                                                 (eval-editor (.getEditor this) :bracket))
-                             :event/keydown   (fn [editor e]
-                                                (case (.keyName js/CodeMirror e)
-                                                  ("Shift-Cmd-Enter"
-                                                    "Shift-Ctrl-Enter") (eval-editor editor :top-level)
-                                                  ("Cmd-Enter"
-                                                    "Ctrl-Enter") (eval-editor editor :bracket)
-                                                  nil))})]))))
+                             :default-value   default-value})]))))
 
 
 
@@ -153,7 +129,7 @@
     {:style {:box-shadow "-1px -1px 0 0 #eee"}}
 
     (when (d/get :commands :which-key/active?)
-      (which-key/hints))
+      (which-key/show-hints))
 
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code

@@ -57,46 +57,128 @@
 ;; Halloween pumpkin
 (layer
  (position 40 60 (colorize "orange" (circle 40)))
- (position 10 30 (colorize "black" (triangle 24)))
- (position 45 30 (colorize "black" (triangle 24)))
- (position 20 75 (colorize "black" (rectangle 40 10)))
+ (position 10 30 (colorize "black"  (triangle 24)))
+ (position 45 30 (colorize "black"  (triangle 24)))
+ (position 20 75 (colorize "black"  (rectangle 40 10)))
  (position 25 74 (colorize "orange" (rectangle 10 5)))
  (position 45 74 (colorize "orange" (rectangle 10 5)))
  (position 33 82 (colorize "orange" (rectangle 10 5)))
- (position 35 2 (colorize "black" (rectangle 10 20))))
+ (position 35 2  (colorize "black"  (rectangle 10 20))))
 
-;; Berlin Fernseheturm
-(layer (position 35 60 (colorize "grey" (circle 25)))
-       (position 34 0 (colorize "grey" (rectangle 2 300)))
-       (position 29 78 (colorize "grey" (rectangle 12 222)))
-       (position 29 20 (colorize "grey" (rectangle 12 16)))
-       (position 18 285 (colorize "grey" (triangle 35)))
-       (position 26 95 (colorize "grey" (rectangle 18 16)))
-       (position 24 152 (colorize "grey" (rectangle 5 158)))
-       (position 41 152 (colorize "grey" (rectangle 5 158)))
-       (position 41 140 (colorize "grey" (rectangle 2 158)))
-       (position 27 140 (colorize "grey" (rectangle 2 158))))
+;;;; Fernseheturm
+(let [base (layer (position 35 90 (colorize "grey" (circle 25)))
+                  (position 34 0 (colorize "grey" (rectangle 4 300)))
+                  (position 29 108 (colorize "grey" (rectangle 12 222)))
+                  (position 29 50 (colorize "grey" (rectangle 12 16)))
+                  (position 15 315 (colorize "grey" (triangle 40)))
+                  (position 26 125 (colorize "grey" (rectangle 18 16)))
+                  (position 24 182 (colorize "grey" (rectangle 5 158)))
+                  (position 41 182 (colorize "grey" (rectangle 5 158)))
+                  (position 41 170 (colorize "grey" (rectangle 2 158)))
+                  (position 27 170 (colorize "grey" (rectangle 2 158))))
+      
+      small-brown-rectangles (layer
+                              ;;center of sphere small dark rectangle
+                              (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;; first set out and lower
+                              (position 30 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 40 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;; second set out and lower
+                              (position 27 91 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 43 91 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;; third set out but NOT lower
+                              (position 24 91 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 46 91 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;; fourth set out and lower
+                              (position 21 92 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 49 92 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;; fifth set out NOT lower
+                              (position 17 92 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 52 92 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              ;;sixth set out and lower
+                              (position 14 93 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                              (position 55 93 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
 
-;; Berlin Fernseheturm, with lighting effects (beta)
-(layer (position 35 90 (colorize "grey" (circle 25)))
-       (position 34 0 (colorize "grey" (rectangle 4 300)))
-       (position 29 108 (colorize "grey" (rectangle 12 222)))
-       (position 29 50 (colorize "grey" (rectangle 12 16)))
-       (position 15 315 (colorize "grey" (triangle 40)))
-       (position 26 125 (colorize "grey" (rectangle 18 16)))
-       (position 24 182 (colorize "grey" (rectangle 5 158)))
-       (position 41 182 (colorize "grey" (rectangle 5 158)))
-       (position 41 170 (colorize "grey" (rectangle 2 158)))
-       (position 27 170 (colorize "grey" (rectangle 2 158)))
-       ;; now we start the highlight layer
-       (position 25 100 (colorize "lightgrey" (circle 10)))
-       (position 24 182 (colorize "lightgrey" (rectangle 5 158)))
-       (position 34 0 (colorize "lightgrey" (rectangle 2 50)))
-       (position 25 90 (colorize "pink" (rectangle 2 25)))
-       (position 22 90 (colorize "pink" (rectangle 2 22)))
-       (position 19 90 (colorize "pink" (rectangle 2 19)))
-       (position 16 90 (colorize "pink" (rectangle 2 16)))
-       (position 13 90 (colorize "pink" (rectangle 2 13)))
-       ;; orange highlights
-       (position 27 182 (colorize "orange" (rectangle 1 158)))
-       (position 31 141 (colorize "orange" (rectangle 1 30))))
+      reflections-on-sphere-base (layer
+                                  ;; white circle
+                                  (position 40 90 (opacity 0.75 (colorize "white" (circle 20))))
+                                  ;; lower blue circle
+                                  (position 28 90 (opacity 0.75 (colorize "lightblue" (circle 15))))
+                                  ;; higher blue circle
+                                  (position 24 90 (opacity 0.75 (colorize "lightblue" (circle 15))))
+                                  ;; orange triangle
+                                  (position 35 97 (opacity 0.5 (colorize "orange" (circle 15))))
+                                  ;; yellow triangle
+                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20)))) 
+                                  ;;center of sphere small dark rectangle
+                                  (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
+
+      lower-brown-rectangles-on-sphere (layer
+                                        ;;center of sphere small dark rectangle
+                                        (position 35 98 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        ;; first set out and lower
+                                        (position 30 98 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 40 98 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        ;; second set out and lower
+                                        (position 27 99 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 43 99 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        ;; third set out but NOT lower
+                                        (position 24 99 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 46 99 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        ;; fourth set out and lower
+                                        (position 21 100 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 49 100 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        ;; fifth set out NOT lower
+                                        (position 17 100 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 52 100 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 14 93 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
+                                        (position 55 93 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
+
+      reflections-on-sphere-base (layer
+                                  ;; white circle 
+                                  (position 40 90 (opacity 0.75 (colorize "white" (circle 20))))
+                                  ;; lower blue circle
+                                  (position 28 90 (opacity 0.75 (colorize "lightblue" (circle 15))))
+                                  ;; higher blue circle
+                                  (position 28 83 (opacity 0.75 (colorize "lightblue" (circle 15))))
+                                  ;; orange triangle
+                                  (position 35 97 (opacity 0.5 (colorize "orange" (circle 15))))
+                                  ;; yellow triangle
+                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20)))) 
+                                  ;;center of sphere small dark rectangle
+                                  (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))) 
+
+      antenna-shaft-highlights (layer
+                                ;; skinny orange horizontal highlight
+                                (position 26 128 (opacity 0.75 (colorize "orange" (rectangle 18 3))))
+                                ;; orange top  transparent vertical layer
+                                (position 28 140 (opacity 0.75 (colorize "orange" (rectangle 13 32))))
+                                ;; white transparent vertical side highlights
+                                (position 25 180 (opacity 0.50 (colorize "white" (rectangle 12 155))))
+                                (position 33 180 (opacity 0.50 (colorize "white" (rectangle 12 155))))
+                                ;; orange lower transparent vertical layer
+                                (position 28 180 (opacity 0.35 (colorize "orange" (rectangle 13 155))))
+                                ;; white transparent vertical highlight mid
+                                (position 28 200 (opacity 0.35 (colorize "white" (rectangle 13 150))))
+                                ;; white transparent vertical highlight lower
+                                (position 28 200 (opacity 0.35 (colorize "white" (rectangle 13 150))))
+                                ;;antenna white highlight
+                                (position 33 0 (opacity .65 (colorize "white" (rectangle 1 50))))
+                                ;;antenna orange highlight
+                                (position 35 0 (opacity .75 (colorize "orange" (rectangle 1 50))))
+                                ;;just below antenna cylinder - center blue rectangle
+                                (position 33 55 (opacity 0.25 (colorize "blue" (rectangle 4 6))))
+                                ;; just below antenna cylinder - lower rectangles
+                                (position 31 57 (opacity 0.35 (colorize "blue" (rectangle 2 6))))
+                                (position 37 57 (opacity 0.35 (colorize "blue" (rectangle 2 6))))
+                                ;; just below antenna cylinder - even lower rectangles
+                                (position 29 58 (opacity 0.35 (colorize "blue" (rectangle 2 6))))
+                                (position 39 58 (opacity 0.35 (colorize "blue" (rectangle 2 6))))
+                                ;; extra dark blue on brown rectangles on main sphere
+                                (position 30 90 (opacity 0.5 (colorize "blue" (rectangle 4 6))))
+                                (position 40 90 (opacity 0.5 (colorize "blue" (rectangle 4 6)))))]
+  (layer base
+         reflections-on-sphere-base
+         small-brown-rectangles
+         lower-brown-rectangles-on-sphere
+         antenna-shaft-highlights))

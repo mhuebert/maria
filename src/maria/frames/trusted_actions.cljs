@@ -55,4 +55,5 @@
                       [:auth/sign-out] (remote/sign-out)
 
                       [:window/navigate url opts] (navigate! url opts)
+                      [:window/set-title title] (d/transact! [[:db/add :window :title title]])
                       :else (prn "Unknown message: " message))))))

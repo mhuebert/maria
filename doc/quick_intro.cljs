@@ -23,9 +23,10 @@
 (what-is "puppy")
 
 ;; Ok! It's a _string_, which is a funny way of saying "some
-;; text". There are several other kinds of things in Clojure that
-;; we'll get to know later, but in the meantime let's talk about those
-;; parentheses.
+;; text". You can tell it's a string because it's wrapped in
+;; double-quotes. There are several other kinds of things in Clojure
+;; that we'll get to know later, but in the meantime let's talk about
+;; those parentheses.
 
 ;; Whenever you see an expression in parentheses, it's kind of like a
 ;; sentence where the first thing after the `(` is treated as the
@@ -286,8 +287,9 @@ color-names
 
 ;; Say we're going to draw a bunch of shapes, and we want to use just
 ;; a few colors over and over. Picasso might choose five different
-;; blues. A fan of old movies might choose ten shades of black and
-;; white. Put a few color names into a vector, like this:
+;; blues...a fan of old movies might choose ten shades of black and
+;; white. Yours is up to you. Put a few color names into a vector,
+;; like this:
 
 ["blue" "turquoise" "midnightblue"]
 

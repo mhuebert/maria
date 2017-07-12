@@ -21,7 +21,7 @@
 .cm-s-maria-light span.cm-number {color: #987aa0;}
 
 .cm-s-maria-light span.cm-property, .cm-s-maria-light span.cm-attribute {color: #98a14b;}
-.cm-s-maria-light span.cm-keyword {color: #cc6666;}
+.cm-s-maria-light span.cm-keyword, .cm-s-maria-light span.cm-builtin {color: #cc6666;}
 .cm-s-maria-light span.cm-string {color: #a78938;}
 
 .cm-s-maria-light span.cm-variable {color: #98a14b;}
@@ -60,6 +60,10 @@ div.CodeMirror {
         //font-weight: bold;
         color: #777;
         //cursor: pointer;
+    }
+    span.CodeMirror-unmatchedBracket {
+        background-color: #c00000;
+        color: white;
     }
 
     .CodeMirror-evalRegion {
@@ -209,4 +213,15 @@ div.CodeMirror {
     overflow: hidden;
     background: transparent;
     -webkit-appearance: caret;
+}
+.pv05 {
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+}
+
+.hint-columns {
+    column-width: 14rem;
+}
+.c-avoid {
+    break-inside: avoid;
 }
