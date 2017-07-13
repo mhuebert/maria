@@ -43,6 +43,9 @@
 (defn init-listeners []
   (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
                                   [:db/add :commands :which-key/active? false]])
+        clear-which-key! #(do (doseq [timeout (d/get :commands :timeouts)]
+                                (js/clearTimeout timeout))
+                              (d/transact! [[:db/add :commands :which-key/active? false]]))
         which-key-delay 500
         handle-keydown (fn [e]
                          (let [keycode (registry/normalize-keycode (.-keyCode e))
@@ -51,7 +54,7 @@
                            (if-let [commands (seq (registry/get-keyset-commands (conj keys-down keycode)))]
                              (do (doseq [command commands]
                                    (exec-command command e))
-                                 (d/transact! [[:db/add :commands :which-key/active? false]]))
+                                 (clear-which-key!))
                              (when modifier?
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
                                              [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
@@ -73,8 +76,7 @@
                      (let [keycode (registry/normalize-keycode (.-keyCode e))
                            modifier? (registry/modifiers keycode)]
                        (when modifier?
-                         (doseq [timeout (d/get :commands :timeouts)]
-                           (js/clearTimeout timeout))
+                         (clear-which-key!)
                          (d/transact! [[:db/update-attr :commands :modifiers-down disj keycode]])
                          (when (empty? (d/get :commands :modifiers-down))
                            (d/transact! [[:db/add :commands :which-key/active? false]]))))))
