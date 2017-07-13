@@ -123,12 +123,12 @@
 
 color-names
 
-;; We can also combine expressions to create a group of shapes, by
-;; using the `group` function:
+;; We can also combine expressions to create a layer of shapes, by
+;; using the `layer` function:
 
-(doc group)
+(doc layer)
 
-;; By default, things in groups all share the same top/left corner,
+;; By default, things in layers all share the same top/left corner,
 ;; and thus often overlap:
 
 (layer
