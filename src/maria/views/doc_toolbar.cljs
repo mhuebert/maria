@@ -192,9 +192,8 @@
                              :placeholder "Enter a title..."
                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))
 
-
       (or (command-button :doc/fork icons/ContentDuplicate)
-          (command-button :doc/publish icons/Backup (icons/class icons/Backup "o-50")))
+          (command-button :doc/publish icons/Backup (when signed-in? (icons/class icons/Backup "o-50"))))
       (command-button :doc/revert icons/Undo)]
      [:.flex-auto]
      (command-button :doc/new icons/Add)

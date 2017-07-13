@@ -54,8 +54,9 @@
                                keys-down (d/get :commands :modifiers-down)
                                modifier? (contains? registry/modifiers keycode)]
                            (if-let [commands (seq (registry/get-keyset-commands (conj keys-down keycode)))]
-                             (doseq [command commands]
-                               (exec-command command e))
+                             (do (doseq [command commands]
+                                   (exec-command command e))
+                                 (d/transact! [[:db/add :commands :which-key/active? false]]))
                              (when modifier?
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
                                              [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
