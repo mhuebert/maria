@@ -8,36 +8,47 @@
 
 (def pass #(.-Pass js/CodeMirror))
 
+(def selection? #(some-> (:editor %) (.somethingSelected)))
+(def no-selection? #(some-> (:editor %) (.somethingSelected) (not)))
+
 (defcommand :copy/form
   {:bindings ["Cmd-C"]
-   :when     #(not (.somethingSelected (:editor %)))}
+   :when     no-selection?}
   [{:keys [editor]}]
   (edit/copy-form editor))
 
 (defcommand :copy/selection
   {:bindings ["Cmd-C"]
-   :when #(.somethingSelected (:editor %))})
+   :when     selection?})
 
 (defcommand :cut/line
   "Cut to end of line / node"
-  {:bindings ["Ctrl-K"]
+  {:bindings ["Cmd-K"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/kill editor))
 
+(defcommand :cut/selection
+  {:bindings ["Cmd-K"]
+   :when     selection?})
+
 (defcommand :cut/form
   "Cuts current highlight"
   {:bindings ["Cmd-X"]
-   :when     :editor}
+   :when     no-selection?}
   [{:keys [editor]}]
   (edit/cut-form editor))
 
 (defcommand :delete/form
   "Deletes current highlight"
   {:bindings ["Cmd-Backspace"]
-   :when     :editor}
+   :when     no-selection?}
   [{:keys [editor]}]
   (edit/delete-form editor))
+
+(defcommand :delete/selection
+  {:bindings ["Cmd-Backspace"]
+   :when     selection?})
 
 (defcommand :cursor/hop-left
   "Move cursor left one form"
