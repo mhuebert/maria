@@ -24,7 +24,7 @@
 (def symbols {"CONTROL"              (if mac? "⌘" "^")
               "COMMAND"              (if mac? "⌘" "^")
               "SHIFT"                "⇧"
-              "OPTION"               "⎇"
+              "ALT"                  "⎇"
               "ENTER"                "↩"
               "BACKSPACE"            "⌫"
               "FORWARD_DELETE"       "⌦"
@@ -125,9 +125,9 @@
                                modifier? (contains? modifiers keycode)]
                            (if-let [command-name (get-keyset-command (conj keys-down keycode))]
                              (let [{:keys [command]} (get @commands command-name)]
-                               (some-> editor/current-editor (command))
-                               (.stopPropagation e)
-                               (.preventDefault e))
+                               (when-not (= (some-> editor/current-editor (command)) (.-Pass js/CodeMirror))
+                                 (.stopPropagation e)
+                                 (.preventDefault e)))
                              (when modifier?
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
                                              [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]

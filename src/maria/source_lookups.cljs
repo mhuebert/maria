@@ -41,15 +41,22 @@
         form (r/read reader)]
     (:source (meta form))))
 
+(defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]
+  (or (some->> intermediate-values
+               (keep (partial js-match js-source))
+               (first))
+      (when compiled-js
+        (let [i (.indexOf compiled-js js-source)]
+          (when (> i -1)
+            (assoc result :index i))))))
+
 (defn js-source->clj-source
   "Searches previously compiled ClojureScript<->JavaScript mappings to return the original ClojureScript
   corresponding to compiled JavaScript"
   [js-source]
-  (when-let [{:keys [index source compiled-js source-map]} (first (for [{:keys [compiled-js] :as res} @e/eval-log
-                                                                        :when compiled-js
-                                                                        :let [i (.indexOf compiled-js js-source)]
-                                                                        :when (> i -1)]
-                                                                    (merge res {:index i})))]
+  (when-let [{:keys [index source compiled-js source-map]} (->> @e/eval-log
+                                                                (keep (partial js-match js-source))
+                                                                (first))]
     (let [pos (-> (cljs-eval/mapped-cljs-position (index-position index compiled-js) source-map)
                   (update :line inc)
                   (update :column inc))]
