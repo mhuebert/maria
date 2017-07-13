@@ -120,14 +120,14 @@
 
 (defcommand :doc/new
   "Create a blank doc"
-  {:bindings ["Cmd-B"]
+  {:bindings ["Command-B"]
    :when     :doc-toolbar}
   [{:keys [doc-toolbar]}]
   (new-file! doc-toolbar))
 
 (defcommand :doc/publish
   "Publish the current doc"
-  {:bindings ["Cmd-Shift-P"]
+  {:bindings ["Command-Shift-P"]
    :when     #(and (:signed-in? %)
                    (let [doc-toolbar (:doc-toolbar %)]
                      (and (#{:create :publish} (persistence-mode doc-toolbar))
@@ -138,7 +138,7 @@
 
 (defcommand :doc/fork
   "Make your own copy of another user's project"
-  {:bindings ["Cmd-Shift-P"]
+  {:bindings ["Command-Shift-P"]
    :when     #(and (:signed-in? %)
                    (= :fork (persistence-mode (:doc-toolbar %))))}
   [{:keys [doc-toolbar]}]

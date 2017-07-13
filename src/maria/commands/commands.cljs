@@ -12,93 +12,97 @@
 (def no-selection? #(some-> (:editor %) (.somethingSelected) (not)))
 
 (defcommand :copy/form
-  {:bindings ["Cmd-C"]
+  {:bindings ["Command-C"
+              "Control-C"]
    :when     no-selection?}
   [{:keys [editor]}]
   (edit/copy-form editor))
 
 (defcommand :copy/selection
-  {:bindings ["Cmd-C"]
+  {:bindings ["Command-C"
+              "Control-C"]
    :when     selection?})
 
 (defcommand :cut/line
-  "Cut to end of line / node"
-  {:bindings ["Cmd-K"]
+  "Kill: cuts to end of line, preserving bracket structure"
+  {:bindings ["Command-K"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/kill editor))
 
 (defcommand :cut/selection
-  {:bindings ["Cmd-K"]
+  {:bindings ["Command-X"
+              "Control-X"]
    :when     selection?})
 
 (defcommand :cut/form
   "Cuts current highlight"
-  {:bindings ["Cmd-X"]
+  {:bindings ["Command-X"
+              "Control-X"]
    :when     no-selection?}
   [{:keys [editor]}]
   (edit/cut-form editor))
 
 (defcommand :delete/form
   "Deletes current highlight"
-  {:bindings ["Cmd-Backspace"]
+  {:bindings ["Command-Backspace"]
    :when     no-selection?}
   [{:keys [editor]}]
   (edit/delete-form editor))
 
 (defcommand :delete/selection
-  {:bindings ["Cmd-Backspace"]
+  {:bindings ["Command-Backspace"]
    :when     selection?})
 
 (defcommand :cursor/hop-left
   "Move cursor left one form"
-  {:bindings ["Alt-Left"]
+  {:bindings ["Option-Left"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/hop-left editor))
 
 (defcommand :cursor/hop-right
   "Move cursor right one form"
-  {:bindings ["Alt-Right"]
+  {:bindings ["Option-Right"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/hop-right editor))
 
 (defcommand :selection/expand
   "Select parent form, or form under cursor"
-  {:bindings ["Cmd-]" "Cmd-1"]
+  {:bindings ["Command-]" "Command-1"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/expand-selection editor))
 
 (defcommand :selection/shrink
   "Select child of current form (remembers :expand-selection history)"
-  {:bindings ["Cmd-[" "Cmd-2"]
+  {:bindings ["Command-[" "Command-2"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/shrink-selection editor))
 
 (defcommand :comment/line
   "Comment the current line"
-  {:bindings ["Cmd-/"]
+  {:bindings ["Command-/"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/comment-line editor))
 
 (defcommand :comment/uneval-form
-  {:bindings ["Cmd-;"]
+  {:bindings ["Command-;"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/uneval-form editor))
 
 (defcommand :comment/uneval-top-level-form
-  {:bindings ["Cmd-Shift-;"]
+  {:bindings ["Command-Shift-;"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/uneval-top-level-form editor))
 
 (defcommand :form/slurp
-  {:bindings ["Shift-Cmd-K"]
+  {:bindings ["Command-Shift-K"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/slurp editor))
@@ -122,21 +126,21 @@
 
 (defcommand :eval/form
   "Evaluate the current form"
-  {:bindings ["Cmd-Enter"]
+  {:bindings ["Command-Enter"]
    :when     :editor}
   [{:keys [editor]}]
   (eval-scope editor :bracket))
 
 (defcommand :eval/top-level
   "Evaluate the top-level form"
-  {:bindings ["Shift-Cmd-Enter"]
+  {:bindings ["Command-Shift-Enter"]
    :when     :editor}
   [{:keys [editor]}]
   (eval-scope editor :top-level))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
-  {:bindings ["Option-Cmd-Enter"]
+  {:bindings ["Command-Option-Enter"]
    :when     :editor}
   [{:keys [editor]}]
   (eval-to-repl (.getValue editor)))
@@ -146,5 +150,8 @@
   {:bindings ["Option-Click"]
    :when     :editor}
   [{:keys [editor]}]
-  (eval-scope editor :bracket)
-  true)
+  (eval-scope editor :bracket))
+
+(defcommand :test/command
+  {:bindings ["Command-Control-Click"]})
+

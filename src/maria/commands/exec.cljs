@@ -59,24 +59,21 @@
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
                                              [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
                                                                                                          (when (and (seq keys-down)
-                                                                                                                    (not= keys-down #{(registry/keystring->code "shift")}))
+                                                                                                                    (not= keys-down #{(registry/endkey->keycode "shift")}))
                                                                                                            (d/transact! [[:db/add :commands :which-key/active? true]]))) which-key-delay)]])))))]
     (clear-keys)
     (events/listen js/window "keydown" handle-keydown true)
 
     (events/listen js/window "mousedown"
                    (fn [e]
-                     (let [keycode (registry/button->code (.-button e))]
-                       (when-let [commands (registry/get-keyset-commands (conj (d/get :commands :modifiers-down) keycode))]
-                         (doseq [command commands]
-                           (exec-command command e))))))
+                     (doseq [command (-> (conj (d/get :commands :modifiers-down) (.-button e))
+                                         (registry/get-keyset-commands))]
+                       (exec-command command e))))
 
     (events/listen js/window "keyup"
                    (fn [e]
-                     (let [keycode (registry/normalize-keycode (.-keyCode e))
-                           modifier? (registry/modifiers keycode)]
-                       (when modifier?
-                         (clear-which-key!)
+                     (let [keycode (registry/normalize-keycode (.-keyCode e))]
+                       (when (registry/modifiers keycode)
                          (d/transact! [[:db/update-attr :commands :modifiers-down disj keycode]])
                          (when (empty? (d/get :commands :modifiers-down))
                            (d/transact! [[:db/add :commands :which-key/active? false]]))))))
