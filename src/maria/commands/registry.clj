@@ -21,13 +21,24 @@
                        [["a" 1 2] ["a" nil '(1 2)]]]]
     (assert (= (parse-opt-args [string? map?] args) opts))))
 
-(defmacro defcommand [command-name & args]
-  (let [[docstring options body] (parse-opt-args [string? map?] args)
+(defmacro defcommand
+  "Defines a command. command-name should be a namespaced keyword, followed by the optional positional args:
+  - docstring
+  - options map, which may contain:
+      :bindings, a vector of keymaps to bind, each containing a keyset of the form 'Cmd-X'
+      :when, a predicate function indicating whether the command is enabled for a given context
+  - a vector of arguments followed by body forms, for the command function.
+
+  If no arglist/body is provided, a passthrough function will be supplied, so that `defcommand`
+  can be used for documenting existing/built-in behaviour."
+  [command-name & args]
+  (let [[docstring options arglist body] (parse-opt-args [string? map? vector?] args)
         {key-patterns :bindings
          pred         :when
          :or          {key-patterns []}} options
-        [arglist & body] body
         normalized-key-patterns (if (string? key-patterns) [key-patterns] key-patterns)
+        _ (when (nil? arglist)
+            (assert (empty? body)))
         commands 'maria.commands.registry/commands
         mappings 'maria.commands.registry/mappings
         normalize-keyset-string 'maria.commands.registry/normalize-keyset-string
