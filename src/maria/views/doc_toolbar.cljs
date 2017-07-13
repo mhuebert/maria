@@ -43,10 +43,10 @@
                                                                          (icons/class "gold"))])
 
 (defn command-button
-  ([command-name icon]
+  ([context command-name icon]
    (command-button command-name icon nil))
-  ([command-name icon else-icon]
-   (if (exec/in-context? command-name)
+  ([context command-name icon else-icon]
+   (if (exec/get-command context command-name)
      (toolbar-button [#(exec/exec-command command-name) icon])
      (when else-icon
        (toolbar-button [#() else-icon])))))
@@ -177,7 +177,8 @@
         {persisted-content :content} (get-in persisted [:files filename])
         update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
                                                                     (assoc-in local [:files filename] {:filename %
-                                                                                                       :content  (or local-content persisted-content)}))]])]
+                                                                                                       :content  (or local-content persisted-content)}))]])
+        command-context (exec/get-context)]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.br.b--light-gray.f7.flex-none
      [:.ph2.flex-auto.flex.items-center
 
@@ -192,11 +193,11 @@
                              :placeholder "Enter a title..."
                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))
 
-      (or (command-button :doc/fork icons/ContentDuplicate)
-          (command-button :doc/publish icons/Backup (when signed-in? (icons/class icons/Backup "o-50"))))
-      (command-button :doc/revert icons/Undo)]
+      (or (command-button command-context :doc/fork icons/ContentDuplicate)
+          (command-button command-context :doc/publish icons/Backup (when signed-in? (icons/class icons/Backup "o-50"))))
+      (command-button command-context :doc/revert icons/Undo)]
      [:.flex-auto]
-     (command-button :doc/new icons/Add)
+     (command-button command-context :doc/new icons/Add)
 
      (if signed-in? (user-menu)
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]))

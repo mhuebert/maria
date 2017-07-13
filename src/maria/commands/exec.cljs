@@ -12,22 +12,16 @@
    :doc-toolbar current-doc-toolbar
    :signed-in?  (d/get :auth-public :signed-in?)})
 
-(defn command-in-context
-  ([command-entry]
-   (command-in-context (get-context) command-entry))
-  ([context {pred :pred :as command-entry}]
-   (when (or (nil? pred) (pred context))
-     command-entry)))
-
-(defn in-context? [command-name]
-  (command-in-context (get-context) (get @registry/commands command-name)))
+(defn get-command [context command-name]
+  (let [{:keys [pred] :as command-entry} (get @registry/commands command-name)]
+    (when (or (nil? pred) (pred context))
+      command-entry)))
 
 (defn exec-command
   ([command-name] (exec-command command-name nil))
   ([command-name e]
-   (let [context (get-context)
-         {:keys [command] :as command-entry} (get @registry/commands command-name)]
-     (when (command-in-context context command-entry)
+   (let [context (get-context)]
+     (when-let [{:keys [command]} (get-command context command-name)]
        (let [result (command context)]
          (when (and e (not= result (.-Pass js/CodeMirror)))
            (.stopPropagation e)
@@ -40,8 +34,7 @@
                  (when (set/subset? modifiers-down keyset)
                    ;; change this later for multi-step keysets
                    (some->> (seq exec)
-                            (keep #(some->> (get @registry/commands %)
-                                            (command-in-context current-context)))))))
+                            (keep (partial get-command current-context))))))
          (apply concat)
          (distinct))))
 
