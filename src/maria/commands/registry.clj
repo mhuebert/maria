@@ -27,7 +27,6 @@
          pred         :when
          :or          {key-patterns []}} options
         [arglist & body] body
-        _ (assert (vector? arglist))
         normalized-key-patterns (if (string? key-patterns) [key-patterns] key-patterns)
         commands 'maria.commands.registry/commands
         mappings 'maria.commands.registry/mappings
@@ -40,8 +39,10 @@
                                                       :pred             ~pred
                                                       :bindings-strings ~normalized-key-patterns
                                                       :bindings         parsed-key-patterns#
-                                                      :command          (fn ~arglist
-                                                                          ~@body)})
+                                                      :command          ~(if arglist
+                                                                           `(fn ~arglist
+                                                                              ~@body)
+                                                                           '(fn [] (.-Pass js/CodeMirror)))})
                 (doseq [pattern# parsed-key-patterns#]
                   (swap! ~mappings update-in (conj pattern# :exec) conj ~command-name)))]
     form))

@@ -44,7 +44,7 @@
 
 (defn command-button
   ([context command-name icon]
-   (command-button command-name icon nil))
+   (command-button context command-name icon nil))
   ([context command-name icon else-icon]
    (if (exec/some-command context command-name)
      (toolbar-button [#(exec/exec-command command-name) icon])
