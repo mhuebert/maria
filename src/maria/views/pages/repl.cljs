@@ -11,7 +11,8 @@
             [maria.views.repl-utils :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.toolbar :as toolbar]
-            [maria.persistence.local :as local]))
+            [maria.persistence.local :as local])
+  (:require-macros [maria.commands.registry :refer [defcommand]]))
 
 (defn init []
   ;(set! cljs-live.compiler/debug? true)
@@ -104,13 +105,13 @@
                                :filename   filename
                                :id         id
                                :get-editor #(.getEditor this)})
-             (editor/editor {:ref             #(when % (swap! state assoc :repl-editor %))
-                             :class           "flex-auto overflow-auto"
-                             :on-update       (fn [source]
-                                                (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                             :source-id       id
-                             :value           (or local-value persisted-value)
-                             :default-value   default-value})]))))
+             (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+                             :class         "flex-auto overflow-auto"
+                             :on-update     (fn [source]
+                                              (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                             :source-id     id
+                             :value         (or local-value persisted-value)
+                             :default-value default-value})]))))
 
 
 
@@ -129,14 +130,20 @@
     {:style {:box-shadow "-1px -1px 0 0 #eee"}}
 
     (when (d/get :commands :which-key/active?)
-      (which-key/hints))
+      (which-key/show-hints))
 
     (repl-ui/ScrollBottom
       [:.flex-auto.overflow-auto.code
        (if-let [eval-log (d/get :repl/state :eval-log)]
-         (map repl-values/display-result (last-n 50 eval-log))
+         (map repl-values/display-result (->> (subvec eval-log (d/get :repl/state :cleared-index 0))
+                                              (last-n 50)))
          [:.pa3.gray "Loading..."])])
     result-toolbar]])
+
+(defcommand :repl/clear
+            ["Cmd-Shift-B"]
+            "Clear the repl output"
+            #(d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
 
 #_(defview current-namespace
     {:view/spec {:props {:ns symbol?}}}

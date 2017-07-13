@@ -41,7 +41,6 @@
 
 (defn load-gist
   "Loads gist content, evaluating as ClojureScript code."
-  ;; TODO - distinguish between .clj(s|c) files and .md files, handle appropriately.
   [id]
   (let [status (atom {:url    id
                       :status "Loading gist..."})]
@@ -51,10 +50,7 @@
                                    :status [:.dark-red "Error:"]
                                    :error error)
                             (let [project value
-                                  source (or (some-> (:files project)
-                                                     (first)
-                                                     (:content))
-                                             "")]
+                                  [_ {source :content}] (first  (:files project))]
                               (eval/eval-str source)
                               (swap! status assoc
                                      :status "Gist loaded."

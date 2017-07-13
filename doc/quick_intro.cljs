@@ -207,12 +207,12 @@ color-names
 ;; giant expression, which will draw a small diagram to help explain
 ;; how functions work:
 
+
 (layer
   (position 50 60 (text "(fn [radius] (circle radius))"))
   (colorize "grey" (position 60 70 (triangle 10)))
   (position 0 102 (text "function"))
-  (position 30 -3
-            (layer (position 60 -45 (rotate 60 (colorize "grey" (triangle 10))))))
+  (position 95 25 (rotate 60 (colorize "grey" (triangle 10))))
   (position 90 20 (text "argument(s)"))
   (colorize "grey" (position 170 70 (triangle 10)))
   (position 170 102 (text "expression")))

@@ -19,7 +19,7 @@
             [goog.events :as events]
 
             [maria.frames.communication :as frame]
-            [re-db.d :as d]
+            [maria.commands.commands]
             [clojure.string :as string]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
@@ -46,7 +46,6 @@
 (defn main []
 
   (local/init-storage "new" github/blank)
-
   (repl/init)
 
   (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")

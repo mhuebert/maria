@@ -1,28 +1,48 @@
 (ns maria.commands.which-key
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [re-view-material.icons :as icons]
-            [maria.commands.core :as commands]
+            [maria.commands.registry :as commands]
             [clojure.set :as set]))
 
-(defview hints
+(defn show-keyset
+  "Render a keyset. Does not support multi-step key-combos."
+  [modifiers-down [keyset]]
+  [:.dib.bg-near-white.ph1.br2.pv05
+   {:key (str keyset)}
+   (->> (set/difference keyset modifiers-down)
+        (map #(commands/show-key %))
+        (sort-by (fn [x] (if (string? x) x (:name (meta x)))))
+        (reverse))])
+
+(defn show-hint [modifiers-down {:keys [display-name namespace doc key-patterns]}]
+  [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first key-patterns))])
+
+(defn show-namespace-hints [modifiers-down [namespace hints]]
+  (let [row-height 24]
+    [:.c-avoid.bt.b--near-white.pv1
+     [:.flex
+      [:.pr2.flex-none.tr.b.pv2.flex.items-center.justify-end
+       {:style {:min-width 70
+                :height    row-height}}
+       namespace]
+      [:.flex-auto
+       (for [{:keys [display-name key-patterns]} hints]
+         [:.flex.items-center.ws-nowrap
+          {:style {:height row-height}}
+          display-name
+          [:.flex-auto]
+          (show-keyset modifiers-down (first key-patterns))])]]]))
+
+(defview show-hints
   []
   (let [modifiers-down (d/get :commands :modifiers-down)]
     (if-let [hints (seq (commands/get-hints modifiers-down))]
-      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f6.sans-serif.flex-wrap.flex.pv2
+      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns.overflow-auto
+       {:style {:max-height 150}}
        (->> hints
-            (map (fn [{:keys [keyset results]}]
-                   (let [exec (:exec results)
-                         {:keys [display-name doc]} (@commands/commands exec)]
-                     [:.w-third.dib.f6.mv1
-                      [:.flex.items-center
-                       [:.dib.w3.tr.flex-none.mr2
-                        [:.dib.bg-near-white.ph1.br2.pv05 (->> (set/difference keyset modifiers-down)
-                                                               (map #(commands/show-key %))
-                                                               (sort-by compare)
-                                                               (reverse))]]
-
-                       display-name]
-                      ;; TODO: add tooltip with doc
-                      #_(when doc [:.gray.f7 [:.dib.w1] [:.dib.w3] doc])]))))]
+            (keep (fn [{{command-name :exec} :results}]
+                    (@commands/commands command-name)))
+            (distinct)
+            (group-by :namespace)
+            (map (partial show-namespace-hints modifiers-down)))]
       [:.fixed])))

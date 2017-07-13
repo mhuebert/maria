@@ -1,6 +1,6 @@
 (ns maria.views.toolbar
   (:require [re-view.core :as v :refer [defview]]
-            [maria.commands.core :refer [defcommand]]
+            [maria.commands.registry :refer-macros [defcommand]]
             [maria.views.text :as text]
             [maria.frames.communication :as frame]
             [re-view-material.icons :as icons]
@@ -63,16 +63,19 @@
     (and filename
          local-file
          (or (and local-content (not= local-content persisted-content))
-             (and local-filename (not= local-filename filename)))
-         (not (re-find #"^\s*$" local-content)))))
+             (and local-filename (not= local-filename filename))))))
 
 (defn valid-content? [project filename]
   (let [{local-content  :content
          local-filename :filename} (get-in project [:local :files filename])
-        persisted-content (get-in project [:persisted :files filename :content])]
-    (and (not (empty? (or local-content persisted-content)))
-         (not (empty? (some-> (or local-filename filename)
-                              (strip-clj-ext)))))))
+        persisted-content (get-in project [:persisted :files filename :content])
+        content-to-persist (or local-content persisted-content)
+        filename-to-persist (some-> (or local-filename filename)
+                                    (strip-clj-ext))]
+    (and (not (empty? content-to-persist))
+         (not (re-find #"^\s*$" content-to-persist))
+         (not (empty? filename-to-persist))
+         (not (re-find #"^\s*$" filename-to-persist)))))
 
 (defn persist! [{:keys [local persisted] :as project} filename]
   (when (and (unsaved-changes? project filename)
@@ -86,21 +89,23 @@
               :create [:project/create (d/get "new" :local)]
               :fork [:project/fork (:id persisted)])))))
 
-(defn new-file! [{:keys [view/state get-editor] :as toolbar}]
+(defn new-file! [{:keys [view/state get-editor id] :as toolbar}]
   (let [{:keys [title-input]} @state]
     (github/clear-new!)
-    (some-> title-input (.focus))
-    (when get-editor
+    ;(some-> title-input (.focus))
+    (when (and (= id "new") get-editor)
+      ;; if we are already in the document with the id "new", clear the editor.
+      ;; otherwise, we will get a blank editor by switching ids.
       (some-> (get-editor)
               (.setValue "")))
     (frame/send frame/trusted-frame [:window/navigate "/new" {}])))
 
-(defcommand :create-blank-doc
+(defcommand :doc/new
             ["Cmd-B"]
             "Create a blank doc"
             (fn [] (some-> current-toolbar (new-file!))))
 
-(defcommand :publish-doc
+(defcommand :doc/publish
             ["Cmd-Shift-P"]
             "Publish the current doc"
             (fn [] (when current-toolbar
@@ -157,10 +162,10 @@
             (if (and (valid-content? project filename)
                      has-unsaved-changes)
               (toolbar-item [persist! icons/Backup])
-              (toolbar-item {:class "o-50"} [nil icons/Backup ""]))
-            (when (and persisted has-unsaved-changes)
-              (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
-                                  (.setValue (get-editor) persisted-content)) icons/Undo])))))]
+              (toolbar-item {:class "o-50"} [nil icons/Backup ""])))))
+      (when (and persisted has-unsaved-changes)
+        (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
+                            (.setValueAndRefresh (get-editor) persisted-content)) icons/Undo]))]
 
      (toolbar-item [#(new-file! this) icons/Add "New namespace"])
      (if signed-in? (user-menu)

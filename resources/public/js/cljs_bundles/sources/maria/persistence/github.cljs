@@ -3,10 +3,13 @@
             [goog.object :as gobj]
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
-            [re-view-routing.core :as r]
-            [maria.persistence.local :as local]
-            [maria.frame-communication :as frame]
             [maria.curriculum :as curriculum]))
+
+(defn send [url cb & args]
+  (d/transact! [[:db/update-attr :remote/status :in-progress (fnil inc 0)]])
+  (.apply xhr/send nil (to-array (concat [url (fn [e]
+                                                (d/transact! [[:db/update-attr :remote/status :in-progress dec]])
+                                                (cb e))] args)) args))
 
 (defn gist-person [{:keys [html_url url id login gists_url] :as person}]
   {:username  login
@@ -39,15 +42,15 @@
     description (assoc :description description)))
 
 (defn get-gist [id cb]
-  (xhr/send (str "https://api.github.com/gists/" id)
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (cb {:value (gist->project (js->clj (.getResponseJson target) :keywordize-keys true))})
-                  (cb {:error (.getLastError target)}))))
-            "GET"
-            nil
-            (tokens/auth-headers :github)))
+  (send (str "https://api.github.com/gists/" id)
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (gist->project (js->clj (.getResponseJson target) :keywordize-keys true))})
+              (cb {:error (.getLastError target)}))))
+        "GET"
+        nil
+        (tokens/auth-headers :github)))
 
 (defn load-gist [id]
   (d/transact! [{:db/id           id
@@ -57,17 +60,17 @@
                                [:db/add id :loading-message false]]))))
 
 (defn get-user-gists [username cb]
-  (xhr/send (str "https://api.github.com/users/" username "/gists")
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (cb {:value (->> (js->clj (.getResponseJson target) :keywordize-keys true)
-                                   (map gist->project)
-                                   (filter #(> (count (:files %)) 0)))})
-                  (cb {:error (.getLastError target)}))))
-            "GET"
-            nil
-            (tokens/auth-headers :github)))
+  (send (str "https://api.github.com/users/" username "/gists")
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (->> (js->clj (.getResponseJson target) :keywordize-keys true)
+                               (map gist->project)
+                               (filter #(> (count (:files %)) 0)))})
+              (cb {:error (.getLastError target)}))))
+        "GET"
+        nil
+        (tokens/auth-headers :github)))
 
 (defn load-user-gists [username]
   (case username
@@ -85,66 +88,57 @@
                                                  [:db/add username :loading-message false]]
                                                 [{:error error}])))))))
 
-(defn patch-gist [id data]
-  (xhr/send (str "https://api.github.com/gists/" id)
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (d/transact! [[:db/add id :persisted (-> (.getResponseJson target)
-                                                           (js->clj :keywordize-keys true)
-                                                           (gist->project))]])
-                  (prn :error-saving-gist (.getLastError target)))))
-            "PATCH"
-            (->> data (clj->js) (.stringify js/JSON))
-            (tokens/auth-headers :github)))
+(defn patch-gist [gist-id gist-data cb]
+  (send (str "https://api.github.com/gists/" gist-id)
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (-> (.getResponseJson target)
+                              (js->clj :keywordize-keys true)
+                              (gist->project))})
+              (cb {:error (.getLastError target)}))))
+        "PATCH"
+        (->> gist-data (clj->js) (.stringify js/JSON))
+        (tokens/auth-headers :github)))
 
-(defn create-gist [child-id gist-data]
-  (xhr/send (str "https://api.github.com/gists")
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (let [{id :id :as project} (-> (.getResponseJson target)
-                                                 (js->clj :keywordize-keys true)
-                                                 (gist->project))]
-                    (d/transact! [[:db/add id :persisted project]])
-                    (frame/send child-id [:project/clear-new!])
-                    (r/nav! (str "/gist/" id)))
-                  (prn :error-creating-gist (.getLastError target)))))
-            "POST"
-            (->> gist-data (clj->js) (.stringify js/JSON))
-            (tokens/auth-headers :github)))
+(defn create-gist [gist-data cb]
+  (send (str "https://api.github.com/gists")
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (-> (.getResponseJson target)
+                              (js->clj :keywordize-keys true)
+                              (gist->project))})
+              (cb {:error (.getLastError target)}))))
+        "POST"
+        (->> gist-data (clj->js) (.stringify js/JSON))
+        (tokens/auth-headers :github)))
 
-(defn fork-gist [child-id gist-id]
-  (xhr/send (str "https://api.github.com/gists/" gist-id "/forks")
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (let [{new-id :id
-                         :as    gist-data} (-> (.getResponseJson target)
-                                               (js->clj :keywordize-keys true))]
-                    (frame/send child-id [:db/copy-local gist-id new-id])
-                    (d/transact! [{:db/id     new-id
-                                   :persisted (gist->project gist-data)}])
-                    (r/nav! (str "/gist/" new-id)))
-                  (prn :error-saving-gist (.getLastError target)))))
-            "POST"
-            nil
-            (tokens/auth-headers :github)))
+(defn fork-gist [gist-id cb]
+  (send (str "https://api.github.com/gists/" gist-id "/forks")
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (-> (.getResponseJson target)
+                              (js->clj :keywordize-keys true)
+                              (gist->project))})
+              (cb {:error (.getLastError target)}))))
+        "POST"
+        nil
+        (tokens/auth-headers :github)))
 
 (defn get-username [id cb]
-  (xhr/send (str "https://api.github.com/user/" id)
-            (fn [e]
-              (let [target (.-target e)]
-                (if (.isSuccess target)
-                  (cb {:value (gobj/get (.getResponseJson target) "login")})
-                  (cb {:error (.getLastError target)}))))
-            "GET"
-            nil
-            (tokens/auth-headers :github)))
+  (send (str "https://api.github.com/user/" id)
+        (fn [e]
+          (let [target (.-target e)]
+            (if (.isSuccess target)
+              (cb {:value (gobj/get (.getResponseJson target) "login")})
+              (cb {:error (.getLastError target)}))))
+        "GET"
+        nil
+        (tokens/auth-headers :github)))
 
-
-
-(def blank {:files {"untitled.cljs" {:content ";; type here"}}})
+(def blank {:files {"" {:content ""}}})
 
 (defn clear-new! []
   (d/transact! [{:db/id     "new"
