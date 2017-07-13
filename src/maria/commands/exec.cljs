@@ -12,16 +12,18 @@
    :doc-toolbar current-doc-toolbar
    :signed-in?  (d/get :auth-public :signed-in?)})
 
-(defn get-command [context command-name]
-  (let [{:keys [pred] :as command-entry} (get @registry/commands command-name)]
-    (when (or (nil? pred) (pred context))
-      command-entry)))
+(defn some-command
+  "Returns command associated with name, if it exists and is valid given the provided context."
+  ([context name]
+   (let [{:keys [pred] :as command-entry} (get @registry/commands name)]
+     (when (or (nil? pred) (pred context))
+       command-entry))))
 
 (defn exec-command
   ([command-name] (exec-command command-name nil))
   ([command-name e]
    (let [context (get-context)]
-     (when-let [{:keys [command]} (get-command context command-name)]
+     (when-let [{:keys [command]} (some-command context command-name)]
        (let [result (command context)]
          (when (and e (not= result (.-Pass js/CodeMirror)))
            (.stopPropagation e)
@@ -34,7 +36,7 @@
                  (when (set/subset? modifiers-down keyset)
                    ;; change this later for multi-step keysets
                    (some->> (seq exec)
-                            (keep (partial get-command current-context))))))
+                            (keep (partial some-command current-context))))))
          (apply concat)
          (distinct))))
 

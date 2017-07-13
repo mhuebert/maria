@@ -46,7 +46,7 @@
   ([context command-name icon]
    (command-button command-name icon nil))
   ([context command-name icon else-icon]
-   (if (exec/get-command context command-name)
+   (if (exec/some-command context command-name)
      (toolbar-button [#(exec/exec-command command-name) icon])
      (when else-icon
        (toolbar-button [#() else-icon])))))
