@@ -1,10 +1,7 @@
 (ns maria.commands.registry
   (:require [clojure.set :as set]
-            [maria.editor :as editor]
-            [goog.events :as events]
             [goog.object :as gobj]
             [cljs.pprint :refer [pprint]]
-            [re-db.d :as d]
             [clojure.string :as string]
             [re-view-material.icons :as icons]
             [goog.events.KeyCodes :as KeyCodes])
@@ -21,7 +18,7 @@
                  [:path {:d "M0 0h24v24H0z", :fill "none"}]
                  [:path {:d "M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"}]])
 
-(def symbols {"CONTROL"              (if mac? "⌘" "^")
+(def symbols {"CTRL"                 (if mac? "⌘" "^")
               "COMMAND"              (if mac? "⌘" "^")
               "SHIFT"                "⇧"
               "ALT"                  "⎇"
@@ -91,7 +88,8 @@
        (map (fn [s] (->> (string/split s #"[-+]")
                          (map keystring->code)
                          (set))))
-       (interpose :keys)))
+       (interpose :keys)
+       (vec)))
 
 (def code->symbol
   (reduce-kv (fn [m k sym]
@@ -108,64 +106,14 @@
                  (.-ALT KeyCodes)
                  (.-SHIFT KeyCodes)})
 
-(defn get-keyset-command [keys-pressed]
+(defn get-keyset-commands [keys-pressed]
   (get-in @mappings [keys-pressed :exec]))
 
 (defn normalize-keycode [key-code]
   (let [key-code (KeyCodes/normalizeKeyCode key-code)]
     (get {91 17} key-code key-code)))
 
-(defn init-listeners []
-  (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
-                                  [:db/add :commands :which-key/active? false]])
-        which-key-delay 500
-        handle-keydown (fn [e]
-                         (let [keycode (normalize-keycode (.-keyCode e))
-                               keys-down (d/get :commands :modifiers-down)
-                               modifier? (contains? modifiers keycode)]
-                           (if-let [command-name (get-keyset-command (conj keys-down keycode))]
-                             (let [{:keys [command]} (get @commands command-name)]
-                               (when-not (= (some-> editor/current-editor (command)) (.-Pass js/CodeMirror))
-                                 (.stopPropagation e)
-                                 (.preventDefault e)))
-                             (when modifier?
-                               (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
-                                             [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
-                                                                                                         (when (and (seq keys-down)
-                                                                                                                    (not= keys-down #{(keystring->code "shift")}))
-                                                                                                           (d/transact! [[:db/add :commands :which-key/active? true]]))) which-key-delay)]])))))]
-
-    (clear-keys)
-    (events/listen js/window "keydown" handle-keydown true)
-
-    (events/listen js/window "mousedown"
-                   (fn [e]
-                     (let [keycode (button->code (.-button e))]
-                       (when-let [command-name (get-keyset-command (conj (d/get :commands :modifiers-down) keycode))]
-                         (let [{:keys [command name]} (get @commands command-name)]
-                           (when (some-> editor/current-editor (command))
-                             (.preventDefault e)))))))
-
-    (events/listen js/window "keyup"
-                   (fn [e]
-                     (let [keycode (normalize-keycode (.-keyCode e))
-                           modifier? (modifiers keycode)]
-                       (when modifier?
-                         (doseq [timeout (d/get :commands :timeouts)]
-                           (js/clearTimeout timeout))
-                         (d/transact! [[:db/update-attr :commands :modifiers-down disj keycode]])
-                         (when (empty? (d/get :commands :modifiers-down))
-                           (d/transact! [[:db/add :commands :which-key/active? false]]))))))
-
-    (events/listen js/window #js ["blur" "focus"] #(when (= (.-target %) (.-currentTarget %))
-                                                     (clear-keys)))))
-
-(defn get-hints [keys-pressed]
-  (keep (fn [[keyset results]]
-          (when (set/subset? keys-pressed keyset)
-            (when (:exec results)                           ;; take off this condition later for multi-step keysets
-              {:keyset  keyset
-               :results results}))) @mappings))
 
 
-(defonce _ (init-listeners))
+
+

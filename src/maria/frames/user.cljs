@@ -4,6 +4,8 @@
             [maria.views.pages.repl :as repl]
             [cljs.core.match :refer-macros [match]]
 
+            [maria.commands.exec]
+
     ;; include to precompile for self-hosted env
             [clojure.set]
             [clojure.string]

@@ -10,7 +10,7 @@
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cljs.core.match :refer-macros [match]]
-            [maria.views.toolbar :as toolbar]
+            [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local])
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
@@ -62,7 +62,7 @@
 (defview gists-list [{:keys [username]}]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar/toolbar {:parent (:owner (first gists))})
+     (toolbar/doc-toolbar {:parent (:owner (first gists))})
      [:.flex-auto.overflow-auto.sans-serif.f6
       (if-let [message (d/get username :loading-message)]
         (loader message)
@@ -100,11 +100,11 @@
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
             [:.h-100.flex.flex-column
-             (toolbar/toolbar {:project    project
-                               :owner      (:owner project)
-                               :filename   filename
-                               :id         id
-                               :get-editor #(.getEditor this)})
+             (toolbar/doc-toolbar {:project project
+                               :owner       (:owner project)
+                               :filename    filename
+                               :id          id
+                               :get-editor  #(.getEditor this)})
              [:.flex.flex-auto
               (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
 
@@ -142,9 +142,10 @@
     result-toolbar]])
 
 (defcommand :repl/clear
-            ["Cmd-Shift-B"]
             "Clear the repl output"
-            #(d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
+            {:bindings ["Cmd-Shift-B"]}
+            []
+            (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
 
 #_(defview current-namespace
     {:view/spec {:props {:ns symbol?}}}

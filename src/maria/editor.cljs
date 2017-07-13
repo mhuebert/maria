@@ -5,12 +5,12 @@
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
-            [maria.show-comments :as show-comments]
+            [maria.pretty-comments :as show-comments]
 
+            [maria.commands.exec :as exec]
             [goog.events :as events]
-            [cljs.pprint :refer [pprint]]))
 
-(def current-editor nil)
+            [cljs.pprint :refer [pprint]]))
 
 (def options
   {:theme             "maria-light"
@@ -53,6 +53,9 @@
                                         (.on editor event-key f))))
                                   (when on-mount (on-mount editor this)))
 
+                                (events/listen dom-node "focus" #(set! exec/current-editor editor) true)
+                                (events/listen dom-node "blur" #(set! exec/current-editor nil) true)
+
                                 (some->> (or value default-value) (str) (.setValueAndRefresh editor))
 
                                 (.focus editor)
@@ -82,11 +85,7 @@
                             (let [editor (:editor @state)]
                               (doto editor
                                 (.setCursor (.lineCount editor) 0)
-                                (.focus))))
-               :on-blur  #(do (set! current-editor nil)
-                              (when on-blur (on-blur %)))
-               :on-focus #(do (set! current-editor (:editor @state))
-                              (when on-focus (on-focus %)))}))])
+                                (.focus))))}))])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true

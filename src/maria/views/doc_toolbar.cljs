@@ -1,8 +1,10 @@
-(ns maria.views.toolbar
+(ns maria.views.doc-toolbar
   (:require [re-view.core :as v :refer [defview]]
             [maria.commands.registry :refer-macros [defcommand]]
+            [maria.commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.communication :as frame]
+            [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
             [maria.persistence.github :as github]
             [re-db.d :as d]
@@ -33,19 +35,25 @@
                         :on-click     #(send [:auth/sign-out])
                         :dense        true})))
 
-(def toolbar-button :.pa2.flex.items-center)
-(v/defn toolbar-item [props [action icon]]
-  [toolbar-button (merge {:on-click action}
-                         (cond-> props
-                                 action (update :classes conj "pointer hover-bg-near-white"))) (-> icon
-                                                                                                   (icons/size 20)
-                                                                                                   (icons/class "gold"))])
+
+(defn toolbar-button [[action icon]]
+  [:.pa2.flex.items-center {:on-click action
+                            :class    "pointer hover-bg-near-white"} (-> icon
+                                                                         (icons/size 20)
+                                                                         (icons/class "gold"))])
+
+(defn command-button
+  ([command-name icon]
+   (command-button command-name icon nil))
+  ([command-name icon else-icon]
+   (if (exec/in-context? command-name)
+     (toolbar-button [#(exec/exec-command command-name) icon])
+     (when else-icon
+       (toolbar-button [#() else-icon])))))
 
 (def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-underline.flex.items-center)
 
-(def current-toolbar nil)
-
-(defn persistence-mode [{:keys [persisted]}]
+(defn persistence-mode [{{:keys [persisted]} :project}]
   (let [owned-by-current-user? (or (nil? persisted)
                                    (= (str (:id (:owner persisted))) (d/get :auth-public :id)))]
     (match [(boolean persisted) owned-by-current-user?]
@@ -53,9 +61,10 @@
            [true true] :publish
            [true false] :fork)))
 
-(defn unsaved-changes? [{{local-files :files}     :local
-                         {persisted-files :files} :persisted
-                         :as                      project} filename]
+(defn unsaved-changes? [{{{local-files :files}     :local
+                          {persisted-files :files} :persisted
+                          :as                      project} :project
+                         filename                           :filename}]
   (let [{local-content  :content
          local-filename :filename
          :as            local-file} (get local-files filename)
@@ -65,7 +74,7 @@
          (or (and local-content (not= local-content persisted-content))
              (and local-filename (not= local-filename filename))))))
 
-(defn valid-content? [project filename]
+(defn valid-content? [{:keys [project filename]}]
   (let [{local-content  :content
          local-filename :filename} (get-in project [:local :files filename])
         persisted-content (get-in project [:persisted :files filename :content])
@@ -77,17 +86,26 @@
          (not (empty? filename-to-persist))
          (not (re-find #"^\s*$" filename-to-persist)))))
 
-(defn persist! [{:keys [local persisted] :as project} filename]
-  (when (and (unsaved-changes? project filename)
-             (valid-content? project filename))
-    (let [persist-mode (persistence-mode project)
+(defn fork! [{:keys [project]}]
+  (let [persisted-id (get-in project [:persisted :id])]
+    (send [:project/fork persisted-id])))
+
+(defn create! []
+  (send [:project/create (d/get "new" :local)]))
+
+(defn publish! [{{:keys [local persisted] :as project} :project
+                 filename                              :filename
+                 :as                                   toolbar}]
+  (when (and (unsaved-changes? toolbar)
+             (valid-content? toolbar))
+    (let [persist-mode (persistence-mode toolbar)
           {local-content  :content
            local-filename :filename} (get-in local [:files filename])]
-      (send (case persist-mode
-              :publish [:project/publish (:id persisted) {:files {filename {:filename (or local-filename filename)
-                                                                            :content  (or local-content (get-in persisted [:files filename :content]))}}}]
-              :create [:project/create (d/get "new" :local)]
-              :fork [:project/fork (:id persisted)])))))
+      (case persist-mode
+        :publish (send [:project/publish (:id persisted) {:files {filename {:filename (or local-filename filename)
+                                                                            :content  (or local-content (get-in persisted [:files filename :content]))}}}])
+        :create (create!)
+        :fork (fork! toolbar)))))
 
 (defn new-file! [{:keys [view/state get-editor id] :as toolbar}]
   (let [{:keys [title-input]} @state]
@@ -101,24 +119,47 @@
     (frame/send frame/trusted-frame [:window/navigate "/new" {}])))
 
 (defcommand :doc/new
-            ["Cmd-B"]
-            "Create a blank doc"
-            (fn [] (some-> current-toolbar (new-file!))))
+  "Create a blank doc"
+  {:bindings ["Cmd-B"]
+   :when     :doc-toolbar}
+  [{:keys [doc-toolbar]}]
+  (new-file! doc-toolbar))
 
 (defcommand :doc/publish
-            ["Cmd-Shift-P"]
-            "Publish the current doc"
-            (fn [] (when current-toolbar
-                     (persist! (:project current-toolbar)
-                               (:filename current-toolbar)))))
+  "Publish the current doc"
+  {:bindings ["Cmd-Shift-P"]
+   :when     #(and (:signed-in? %)
+                   (let [doc-toolbar (:doc-toolbar %)]
+                     (and (#{:create :publish} (persistence-mode doc-toolbar))
+                          (unsaved-changes? doc-toolbar)
+                          (valid-content? doc-toolbar))))}
+  [{:keys [doc-toolbar]}]
+  (publish! doc-toolbar))
 
+(defcommand :doc/fork
+  "Make your own copy of another user's project"
+  {:bindings ["Cmd-Shift-P"]
+   :when     #(and (:signed-in? %)
+                   (= :fork (persistence-mode (:doc-toolbar %))))}
+  [{:keys [doc-toolbar]}]
+  (fork! doc-toolbar))
 
+(defcommand :doc/revert
+  {:when (fn [{:keys [doc-toolbar]}]
+           (and (get-in doc-toolbar [:project :persisted])
+                (unsaved-changes? doc-toolbar)))}
+  [{{{persisted :persisted} :project
+     filename               :filename
+     get-editor             :get-editor} :doc-toolbar}]
+  (d/transact! [[:db/add (:id persisted) :local persisted]])
+  (some-> (get-editor)
+          (.setValueAndRefresh (get-in persisted [:files filename :content]))))
 
-(defview toolbar
+(defview doc-toolbar
   {:life/did-mount          (fn [this]
                               (.updateWindowTitle this)
-                              (set! current-toolbar this))
-   :life/will-unmount       #(set! current-toolbar nil)
+                              (set! exec/current-doc-toolbar this))
+   :life/will-unmount       #(set! exec/current-doc-toolbar nil)
    :life/will-receive-props (fn [{filename                  :filename
                                   {prev-filename :filename} :view/prev-props
                                   :as                       this}]
@@ -126,47 +167,37 @@
                                 (.updateWindowTitle this)))
    :update-window-title     (fn [{:keys [filename]}]
                               (frame/send frame/trusted-frame [:window/set-title filename]))}
-  [{{:keys [persisted local]
-     :as   project} :project
-    :keys           [filename get-editor id view/state] :as this}]
+  [{{:keys [persisted local]} :project
+    :keys                     [filename id view/state] :as this}]
 
   (let [signed-in? (d/get :auth-public :signed-in?)
         {parent-url :maria-url parent-username :username} (or (:parent this) (:owner persisted) (d/entity :auth-public))
-        persist-mode (persistence-mode project)
         current-filename (or (get-in local [:files filename :filename]) filename)
         {local-content :content} (get-in local [:files filename])
         {persisted-content :content} (get-in persisted [:files filename])
-        persisted-id (:id persisted)
         update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
                                                                     (assoc-in local [:files filename] {:filename %
-                                                                                                       :content  (or local-content persisted-content)}))]])
-        has-unsaved-changes (unsaved-changes? project filename)]
+                                                                                                       :content  (or local-content persisted-content)}))]])]
     [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.br.b--light-gray.f7.flex-none
      [:.ph2.flex-auto.flex.items-center
-      [:.pl2.flex.items-center
-       [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
-       [:.ph1.gray "/"]
-       (when filename
-         (text/autosize-text {:auto-focus  true
-                              :ref         #(when % (swap! state assoc :title-input %))
-                              :value       (strip-clj-ext current-filename)
-                              :on-key-down #(when (= 13 (.-which %))
-                                              (persist! (:project this) (:filename this)))
-                              :placeholder "Enter a title..."
-                              :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))]
 
-      (when (and filename signed-in?)
-        (if (= :fork persist-mode)
-          (toolbar-item [persist! icons/ContentDuplicate])
-          (list
-            (if (and (valid-content? project filename)
-                     has-unsaved-changes)
-              (toolbar-item [persist! icons/Backup])
-              (toolbar-item {:class "o-50"} [nil icons/Backup ""])))))
-      (when (and persisted has-unsaved-changes)
-        (toolbar-item [#(do (d/transact! [[:db/add persisted-id :local persisted]])
-                            (.setValueAndRefresh (get-editor) persisted-content)) icons/Undo]))]
+      [:a.hover-underline.gray.no-underline.pl2 {:href parent-url} parent-username]
+      [:.ph1.gray "/"]
+      (when filename
+        (text/autosize-text {:auto-focus  true
+                             :ref         #(when % (swap! state assoc :title-input %))
+                             :value       (strip-clj-ext current-filename)
+                             :on-key-down #(when (= 13 (.-which %))
+                                             (publish! this))
+                             :placeholder "Enter a title..."
+                             :on-change   #(update-filename (add-clj-ext (.-value (.-target %))))}))
 
-     (toolbar-item [#(new-file! this) icons/Add "New namespace"])
+
+      (or (command-button :doc/fork icons/ContentDuplicate)
+          (command-button :doc/publish icons/Backup (icons/class icons/Backup "o-50")))
+      (command-button :doc/revert icons/Undo)]
+     [:.flex-auto]
+     (command-button :doc/new icons/Add)
+
      (if signed-in? (user-menu)
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]))

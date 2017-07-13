@@ -7,64 +7,84 @@
             [magic-tree-codemirror.edit :as edit]))
 
 (defcommand :copy/form
-            ["Cmd-C"]
-            ""
-            edit/copy-form)
+            {:bindings ["Cmd-C"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/copy-form editor))
 
 (defcommand :cut/line
-            ["Ctrl-K"]
             "Cut to end of line / node"
-            edit/kill)
+            {:bindings ["Ctrl-K"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/kill editor))
 
 (defcommand :cut/form
-            ["Cmd-X"]
             "Cuts current highlight"
-            edit/cut-form)
+            {:bindings ["Cmd-X"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/cut-form editor))
 
 (defcommand :delete/form
-            ["Cmd-Backspace"]
             "Deletes current highlight"
-            edit/delete-form)
+            {:bindings ["Cmd-Backspace"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/delete-form editor))
 
 (defcommand :cursor/hop-left
-            ["Alt-Left"]
             "Move cursor left one form"
-            edit/hop-left)
+            {:bindings ["Alt-Left"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/hop-left editor))
 
 (defcommand :cursor/hop-right
-            ["Alt-Right"]
             "Move cursor right one form"
-            edit/hop-right)
+            {:bindings ["Alt-Right"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/hop-right editor))
 
 (defcommand :selection/expand
-            ["Cmd-]" "Cmd-1"]
             "Select parent form, or form under cursor"
-            edit/expand-selection)
+            {:bindings ["Cmd-]" "Cmd-1"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/expand-selection editor))
 
 (defcommand :selection/shrink
-            ["Cmd-[" "Cmd-2"]
             "Select child of current form (remembers :expand-selection history)"
-            edit/shrink-selection)
+            {:bindings ["Cmd-[" "Cmd-2"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/shrink-selection editor))
 
 (defcommand :comment/line
-            ["Cmd-/"]
             "Comment the current line"
-            edit/comment-line)
+            {:bindings ["Cmd-/"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/comment-line editor))
 
 (defcommand :comment/uneval-form
-            ["Cmd-;"]
-            ""
-            edit/uneval-form)
+            {:bindings ["Cmd-;"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/uneval-form editor))
 
 (defcommand :comment/uneval-top-level-form
-            ["Cmd-Shift-;"]
-            ""
-            edit/uneval-top-level-form)
+            {:bindings ["Cmd-Shift-;"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/uneval-top-level-form editor))
 
 (defcommand :form/slurp
-            ["Shift-Cmd-K"]
-            ""
-            edit/slurp)
+            {:bindings ["Shift-Cmd-K"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (edit/slurp editor))
 
 (defn eval-to-repl [source]
   (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
@@ -84,23 +104,30 @@
       (eval-to-repl source))))
 
 (defcommand :eval/form
-            ["Cmd-Enter"]
             "Evaluate the current form"
-            (fn [editor] (eval-scope editor :bracket)))
+            {:bindings ["Cmd-Enter"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (eval-scope editor :bracket))
 
 (defcommand :eval/top-level
-            ["Shift-Cmd-Enter"]
             "Evaluate the top-level form"
-            (fn [editor] (eval-scope editor :top-level)))
+            {:bindings ["Shift-Cmd-Enter"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (eval-scope editor :top-level))
 
 (defcommand :eval/doc
-            ["Option-Cmd-Enter"]
             "Evaluate whole doc"
-            (fn [editor] (eval-to-repl (.getValue editor))))
+            {:bindings ["Option-Cmd-Enter"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (eval-to-repl (.getValue editor)))
 
 (defcommand :eval/on-click
-            ["Option-Click"]
             "Evaluate the clicked form"
-            (fn [editor]
-              (eval-scope editor :bracket)
-              true))
+            {:bindings ["Option-Click"]
+             :when     :editor}
+            [{:keys [editor]}]
+            (eval-scope editor :bracket)
+            true)

@@ -75,7 +75,9 @@ div.CodeMirror {
         font-size: 15px;
     }
 }
-
+.pre-wrap {
+    white-space: pre-wrap;
+}
 .CodeMirror, .code, code, pre {
     font-family: 'Fira Code', monospace;
     font-size: 15px;

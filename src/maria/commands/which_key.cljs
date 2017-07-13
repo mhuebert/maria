@@ -2,6 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.commands.registry :as commands]
+            [maria.commands.exec :as exec]
             [clojure.set :as set]))
 
 (defn show-keyset
@@ -14,8 +15,8 @@
         (sort-by (fn [x] (if (string? x) x (:name (meta x)))))
         (reverse))])
 
-(defn show-hint [modifiers-down {:keys [display-name namespace doc key-patterns]}]
-  [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first key-patterns))])
+(defn show-hint [modifiers-down {:keys [display-name namespace doc bindings]}]
+  [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first bindings))])
 
 (defn show-namespace-hints [modifiers-down [namespace hints]]
   (let [row-height 24]
@@ -26,23 +27,20 @@
                 :height    row-height}}
        namespace]
       [:.flex-auto
-       (for [{:keys [display-name key-patterns]} hints]
+       (for [{:keys [display-name bindings]} hints]
          [:.flex.items-center.ws-nowrap
           {:style {:height row-height}}
           display-name
           [:.flex-auto]
-          (show-keyset modifiers-down (first key-patterns))])]]]))
+          (show-keyset modifiers-down (first bindings))])]]]))
 
 (defview show-hints
   []
   (let [modifiers-down (d/get :commands :modifiers-down)]
-    (if-let [hints (seq (commands/get-hints modifiers-down))]
+    (if-let [hints (seq (exec/contextual-hints modifiers-down))]
       [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns.overflow-auto
        {:style {:max-height 150}}
        (->> hints
-            (keep (fn [{{command-name :exec} :results}]
-                    (@commands/commands command-name)))
-            (distinct)
             (group-by :namespace)
             (map (partial show-namespace-hints modifiers-down)))]
       [:.fixed])))
