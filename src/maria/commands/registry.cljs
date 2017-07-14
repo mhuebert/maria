@@ -26,8 +26,8 @@
                 "9"            "NINE"
                 "["            "OPEN_SQUARE_BRACKET"
                 "]"            "CLOSE_SQUARE_BRACKET"
-                "/"            "BACKSLASH"
-                \\             "SLASH"
+                \\             "BACKSLASH"
+                "/"            "SLASH"
                 "'"            "APOSTROPHE"
                 ","            "COMMA"
                 "."            "PERIOD"
@@ -83,8 +83,8 @@
         (.-END KeyCodes)                  "↘"
         (.-OPEN_SQUARE_BRACKET KeyCodes)  "["
         (.-CLOSE_SQUARE_BRACKET KeyCodes) "]"
-        (.-BACKSLASH KeyCodes)            "/"
-        (.-SLASH KeyCodes)                \\
+        (.-SLASH KeyCodes)                "/"
+        (.-BACKSLASH KeyCodes)            \\
         (.-APOSTROPHE KeyCodes)           "'"
         (.-COMMA KeyCodes)                ","
         (.-PERIOD KeyCodes)               "."

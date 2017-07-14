@@ -8,26 +8,22 @@
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/clojurescript "1.9.562"]
-
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [com.cognitect/transit-cljs "0.8.239"]
 
                  [fast-zip "0.7.0"]
-                 [cljsjs/codemirror "5.19.0-0"]
-                 [cljsjs/marked "0.3.5-0"]
-
 
                  [re-view "0.3.18"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
-
                  [cljs-live "0.1.20-SNAPSHOT"]
                  [magic-tree "0.0.7-SNAPSHOT"]
 
+
+                 [cljsjs/codemirror "5.19.0-0"]
+                 [cljsjs/marked "0.3.5-0"]
                  [cljsjs/react "15.5.4-0"]
                  [cljsjs/react-dom "15.5.4-0"]
-
-
                  [cljsjs/firebase "4.0.0-0"]]
 
   :plugins [[lein-figwheel "0.5.10"]

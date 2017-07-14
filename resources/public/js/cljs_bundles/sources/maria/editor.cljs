@@ -5,11 +5,12 @@
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
+            [maria.pretty-comments :as show-comments]
 
+            [maria.commands.exec :as exec]
             [goog.events :as events]
-            [cljs.pprint :refer [pprint]]))
 
-(def current-editor nil)
+            [cljs.pprint :refer [pprint]]))
 
 (def options
   {:theme             "maria-light"
@@ -33,8 +34,12 @@
                                                                                   read-only? (-> (select-keys [:theme :mode :lineWrapping])
                                                                                                  (assoc :readOnly "nocursor"))))))]
                                 (set! (.-view editor) this)
+                                (set! (.-setValueAndRefresh editor) #(do
+                                                                       (.setValue editor %)
+                                                                       (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
+                                (swap! editor assoc :on-ast-update show-comments/handle-ast-update)
 
                                 (when-not read-only?
 
@@ -48,7 +53,12 @@
                                         (.on editor event-key f))))
                                   (when on-mount (on-mount editor this)))
 
-                                (some->> (or value default-value) (str) (.setValue editor))
+                                (events/listen dom-node "focus" #(set! exec/current-editor editor) true)
+                                (events/listen dom-node "blur" #(set! exec/current-editor nil) true)
+
+                                (some->> (or value default-value) (str) (.setValueAndRefresh editor))
+
+                                (.focus editor)
 
                                 (when on-update
                                   (.on editor "change" #(on-update (.getValue %1))))
@@ -58,7 +68,7 @@
                               (when-let [editor (:editor @state)]
                                 (cm/set-preserve-cursor editor value)))
    :reset-value             (fn [{:keys [default-value value view/state]}]
-                              (.setValue (:editor @state) (or value default-value)))
+                              (.setValueAndRefresh (:editor @state) (or value default-value)))
    :life/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props
@@ -69,16 +79,13 @@
                                     :else nil))
    :life/should-update      (fn [_] false)}
   [{:keys [view/state on-focus on-blur view/props] :as this}]
-  [:div (-> (select-keys props [:style :class :classes])
-            (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
-                                 (let [editor (:editor @state)]
-                                   (doto editor
-                                     (.setCursor (.lineCount editor) 0)
-                                     (.focus))))
-                    :on-blur  #(do (set! current-editor nil)
-                                   (when on-blur (on-blur %)))
-                    :on-focus #(do (set! current-editor (:editor @state))
-                                   (when on-focus (on-focus %)))}))])
+  [:.flex-auto
+   (-> (select-keys props [:style :class :classes])
+       (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
+                            (let [editor (:editor @state)]
+                              (doto editor
+                                (.setCursor (.lineCount editor) 0)
+                                (.focus))))}))])
 
 (v/defn viewer [props source]
   (editor (merge {:read-only? true

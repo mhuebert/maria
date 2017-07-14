@@ -42,17 +42,18 @@
       ;; in the macro so there's no way to reuse specs.
       ))
 
-(clojure.core/defn parse-view-args
-  "Parse args for optional docstring and method map"
-  [args]
-  (let [out []
-        out (conj out (if (symbol? (first args)) (first args) (gensym)))
-        args (if (symbol? (first args)) (next args) args)
-        out (conj out (if (string? (first args)) (first args) nil))
-        args (if (string? (first args)) (next args) args)
-        out (conj out (if (map? (first args)) (first args) nil))
-        args (if (map? (first args)) (next args) args)]
-    (conj out args)))
+(clojure.core/defn parse-opt-args [preds args]
+  (loop [preds preds
+         args args
+         out []]
+    (if (empty? preds)
+      (conj out args)
+      (let [match? ((first preds) (first args))]
+        (recur (rest preds)
+               (cond-> args match? (rest))
+               (conj out (if match? (first args) nil)))))))
+
+(def parse-view-args (partial parse-opt-args [symbol? string? map?]))
 
 (clojure.core/defn display-name
   "Generate a meaningful name to identify React components while debugging"

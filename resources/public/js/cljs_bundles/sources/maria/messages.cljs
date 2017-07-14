@@ -52,9 +52,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier
 
-;; XXX still has a small bug where multiple different variable names
-;; at the same level of the trie will cause weird behavior, should add
-;; check to the trie builder to prevent this.
 (defn match-in-tokens
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
   ([trie tokens] (match-in-tokens trie tokens []))
