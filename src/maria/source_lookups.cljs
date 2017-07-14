@@ -76,11 +76,9 @@
       (or (when-let [munged-sym (ensure-str (aget f "name"))]
             (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
           (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
-                       [_ {the-name :name :as var-data}] (ns-data :defs)
-                       :let [value (let [segments (concat (map munge (string/split (namespace the-name) ".")) (list (munge (name (:name var-data)))))]
-                                     (apply gobj/getValueByKeys js/window segments))]
-                       :when (= value f)]
-                   var-data))))))
+                       [_ the-var] (ns-data :defs)
+                       :when (= f (e/var-value the-var))]
+                   the-var))))))
 
 (def source-path "/js/cljs_bundles/sources")
 

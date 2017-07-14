@@ -9,6 +9,8 @@
   ([sym] (e/resolve-var c-state c-env sym))
   ([c-state c-env sym] (e/resolve-var c-state c-env sym)))
 
+(def var-value e/var-value)
+
 (defonce eval-log (atom (list)))
 
 (defn eval-log-wrap [f]
