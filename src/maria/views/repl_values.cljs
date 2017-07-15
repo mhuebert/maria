@@ -20,7 +20,7 @@
 (declare format-value)
 
 (defview display-deferred
-  {:life/will-mount (fn [{:keys [deferred view/state]}]
+  {:view/will-mount (fn [{:keys [deferred view/state]}]
                       (-> deferred
                           (.addCallback #(swap! state assoc :value %1))
                           (.addErrback #(swap! state assoc :error %)))
@@ -38,7 +38,7 @@
 (def expander-label :.inline-flex.items-center)
 
 (defview format-collection
-  {:life/initial-state 20}
+  {:view/initial-state 20}
   [{limit :view/state} value]
   (let [[lb rb] (bracket-type value)
         more? (= (count (take (inc @limit) value)) (inc @limit))]
@@ -49,7 +49,7 @@
      [:span.output-bracket rb]]))
 
 (defview format-function
-  {:life/initial-state (fn [_ value] {:expanded? false})}
+  {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
   (let [{:keys [expanded?]} @state
         fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]

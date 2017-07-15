@@ -16,7 +16,7 @@
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
 (defview doc
-  {:life/initial-state #(:expanded? %)
+  {:view/initial-state #(:expanded? %)
    :key                :name}
   [{:keys [doc
            meta
@@ -46,7 +46,7 @@
          (docs-link namespace name)))]))
 
 (defview var-source
-  {:life/will-mount (fn [{:keys [view/props view/state]}]
+  {:view/will-mount (fn [{:keys [view/props view/state]}]
                       (reader/var-source props (partial reset! state)))}
   [{:keys [view/state special-form name]}]
   (let [{:keys [value error] :as result} @state]
@@ -57,7 +57,7 @@
           value (repl-ui/card (editor/viewer value)))))
 
 (defview dir
-  {:life/initial-state {:expanded? false}}
+  {:view/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
   (let [defs (->> (:defs (ns-utils/analyzer-ns @c-state ns))
                   (seq)

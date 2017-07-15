@@ -10,7 +10,7 @@
   (with-out-str (pprint x)))
 
 (defview track-cursor
-  {:life/initial-state {:editor nil}}
+  {:view/initial-state {:editor nil}}
   [{:keys [view/state] :as this}]
   (let [{:keys [zipper] {:keys [pos]} :magic/cursor} (some-> (:editor @state) :view/state deref :editor)
         node (some-> zipper (tree/node-at pos) z/node)]

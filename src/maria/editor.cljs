@@ -25,7 +25,7 @@
 (defview editor
   {:view/spec               {:props {:event/mousedown :Function
                                      :event/keydown   :Function}}
-   :life/did-mount          (fn [{:keys [default-value value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
+   :view/did-mount          (fn [{:keys [default-value value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
                                     editor (js/CodeMirror dom-node
@@ -69,7 +69,7 @@
                                 (cm/set-preserve-cursor editor value)))
    :reset-value             (fn [{:keys [default-value value view/state]}]
                               (.setValueAndRefresh (:editor @state) (or value default-value)))
-   :life/will-receive-props (fn [{value                       :value
+   :view/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props
                                   state                       :view/state

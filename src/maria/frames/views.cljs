@@ -7,7 +7,7 @@
             [maria.frames.trusted-actions :as actions]))
 
 (defview frame-view
-  {:life/initial-state      #(do {:frame-id (str (gensym))})
+  {:view/initial-state      #(do {:frame-id (str (gensym))})
    :spec/props              {:id         {:spec :String
                                           :doc  "unique ID for frame"}
                              :on-message {:spec :Function
@@ -20,11 +20,11 @@
                               (frame/send (:frame-id @state) message))
    :send-transactions       (fn [{:keys [db/transactions view/state]}]
                               (frame/send (:frame-id @state) [:db/transactions transactions]))
-   :life/did-mount          (fn [{:keys [view/state on-message] :as this}]
+   :view/did-mount          (fn [{:keys [view/state on-message] :as this}]
                               (when on-message
                                 (frame/listen (:frame-id @state) on-message))
                               (.sendTransactions this))
-   :life/will-receive-props (fn [{:keys [on-message view/state db/transactions] {prev-tx         :db/transactions
+   :view/will-receive-props (fn [{:keys [on-message view/state db/transactions] {prev-tx         :db/transactions
                                                                                  prev-on-message :on-message} :view/prev-props :as this}]
                               (let [{:keys [frame-id]} @state]
                                 (when-not (= on-message prev-on-message)
@@ -32,7 +32,7 @@
                                   (frame/listen frame-id on-message))
                                 (when (not= transactions prev-tx)
                                   (.sendTransactions this))))
-   :life/will-unmount       (fn [{:keys [view/state on-message]}]
+   :view/will-unmount       (fn [{:keys [view/state on-message]}]
                               (frame/unlisten (:frame-id @state) on-message))}
   [{:keys [view/state]}]
   [:iframe.maria-editor-frame

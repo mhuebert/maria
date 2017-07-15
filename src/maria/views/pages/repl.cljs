@@ -76,10 +76,10 @@
 (defview edit-file
   {:get-editor              (fn [{:keys [view/state]}]
                               (-> (:repl-editor @state) :view/state deref :editor))
-   :life/will-receive-props (fn [{id :id {prev-id :id} :view/prev-props}]
+   :view/will-receive-props (fn [{id :id {prev-id :id} :view/prev-props}]
                               (when-not (= id prev-id)
                                 (local/init-storage id)))
-   :life/will-mount         (fn [{:keys [id]}]
+   :view/will-mount         (fn [{:keys [id]}]
                               (local/init-storage id))
    :project-files           (fn [{:keys [id]}]
                               (-> (concat (keys (d/get-in id [:persisted :files])) (keys (d/get-in id [:local :files])))

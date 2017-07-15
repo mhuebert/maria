@@ -156,11 +156,11 @@
           (.setValueAndRefresh (get-in persisted [:files filename :content]))))
 
 (defview doc-toolbar
-  {:life/did-mount          (fn [this]
+  {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
                               (set! exec/current-doc-toolbar this))
-   :life/will-unmount       #(set! exec/current-doc-toolbar nil)
-   :life/will-receive-props (fn [{filename                  :filename
+   :view/will-unmount       #(set! exec/current-doc-toolbar nil)
+   :view/will-receive-props (fn [{filename                  :filename
                                   {prev-filename :filename} :view/prev-props
                                   :as                       this}]
                               (when-not (= filename prev-filename)
