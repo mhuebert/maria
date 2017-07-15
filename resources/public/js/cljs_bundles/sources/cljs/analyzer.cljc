@@ -1589,15 +1589,15 @@
                   (let [ret-tag (-> n meta :tag)
                         fexpr (no-warn (analyze env (n->fexpr n)))
                         be (cond->
-                             {:name            n
-                              :fn-var          true
-                              :line            (get-line n env)
-                              :column          (get-col n env)
-                              :local-value     true
-                              :shadow          (locals n)
-                              :variadic        (:variadic fexpr)
+                             {:name n
+                              :fn-var true
+                              :line (get-line n env)
+                              :column (get-col n env)
+                              :local true
+                              :shadow (locals n)
+                              :variadic (:variadic fexpr)
                               :max-fixed-arity (:max-fixed-arity fexpr)
-                              :method-params   (map :params (:methods fexpr))}
+                              :method-params (map :params (:methods fexpr))}
                              ret-tag (assoc :ret-tag ret-tag))]
                     [(assoc-in env [:locals n] be)
                      (conj bes be)]))
@@ -1674,18 +1674,18 @@
           (let [init-expr (analyze-let-binding-init env init (cons {:params bes} *loop-lets*))
                 line (get-line name env)
                 col (get-col name env)
-                be {:name          name
-                    :line          line
-                    :column        col
-                    :init          init-expr
-                    :tag           (get-let-tag name init-expr)
-                    :local-value   true
-                    :shadow        (-> env :locals name)
+                be {:name name
+                    :line line
+                    :column col
+                    :init init-expr
+                    :tag (get-let-tag name init-expr)
+                    :local true
+                    :shadow (-> env :locals name)
                     ;; Give let* bindings same shape as var so
                     ;; they get routed correctly in the compiler
-                    :op            :var
-                    :env           {:line line :column col}
-                    :info          {:name name
+                    :op :var
+                    :env {:line line :column col}
+                    :info {:name name
                            :shadow (-> env :locals name)}
                     :binding-form? true}
                 be (if (= :fn (:op init-expr))

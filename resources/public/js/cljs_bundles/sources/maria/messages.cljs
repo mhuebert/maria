@@ -111,7 +111,7 @@
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [source error error-location]}]
+  [{:keys [source error error-position]}]
   [:div
    [:p (prettify-error-message (ex-message error))]
    [:p (ex-message (ex-cause error))]
@@ -163,7 +163,7 @@
        :undeclared-var (str "The above expression contains a reference to `"
                             (-> w :extra :suffix)
                             "`, but it hasn't been defined!")
-       (with-out-str (println (dissoc w :env))))]))
+       (with-out-str (println (select-keys w [:type :extra]))))]))
 
 ;; NB took this out because we're already
 ;; printing the expression in a nicer way
