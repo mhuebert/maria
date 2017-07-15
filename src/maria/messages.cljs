@@ -91,15 +91,16 @@
 (def error-message-trie
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-    [["cannot read property call of %"
-      "It looks like you're trying to call a function that has not been defined yet."]
-     ["invalid arity %"
-      "%1 is too many arguments!"]
-     ["no protocol method icollection conj defined for type % %"
-      "The %1 `%2` can't be used as a collection."]
-     ["% is not iseqable" "The value `%1` can't be used as a sequence or collection."]
-     ["% call is not a function"
-      "The value `%1` isn't a function, but it's being called like one."]]))
+   [["cannot read property call of %"
+     "It looks like you're trying to call a function that has not been defined yet."]
+    ["invalid arity %"
+     "%1 is too many arguments!"]
+    ["no protocol method icollection conj defined for type % %"
+     "The %1 `%2` can't be used as a collection."]
+    ["% is not iseqable"
+     "The value `%1` can't be used as a sequence or collection."]
+    ["% call is not a function"
+     "The value `%1` isn't a function, but it's being called like one."]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
