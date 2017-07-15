@@ -91,22 +91,20 @@
   {:key :id}
   [{:keys [value
            error
-           error-location
+           error-position
            warnings
            source] :as result}]
   (let [error? (or error (seq warnings))]
     (when error
       (.error js/console error))
-    (when (seq warnings)
-      (prn :warnings warnings))
     [:div.bb.b--darken.overflow-hidden
      {:class (when error? "bg-darken-red")}
      (when source
        [:.code.overflow-auto.pre.gray.mv3
         {:style {:max-height 200}}
         (editor/viewer {:error-ranges (cond-> []
-                                              error (conj (magic/error-range source error-location))
-                                              (seq warnings) (into (map #(magic/error-range source (:env %)) warnings)))} source)])
+                                              error (conj (magic/error-range source error-position))
+                                              (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
      [:.ws-prewrap.relative.mv3
       (cond error?
             [:.ph3.overflow-auto

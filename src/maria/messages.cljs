@@ -111,7 +111,7 @@
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [source error error-location]}]
+  [{:keys [source error error-position]}]
   [:div
    [:p (prettify-error-message (ex-message error))]
    [:p (ex-message (ex-cause error))]
