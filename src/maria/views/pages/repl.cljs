@@ -15,7 +15,7 @@
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
 (defn init []
-  (set! cljs-live.compiler/debug? true)
+  #_(set! cljs-live.compiler/debug? true)
   (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
                     "/js/cljs_bundles/maria.user.json"
                     "/js/cljs_bundles/cljs.spec.alpha.json"]

@@ -72,19 +72,25 @@
 
 (defn format-value [value]
   [:span
-   (cond
-     (= :shape (:is-a value)) (shapes/show value)           ; synthesize component for shape
-     (or (vector? value)
-         (seq? value)
-         (set? value)) (format-collection value)
-     (var? value) (.toString value)
-     (fn? value) (format-function value)
-     (v/is-react-element? value) value
-     (instance? cljs.core/Namespace value) (str value)
-     (instance? Deferred value) (display-deferred {:deferred value})
-     :else (if (nil? value)
-             "nil"
-             (try (string/trim-newline (with-out-str (pprint value)))
+   (case (messages/what-is value)
+
+     :maria.kinds/shape (shapes/show value)
+
+     (:maria.kinds/vector
+       :maria.kinds/sequence
+       :maria.kinds/set) (format-collection value)
+
+     :maria.kinds/var (.toString value)
+
+     :maria.kinds/nil "nil"
+
+     :maria.kinds/function (format-function value)
+
+     (cond
+       (v/is-react-element? value) value
+       (instance? cljs.core/Namespace value) (str value)
+       (instance? Deferred value) (display-deferred {:deferred value})
+       :else (try (string/trim-newline (with-out-str (pprint value)))
                   (catch js/Error e "error printing result"))))])
 
 (defview display-result
@@ -106,15 +112,14 @@
                                               error (conj (magic/error-range source error-position))
                                               (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
      [:.ws-prewrap.relative.mv3
-      (cond error?
-            [:.ph3.overflow-auto
-             (for [message (cons (when error (messages/reformat-error result))
-                                 (map messages/reformat-warning (distinct warnings)))
-                   :when message]
-               [:.mv2 message])]
-            (v/is-react-element? value)
-            value
-            :else [:.ph3 (format-value value)])]]))
+      (if error?
+        [:.ph3.overflow-auto
+         (for [message (cons (when error (messages/reformat-error result))
+                             (map messages/reformat-warning (distinct warnings)))
+               :when message]
+           [:.mv2 message])]
+
+        [:.ph3 (format-value value)])]]))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
