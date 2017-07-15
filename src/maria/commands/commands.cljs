@@ -68,6 +68,16 @@
   [{:keys [editor]}]
   (edit/hop-right editor))
 
+(defcommand :cursor/jump-to-top
+  "Move cursor to top of current doc"
+  {:bindings "Command-Up"
+   :when :editor})
+
+(defcommand :cursor/jump-to-bottom
+  "Move cursor to bottom of current doc"
+  {:bindings "Command-Down"
+   :when :editor})
+
 (defcommand :selection/expand
   "Select parent form, or form under cursor"
   {:bindings ["Command-]" "Command-1"]

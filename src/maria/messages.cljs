@@ -163,7 +163,7 @@
        :undeclared-var (str "The above expression contains a reference to `"
                             (-> w :extra :suffix)
                             "`, but it hasn't been defined!")
-       (with-out-str (println (dissoc w :env))))]))
+       (with-out-str (println (select-keys w [:type :extra]))))]))
 
 ;; NB took this out because we're already
 ;; printing the expression in a nicer way
