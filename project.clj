@@ -50,7 +50,6 @@
                                        :output-to      "resources/public/js/compiled/user.js"
                                        :output-dir     "resources/public/js/compiled/out-user-prod"
                                        :asset-path     "/js/compiled/out-user-prod"
-                                       :source-map     false
                                        :cache-analysis false
                                        :dump-core      false
                                        :parallel-build true
@@ -72,7 +71,6 @@
                                        :output-dir     "resources/public/js/compiled/out-trusted-prod"
                                        :asset-path     "/js/compiled/out-trusted-prod"
                                        :optimizations  :advanced
-                                       :source-map     false
                                        :parallel-build true}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
