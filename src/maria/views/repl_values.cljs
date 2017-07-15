@@ -72,7 +72,7 @@
 
 (defn format-value [value]
   [:span
-   (case (messages/what-is value)
+   (case (messages/kind value)
 
      :maria.kinds/shape (shapes/show value)
 
