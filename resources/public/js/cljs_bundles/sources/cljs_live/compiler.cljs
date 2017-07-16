@@ -10,7 +10,7 @@
 (defn log [& args]
   (when debug? (apply println args)))
 
-(def cljs-cache (atom {}))
+(def cljs-cache (atom {"provided" #{}}))
 
 (defn is-provided
   "Determine if a namespace is already provided. If using :optimizations :none,
@@ -24,7 +24,7 @@
   (or (contains? *loaded-libs* name)
       (if-let [provided? (aget js/goog "isProvided_")]
         (provided? name)
-        (contains? (set (get @cljs-cache "provided")) name))))
+        (contains? (@cljs-cache "provided") (str name)))))
 
 ;; from cljs.js-deps
 (defn parse-goog-provides
@@ -85,9 +85,9 @@
   [c-state {:keys [path macros name]} cb]
   (let [path (cond-> path
                      macros (str "$macros"))
-        name (if-not macros name
+        name (if-not macros  name
                             (symbol (str name "$macros")))
-        js-provided? (is-provided (munge (str name)))
+        js-provided? (is-provided (str name))
         c-state-provided? (contains? (get-in @c-state [::loaded]) name)]
     (swap! c-state update ::loaded (fnil conj #{}) name)
     (cb (if (and (*loaded-libs* (str name)) c-state-provided?)
@@ -103,9 +103,21 @@
                                source (merge {:source source
                                               :lang   lang}))]
             (when (or cache source)
-              (set! *loaded-libs* (conj *loaded-libs* (str name))))
-            (log [(if (boolean source) "source" "      ")
-                  (if (boolean cache) "cache" "     ")] name)
+              (set! *loaded-libs* (conj *loaded-libs* (str name))) 0)
+
+            (when (cond (and (not js-provided?) (not source) (.test #"^goog" (str name)))
+                        (do (prn "GOOG?" name) true)
+                        (and (not c-state-provided?)
+                             (not cache)
+                             (not source))
+                        (do (prn (str (if js-provided? "CACHE?" "SOURCE?") " " name " " path)) true)
+                        :else nil)
+              (log [(if (boolean source) "source" "      ")
+                    (if (boolean cache) "cache" "     ")
+                    (if js-provided? "js-provided" "           ")
+                    (if c-state-provided? "in-c-state" "          ")
+                    ;; is maria.persistence.github there?
+                    (when (boolean source) lang)] name))
             result)))))
 
 (defn get-json [path cb]
@@ -134,11 +146,9 @@
                                                                                         (apply hash-map (interleave provides (repeat k))))))) bundle bundle)]
                          (swap! cljs-cache (partial merge-with (fn [v1 v2]
                                                                  (if (coll? v1) (into v1 v2) v2))) bundle)
+
                          (swap! bundles merge bundle)
                          (swap! loaded inc)
                          (when (= total @loaded)
                            (aset js/window "CLJS_LIVE" (clj->js @cljs-cache))
                            (cb @bundles)))))))))
-
-
-

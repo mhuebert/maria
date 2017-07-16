@@ -4,7 +4,6 @@
             [maria.commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.communication :as frame]
-            [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
             [maria.persistence.github :as github]
             [re-db.d :as d]

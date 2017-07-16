@@ -17,7 +17,7 @@
     (set! (.-scrollTop el) (.-scrollHeight el))))
 
 (defview ScrollBottom
-         {:life/did-update scroll-bottom
-          :life/did-mount  scroll-bottom}
+         {:view/did-update scroll-bottom
+          :view/did-mount  scroll-bottom}
          [_ element]
          element)

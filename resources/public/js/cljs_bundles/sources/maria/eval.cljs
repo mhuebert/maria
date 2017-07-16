@@ -21,5 +21,3 @@
 
 (def eval (eval-log-wrap (partial e/eval c-state c-env)))
 (def eval-str (eval-log-wrap (partial e/eval-str c-state c-env)))
-
-

@@ -5,8 +5,7 @@
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.util :as cm]
-            [magic-tree-codemirror.edit :refer [key-map]]))
+            [magic-tree-codemirror.util :as cm]))
 
 (specify! (.-prototype js/CodeMirror)
   ILookup
@@ -65,14 +64,35 @@
         (swap! cm assoc-in [:magic/cursor :handles]
                (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
+(defn clear-parse-errors! [cm]
+  (doseq [handle (get-in cm [:magic/errors :handles])]
+    (.clear handle))
+  (swap! cm update :magic/errors dissoc :handles))
+
+(defn highlight-parse-errors! [cm errors]
+  (let [error-ranges (map (comp :position second) errors)
+        ;; TODO
+        ;; derive className from error name, not all errors are unmatched brackets.
+        ;; (somehow) add a tooltip or other attribute to the marker (for explanation).
+        handles (cm/mark-ranges! cm error-ranges #js {:className "CodeMirror-unmatchedBracket"})]
+    (swap! cm assoc-in [:magic/errors :handles] handles)))
+
 (defn update-ast!
-  [{:keys [ast] :as cm}]
-  (when-let [next-ast (try (tree/ast (.getValue cm))
-                           (catch js/Error e (.debug js/console e)))]
+  [{:keys [ast on-ast-update] :as cm}]
+  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (.getValue cm))
+                                                (catch js/Error e (.debug js/console e)))]
     (when (not= next-ast ast)
-      (swap! cm assoc
-             :ast next-ast
-             :zipper (tree/ast-zip next-ast)))))
+      (let [next-zip (tree/ast-zip next-ast)]
+        (clear-parse-errors! cm)
+        (when-let [error (first errors)]
+          (highlight-parse-errors! cm [error]))
+        (when on-ast-update
+          (on-ast-update cm next-ast next-zip))
+        (if (seq errors)
+          (swap! cm dissoc :ast :zipper)
+          (swap! cm assoc
+                 :ast next-ast
+                 :zipper next-zip))))))
 
 (defn update-cursor!
   [{:keys [zipper magic/brackets?] :as cm}]
@@ -119,9 +139,3 @@
                      (events/listen el "mousemove" (partial update-highlights! cm)))
 
                    (swap! cm assoc :magic/brackets? true))))
-
-(.defineOption js/CodeMirror "magicEdit" false
-               (fn [cm kmap]
-                 (when kmap
-                   (.addKeyMap cm (clj->js (cond-> key-map
-                                                   (map? kmap) (merge kmap)))))))

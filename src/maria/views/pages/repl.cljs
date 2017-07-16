@@ -2,16 +2,17 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
-            [maria.editor :as editor]
+            [maria.codemirror.editor :as editor]
             [maria.eval :as eval]
-            [cljs.pprint :refer [pprint]]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-utils :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
-            [maria.persistence.local :as local])
+            [maria.persistence.local :as local]
+            [maria.pretty-comments :as pretty-comments]
+            [maria.commands.exec :as exec])
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
 (defn init []
@@ -100,14 +101,16 @@
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
             [:.h-100.flex.flex-column
-             (toolbar/doc-toolbar {:project project
-                               :owner       (:owner project)
-                               :filename    filename
-                               :id          id
-                               :get-editor  #(.getEditor this)})
+             (toolbar/doc-toolbar {:project    project
+                                   :owner      (:owner project)
+                                   :filename   filename
+                                   :id         id
+                                   :get-editor #(.getEditor this)})
              [:.flex.flex-auto
               (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-
+                              :on-ast-update pretty-comments/handle-ast-update
+                              :event/focus   #(set! exec/current-editor %2)
+                              :event/blur    #(set! exec/current-editor nil)
                               :on-update     (fn [source]
                                                (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                               :source-id     id
@@ -142,10 +145,10 @@
     result-toolbar]])
 
 (defcommand :repl/clear
-            "Clear the repl output"
-            {:bindings ["Cmd-Shift-B"]}
-            []
-            (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
+  "Clear the repl output"
+  {:bindings ["Cmd-Shift-B"]}
+  []
+  (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
 
 #_(defview current-namespace
     {:view/spec {:props {:ns symbol?}}}

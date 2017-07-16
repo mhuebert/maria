@@ -1,16 +1,11 @@
-(ns maria.editor
+(ns maria.codemirror.editor
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
-            [maria.pretty-comments :as show-comments]
-
-            [maria.commands.exec :as exec]
-            [goog.events :as events]
-
-            [cljs.pprint :refer [pprint]]))
+            [goog.events :as events]))
 
 (def options
   {:theme             "maria-light"
@@ -25,7 +20,7 @@
 (defview editor
   {:view/spec               {:props {:event/mousedown :Function
                                      :event/keydown   :Function}}
-   :view/did-mount          (fn [{:keys [default-value value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
+   :view/did-mount          (fn [{:keys [default-value on-ast-update value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
                                     editor (js/CodeMirror dom-node
@@ -39,22 +34,21 @@
                                                                        (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
-                                (swap! editor assoc :on-ast-update show-comments/handle-ast-update)
+
+                                (some->> on-ast-update
+                                         (swap! editor assoc :on-ast-update))
 
                                 (when-not read-only?
 
                                   ;; event handlers are passed in as props with keys like :event/mousedown
                                   (doseq [[event-key f] (filter (fn [[k v]] (= (namespace k) "event")) props)]
                                     (let [event-key (name event-key)]
-                                      (if (#{"mousedown" "click" "mouseup"} event-key)
+                                      (if (#{"mousedown" "click" "mouseup" "focus" "blur"} event-key)
                                         ;; attach mouse handlers to dom node, preventing CodeMirror selection by using goog.events capture phase
-                                        (events/listen dom-node event-key f true)
+                                        (events/listen dom-node event-key #(f % editor) true)
                                         ;; attach other handlers to CodeMirror instance
                                         (.on editor event-key f))))
                                   (when on-mount (on-mount editor this)))
-
-                                (events/listen dom-node "focus" #(set! exec/current-editor editor) true)
-                                (events/listen dom-node "blur" #(set! exec/current-editor nil) true)
 
                                 (some->> (or value default-value) (str) (.setValueAndRefresh editor))
 

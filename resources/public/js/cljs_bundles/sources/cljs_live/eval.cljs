@@ -4,8 +4,7 @@
             [cljs.tools.reader.reader-types :as rt]
             [cljs.analyzer :refer [*cljs-warning-handlers*]]
             [cljs-live.compiler :as c]
-            [cljs.repl :refer [print-doc]]
-
+            [goog.object :as gobj]
             [clojure.string :as string]
             [goog.crypt.base64 :as base64]
             [cljs.source-map :as sm])
@@ -16,12 +15,7 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(def repl-specials {}
-  #_{'ns       wrap-ns
-     'in-ns    in-ns
-     'with-ns  with-ns
-     'doc      doc
-     'defmacro wrap-defmacro})
+(def repl-specials {})
 
 (defn swap-repl-specials!
   "Mutate repl specials available to the eval fns in this namespace."
@@ -47,10 +41,17 @@
         (str s "$macros")))))
 
 (defn resolve-var
-  ([sym] (resolve-var c-state c-env sym))
+  ([sym]
+   (resolve-var c-state c-env sym))
   ([c-state c-env sym]
    (binding [cljs.env/*compiler* c-state]
      (cljs.analyzer/resolve-var (assoc @cljs.env/*compiler* :ns (get-ns c-state (or (:ns @c-env) 'cljs.user))) sym))))
+
+(defn var-value [the-var]
+  (->> (string/split (:name the-var) #"[\./]")
+       (map munge)
+       (to-array)
+       (apply gobj/getValueByKeys js/window)))
 
 (defn resolve-symbol
   ([sym] (resolve-symbol c-state c-env sym))
@@ -88,22 +89,12 @@
   (-> (eval c-state c-env (with-meta (cons 'ns body) {::skip-repl-special true}))
       (assoc :ns (first body))))
 
-(defspecial doc
-  "Show doc for symbol"
-  [c-state c-env name]
-  (let [[namespace name] (let [name (resolve-symbol name)]
-                           (map symbol [(namespace name) (clojure.core/name name)]))]
-    {:value (with-out-str
-              (some-> (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
-                      (select-keys [:name :doc :arglists])
-                      print-doc)
-              "Not found")}))
-
 (defn repl-special [c-state c-env body]
   (let [f (get repl-specials (first body))]
     (try (f c-state c-env body)
          (catch js/Error e
-           (prn "repl-special error" e)
+           (prn "repl-special error" body e)
+           (.error js/console e)
            {:error e}))))
 
 (defn dec-pos
@@ -126,13 +117,17 @@
 (defn warning-handler
   "Collect warnings in a dynamic var"
   [form source warning-type env extra]
+  ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
+  ;;        also unsure of memory implications.
   (some-> *cljs-warnings*
-          (swap! conj {:type   warning-type
-                       :env    (relative-pos (dec-pos env) (when (satisfies? IMeta form) (some-> (meta form)
-                                                                                                 (dec-pos))))
-                       :extra  extra
-                       :source source
-                       :form   form})))
+          (swap! conj {:type             warning-type
+                       :warning-position (relative-pos (-> (select-keys env [:line :column])
+                                                           (dec-pos))
+                                                       (when (satisfies? IMeta form) (some-> (meta form)
+                                                                                             (dec-pos))))
+                       :extra            extra
+                       :source           source
+                       :form             form})))
 
 (defn error-position [error]
   (let [[line column] (->> (re-find #"<anonymous>:(\d+)(?::(\d+))" (.-stack error))
@@ -154,7 +149,21 @@
      :column col}))
 
 (defn eval
-  "Eval a single form, keeping track of current ns in c-env"
+  "Eval a single form. Arguments:
+   c-state - a cljs compiler state atom
+   c-env   - an atom for tracking the compiler environment;
+             must contain an :ns key with the current namespace (as a symbol)
+
+  Updates the `c-env` atom if the current namespace changes during eval.
+
+  Eval returns a map containing:
+
+  :value or :error - depending on the result of evaluation
+  :error-position  - the 0-indexed position of the error, if present
+  :compiled-js     - the javascript source emitted by the compiler
+  :source          - the source code string that was evaluated
+  :source-map      - the base64-encoded source-map string
+  :env             - the compile environment, a map containing :ns (current namespace)"
   ([form] (eval c-state c-env form))
   ([c-state c-env form] (eval c-state c-env form {}))
   ([c-state c-env form opts]
@@ -169,8 +178,9 @@
                                    (repl-special c-state c-env form)
                                    (let [result (atom)
                                          cb (partial swap! result merge)
-                                         file-name (name (gensym "user_cljs"))]
-
+                                         file-name (str (string/replace (str (:ns env)) "." "/") "/" (gensym "cljs_live_") (if (string/ends-with? (str (:ns env)) "$macros")
+                                                                                                                             ".clj"
+                                                                                                                             ".cljs"))]
                                      (binding [*cljs-warning-handlers* [(partial warning-handler form source)]
                                                r/*data-readers* (conj r/*data-readers* {'js identity})]
                                        (if source
@@ -182,14 +192,14 @@
                                                                (let [[js-source source-map] (clojure.string/split compiled-js #"\n//#\ssourceURL[^;]+;base64,")]
                                                                  (->> (if error
                                                                         {:error          error
-                                                                         :error-location (some-> (ex-cause error)
+                                                                         :error-position (some-> (ex-cause error)
                                                                                                  (ex-data)
                                                                                                  (select-keys [:line :column])
                                                                                                  (dec-pos)
                                                                                                  (relative-pos start-pos))}
                                                                         (-> (try {:value (js/eval js-source)}
                                                                                  (catch js/Error e {:error          e
-                                                                                                    :error-location (-> (error-position e)
+                                                                                                    :error-position (-> (error-position e)
                                                                                                                         (mapped-cljs-position source-map)
                                                                                                                         (relative-pos start-pos))}))
                                                                             (merge {:compiled-js js-source
@@ -215,15 +225,20 @@
             (recur (conj forms form))))))))
 
 (defn eval-forms
-  "Eval a list of forms"
+  "Eval a list of forms. Stops at the first error.
+
+  Returns the result of the last form. A vector of earlier results is returned in
+  the :intermediate-values key."
   [c-state c-env forms]
   (binding [*cljs-warnings* (or *cljs-warnings* (atom []))]
-    (loop [forms forms]
+    (loop [forms forms
+           intermediate-values []]
       (let [{:keys [error] :as result} (eval c-state c-env (first forms))
             remaining (rest forms)]
         (if (or error (empty? remaining))
-          (assoc result :warnings @*cljs-warnings*)
-          (recur remaining))))))
+          (assoc result :warnings @*cljs-warnings*
+                        :intermediate-values intermediate-values)
+          (recur remaining (conj intermediate-values result)))))))
 
 (defn read-src
   "Read src using indexed reader."
@@ -235,7 +250,8 @@
            {:error e}))))
 
 (defn eval-str
-  "Eval string by first reading all top-level forms, then eval'ing them one at a time."
+  "Eval string by first reading all top-level forms, then eval'ing them one at a time.
+  Stops at the first error."
   ([src] (eval-str c-state c-env src))
   ([c-state c-env src]
    (let [{:keys [error value] :as result} (read-src c-state c-env src)]

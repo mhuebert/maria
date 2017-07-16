@@ -1,10 +1,9 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.ns-utils :as ns-utils]
-            [maria.editor :as editor]
+            [maria.codemirror.editor :as editor]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
-            [cljs.pprint :refer [pprint]]
             [maria.source-lookups :as reader]
             [maria.views.repl-utils :as repl-ui]))
 

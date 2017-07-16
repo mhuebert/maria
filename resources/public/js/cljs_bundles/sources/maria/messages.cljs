@@ -19,7 +19,8 @@
    :maria.kinds/true         {:doc "true: the Boolean value 'true'"}
    :maria.kinds/vector       {:doc "a vector: a collection of values, indexable by number"}
    :maria.kinds/object       {:doc "a javascript object: a collection of key/value pairs"}
-   :maria.kinds/special-form {:doc "a special form: a primitive which is evaluated in a special way"}})
+   :maria.kinds/special-form {:doc "a special form: a primitive which is evaluated in a special way"}
+   :maria.kinds/var          {:doc "a Clojure var"}})
 
 (defn kind [thing]
   (if (contains? kinds thing)
@@ -41,6 +42,7 @@
       (true? thing) :maria.kinds/true
       (vector? thing) :maria.kinds/vector
       (object? thing) :maria.kinds/object
+      (var? thing) :maria.kinds/var
       :else nil)))
 
 ;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures

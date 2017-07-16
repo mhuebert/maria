@@ -5,10 +5,15 @@
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
             [cljs-live.compiler :as c]
-            [goog.net.XhrIo :as xhr])
+            [goog.net.XhrIo :as xhr]
+            [goog.object :as gobj])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
+
+(defn ensure-str [s]
+  (when (and (string? s) (not (identical? s "")))
+    s))
 
 (defn index-position
   "Given an index into a string, returns the 1-indexed line+column position"
@@ -36,15 +41,22 @@
         form (r/read reader)]
     (:source (meta form))))
 
+(defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]
+  (or (some->> intermediate-values
+               (keep (partial js-match js-source))
+               (first))
+      (when compiled-js
+        (let [i (.indexOf compiled-js js-source)]
+          (when (> i -1)
+            (assoc result :index i))))))
+
 (defn js-source->clj-source
   "Searches previously compiled ClojureScript<->JavaScript mappings to return the original ClojureScript
   corresponding to compiled JavaScript"
   [js-source]
-  (when-let [{:keys [index source compiled-js source-map]} (first (for [{:keys [compiled-js] :as res} @e/eval-log
-                                                                        :when compiled-js
-                                                                        :let [i (.indexOf compiled-js js-source)]
-                                                                        :when (> i -1)]
-                                                                    (merge res {:index i})))]
+  (when-let [{:keys [index source compiled-js source-map]} (->> @e/eval-log
+                                                                (keep (partial js-match js-source))
+                                                                (first))]
     (let [pos (-> (cljs-eval/mapped-cljs-position (index-position index compiled-js) source-map)
                   (update :line inc)
                   (update :column inc))]
@@ -57,46 +69,45 @@
         (str (string/join "." (drop-last parts)) "/" (last parts))
         (first parts)))))
 
-(defn fn-var
+(def fn-var
   "Look up the var for a function using its `name` property"
-  [f]
-  (when-let [munged-sym (aget f "name")]
-    (cljs-eval/resolve-var (symbol (demunge-symbol-str munged-sym)))))
+  (memoize
+    (fn [f]
+      (or (when-let [munged-sym (ensure-str (aget f "name"))]
+            (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+          (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
+                       [_ the-var] (ns-data :defs)
+                       :when (= f (e/var-value the-var))]
+                   the-var))))))
 
 (def source-path "/js/cljs_bundles/sources")
 
-(defn normalize-file [file name]
-  (let [namespace-path (-> (namespace name)
-                           (string/replace "." "/")
-                           (string/replace "$macros" ""))]
-    (re-find (re-pattern (str namespace-path ".*")) file)))
-
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
-  [{{meta-file :file :as meta} :meta :keys [file name source] :as the-var} cb]
-  (if source (cb {:value source})
-             (if-let [file (some-> (or file meta-file)
-                                   (normalize-file name))]
-               (if-let [source (get @c/cljs-cache file)]
-                 (cb {:value (source-of-form-at-position source the-var)})
-                 (xhr/send (str source-path "/" file)
-                           (fn [e]
-                             (let [target (.-target e)]
-                               (if (.isSuccess target)
-                                 (let [source (.getResponseText target)]
-                                   ;; strip source to line/col from meta
-                                   (cb {:value (source-of-form-at-position source meta)}))
-                                 (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
-                           "GET"))
-               (cb {:error (str "File not specified for `" name "`")}))))
+  [{{meta-file :file :as meta} :meta file :file name :name :as the-var} cb]
+  (if-let [file (or file meta-file)]
+    (let [namespace-path (as-> (namespace name) path
+                               (string/split path ".")
+                               (map munge path)
+                               (string/join "/" path)
+                               (string/replace path "$macros" ""))
+          file (re-find (re-pattern (str namespace-path ".*")) file)]
+      (if-let [source (get @c/cljs-cache file)]
+        (cb {:value (source-of-form-at-position source the-var)})
+        (xhr/send (str source-path "/" file)
+                  (fn [e]
+                    (let [target (.-target e)]
+                      (if (.isSuccess target)
+                        (let [source (.getResponseText target)]
+                          ;; strip source to line/col from meta
+                          (cb {:value (source-of-form-at-position source meta)}))
+                        (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
+                  "GET")))
+    (cb {:error (str "File not specified for `" name "`")})))
 
 (defn fn-source-sync [f]
   (or (js-source->clj-source (.toString f))
       (.toString f)))
-
-(defn ensure-str [s]
-  (when (and (string? s) (not (identical? s "")))
-    s))
 
 (defn fn-name
   [f]

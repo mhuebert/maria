@@ -1,5 +1,5 @@
 (ns maria.ns-utils
-  (:require [cljs-live.eval :as e]))
+  (:require [maria.eval :as e]))
 
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
@@ -22,7 +22,7 @@
 (defn resolve-sym
   "Resolve a symbol into fully qualified name. Returns vector of [namespace, name] as symbols."
   [c-state c-env sym]
-  (let [n (e/resolve-symbol c-state c-env sym)]
+  (let [n (:name (e/resolve-var c-state c-env sym))]
     (mapv symbol [(namespace n) (name n)])))
 
 (defn resolve-var

@@ -1,13 +1,11 @@
 (ns maria.views.pages.paredit-inspect
   (:require [magic-tree.core :as tree]
-            [maria.editor :as cm]
+            [maria.codemirror.editor :as cm]
             [fast-zip.core :as z]
-            [re-db.d :as d]
-            [cljs.pprint :refer [pprint]]
             [re-view.core :as v :refer [defview]]))
 
 (defn pretty-str [x]
-  (with-out-str (pprint x)))
+  (with-out-str (prn x)))
 
 (defview track-cursor
   {:view/initial-state {:editor nil}}

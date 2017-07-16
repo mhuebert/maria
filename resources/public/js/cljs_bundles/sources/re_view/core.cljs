@@ -50,17 +50,17 @@
 
 (def kmap
   "Mapping of convenience keys to React lifecycle method keys."
-  #:life {:constructor        "constructor"
-          :initial-state      "$getInitialState"
-          :will-mount         "componentWillMount"
-          :did-mount          "componentDidMount"
-          :will-receive-props "componentWillReceiveProps"
-          :will-receive-state "componentWillReceiveState"
-          :should-update      "shouldComponentUpdate"
-          :will-update        "componentWillUpdate"
-          :did-update         "componentDidUpdate"
-          :will-unmount       "componentWillUnmount"
-          :render             "render"})
+  {:constructor             "constructor"
+   :view/initial-state      "$getInitialState"
+   :view/will-mount         "componentWillMount"
+   :view/did-mount          "componentDidMount"
+   :view/will-receive-props "componentWillReceiveProps"
+   :view/will-receive-state "componentWillReceiveState"
+   :view/should-update      "shouldComponentUpdate"
+   :view/will-update        "componentWillUpdate"
+   :view/did-update         "componentDidUpdate"
+   :view/will-unmount       "componentWillUnmount"
+   :view/render             "render"})
 
 (defn compseq
   "Compose fns to execute sequentially over the same arguments"
@@ -75,7 +75,7 @@
   (let [methods (apply merge-with (fn [a b] (if (vector? a) (conj a b) [a b])) methods)]
     (reduce-kv (fn [m method-k fns]
                  (cond-> m
-                         (vector? fns) (assoc method-k (if (keyword-identical? method-k :life/should-update)
+                         (vector? fns) (assoc method-k (if (keyword-identical? method-k :view/should-update)
                                                          (apply v-util/any-pred fns)
                                                          (apply compseq fns))))) methods methods)))
 
@@ -85,23 +85,23 @@
   (if-not (fn? f)
     f
     (case method-k
-      (:life/initial-state
+      (:view/initial-state
         :key
-        :life/constructor) f
-      :life/render (reactive-render f)
-      :life/will-receive-props
+        :constructor) f
+      :view/render (reactive-render f)
+      :view/will-receive-props
       (fn [props]
         (binding [*trigger-state-render* false]
           (f (js-this) props)))
-      (:life/will-mount
-        :life/will-unmount
-        :life/will-receive-state
-        :life/will-update)
+      (:view/will-mount
+        :view/will-unmount
+        :view/will-receive-state
+        :view/will-update)
       (fn []
         (binding [*trigger-state-render* false]
           (apply f (js-this) (aget (js-this) "re$view" "children"))))
-      (:life/did-mount
-        :life/did-update)
+      (:view/did-mount
+        :view/did-update)
       (fn []
         (apply f (js-this) (aget (js-this) "re$view" "children")))
       (fn [& args]
@@ -142,7 +142,7 @@
 (defn wrap-lifecycle-methods
   "Augment lifecycle methods with default behaviour."
   [methods]
-  (->> (collect [{:life/will-receive-props (fn [this props]
+  (->> (collect [{:view/will-receive-props (fn [this props]
                                              (let [{prev-props :view/props prev-children :view/children :as this} this]
                                                (let [next-props (aget props "props")]
                                                  (aset this "re$view" "props" next-props)
@@ -150,18 +150,18 @@
                                                  (aset this "re$view" "children" (aget props "children"))
                                                  (aset this "re$view" "prevChildren" prev-children))))}
                  methods
-                 {:life/should-update (fn [{:keys [view/props
+                 {:view/should-update (fn [{:keys [view/props
                                                    view/prev-props
                                                    view/children
                                                    view/prev-children]}]
                                         (or (not= props prev-props)
                                             (not= children prev-children)))
-                  :life/will-unmount  (fn [{:keys [view/state] :as this}]
+                  :view/will-unmount  (fn [{:keys [view/state] :as this}]
                                         (aset this "unmounted" true)
                                         (when-let [un-sub (aget this "reactiveUnsubscribe")]
                                           (un-sub))
                                         (some-> state (remove-watch :state-changed)))
-                  :life/did-update    (fn [this]
+                  :view/did-update    (fn [this]
                                         (let [re$view (aget this "re$view")
                                               state (aget re$view "state")]
                                           (doto re$view
@@ -336,7 +336,7 @@
     (:require [re-view.core :refer [defview]]))
 
   (defview greeting
-           {:life/initial-state {:first-name "Herbert"}}
+           {:view/initial-state {:first-name "Herbert"}}
            [{:keys [first-name view/state] :as this}]
            [:div
             [:p (str "Hello, " first-name "!")]

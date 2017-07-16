@@ -1,6 +1,5 @@
 (ns maria.commands.registry
   (:require [goog.object :as gobj]
-            [cljs.pprint :refer [pprint]]
             [clojure.string :as string]
             [goog.events.KeyCodes :as KeyCodes])
   (:import [goog.events KeyCodes]))

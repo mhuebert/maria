@@ -5,8 +5,7 @@
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
             [cljs-live.compiler :as c]
-            [goog.net.XhrIo :as xhr]
-            [goog.object :as gobj])
+            [goog.net.XhrIo :as xhr])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe

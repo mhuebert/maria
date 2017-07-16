@@ -11,12 +11,12 @@
                                                       args
                                                       (first args))]
                           (or key id name)))
-   :life/did-mount    (fn [this component atom]
+   :view/did-mount    (fn [this component atom]
                         (some-> atom
                                 (add-watch this (fn [_ _ old new]
                                                   (when (not= old new)
                                                     (v/force-update this))))))
-   :life/will-unmount (fn [this _ atom]
+   :view/will-unmount (fn [this _ atom]
                         (some-> atom
                                 (remove-watch this)))}
   [_ component prop-atom]
@@ -31,12 +31,12 @@
 (defview Frame
   "Renders component (passed in as child) to an iFrame."
   {:spec/children     [:Element]
-   :life/did-mount    (fn [this content]
+   :view/did-mount    (fn [this content]
                         (-> (v/dom-node this)
                             (aget "contentDocument" "body")
                             (gdom/appendChild (gdom/createDom "div")))
                         (.renderFrame this content))
-   :life/will-unmount (fn [this]
+   :view/will-unmount (fn [this]
                         (.unmountComponentAtNode js/ReactDOM (.getElement this)))
    :get-element       (fn [this]
                         (-> (v/dom-node this)

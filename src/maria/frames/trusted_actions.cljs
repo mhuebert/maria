@@ -3,7 +3,6 @@
             [maria.persistence.firebase :as remote]
             [clojure.string :as string]
             [re-view-routing.core :as routing]
-            [cljs.pprint :refer [pprint]]
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]
             [maria.frames.communication :as frame]

@@ -1,11 +1,9 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.ns-utils :as ns-utils]
-            [maria.editor :as editor]
+            [maria.codemirror.editor :as editor]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
-            [cljs.pprint :refer [pprint]]
-            [cljs-live.compiler :as c]
             [maria.source-lookups :as reader]
             [maria.views.repl-utils :as repl-ui]))
 
@@ -17,7 +15,7 @@
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
 (defview doc
-  {:life/initial-state #(:expanded? %)
+  {:view/initial-state #(:expanded? %)
    :key                :name}
   [{:keys [doc
            meta
@@ -47,16 +45,18 @@
          (docs-link namespace name)))]))
 
 (defview var-source
-  {:life/will-mount (fn [{:keys [view/props view/state]}]
+  {:view/will-mount (fn [{:keys [view/props view/state]}]
                       (reader/var-source props (partial reset! state)))}
-  [{:keys [view/state]}]
+  [{:keys [view/state special-form name]}]
   (let [{:keys [value error] :as result} @state]
-    (cond (nil? result) "Loading..."
-          error error
-          value (editor/viewer value))))
+    (cond (nil? result) [:.pa2 "Loading..."]
+          error  [:.ma3 (if special-form
+                          (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
+                          error)]
+          value (repl-ui/card (editor/viewer value)))))
 
 (defview dir
-  {:life/initial-state {:expanded? false}}
+  {:view/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
   (let [defs (->> (:defs (ns-utils/analyzer-ns @c-state ns))
                   (seq)

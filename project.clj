@@ -71,6 +71,7 @@
                                        :output-dir     "resources/public/js/compiled/out-trusted-prod"
                                        :asset-path     "/js/compiled/out-trusted-prod"
                                        :optimizations  :advanced
+                                       :dump-core      false
                                        :parallel-build true}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
