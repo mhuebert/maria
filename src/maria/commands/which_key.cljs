@@ -22,14 +22,15 @@
   (let [row-height 24]
     [:.c-avoid.bt.b--near-white.pv1
      [:.flex
-      [:.pr2.flex-none.tr.b.pv2.flex.items-center.justify-end
+      [:.pr1.flex-none.tr.b.pv2.flex.items-center.justify-end
        {:style {:min-width 70
                 :height    row-height}}
        namespace]
       [:.flex-auto
-       (for [{:keys [display-name bindings]} hints]
-         [:.flex.items-center.ws-nowrap
-          {:style {:height row-height}}
+       (for [{:keys [display-name name bindings]} hints]
+         [:.flex.items-center.ws-nowrap.pointer.hover-bg-near-white.pl1.br2
+          {:on-mouse-down #(exec/exec-command name %)
+           :style         {:height row-height}}
           display-name
           [:.flex-auto]
           (show-keyset modifiers-down (first bindings))])]]]))
