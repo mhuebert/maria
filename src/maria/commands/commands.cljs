@@ -1,12 +1,13 @@
 (ns maria.commands.commands
   (:require [maria.commands.registry :refer-macros [defcommand]]
             [maria.views.pages.repl :as repl]
-            [maria.messages :as messages]
+            [maria.repl-specials :as repl-specials]
             [maria.eval :as eval]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
             [magic-tree-codemirror.edit :as edit]
-            [fast-zip.core :as z]))
+            [fast-zip.core :as z]
+            [maria.live.ns-utils :as ns-utils]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -161,11 +162,11 @@
 
 (defcommand :form/doc
   "Show documentation for current form"
-  {:bindings ["Command-Control-W"]
+  {:bindings ["Command-D"]
    :when     #(some-> % :editor :magic/cursor :bracket-loc z/node)}
   [{editor :editor}]
   (let [node (some-> editor :magic/cursor :bracket-loc z/node)
         sexp (some-> node tree/sexp)]
-    (if (symbol? sexp)
+    (if (and (symbol? sexp) (repl-specials/resolve-var-or-special eval/c-state eval/c-env sexp))
       (repl/eval-to-repl (list 'doc sexp))
       (repl/eval-to-repl (list 'maria.messages/what-is (list 'quote sexp))))))
