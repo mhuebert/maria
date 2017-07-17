@@ -106,19 +106,13 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
     {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
                                           (str (str "`doc` requires a symbol, but a " (cljs.core/name (messages/kind name)) " was passed."))))}))
 
+
 (defspecial source
   "Show source code for given symbol"
   [c-state c-env name]
-  (let [{:keys [error value] :as val} (e/resolve-var c-state c-env name)]
-    (if error
-      val
-      (if-let [the-var (or (and (symbol? name) (resolve-var-or-special c-state c-env name))
-                           (source-lookups/fn-var value))]
-        {:value (special-views/var-source the-var)}
-        ;; try getting value as function
-        (if-let [fn-source (and (fn? value) (source-lookups/fn-source-sync value))]
-          {:value fn-source}
-          {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))})))))
+  (if-let [the-var (and (symbol? name) (resolve-var-or-special c-state c-env name))]
+    {:value (special-views/var-source the-var)}
+    {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"

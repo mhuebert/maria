@@ -55,7 +55,7 @@
   (let [{:keys [expanded?]} @state
         fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
 
-    [:span.i
+    [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)}
       [expander-label
        (if (and fn-name (not= "" fn-name))

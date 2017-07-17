@@ -72,12 +72,13 @@
   "Look up the var for a function using its `name` property"
   (memoize
     (fn [f]
-      (or (when-let [munged-sym (ensure-str (aget f "name"))]
-            (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
-          (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
-                       [_ the-var] (ns-data :defs)
-                       :when (= f (e/var-value the-var))]
-                   the-var))))))
+      (when (fn? f)
+        (or (when-let [munged-sym (ensure-str (aget f "name"))]
+              (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+            (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
+                         [_ the-var] (ns-data :defs)
+                         :when (= f (e/var-value the-var))]
+                     the-var)))))))
 
 (def source-path "/js/cljs_bundles/sources")
 
@@ -105,8 +106,9 @@
     (cb {:error (str "File not specified for `" name "`")})))
 
 (defn fn-source-sync [f]
-  (or (js-source->clj-source (.toString f))
-      (.toString f)))
+  (when (fn? f)
+    (or (js-source->clj-source (.toString f))
+        (.toString f))))
 
 (defn fn-name
   [f]

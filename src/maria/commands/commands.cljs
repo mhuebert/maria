@@ -162,7 +162,7 @@
 
 (defcommand :form/doc
   "Show documentation for current form"
-  {:bindings ["Command-D"]
+  {:bindings ["Command-Shift-D"]
    :when     #(some-> % :editor :magic/cursor :bracket-loc z/node)}
   [{editor :editor}]
   (let [node (some-> editor :magic/cursor :bracket-loc z/node)
@@ -170,3 +170,16 @@
     (if (and (symbol? sexp) (repl-specials/resolve-var-or-special eval/c-state eval/c-env sexp))
       (repl/eval-to-repl (list 'doc sexp))
       (repl/eval-to-repl (list 'maria.messages/what-is (list 'quote sexp))))))
+
+(defcommand :form/source
+  "Show source code for the current var"
+  {:bindings ["Command-Shift-S"]
+   :when     #(some->> % :editor :magic/cursor :bracket-loc z/node tree/sexp symbol?)}
+  [{editor :editor}]
+  (repl/eval-to-repl (list 'source (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+
+#_(defcommand :form/compiled-source
+  "Show compiled javascript for current form"
+  {:bindings ["Command-Shift-J"]}
+  [{editor :editor}]
+  (prn :show-js))
