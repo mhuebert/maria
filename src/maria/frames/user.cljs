@@ -26,7 +26,8 @@
             [maria.frames.user-actions :as user-actions]
 
 
-            [clojure.spec.alpha :include-macros true]))
+            [clojure.spec.alpha :include-macros true]
+            [maria.live.analyzer]))
 
 (enable-console-print!)
 

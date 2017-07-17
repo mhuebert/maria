@@ -1,7 +1,6 @@
 (ns maria.eval
   (:require [cljs.js :as cljs]
-            [cljs-live.eval :as e :refer [defspecial]]
-            [maria.live.analyzer :as ast]))
+            [cljs-live.eval :as e :refer [defspecial]]))
 
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
@@ -22,6 +21,4 @@
 
 (def eval (eval-log-wrap (partial e/eval c-state c-env)))
 (def eval-str (eval-log-wrap (partial e/eval-str c-state c-env)))
-#_(defn compile-str [s]
-  (cljs/compile-str c-state s #()))
-(def analyze-form (partial ast/analyze-form c-state c-env))
+(def compile-str (partial e/compile-str c-state c-env))

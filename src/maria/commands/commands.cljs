@@ -7,7 +7,8 @@
             [magic-tree-codemirror.util :as cm]
             [magic-tree-codemirror.edit :as edit]
             [fast-zip.core :as z]
-            [maria.live.ns-utils :as ns-utils]))
+            [maria.live.ns-utils :as ns-utils]
+            [clojure.set :as set]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -178,8 +179,8 @@
   [{editor :editor}]
   (repl/eval-to-repl (list 'source (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
-#_(defcommand :form/compiled-source
+(defcommand :form/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["Command-Shift-J"]}
   [{editor :editor}]
-  (prn :show-js))
+  (repl/add-to-repl-out! (some-> editor :magic/cursor :bracket-loc z/node tree/string eval/compile-str (set/rename-keys {:compiled-js :value}))))

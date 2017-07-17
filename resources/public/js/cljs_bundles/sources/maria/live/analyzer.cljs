@@ -10,10 +10,8 @@
 
 
 (defn analyze-form
-  ([form]
-   (analyze-form e/c-state e/c-env form nil))
-  ([form opts]
-   (analyze-form e/c-state e/c-env form opts))
+  ([form] (analyze-form e/c-state e/c-env form nil))
+  ([form opts] (analyze-form e/c-state e/c-env form opts))
   ([c-state c-env form opts]
    (let [aenv (ana/empty-env)
          the-ns (:ns @c-env)]
