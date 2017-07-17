@@ -10,8 +10,11 @@
 
 
 (defn analyze-form
-  ([form] (analyze-form e/c-state e/c-env form nil))
-  ([form opts] (analyze-form e/c-state e/c-env form opts))
+  "Returns the ClojureScript ast for a form."
+  ([form]
+   (analyze-form e/c-state e/c-env form nil))
+  ([form opts]
+   (analyze-form e/c-state e/c-env form opts))
   ([c-state c-env form opts]
    (let [aenv (ana/empty-env)
          the-ns (:ns @c-env)]
@@ -33,13 +36,19 @@
              (ana/error aenv
                         (str "Could not analyze " name) cause))))))))
 
-(defn some-namespaced-symbol [s]
+(defn some-namespaced-symbol
+  "Returns s (the symbol) if it has a namespace."
+  [s]
   (when (namespace s) s))
 
-(defn printable-ast [x]
+(defn printable-ast
+  "Recursively remove :env keys from an ast - useful for printing."
+  [x]
   (walk/prewalk #(cond-> % (map? %) (dissoc :env)) x))
 
-(defn ast-vars [ast]
+(defn ast-vars
+  "Returns a list of names of vars contained in an ast."
+  [ast]
   (->> ast
        (tree-seq :children :children)
        (keep #(when (and (map? %)
