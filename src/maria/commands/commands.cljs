@@ -1,10 +1,12 @@
 (ns maria.commands.commands
   (:require [maria.commands.registry :refer-macros [defcommand]]
-            [re-db.d :as d]
+            [maria.views.pages.repl :as repl]
+            [maria.messages :as messages]
             [maria.eval :as eval]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
-            [magic-tree-codemirror.edit :as edit]))
+            [magic-tree-codemirror.edit :as edit]
+            [fast-zip.core :as z]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -71,12 +73,12 @@
 (defcommand :cursor/jump-to-top
   "Move cursor to top of current doc"
   {:bindings "Command-Up"
-   :when :editor})
+   :when     :editor})
 
 (defcommand :cursor/jump-to-bottom
   "Move cursor to bottom of current doc"
   {:bindings "Command-Down"
-   :when :editor})
+   :when     :editor})
 
 (defcommand :selection/expand
   "Select parent form, or form under cursor"
@@ -117,11 +119,6 @@
   [{:keys [editor]}]
   (edit/slurp editor))
 
-(defn eval-to-repl [source]
-  (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc (eval/eval-str source)
-                                                                        :id (d/unique-id)
-                                                                        :source source)]]))
-
 (defn eval-scope [cm scope]
   (let [traverse (case scope :top-level tree/top-loc
                              :bracket identity)]
@@ -132,7 +129,7 @@
                                (traverse)
                                (tree/string (:ns @eval/c-env))))]
 
-      (eval-to-repl source))))
+      (repl/eval-str-to-repl source))))
 
 (defcommand :eval/form
   "Evaluate the current form"
@@ -153,7 +150,7 @@
   {:bindings ["Command-Option-Enter"]
    :when     :editor}
   [{:keys [editor]}]
-  (eval-to-repl (.getValue editor)))
+  (repl/eval-str-to-repl (.getValue editor)))
 
 (defcommand :eval/on-click
   "Evaluate the clicked form"
@@ -162,6 +159,13 @@
   [{:keys [editor]}]
   (eval-scope editor :bracket))
 
-(defcommand :test/command
-  {:bindings ["Command-Control-Click"]})
-
+(defcommand :form/doc
+  "Show documentation for current form"
+  {:bindings ["Command-Control-W"]
+   :when     #(some-> % :editor :magic/cursor :bracket-loc z/node)}
+  [{editor :editor}]
+  (let [node (some-> editor :magic/cursor :bracket-loc z/node)
+        sexp (some-> node tree/sexp)]
+    (if (symbol? sexp)
+      (repl/eval-to-repl (list 'doc sexp))
+      (repl/eval-to-repl (list 'maria.messages/what-is (list 'quote sexp))))))

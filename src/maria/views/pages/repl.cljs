@@ -45,6 +45,17 @@
   (subvec v (max 0 (- (count v) n))))
 
 
+(defn add-to-repl-out! [result]
+  (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc result :id (d/unique-id))]]))
+
+(defn eval-str-to-repl [source]
+  (add-to-repl-out! (-> (eval/eval-str source)
+                        (assoc :source source))))
+
+(defn eval-to-repl [form]
+  (add-to-repl-out! (-> (eval/eval form)
+                        (assoc :form form))))
+
 
 
 (def result-toolbar
@@ -149,6 +160,8 @@
   {:bindings ["Cmd-Shift-B"]}
   []
   (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
+
+
 
 #_(defview current-namespace
     {:view/spec {:props {:ns symbol?}}}

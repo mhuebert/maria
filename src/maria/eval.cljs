@@ -1,7 +1,8 @@
 (ns maria.eval
   (:require [cljs.js :as cljs]
             [cljs-live.eval :as e :refer [defspecial]]
-            [maria.live.analyzer :as ast]))
+            [maria.live.analyzer :as ast]
+            [re-db.d :as d]))
 
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))

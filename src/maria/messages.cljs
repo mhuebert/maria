@@ -21,7 +21,9 @@
    :maria.kinds/object       {:doc "a javascript object: a collection of key/value pairs"}
    :maria.kinds/special-form {:doc "a special form: a primitive which is evaluated in a special way"}
    :maria.kinds/atom         {:doc "an Clojure atom, a way to manage data that can change"}
-   :maria.kinds/var          {:doc "a Clojure var"}})
+   :maria.kinds/var          {:doc "a Clojure var"}
+   :maria.kinds/comment      {:doc "a comment: any text beginning with `;` is ignored by the computer, useful for explaining or annotating code."}
+   :maria.kinds/uneval       {:doc "uneval: adding `#_` in front of any expression will cause it to be completely ignored by the computer, like a comment."}})
 
 (defn kind [thing]
   (if (contains? kinds thing)
