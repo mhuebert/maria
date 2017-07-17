@@ -1,4 +1,4 @@
-(ns maria.ns-utils
+(ns maria.live.ns-utils
   (:require [maria.eval :as e]))
 
 (defn builtin-ns? [s]

@@ -9,6 +9,7 @@
                   :provided       [maria.frames.user]
                   :require-cache  [maria.eval
                                    cljs.js                  ;; for `doc` on cljs.js namespace
+                                   cljs.compiler
                                    maria.editor
                                    maria.repl-specials
                                    cljs.core.match

@@ -1,4 +1,4 @@
-(ns maria.source-lookups
+(ns maria.live.source-lookups
   (:require [cljs.tools.reader :as r]
             [cljs.tools.reader.reader-types :as rt]
             [clojure.string :as string]

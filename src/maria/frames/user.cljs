@@ -16,8 +16,6 @@
             [re-view-routing.core :as r]
             [re-view.core :as v :refer [defview]]
 
-            [clojure.spec.alpha :include-macros true]
-
             [goog.events :as events]
 
             [maria.frames.communication :as frame]
@@ -25,7 +23,10 @@
             [clojure.string :as string]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
-            [maria.frames.user-actions :as user-actions]))
+            [maria.frames.user-actions :as user-actions]
+
+
+            [clojure.spec.alpha :include-macros true]))
 
 (enable-console-print!)
 

@@ -11,7 +11,7 @@
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
-            [maria.pretty-comments :as pretty-comments]
+            [maria.codemirror.pretty-comments :as pretty-comments]
             [maria.commands.exec :as exec])
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 

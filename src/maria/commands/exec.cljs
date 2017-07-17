@@ -43,8 +43,8 @@
 (defn init-listeners []
   (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
                                   [:db/add :commands :which-key/active? false]])
-        clear-which-key! #(do (doseq [timeout (d/get :commands :timeouts)]
-                                (js/clearTimeout timeout))
+        clear-timeout! #(some-> (d/get :commands :timeout) (js/clearTimeout))
+        clear-which-key! #(do (clear-timeout!)
                               (d/transact! [[:db/add :commands :which-key/active? false]]))
         which-key-delay 500
         handle-keydown (fn [e]
@@ -56,11 +56,13 @@
                                    (exec-command command e))
                                  (clear-which-key!))
                              (when modifier?
+                               (clear-timeout!)
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
-                                             [:db/update-attr :commands :timeouts conj (js/setTimeout #(let [keys-down (d/get :commands :modifiers-down)]
-                                                                                                         (when (and (seq keys-down)
-                                                                                                                    (not= keys-down #{(registry/endkey->keycode "shift")}))
-                                                                                                           (d/transact! [[:db/add :commands :which-key/active? true]]))) which-key-delay)]])))))]
+                                             [:db/add :commands :timeout (-> #(let [keys-down (d/get :commands :modifiers-down)]
+                                                                                (when (and (seq keys-down)
+                                                                                           (not= keys-down #{(registry/endkey->keycode "shift")}))
+                                                                                  (d/transact! [[:db/add :commands :which-key/active? true]])))
+                                                                             (js/setTimeout which-key-delay))]])))))]
     (clear-keys)
     (events/listen js/window "keydown" handle-keydown true)
 

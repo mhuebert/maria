@@ -1,10 +1,10 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
-            [maria.ns-utils :as ns-utils]
+            [maria.live.ns-utils :as ns-utils]
             [maria.codemirror.editor :as editor]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
-            [maria.source-lookups :as reader]
+            [maria.live.source-lookups :as reader]
             [maria.views.repl-utils :as repl-ui]))
 
 (defn docs-link [namespace name]

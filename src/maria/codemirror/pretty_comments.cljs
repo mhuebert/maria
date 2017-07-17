@@ -1,4 +1,4 @@
-(ns maria.pretty-comments
+(ns maria.codemirror.pretty-comments
   (:require [re-view.core :as v :refer [defview]]
             [clojure.string :as string]
 

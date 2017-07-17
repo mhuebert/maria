@@ -1,4 +1,4 @@
-(ns maria.magic-tree
+(ns maria.live.magic-tree
   (:require [magic-tree.core :as tree]
             [magic-tree.range :as range]
             [fast-zip.core :as z]))
