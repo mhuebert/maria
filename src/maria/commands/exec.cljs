@@ -19,15 +19,15 @@
      (when (or (nil? pred) (pred context))
        command-entry))))
 
+(defn stop-event [e]
+  (.stopPropagation e)
+  (.preventDefault e))
+
 (defn exec-command
-  ([command-name] (exec-command command-name nil))
-  ([command-name e]
-   (let [context (get-context)]
-     (when-let [{:keys [command]} (some-command context command-name)]
-       (let [result (command context)]
-         (when (and e (not= result (.-Pass js/CodeMirror)))
-           (.stopPropagation e)
-           (.preventDefault e)))))))
+  [command-name]
+  (let [context (get-context)]
+    (when-let [{:keys [command]} (some-command context command-name)]
+      (command context))))
 
 (defn contextual-hints [modifiers-down]
   (let [current-context (get-context)]
@@ -52,9 +52,10 @@
                                keys-down (d/get :commands :modifiers-down)
                                modifier? (contains? registry/modifiers keycode)]
                            (if-let [commands (seq (registry/get-keyset-commands (conj keys-down keycode)))]
-                             (do (doseq [command commands]
-                                   (exec-command command e))
-                                 (clear-which-key!))
+                             (let [results (mapv exec-command commands)]
+                               (when-not (contains? (set results) (.-Pass js/CodeMirror))
+                                 (stop-event e))
+                               (clear-which-key!))
                              (when modifier?
                                (clear-timeout!)
                                (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
@@ -70,7 +71,7 @@
                    (fn [e]
                      (doseq [command (-> (conj (d/get :commands :modifiers-down) (.-button e))
                                          (registry/get-keyset-commands))]
-                       (exec-command command e))))
+                       (exec-command command))))
 
     (events/listen js/window "keyup"
                    (fn [e]
