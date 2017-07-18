@@ -7,6 +7,5 @@
 (defn handle-message [_ message]
   (match message
          [:db/transactions txs] (d/transact! txs)
-         [:db/copy-local from-id to-id]
-         (local/init-storage to-id (d/get from-id :local))
+         [:db/copy-local from-id to-id] (local/init-storage to-id (d/get from-id :local))
          [:project/clear-new!] (github/clear-new!)))

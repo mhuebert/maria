@@ -16,7 +16,7 @@
                  [re-view "0.3.19"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
-                 [cljs-live "0.1.21-SNAPSHOT"]
+                 [cljs-live "0.1.22-SNAPSHOT"]
                  [magic-tree "0.0.7-SNAPSHOT"]
 
 

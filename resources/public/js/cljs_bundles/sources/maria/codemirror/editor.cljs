@@ -85,5 +85,3 @@
   (editor (merge {:read-only? true
                   :value      source}
                  props)))
-
-

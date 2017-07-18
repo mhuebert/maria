@@ -7,9 +7,10 @@
 
 (defn send [url cb & args]
   (d/transact! [[:db/update-attr :remote/status :in-progress (fnil inc 0)]])
-  (.apply xhr/send nil (to-array (concat [url (fn [e]
-                                                (d/transact! [[:db/update-attr :remote/status :in-progress dec]])
-                                                (cb e))] args)) args))
+  (.apply xhr/send nil (to-array (concat [(str url "?ts=" (.now js/Date))
+                                          (fn [e]
+                                            (d/transact! [[:db/update-attr :remote/status :in-progress dec]])
+                                            (cb e))] args)) args))
 
 (defn gist-person [{:keys [html_url url id login gists_url] :as person}]
   {:username  login
@@ -114,18 +115,18 @@
         (->> gist-data (clj->js) (.stringify js/JSON))
         (tokens/auth-headers :github)))
 
-(defn fork-gist [gist-id cb]
-  (send (str "https://api.github.com/gists/" gist-id "/forks")
-        (fn [e]
-          (let [target (.-target e)]
-            (if (.isSuccess target)
-              (cb {:value (-> (.getResponseJson target)
-                              (js->clj :keywordize-keys true)
-                              (gist->project))})
-              (cb {:error (.getLastError target)}))))
-        "POST"
-        nil
-        (tokens/auth-headers :github)))
+#_(defn fork-gist [gist-id cb]
+    (send (str "https://api.github.com/gists/" gist-id "/forks")
+          (fn [e]
+            (let [target (.-target e)]
+              (if (.isSuccess target)
+                (cb {:value (-> (.getResponseJson target)
+                                (js->clj :keywordize-keys true)
+                                (gist->project))})
+                (cb {:error (.getLastError target)}))))
+          "POST"
+          nil
+          (tokens/auth-headers :github)))
 
 (defn get-username [id cb]
   (send (str "https://api.github.com/user/" id)

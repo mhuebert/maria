@@ -167,3 +167,4 @@
   {:bindings ["Command-Shift-J"]}
   [{editor :editor}]
   (repl/add-to-repl-out! (some-> editor :magic/cursor :bracket-loc z/node tree/string eval/compile-str (set/rename-keys {:compiled-js :value}))))
+
