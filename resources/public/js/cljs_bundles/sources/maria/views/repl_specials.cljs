@@ -38,10 +38,10 @@
                   icons/ArrowDropDown)]]
      (when @state
        (list
-         [:.mv1.blue (string/join ", " (map str (ns-utils/elide-quote (or forms
+         [:.mv1.blue.f6 (string/join ", " (map str (ns-utils/elide-quote (or forms
                                                                           (:arglists meta)
                                                                           arglists))))]
-         [:.gray.mv2 doc]
+         [:.gray.mv2.f6 doc]
          (docs-link namespace name)))]))
 
 (defview var-source

@@ -1,19 +1,22 @@
 (ns maria.commands.which-key
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.commands.registry :as commands]
+            [maria.commands.registry :as registry]
             [maria.commands.exec :as exec]
             [clojure.set :as set]))
 
 (defn show-keyset
   "Render a keyset. Does not support multi-step key-combos."
   [modifiers-down [keyset]]
-  [:.dib.bg-near-white.ph1.br2.pv05
-   {:key (str keyset)}
-   (->> (set/difference keyset modifiers-down)
-        (map #(commands/show-key %))
-        (sort-by (fn [x] (if (string? x) x (:name (meta x)))))
-        (reverse))])
+  (let [keyset (set/difference keyset modifiers-down)
+        sort-ks #(sort-by (fn [x] (if (string? x) x (:name (meta x)))) %)]
+    [:.dib.bg-near-white.ph1.br2.pv05
+     {:key (str keyset)}
+     (->> (sort-ks (set/intersection keyset registry/modifiers))
+          (map registry/show-key))
+     " "
+     (->> (sort-ks (set/difference keyset registry/modifiers))
+          (map registry/show-key))]))
 
 (defn show-hint [modifiers-down {:keys [display-name namespace doc bindings]}]
   [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first bindings))])

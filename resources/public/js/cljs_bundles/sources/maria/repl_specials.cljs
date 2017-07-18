@@ -110,9 +110,6 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 (defspecial source
   "Show source code for given symbol"
   [c-state c-env name]
-  (prn :n name (symbol? name) @c-env
-       1 (resolve-var-or-special c-state c-env name)
-       2 (e/resolve-var name))
   (if-let [the-var (and (symbol? name) (resolve-var-or-special c-state c-env name))]
     {:value (special-views/var-source the-var)}
     {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))

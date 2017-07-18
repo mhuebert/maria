@@ -13,7 +13,7 @@
                                    cljs-live.eval
                                    cljs.js                  ;; for `doc` on cljs.js namespace
                                    cljs.compiler
-                                   maria.editor
+                                   maria.codemirror.editor
                                    maria.repl-specials
                                    cljs.core.match
                                    maria.views.repl-specials

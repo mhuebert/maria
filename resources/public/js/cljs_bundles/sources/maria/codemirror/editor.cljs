@@ -36,7 +36,7 @@
                                 (swap! state assoc :editor editor)
 
                                 (some->> on-ast-update
-                                        (swap! editor assoc :on-ast-update))
+                                         (swap! editor assoc :on-ast-update))
 
                                 (when-not read-only?
 
@@ -45,7 +45,7 @@
                                     (let [event-key (name event-key)]
                                       (if (#{"mousedown" "click" "mouseup" "focus" "blur"} event-key)
                                         ;; attach mouse handlers to dom node, preventing CodeMirror selection by using goog.events capture phase
-                                        (events/listen dom-node event-key f true)
+                                        (events/listen dom-node event-key #(f % editor) true)
                                         ;; attach other handlers to CodeMirror instance
                                         (.on editor event-key f))))
                                   (when on-mount (on-mount editor this)))

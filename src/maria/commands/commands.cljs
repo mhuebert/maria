@@ -17,67 +17,56 @@
 
 (defcommand :copy/form
   {:bindings ["Command-C"
-              "Control-C"]
+              "Control-C"
+              "Command-Shift-C"
+              "Control-Shift-C"]
    :when     no-selection?}
   [{:keys [editor]}]
   (edit/copy-form editor))
 
 (defcommand :copy/selection
   {:bindings ["Command-C"
-              "Control-C"]
-   :when     selection?})
-
-(defcommand :cut/line
-  "Kill: cuts to end of line, preserving bracket structure"
-  {:bindings ["Command-K"]
-   :when     :editor}
-  [{:keys [editor]}]
-  (edit/kill editor))
-
-(defcommand :cut/selection
-  {:bindings ["Command-X"
-              "Control-X"]
+              "Control-C"
+              "Command-Shift-C"]
    :when     selection?})
 
 (defcommand :cut/form
   "Cuts current highlight"
   {:bindings ["Command-X"
-              "Control-X"]
-   :when     no-selection?}
+              "Control-X"
+              "Command-Shift-X"]
+   :when     :editor}
   [{:keys [editor]}]
   (edit/cut-form editor))
 
 (defcommand :delete/form
   "Deletes current highlight"
-  {:bindings ["Command-Backspace"]
-   :when     no-selection?}
+  {:bindings ["Command-Backspace"
+              "Command-Shift-Backspace"]
+   :when     :editor}
   [{:keys [editor]}]
   (edit/delete-form editor))
 
-(defcommand :delete/selection
-  {:bindings ["Command-Backspace"]
-   :when     selection?})
-
-(defcommand :cursor/hop-left
+(defcommand :navigate/hop-left
   "Move cursor left one form"
   {:bindings ["Option-Left"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/hop-left editor))
 
-(defcommand :cursor/hop-right
+(defcommand :navigate/hop-right
   "Move cursor right one form"
   {:bindings ["Option-Right"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/hop-right editor))
 
-(defcommand :cursor/jump-to-top
+(defcommand :navigate/jump-to-top
   "Move cursor to top of current doc"
   {:bindings "Command-Up"
    :when     :editor})
 
-(defcommand :cursor/jump-to-bottom
+(defcommand :navigate/jump-to-bottom
   "Move cursor to bottom of current doc"
   {:bindings "Command-Down"
    :when     :editor})
@@ -104,48 +93,39 @@
   (edit/comment-line editor))
 
 (defcommand :comment/uneval-form
-  {:bindings ["Command-;"]
+  {:bindings ["Command-;"
+              "Command-Shift-;"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/uneval-form editor))
 
-(defcommand :comment/uneval-top-level-form
-  {:bindings ["Command-Shift-;"]
-   :when     :editor}
-  [{:keys [editor]}]
-  (edit/uneval-top-level-form editor))
-
-(defcommand :form/slurp
+(defcommand :edit/slurp
   {:bindings ["Command-Shift-K"]
    :when     :editor}
   [{:keys [editor]}]
   (edit/slurp editor))
 
-(defn eval-scope [cm scope]
-  (let [traverse (case scope :top-level tree/top-loc
-                             :bracket identity)]
-    (when-let [source (or (cm/selection-text cm)
-                          (->> cm
-                               :magic/cursor
-                               :bracket-loc
-                               (traverse)
-                               (tree/string (:ns @eval/c-env))))]
-
-      (repl/eval-str-to-repl source))))
+(defcommand :edit/kill
+  "Cuts to end of line"
+  {:bindings ["Command-K"
+              "Command-Shift-K"]
+   :when     :editor}
+  [{:keys [editor]}]
+  (edit/kill editor))
 
 (defcommand :eval/form
   "Evaluate the current form"
-  {:bindings ["Command-Enter"]
+  {:bindings ["Command-Enter"
+              "Command-Shift-Enter"]
    :when     :editor}
   [{:keys [editor]}]
-  (eval-scope editor :bracket))
+  (when-let [source (or (cm/selection-text editor)
+                        (->> editor
+                             :magic/cursor
+                             :bracket-loc
+                             (tree/string (:ns @eval/c-env))))]
 
-(defcommand :eval/top-level
-  "Evaluate the top-level form"
-  {:bindings ["Command-Shift-Enter"]
-   :when     :editor}
-  [{:keys [editor]}]
-  (eval-scope editor :top-level))
+    (repl/eval-str-to-repl source)))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
@@ -154,32 +134,35 @@
   [{:keys [editor]}]
   (repl/eval-str-to-repl (.getValue editor)))
 
-(defcommand :eval/on-click
-  "Evaluate the clicked form"
-  {:bindings ["Option-Click"]
-   :when     :editor}
-  [{:keys [editor]}]
-  (eval-scope editor :bracket))
+#_(defcommand :eval/on-click
+    "Evaluate the clicked form"
+    {:bindings ["Option-Click"]
+     :when     :editor}
+    [{:keys [editor]}]
+    (eval-scope editor :bracket))
 
-(defcommand :form/doc
-  "Show documentation for current form"
-  {:bindings ["Command-Shift-D"]
-   :when     #(some-> % :editor :magic/cursor :bracket-loc z/node)}
-  [{editor :editor}]
-  (let [node (some-> editor :magic/cursor :bracket-loc z/node)
-        sexp (some-> node tree/sexp)]
+(defn get-info [node]
+  (let [sexp (some-> node tree/sexp)]
     (if (and (symbol? sexp) (repl-specials/resolve-var-or-special eval/c-state eval/c-env sexp))
       (repl/eval-to-repl (list 'doc sexp))
       (repl/eval-to-repl (list 'maria.messages/what-is (list 'quote sexp))))))
 
-(defcommand :form/source
+(defcommand :meta/info
+  "Show documentation for current form"
+  {:bindings ["Command-I"
+              "Command-Shift-I"]
+   :when     #(some-> % :editor :magic/cursor :bracket-loc z/node)}
+  [{editor :editor}]
+  (get-info (some-> editor :magic/cursor :bracket-loc z/node)))
+
+(defcommand :meta/source
   "Show source code for the current var"
   {:bindings ["Command-Shift-S"]
    :when     #(some->> % :editor :magic/cursor :bracket-loc z/node tree/sexp symbol?)}
   [{editor :editor}]
   (repl/eval-to-repl (list 'source (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
-(defcommand :form/javascript-source
+(defcommand :meta/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["Command-Shift-J"]}
   [{editor :editor}]

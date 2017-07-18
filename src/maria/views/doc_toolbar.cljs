@@ -126,7 +126,7 @@
 
 (defcommand :doc/publish
   "Publish the current doc"
-  {:bindings ["Command-Shift-P"]
+  {:bindings ["Command-S"]
    :when     #(and (:signed-in? %)
                    (let [doc-toolbar (:doc-toolbar %)]
                      (and (#{:create :publish} (persistence-mode doc-toolbar))
@@ -135,7 +135,9 @@
   [{:keys [doc-toolbar]}]
   (publish! doc-toolbar))
 
-(defcommand :doc/fork
+(defcommand :doc/make-a-copy
+  ;; TODO
+  ;; instead of fork, 'save'
   "Make your own copy of another user's project"
   {:bindings ["Command-Shift-P"]
    :when     #(and (:signed-in? %)
