@@ -449,10 +449,13 @@
      [expr & clauses]
      (core/assert (even? (count clauses)))
      (core/let [g (gensym)
-                pstep (core/fn [[test step]] `(if ~test (-> ~g ~step) ~g))]
+                steps (map (core/fn [[test step]] `(if ~test (-> ~g ~step) ~g))
+                        (partition 2 clauses))]
        `(let [~g ~expr
-              ~@(interleave (repeat g) (map pstep (partition 2 clauses)))]
-          ~g))))
+              ~@(interleave (repeat g) (butlast steps))]
+          ~(if (empty? steps)
+             g
+             (last steps))))))
 
 #?(:cljs
    (core/defmacro cond->>
@@ -463,10 +466,13 @@
      [expr & clauses]
      (core/assert (even? (count clauses)))
      (core/let [g (gensym)
-                pstep (core/fn [[test step]] `(if ~test (->> ~g ~step) ~g))]
+                steps (map (core/fn [[test step]] `(if ~test (->> ~g ~step) ~g))
+                        (partition 2 clauses))]
        `(let [~g ~expr
-              ~@(interleave (repeat g) (map pstep (partition 2 clauses)))]
-          ~g))))
+              ~@(interleave (repeat g) (butlast steps))]
+          ~(if (empty? steps)
+             g
+             (last steps))))))
 
 #?(:cljs
    (core/defmacro as->
@@ -475,8 +481,10 @@
      successive form, returning the result of the last form."
      [expr name & forms]
      `(let [~name ~expr
-            ~@(interleave (repeat name) forms)]
-        ~name)))
+            ~@(interleave (repeat name) (butlast forms))]
+        ~(if (empty? forms)
+           name
+           (last forms)))))
 
 #?(:cljs
    (core/defmacro some->
@@ -484,10 +492,13 @@
      and when that result is not nil, through the next etc"
      [expr & forms]
      (core/let [g (gensym)
-                pstep (core/fn [step] `(if (nil? ~g) nil (-> ~g ~step)))]
+                steps (map (core/fn [step] `(if (nil? ~g) nil (-> ~g ~step)))
+                        forms)]
        `(let [~g ~expr
-              ~@(interleave (repeat g) (map pstep forms))]
-          ~g))))
+              ~@(interleave (repeat g) (butlast steps))]
+          ~(if (empty? steps)
+             g
+             (last steps))))))
 
 #?(:cljs
    (core/defmacro some->>
@@ -495,10 +506,13 @@
      and when that result is not nil, through the next etc"
      [expr & forms]
      (core/let [g (gensym)
-                pstep (core/fn [step] `(if (nil? ~g) nil (->> ~g ~step)))]
+                steps (map (core/fn [step] `(if (nil? ~g) nil (->> ~g ~step)))
+                        forms)]
        `(let [~g ~expr
-              ~@(interleave (repeat g) (map pstep forms))]
-          ~g))))
+              ~@(interleave (repeat g) (butlast steps))]
+          ~(if (empty? steps)
+             g
+             (last steps))))))
 
 #?(:cljs
    (core/defmacro if-some
@@ -1769,7 +1783,7 @@
                              (new ~tagname ~@(remove #{'__extmap '__hash} fields) (assoc ~'__extmap k# ~gs) nil)))
                         'IMap
                         `(~'-dissoc [this# k#] (if (contains? #{~@(map keyword base-fields)} k#)
-                                                 (dissoc (with-meta (into {} this#) ~'__meta) k#)
+                                                 (dissoc (-with-meta (into {} this#) ~'__meta) k#)
                                                  (new ~tagname ~@(remove #{'__extmap '__hash} fields)
                                                    (not-empty (dissoc ~'__extmap k#))
                                                    nil)))
@@ -2192,11 +2206,12 @@
   expression, a vector can be used to match a list if needed. The
   test-constants need not be all of the same type."
   [e & clauses]
-  (core/let [default (if (odd? (count clauses))
+  (core/let [esym    (gensym)
+             default (if (odd? (count clauses))
                        (last clauses)
                        `(throw
                           (js/Error.
-                            (cljs.core/str "No matching clause: " ~e))))
+                            (cljs.core/str "No matching clause: " ~esym))))
              env     &env
              pairs   (reduce
                        (core/fn [m [test expr]]
@@ -2214,7 +2229,6 @@
                            :else
                            (assoc-test m test expr env)))
                      {} (partition 2 clauses))
-             esym    (gensym)
              tests   (keys pairs)]
     (core/cond
       (every? (some-fn core/number? core/string? #?(:clj core/char? :cljs (core/fnil core/char? :nonchar)) #(const? env %)) tests)
@@ -2973,7 +2987,10 @@
                            :method-params sigs
                            :arglists arglists
                            :arglists-meta (doall (map meta arglists))})
-               args-sym (gensym "args")]
+               args-sym (gensym "args")
+               param-counts (map count arglists)]
+      (core/when (not= (distinct param-counts) param-counts)
+        (ana/warning :overload-arity {} {:name name}))
       `(do
          (def ~(with-meta name meta)
            (fn [~'var_args]
