@@ -45,6 +45,7 @@
 (def ^:dynamic *cljs-file* nil)
 #?(:clj (def ^:dynamic *unchecked-if* false))
 (def ^:dynamic *cljs-static-fns* false)
+(def ^:dynamic *fn-invoke-direct* false)
 (def ^:dynamic *cljs-macros-path* "/cljs/core")
 (def ^:dynamic *cljs-macros-is-classpath* true)
 (def ^:dynamic *cljs-dep-set* (with-meta #{} {:dep-path []}))
@@ -53,7 +54,7 @@
 (def ^:dynamic *load-macros* true)
 (def ^:dynamic *reload-macros* false)
 (def ^:dynamic *macro-infer* true)
-
+(def ^:dynamic *passes* nil)
 (def ^:dynamic *file-defs* nil)
 
 (def constants-ns-sym
@@ -69,8 +70,8 @@
                read-handler-map @(ns-resolve ns 'read-handler-map)]
            {:handlers
              (read-handler-map
-               {"cljs/js"    (read-handler (fn [_ v] (JSValue. v)))
-                "cljs/regex" (read-handler (fn [_ v] (Pattern/compile v)))})}))
+               {"cljs/js"    (read-handler (fn [v] (JSValue. v)))
+                "cljs/regex" (read-handler (fn [v] (Pattern/compile v)))})}))
        (catch Throwable t
          nil))))
 
@@ -85,12 +86,12 @@
              (write-handler-map
                {JSValue
                 (write-handler
-                  (fn [_ _] "cljs/js")
-                  (fn [_ js] (.val ^JSValue js)))
+                  (fn [_] "cljs/js")
+                  (fn [js] (.val ^JSValue js)))
                 Pattern
                 (write-handler
-                  (fn [_ _] "cljs/regex")
-                  (fn [_ pat] (.pattern ^Pattern pat)))})}))
+                  (fn [_] "cljs/regex")
+                  (fn [pat] (.pattern ^Pattern pat)))})}))
        (catch Throwable t
          nil))))
 
@@ -137,6 +138,8 @@
    :protocol-duped-method true
    :protocol-multiple-impls true
    :protocol-with-variadic-method true
+   :protocol-impl-with-variadic-method true
+   :protocol-impl-recur-with-target true
    :single-segment-namespace true
    :munged-namespace true
    :ns-var-clash true
@@ -357,6 +360,15 @@
   [warning-type info]
   (str "Protocol " (:protocol info) " declares method "
        (:name info) " with variadic signature (&)"))
+
+(defmethod error-message :protocol-impl-with-variadic-method
+  [warning-type info]
+  (str "Protocol " (:protocol info) " implements method "
+    (:name info) " with variadic signature (&)"))
+
+(defmethod error-message :protocol-impl-recur-with-target
+  [warning-type info]
+  (str "Ignoring target object \"" (pr-str (:form info)) "\" passed in recur to protocol method head"))
 
 (defmethod error-message :multiple-variadic-overloads
   [warning-type info]
@@ -761,6 +773,17 @@
              false))
        (not (contains? (-> env :ns :excludes) sym))))
 
+(defn public-name?
+  "Is sym public?"
+  #?(:cljs {:tag boolean})
+  [ns sym]
+  (let [var-ast (or (gets @env/*compiler* ::namespaces ns :defs sym)
+                    #?(:clj  (gets @env/*compiler* ::namespaces ns :macros sym)
+                       :cljs (gets @env/*compiler* ::namespaces (symbol (str (name ns) "$macros")) :defs sym)))]
+    (and (some? var-ast)
+         (not (or (:private var-ast)
+                  (:anonymous var-ast))))))
+
 (defn js-tag? [x]
   (and (symbol? x)
        (or (= 'js x)
@@ -836,6 +859,13 @@
          (or (js-tag (next pre) tag-type externs' top)
              (js-tag (into '[prototype] (next pre)) tag-type (get top tag) top)))))))
 
+(defn dotted-symbol? [sym]
+  (let [s (str sym)]
+    #?(:clj  (and (.contains s ".")
+                  (not (.contains s "..")))
+       :cljs (and ^boolean (goog.string/contains s ".")
+                  (not ^boolean (goog.string/contains s ".."))))))
+
 (defn resolve-var
   "Resolve a var. Accepts a side-effecting confirm fn for producing
    warnings about unresolved vars."
@@ -881,10 +911,7 @@
                {:name (symbol (str full-ns) (str (name sym)))
                 :ns full-ns}))
 
-           #?(:clj  (and (.contains s ".")
-                         (not (.contains s "..")))
-              :cljs (and ^boolean (goog.string/contains s ".")
-                         (not ^boolean (goog.string/contains s ".."))))
+           (dotted-symbol? sym)
            (let [idx    (.indexOf s ".")
                  prefix (symbol (subs s 0 idx))
                  suffix (subs s (inc idx))]
@@ -1134,7 +1161,32 @@
 
 (defmulti parse (fn [op & rest] op))
 
-(defn- var-ast
+(defn var-meta
+  ([var]
+    (var-meta var nil))
+  ([var expr-env]
+   (let [sym (:name var)
+         ks [:ns :doc :file :line :column]
+         m (merge
+             (let [user-meta (:meta var)
+                   uks (keys user-meta)]
+               (zipmap uks
+                 (map #(list 'quote (get user-meta %)) uks)))
+             (assoc (zipmap ks (map #(list 'quote (get var %)) ks))
+               :name `(quote ~(symbol (name (:name var))))
+               :test `(when ~sym (.-cljs$lang$test ~sym))
+               :arglists (let [arglists (:arglists var)
+                               arglists' (if (= 'quote (first arglists))
+                                           (second arglists)
+                                           arglists)]
+                           (list 'quote
+                             (doall (map with-meta arglists'
+                                      (:arglists-meta var)))))))]
+     (if expr-env
+       (analyze expr-env m)
+       m))))
+
+(defn var-ast
   [env sym]
   ;; we need to dissoc locals for the `(let [x 1] (def x x))` case, because we
   ;; want the var's AST and `resolve-var` will check locals first. - António Monteiro
@@ -1144,23 +1196,7 @@
     (when-some [var-ns (:ns var)]
       {:var (analyze expr-env sym)
        :sym (analyze expr-env `(quote ~(symbol (name var-ns) (name (:name var)))))
-       :meta (let [ks [:ns :doc :file :line :column]
-                   m (merge
-                       (let [user-meta (:meta var)
-                             uks (keys user-meta)]
-                         (zipmap uks
-                           (map #(list 'quote (get user-meta %)) uks)))
-                       (assoc (zipmap ks (map #(list 'quote (get var %)) ks))
-                         :name `(quote ~(symbol (name (:name var))))
-                         :test `(when ~sym (.-cljs$lang$test ~sym))
-                         :arglists (let [arglists (:arglists var)
-                                         arglists' (if (= 'quote (first arglists))
-                                                     (second arglists)
-                                                     arglists)]
-                                    (list 'quote
-                                      (doall (map with-meta arglists'
-                                               (:arglists-meta var)))))))]
-              (analyze expr-env m))})))
+       :meta (var-meta var expr-env)})))
 
 (defmethod parse 'var
   [op env [_ sym :as form] _ _]
@@ -1275,14 +1311,30 @@
 (defn valid-proto [x]
   (when (symbol? x) x))
 
+(defn elide-env [env ast opts]
+  (dissoc ast :env))
+
+(defn replace-env-pass [new-env]
+  (fn [env ast opts]
+    (assoc ast :env new-env)))
+
+(defn constant-value?
+  [{:keys [op] :as ast}]
+  (or (= :constant op)
+      (and (#{:map :set :vector :list} op)
+           (every? constant-value? (:children ast)))))
+
 (defmethod parse 'def
   [op env form _ _]
+  (when (> (count form) 4)
+    (throw (error env "Too many arguments to def")))
   (let [pfn (fn
               ([_ sym] {:sym sym})
               ([_ sym init] {:sym sym :init init})
               ([_ sym doc init] {:sym sym :doc doc :init init}))
         args (apply pfn form)
         sym (:sym args)
+        const? (-> sym meta :const)
         sym-meta (meta sym)
         tag (-> sym meta :tag)
         protocol (-> sym meta :protocol valid-proto)
@@ -1316,14 +1368,16 @@
                  *file-defs*
                  (get @*file-defs* sym))
         (warning :redef-in-file env {:sym sym :line (:line v)})))
-    (when *file-defs*
-      (swap! *file-defs* conj sym))
     (let [env (if (or (and (not= ns-name 'cljs.core)
                            (core-name? env sym))
                       (some? (get-in @env/*compiler* [::namespaces ns-name :uses sym])))
-                (let [ev (resolve-existing-var (dissoc env :locals) sym)
+                (let [ev (resolve-existing-var (dissoc env :locals)
+                           ;; ::no-resolve true is to suppress "can't take value
+                           ;; of macro warning" when sym resolves to a macro
+                           (with-meta sym {::no-resolve true}))
                       conj-to-set (fnil conj #{})]
-                  (warning :redef env {:sym sym :ns (:ns ev) :ns-name ns-name})
+                  (when (public-name? (:ns ev) sym)
+                    (warning :redef env {:sym sym :ns (:ns ev) :ns-name ns-name}))
                   (swap! env/*compiler* update-in [::namespaces ns-name :excludes]
                      conj-to-set sym)
                   (update-in env [:ns :excludes] conj-to-set sym))
@@ -1350,49 +1404,62 @@
         (when (and (not (-> sym meta :declared))
                    (and (true? (:fn-var v)) (not fn-var?)))
           (warning :fn-var env {:ns-name ns-name :sym sym})))
-      (swap! env/*compiler* assoc-in [::namespaces ns-name :defs sym]
-        (merge
-          {:name var-name}
-          ;; remove actual test metadata, as it includes non-valid EDN and
-          ;; cannot be present in analysis cached to disk - David
-          (cond-> sym-meta
-            (:test sym-meta) (assoc :test true))
-          {:meta (-> sym-meta
-                   (dissoc :test)
-                   (update-in [:file]
-                     (fn [f]
-                       (if (= (-> env :ns :name) 'cljs.core)
-                         "cljs/core.cljs"
-                         f))))}
-          (when doc {:doc doc})
-          (when (true? dynamic) {:dynamic true})
-          (source-info var-name env)
-          ;; the protocol a protocol fn belongs to
-          (when protocol
-            {:protocol protocol})
-          ;; symbol for reified protocol
-          (when-let [protocol-symbol (-> sym meta :protocol-symbol)]
-            {:protocol-symbol protocol-symbol
-             :info (-> protocol-symbol meta :protocol-info)
-             :impls #{}})
-          (when fn-var?
-            (let [params (map #(vec (map :name (:params %))) (:methods init-expr))]
-              (merge
-                {:fn-var (not (:macro sym-meta))
-                 ;; protocol implementation context
-                 :protocol-impl (:protocol-impl init-expr)
-                 ;; inline protocol implementation context
-                 :protocol-inline (:protocol-inline init-expr)}
-                (if-some [top-fn-meta (:top-fn sym-meta)]
-                  top-fn-meta
-                  {:variadic (:variadic init-expr)
-                   :max-fixed-arity (:max-fixed-arity init-expr)
-                   :method-params params
-                   :arglists (:arglists sym-meta)
-                   :arglists-meta (doall (map meta (:arglists sym-meta)))}))))
-          (if (and fn-var? (some? tag))
-            {:ret-tag tag}
-            (when tag {:tag tag}))))
+
+      ;; declare must not replace any analyzer data of an already def'd sym
+      (when (or (nil? (get-in @env/*compiler* [::namespaces ns-name :defs sym]))
+                (not (:declared sym-meta)))
+        (when *file-defs*
+          (swap! *file-defs* conj sym))
+
+        (swap! env/*compiler* assoc-in [::namespaces ns-name :defs sym]
+          (merge
+            {:name var-name}
+            ;; remove actual test metadata, as it includes non-valid EDN and
+            ;; cannot be present in analysis cached to disk - David
+            (cond-> sym-meta
+              (:test sym-meta) (assoc :test true))
+            {:meta (-> sym-meta
+                       (dissoc :test)
+                       (update-in [:file]
+                         (fn [f]
+                           (if (= (-> env :ns :name) 'cljs.core)
+                             "cljs/core.cljs"
+                             f))))}
+            (when doc {:doc doc})
+            (when const?
+              (let [const-expr
+                    (binding [*passes* (conj *passes* (replace-env-pass {:context :expr}))]
+                      (analyze env (:init args)))]
+                (when (constant-value? const-expr)
+                  {:const-expr const-expr})))
+            (when (true? dynamic) {:dynamic true})
+            (source-info var-name env)
+            ;; the protocol a protocol fn belongs to
+            (when protocol
+              {:protocol protocol})
+            ;; symbol for reified protocol
+            (when-let [protocol-symbol (-> sym meta :protocol-symbol)]
+              {:protocol-symbol protocol-symbol
+               :info (-> protocol-symbol meta :protocol-info)
+               :impls #{}})
+            (when fn-var?
+              (let [params (map #(vec (map :name (:params %))) (:methods init-expr))]
+                (merge
+                  {:fn-var (not (:macro sym-meta))
+                   ;; protocol implementation context
+                   :protocol-impl (:protocol-impl init-expr)
+                   ;; inline protocol implementation context
+                   :protocol-inline (:protocol-inline init-expr)}
+                  (if-some [top-fn-meta (:top-fn sym-meta)]
+                    top-fn-meta
+                    {:variadic (:variadic init-expr)
+                     :max-fixed-arity (:max-fixed-arity init-expr)
+                     :method-params params
+                     :arglists (:arglists sym-meta)
+                     :arglists-meta (doall (map meta (:arglists sym-meta)))}))))
+            (if (and fn-var? (some? tag))
+              {:ret-tag tag}
+              (when tag {:tag tag})))))
       (merge
         {:env env
          :op :def
@@ -1450,7 +1517,7 @@
   (binding [*recur-frames* recur-frames]
     (analyze env form)))
 
-(defn- analyze-fn-method [env locals form type]
+(defn- analyze-fn-method [env locals form type analyze-body?]
   (let [param-names     (first form)
         variadic        (boolean (some '#{&} param-names))
         param-names     (vec (remove '#{&} param-names))
@@ -1462,11 +1529,14 @@
                           (butlast params)
                           params)
         fixed-arity     (count params')
-        recur-frame     {:params params :flag (atom nil)}
+        recur-frame     {:protocol-impl (:protocol-impl env)
+                         :params        params
+                         :flag          (atom nil)}
         recur-frames    (cons recur-frame *recur-frames*)
         body-env        (assoc env :context :return :locals locals)
         body-form       `(do ~@body)
-        expr            (analyze-fn-method-body body-env body-form recur-frames)
+        expr            (when analyze-body?
+                          (analyze-fn-method-body body-env body-form recur-frames))
         recurs          @(:flag recur-frame)]
     {:env env
      :variadic variadic
@@ -1497,10 +1567,10 @@
       (merge name-var ret-tag))))
 
 (defn analyze-fn-methods-pass2* [menv locals type meths]
-  (doall (map #(analyze-fn-method menv locals % type) meths)))
+  (doall (map #(analyze-fn-method menv locals % type true) meths)))
 
 (defn analyze-fn-methods-pass2 [menv locals type meths]
-  (no-warn (analyze-fn-methods-pass2* menv locals type meths)))
+  (analyze-fn-methods-pass2* menv locals type meths))
 
 (defmethod parse 'fn*
   [op env [_ & args :as form] name _]
@@ -1531,7 +1601,7 @@
         menv         (merge menv
                        {:protocol-impl proto-impl
                         :protocol-inline proto-inline})
-        methods      (map #(disallowing-ns* (analyze-fn-method menv locals % type)) meths)
+        methods      (map #(disallowing-ns* (analyze-fn-method menv locals % type (nil? name))) meths)
         mfa          (apply max (map :max-fixed-arity methods))
         variadic     (boolean (some :variadic methods))
         locals       (if named-fn?
@@ -1621,7 +1691,7 @@
      :children (conj (vec (map :init bes)) expr)}))
 
 (defn analyze-do-statements* [env exprs]
-  (seq (map #(analyze (assoc env :context :statement) %) (butlast exprs))))
+  (seq (doall (map #(analyze (assoc env :context :statement) %) (butlast exprs)))))
 
 (defn analyze-do-statements [env exprs]
   (disallowing-recur (analyze-do-statements* env exprs)))
@@ -1748,11 +1818,18 @@
   [op env [_ & exprs :as form] _ _]
   (let [context (:context env)
         frame (first *recur-frames*)
+        ;; Add dummy implicit target object if recuring to proto impl method head
+        add-implicit-target-object? (and (:protocol-impl frame)
+                                         (= (count exprs) (dec (count (:params frame)))))
+        exprs (cond->> exprs add-implicit-target-object? (cons nil))
         exprs (disallowing-recur (vec (map #(analyze (assoc env :context :expr) %) exprs)))]
     (when-not frame
       (throw (error env "Can't recur here")))
     (when-not (= (count exprs) (count (:params frame)))
       (throw (error env "recur argument count mismatch")))
+    (when (and (:protocol-impl frame)
+               (not add-implicit-target-object?))
+      (warning :protocol-impl-recur-with-target env {:form (:form (first exprs))}))
     (reset! (:flag frame) true)
     (assoc {:env env :op :recur :form form}
       :frame frame
@@ -2791,10 +2868,17 @@
        :js-op js-op
        :numeric numeric})))
 
-(defn- analyzed?
+(defn analyzed
+  "Mark a form as being analyzed. Assumes x satisfies IMeta. Useful to suppress
+  warnings that will have been caught by a first compiler pass."
+  [x]
+  (vary-meta x assoc ::analyzed true))
+
+(defn analyzed?
+  "Returns boolean if the form has already been marked as analyzed."
   #?(:cljs {:tag boolean})
-  [f]
-  (contains? (meta f) ::analyzed))
+  [x]
+  (boolean (::analyzed (meta x))))
 
 (defn- all-values?
   #?(:cljs {:tag boolean})
@@ -2813,7 +2897,18 @@
         argc    (count args)
         fn-var? (-> fexpr :info :fn-var)
         kw?     (= 'cljs.core/Keyword (:tag fexpr))
-        cur-ns  (-> env :ns :name)]
+        cur-ns  (-> env :ns :name)
+        HO-invoke? (and (boolean *cljs-static-fns*)
+                        (not fn-var?)
+                        (not kw?)
+                        (not (analyzed? f)))
+        ;; function expressions, eg: ((deref m) x) or ((:x m) :a)
+        bind-f-expr? (and HO-invoke?
+                          (not (symbol? f)))
+        ;; Higher order invokes with (some) argument expressions. Bind the arguments
+        ;; to avoid exponential complexity that is created by the IFn arity check branch.
+        bind-args? (and HO-invoke?
+                        (not (all-values? args)))]
     (when ^boolean fn-var?
       (let [{:keys [^boolean variadic max-fixed-arity method-params name ns macro]} (:info fexpr)]
         ;; don't warn about invalid arity when when compiling a macros namespace
@@ -2835,19 +2930,20 @@
         (warning :fn-deprecated env {:fexpr fexpr})))
     (when (some? (-> fexpr :info :type))
       (warning :invoke-ctor env {:fexpr fexpr}))
-    (if (or (not (boolean *cljs-static-fns*))
-            (not (symbol? f))
-            fn-var?
-            (analyzed? f)
-            (all-values? args))
+    (if (or bind-args? bind-f-expr?)
+      (let [arg-syms (when bind-args? (take argc (repeatedly gensym)))
+            f-sym (when bind-f-expr? (gensym "fexpr__"))
+            bindings (cond-> []
+                       bind-args? (into (interleave arg-syms args))
+                       bind-f-expr? (conj f-sym (analyzed f)))]
+        (analyze env
+          `(let [~@bindings]
+             (~(analyzed (if bind-f-expr? f-sym f))
+               ~@(if bind-args? arg-syms args)))))
       (let [ana-expr #(analyze enve %)
             argexprs (map ana-expr args)]
         {:env env :op :invoke :form form :f fexpr :args (vec argexprs)
-         :children (into [fexpr] argexprs)})
-      (let [arg-syms (take argc (repeatedly gensym))]
-        (analyze env
-                 `(let [~@(vec (interleave arg-syms args))]
-                    (~(vary-meta f assoc ::analyzed true) ~@arg-syms)))))))
+         :children (into [fexpr] argexprs)}))))
 
 (defn parse-invoke
   [env form]
@@ -2888,7 +2984,10 @@
                          (resolve-existing-var env sym)
                          (resolve-var env sym))]
           (if-not (true? (:def-var env))
-            (assoc ret :op :var :info info)
+            (merge
+              (assoc ret :op :var :info info)
+              (when-let [const-expr (:const-expr info)]
+                {:const-expr const-expr}))
             (let [info (resolve-var env sym)]
               (assoc ret :op :var :info info))))))))
 
@@ -3106,9 +3205,12 @@
 (defn elide-reader-meta [m]
   (dissoc m :file :line :column :end-column :end-line :source))
 
+(defn elide-analyzer-meta [m]
+  (dissoc m ::analyzed))
+
 (defn analyze-wrap-meta [expr]
   (let [form (:form expr)
-        m    (elide-reader-meta (meta form))]
+        m    (-> (meta form) elide-reader-meta elide-analyzer-meta)]
     (if (some? (seq m))
       (let [env (:env expr) ; take on expr's context ourselves
             expr (assoc-in expr [:env :context] :expr) ; change expr to :expr
@@ -3170,8 +3272,6 @@
              ast)))
        ast)))
 
-(def ^:dynamic *passes* nil)
-
 #?(:clj
    (defn analyze-form [env form name opts]
      (load-core)
@@ -3227,6 +3327,11 @@
         ast    (analyze-form env form name opts)]
     (reduce (fn [ast pass] (pass env ast opts)) ast passes)))
 
+(defn- warnings-for [form]
+  (if (analyzed? form)
+    (zipmap (keys *cljs-warnings*) (repeat false))
+    *cljs-warnings*))
+
 (defn analyze
   "Given an environment, a map containing {:locals (mapping of names to bindings), :context
   (one of :statement, :expr, :return), :ns (a symbol naming the
@@ -3242,7 +3347,8 @@
   ([env form name opts]
    (ensure
      (wrapping-errors env
-       (binding [reader/*alias-map* (or reader/*alias-map* {})]
+       (binding [*cljs-warnings* (warnings-for form)
+                 reader/*alias-map* (or reader/*alias-map* {})]
          (analyze* env form name opts))))))
 
 #?(:clj
@@ -3253,8 +3359,11 @@
        (instance? File x) (.getAbsolutePath ^File x)
        :default (str x))))
 
-(defn resolve-symbol [s]
-  (:name (resolve-var (assoc @env/*compiler* :ns (get-namespace *cljs-ns*)) s)))
+(defn resolve-symbol [sym]
+  (if (and (not (namespace sym))
+           (dotted-symbol? sym))
+    sym
+    (:name (resolve-var (assoc @env/*compiler* :ns (get-namespace *cljs-ns*)) sym))))
 
 #?(:clj
    (defn forms-seq*
@@ -3484,11 +3593,55 @@
             (util/changed? src cache)))))))
 
 #?(:clj
+   (defn- get-spec-vars
+     []
+     (when-let [spec-ns (find-ns 'cljs.spec.alpha)]
+       {:registry-ref (ns-resolve spec-ns 'registry-ref)
+        :speced-vars  (ns-resolve spec-ns '_speced_vars)}))
+   :cljs
+   (let [registry-ref (delay (get (ns-interns* 'cljs.spec.alpha$macros) 'registry-ref))
+         ;; Here, we look up the symbol '-speced-vars because ns-interns*
+         ;; is implemented by invoking demunge on the result of js-keys.
+         speced-vars  (delay (get (ns-interns* 'cljs.spec.alpha$macros) '-speced-vars))]
+     (defn- get-spec-vars []
+       (when (some? (find-ns-obj 'cljs.spec.alpha$macros))
+         {:registry-ref @registry-ref
+          :speced-vars  @speced-vars}))))
+
+(defn dump-specs
+  "Dumps registered speced vars for a given namespace into the compiler
+  environment."
+  [ns]
+  (let [spec-vars (get-spec-vars)
+        ns-str (str ns)]
+    (swap! env/*compiler* update-in [::namespaces ns]
+      merge
+      (when-let [registry-ref (:registry-ref spec-vars)]
+        {:cljs.spec/registry-ref (into [] (filter (fn [[k _]] (= ns-str (namespace k)))) @@registry-ref)})
+      (when-let [speced-vars (:speced-vars spec-vars)]
+        {:cljs.spec/speced-vars  (into [] (filter #(= ns-str (namespace %))) @@speced-vars)}))))
+
+(defn register-specs
+  "Registers speced vars found in a namespace analysis cache."
+  [cached-ns]
+  #?(:clj (try
+            (require 'cljs.spec.alpha)
+            (catch Throwable t)))
+  (let [{:keys [registry-ref speced-vars]} (get-spec-vars)]
+    (when-let [registry (seq (:cljs.spec/registry-ref cached-ns))]
+      (when registry-ref
+        (swap! @registry-ref merge registry)))
+    (when-let [vars (seq (:cljs.spec/speced-vars cached-ns))]
+      (when speced-vars
+        (swap! @speced-vars into vars)))))
+
+#?(:clj
    (defn write-analysis-cache
      ([ns cache-file]
        (write-analysis-cache ns cache-file nil))
      ([ns ^File cache-file src]
       (util/mkdirs cache-file)
+      (dump-specs ns)
       (let [ext (util/ext cache-file)
             analysis (dissoc (get-in @env/*compiler* [::namespaces ns]) :macros)]
         (case ext
@@ -3503,6 +3656,35 @@
                      analysis))))
       (when src
         (.setLastModified ^File cache-file (util/last-modified src))))))
+
+#?(:clj
+   (defn read-analysis-cache
+     ([cache-file src]
+      (read-analysis-cache cache-file src nil))
+     ([^File cache-file src opts]
+       ;; we want want to keep dependency analysis information
+       ;; don't revert the environment - David
+      (let [{:keys [ns]} (parse-ns src
+                           (merge opts
+                             {:restore false
+                              :analyze-deps true
+                              :load-macros true}))
+            ext          (util/ext cache-file)
+            cached-ns    (case ext
+                           "edn"  (edn/read-string (slurp cache-file))
+                           "json" (let [{:keys [reader read]} @transit]
+                                    (with-open [is (io/input-stream cache-file)]
+                                      (read (reader is :json transit-read-opts)))))]
+        (when (or *verbose* (:verbose opts))
+          (util/debug-prn "Reading analysis cache for" (str src)))
+        (swap! env/*compiler*
+          (fn [cenv]
+            (do
+              (register-specs cached-ns)
+              (doseq [x (get-in cached-ns [::constants :order])]
+                (register-constant! x))
+              (-> cenv
+                (assoc-in [::namespaces ns] cached-ns)))))))))
 
 (defn analyze-form-seq
   ([forms]
@@ -3587,27 +3769,6 @@
                       (when (and cache (true? (:cache-analysis opts)))
                         (write-analysis-cache ns cache res))))
                   (try
-                    ;; we want want to keep dependency analysis information
-                    ;; don't revert the environment - David
-                    (let [{:keys [ns]} (parse-ns res
-                                         (merge opts
-                                           {:restore false
-                                            :analyze-deps true
-                                            :load-macros true}))
-                          ext          (util/ext cache)
-                          cached-ns    (case ext
-                                         "edn"  (edn/read-string (slurp cache))
-                                         "json" (let [{:keys [reader read]} @transit]
-                                                  (with-open [is (io/input-stream cache)]
-                                                    (read (reader is :json transit-read-opts)))))]
-                     (when (or *verbose* (:verbose opts))
-                       (util/debug-prn "Reading analysis cache for" (str res)))
-                     (swap! env/*compiler*
-                       (fn [cenv]
-                         (let []
-                           (doseq [x (get-in cached-ns [::constants :order])]
-                             (register-constant! x))
-                           (-> cenv
-                             (assoc-in [::namespaces ns] cached-ns))))))
+                    (read-analysis-cache cache res opts)
                     (catch Throwable e
                       (analyze-file f true opts))))))))))))

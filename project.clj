@@ -13,7 +13,7 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.19"]
+                 [re-view "0.3.20-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
                  [cljs-live "0.2.0-SNAPSHOT"]
@@ -94,7 +94,7 @@
                    ;; need to add dev source path here to get user.clj loaded
                    :source-paths ["src" "dev"]
                    ;; for CIDER
-                   :plugins      [[cider/cider-nrepl "0.14.0"]]
+                   ;:plugins      [[cider/cider-nrepl "0.14.0"]]
                    :repl-options {; for nREPL dev you really need to limit output
                                   :init             (set! *print-length* 50)
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})

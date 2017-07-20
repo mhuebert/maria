@@ -14,7 +14,9 @@
   (first (filter #(or (= :base (get (z/node %) :tag))
                       (= :base (get (z/node (z/up %)) :tag))) (iterate z/up loc))))
 
-(defn node-at [ast pos]
+(defn navigate
+  "Navigate to a position within a zipper (returns loc) or ast (returns node)."
+  [ast pos]
   (cond (= (type ast) z/ZipperLocation)
         (let [loc ast
               {:keys [value] :as node} (z/node loc)
@@ -25,7 +27,7 @@
                         (or
                           (some-> (filter #(range/within? % pos) (child-locs loc))
                                   first
-                                  (node-at pos))
+                                  (navigate pos))
                           ;; do we want to avoid 'base'?
                           loc #_(when-not (= :base (get node :tag))
                                   loc))))]
@@ -40,7 +42,7 @@
                        ast
                        (or (some-> (filter #(range/within? % pos) (get ast :value))
                                    first
-                                   (node-at pos))
+                                   (navigate pos))
                            (when-not (= :base (get ast :tag))
                              ast))))
         :else (throw (js/Error "Invalid argument passed to `node-at`"))))

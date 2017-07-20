@@ -54,7 +54,7 @@
 (def left-locs nav/left-locs)
 (def top-loc nav/top-loc)
 
-(def node-at nav/node-at)
+(def node-at nav/navigate)
 (def mouse-eval-region nav/mouse-eval-region)
 (def nearest-bracket-region nav/nearest-bracket-region)
 
