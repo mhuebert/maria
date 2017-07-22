@@ -100,7 +100,9 @@
     ["% is not iseqable"
      "The value `%1` can't be used as a sequence or collection."]
     ["% call is not a function"
-     "The value `%1` isn't a function, but it's being called like one."]]))
+     "The value `%1` isn't a function, but it's being called like one."]
+    ["Could not compile %" ;; https://github.com/yogthos/clojure-error-message-catalog/blob/master/cljs/duplicate-case-test-constant.md
+     "It looks like you're declaring a function, but it has more than one overload that takes the same number (or \"arity\") of arguments."]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
