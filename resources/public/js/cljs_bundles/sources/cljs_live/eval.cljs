@@ -2,7 +2,7 @@
   (:require [cljs.js :as cljs]
             [cljs.tools.reader :as r]
             [cljs.tools.reader.reader-types :as rt]
-            [cljs.analyzer :refer [*cljs-warning-handlers*]]
+            [cljs.analyzer :as ana :refer [*cljs-warning-handlers*]]
             [cljs-live.compiler :as c]
             [goog.object :as gobj]
             [clojure.string :as string]
@@ -50,7 +50,7 @@
    (resolve-var c-state c-env sym))
   ([c-state c-env sym]
    (binding [cljs.env/*compiler* c-state]
-     (cljs.analyzer/resolve-var (assoc @cljs.env/*compiler* :ns (get-ns c-state (or (:ns @c-env) 'cljs.user))) sym))))
+     (ana/resolve-var (assoc @cljs.env/*compiler* :ns (get-ns c-state (or (:ns @c-env) 'cljs.user))) sym))))
 
 (defn var-value [the-var]
   (->> (string/split (:name the-var) #"[\./]")
@@ -174,6 +174,7 @@
                            (let [[compiled-js source-map] (clojure.string/split compiled-js-with-source-map #"\n//#\ssourceURL[^;]+;base64,")]
                              (->> (if error
                                     {:error          error
+                                     :error/kind     :compile
                                      :error-position (some-> (ex-cause error)
                                                              (ex-data)
                                                              (select-keys [:line :column])
@@ -225,6 +226,7 @@
                                          (merge result
                                                 (if error
                                                   {:error          error
+                                                   :error/kind     :compile
                                                    :error-position (some-> (ex-cause error)
                                                                            (ex-data)
                                                                            (select-keys [:line :column])
@@ -232,6 +234,7 @@
                                                                            (relative-pos start-pos))}
                                                   (try {:value (js/eval compiled-js)}
                                                        (catch js/Error e {:error          e
+                                                                          :error/kind     :eval
                                                                           :error-position (-> (error-position e)
                                                                                               (mapped-cljs-position source-map)
                                                                                               (relative-pos start-pos))})))))
@@ -273,10 +276,14 @@
   "Read src using indexed reader."
   [c-state c-env src]
   (binding [r/resolve-symbol #(resolve-symbol c-state c-env %)
-            r/*data-readers* (conj r/*data-readers* {'js identity})]
+            r/*data-readers* (conj r/*data-readers* {'js identity})
+            r/*alias-map* (get-in @c-state [:cljs.analyzer/namespaces (:ns @c-env) :requires])
+            *ns* (:ns @c-env)]
     (try {:value (read-string-indexed src)}
          (catch js/Error e
-           {:error e}))))
+           (throw e)
+           {:error      e
+            :error/kind :reader}))))
 
 (defn eval-str
   "Eval string by first reading all top-level forms, then eval'ing them one at a time.

@@ -78,9 +78,18 @@
 
 (def blank-result {:source "" :lang :js})
 
+(defn cache-str [path macros]
+  (let [caches @cljs-cache]
+    (first (for [ext (cond-> ["" ".cljs" ".cljc"]
+                             macros (conj ".clj"))
+                 :let [the-cache (get caches (str path ext ".cache.json"))]
+                 :when the-cache]
+             (transit-json->cljs the-cache)))))
+
 (defn load-fn
   "Load requirements from bundled deps"
   [c-state {:keys [path macros name]} cb]
+
   (let [path (cond-> path
                      macros (str "$macros"))
         name (if-not macros name
@@ -91,27 +100,30 @@
     (cb (if (and (*loaded-libs* (str name)) c-state-provided?)
           blank-result
           (let [[source lang] (when-not js-provided?
-                                (or (some-> (get @cljs-cache (get-in @cljs-cache ["name-to-path" (munge (str name))] (str path ".js")))
+                                (or (some-> (or
+                                              (get @cljs-cache (str path ".js"))
+                                              (get @cljs-cache (get-in @cljs-cache ["name-to-path" (munge (str name))])))
                                             (list :js))
                                     (some-> (get @cljs-cache (str path ".clj"))
                                             (list :clj))))
-                cache (some-> (get @cljs-cache (str path ".cache.json")) (transit-json->cljs))
+                cache (cache-str path macros)
                 result (cond-> (assoc blank-result :name name)
                                cache (merge {:cache cache})
                                source (merge {:source source
                                               :lang   lang}))]
             (when (or cache source)
               (set! *loaded-libs* (conj *loaded-libs* (str name))) 0)
+
+            ;; determine if we can take this out
             (when (and cache (not source))
               (swap! c-state assoc-in [:cljs.analyzer/namespaces name] cache))
+
             (when debug?
               (when (and (not js-provided?) (not source) (.test #"^goog" (str name)))
                 (log (str "Missing dependency: " name)))
               (log [(if (boolean source) "source" "      ")
                     (if (boolean cache) "cache" "     ")
                     (if js-provided? "js-provided" "           ")
-                    (if c-state-provided? "in-c-state" "          ")
-                    ;; is maria.persistence.github there?
                     (when (boolean source) lang)] name))
 
             result)))))
@@ -124,7 +136,29 @@
 (defn fetch-bundle [path cb]
   (get-json path (comp cb js->clj)))
 
+(defn add-bundle!
+  "Add a bundle to the local cache."
+  [bundle]
+  (let [bundle (reduce-kv (fn [bundle k v]
+                            (cond-> bundle
+                                    (.test #"^goog" k)
+                                    ;; there may be other libs that need to be parsed,
+                                    ;; but on the wrong kind of files this can be
+                                    ;; SLOW - 25 seconds for cljs.spec.alpha$macros.
+                                    #_(and (string/ends-with? k ".js")
+                                           (not (string/ends-with? k "$macros.js")))
+                                    ;; parse google provide statements to enable
+                                    ;; dependency resolution for arbitrary google closure modules.
+                                    (update "name-to-path" merge (time (let [provides (parse-goog-provides v)]
+                                                                         (when (empty? provides)
+                                                                           (println k ": " provides "\n"))
+                                                                         (apply hash-map (interleave provides (repeat k)))))))) bundle bundle)]
+    (swap! cljs-cache (partial merge-with (fn [v1 v2]
+                                            (if (coll? v1) (into v1 v2) v2))) bundle)
+    bundle))
+
 (defn load-bundles!
+  "Load multiple bundles. When finished, set window.CLJS_LIVE to entire bundle cache & evaluate callback."
   ([paths] (load-bundles! paths #()))
   ([paths cb]
    (let [bundles (atom {})
@@ -133,15 +167,7 @@
      (doseq [path paths]
        (fetch-bundle path
                      (fn [bundle]
-                       (let [bundle (reduce-kv (fn [bundle k v]
-                                                 (cond-> bundle
-                                                         (.test #"^goog" k)
-                                                         (update "name-to-path" merge (let [provides (parse-goog-provides v)]
-                                                                                        (when (empty? provides)
-                                                                                          (println k ": " provides "\n"))
-                                                                                        (apply hash-map (interleave provides (repeat k))))))) bundle bundle)]
-                         (swap! cljs-cache (partial merge-with (fn [v1 v2]
-                                                                 (if (coll? v1) (into v1 v2) v2))) bundle)
+                       (let [bundle (add-bundle! bundle)]
                          (swap! bundles merge bundle)
                          (swap! loaded inc)
                          (when (= total @loaded)

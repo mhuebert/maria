@@ -26,12 +26,13 @@
    :maria.kinds/uneval       {:doc "uneval: adding `#_` in front of any expression will cause it to be completely ignored by the computer, like a comment."}})
 
 (defn kind [thing]
-  (if (contains? kinds thing)
+  (if (and (keyword? thing) (contains? kinds thing))
     thing
     (cond
       (char? thing) :maria.kinds/character
       (false? thing) :maria.kinds/false
       (keyword? thing) :maria.kinds/keyword
+      (seq? thing) :maria.kinds/sequence
       (list? thing) :maria.kinds/list
       (and (map? thing) (= :shape (:is-a thing))) :maria.kinds/shape
       (map? thing) :maria.kinds/map
@@ -39,7 +40,6 @@
       (fn? thing) :maria.kinds/function
       (nil? thing) :maria.kinds/nil
       (number? thing) :maria.kinds/number
-      (seq? thing) :maria.kinds/sequence
       (set? thing) :maria.kinds/set
       (string? thing) :maria.kinds/string
       (symbol? thing) :maria.kinds/symbol

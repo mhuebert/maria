@@ -9,7 +9,8 @@
 (ns cljs.tools.reader.impl.commons
   (:refer-clojure :exclude [char])
   (:require
-   [cljs.tools.reader.reader-types :refer [peek-char read-char reader-error]]
+   [cljs.tools.reader.impl.errors :refer [reader-error]]
+   [cljs.tools.reader.reader-types :refer [peek-char read-char]]
    [cljs.tools.reader.impl.utils :refer [numeric? newline? char]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

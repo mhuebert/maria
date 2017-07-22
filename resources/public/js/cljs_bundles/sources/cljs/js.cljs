@@ -13,6 +13,7 @@
   (:require [clojure.string :as string]
             [clojure.walk :as walk]
             [cljs.env :as env]
+            [cljs.spec.alpha]
             [cljs.analyzer :as ana]
             [cljs.compiler :as comp]
             [cljs.tools.reader :as r]
@@ -42,9 +43,10 @@
 
 (defn- drop-macros-suffix
   [ns-name]
-  (if (string/ends-with? ns-name "$macros")
-    (subs ns-name 0 (- (count ns-name) 7))
-    ns-name))
+  (when ns-name
+    (if (string/ends-with? ns-name "$macros")
+      (subs ns-name 0 (- (count ns-name) 7))
+      ns-name)))
 
 (defn- elide-macros-suffix
   [sym]
@@ -287,7 +289,8 @@
                                                  ((:*eval-fn* bound-vars) resource)
                                                  (when cache
                                                    (load-analysis-cache!
-                                                     (:*compiler* bound-vars) aname cache))
+                                                     (:*compiler* bound-vars) aname cache)
+                                                   (ana/register-specs cache))
                                                  (when source-map
                                                    (load-source-map!
                                                      (:*compiler* bound-vars) aname source-map))
@@ -362,7 +365,7 @@
          (require bound-vars dep reload opts'
            (fn [res]
              (when (:verbose opts)
-               (debug-prn "Loading result: " res))
+               (debug-prn "Loading result:" res))
              (if-not (:error res)
                (load-deps bound-vars ana-env lib (next deps) nil opts cb)
                (if-let [cljs-dep (let [cljs-ns (ana/clj-ns->cljs-ns dep)]
@@ -428,16 +431,29 @@
           k    (or (reload k)
                    (get-in reloads [k nsym])
                    (and (= nsym name) (:*reload-macros* bound-vars) :reload)
-                   nil)]
-      (require bound-vars nsym k
-        (-> opts
-          (assoc :macros-ns true)
-          (dissoc :context)
-          (dissoc :ns))
+                   nil)
+          opts' (-> opts
+                  (assoc :macros-ns true)
+                  (dissoc :context)
+                  (dissoc :ns))]
+      (require bound-vars nsym k opts'
         (fn [res]
           (if-not (:error res)
             (load-macros bound-vars k (next macros) reload reloads opts cb)
-            (cb res)))))
+            (if-let [cljs-dep (let [cljs-ns (ana/clj-ns->cljs-ns nsym)]
+                                (get {nsym nil} cljs-ns cljs-ns))]
+              (require bound-vars cljs-dep k opts'
+                (fn [res]
+                  (if (:error res)
+                    (cb res)
+                    (do
+                      (patch-alias-map (:*compiler* bound-vars) lib nsym cljs-dep)
+                      (load-macros bound-vars k (next macros) reload reloads opts
+                        (fn [res]
+                          (if (:error res)
+                            (cb res)
+                            (cb (update res :aliased-loads assoc nsym cljs-dep)))))))))
+              (cb res))))))
     (cb {:value nil})))
 
 (defn- rewrite-ns-ast
@@ -453,7 +469,9 @@
                               {} m)))]
     (-> ast
       (update :uses #(walk/postwalk-replace smap %))
+      (update :use-macros #(walk/postwalk-replace smap %))
       (update :requires #(merge smap (walk/postwalk-replace smap %)))
+      (update :require-macros #(merge smap (walk/postwalk-replace smap %)))
       (update :renames rewrite-renames)
       (update :rename-macros rewrite-renames))))
 
@@ -479,7 +497,7 @@
    (if (#{:ns :ns*} op)
      (letfn [(check-uses-and-load-macros [res rewritten-ast]
                (let [env (:*compiler* bound-vars)
-                     {:keys [uses requires require-macros use-macros reload reloads]} rewritten-ast]
+                     {:keys [uses require-macros use-macros reload reloads]} rewritten-ast]
                  (if (:error res)
                    (cb res)
                    (if (:*load-macros* bound-vars)
@@ -489,23 +507,26 @@
                          (fn [res]
                            (if (:error res)
                              (cb res)
-                             (do
+                             (let [{:keys [require-macros] :as rewritten-ast} (rewrite-ns-ast rewritten-ast (:aliased-loads res))]
                                (when (:verbose opts) (debug-prn "Processing :require-macros for" (:name ast)))
                                (load-macros bound-vars :require-macros require-macros reload reloads opts
-                                 (fn [res]
-                                   (if (:error res)
-                                     (cb res)
-                                     (let [res (try
-                                                 (when (seq use-macros)
-                                                   (when (:verbose opts) (debug-prn "Checking :use-macros for" (:name ast)))
-                                                   (ana/check-use-macros use-macros env))
-                                                 {:value nil}
-                                                 (catch :default cause
-                                                   (wrap-error
-                                                     (ana/error ana-env
-                                                       (str "Could not parse ns form " (:name ast)) cause))))]
-                                       (if (:error res)
-                                         (cb res)
+                                 (fn [res']
+                                   (if (:error res')
+                                     (cb res')
+                                     (let [{:keys [require-macros use-macros] :as rewritten-ast} (rewrite-ns-ast rewritten-ast (:aliased-loads res))
+                                           res' (try
+                                                  (when (seq use-macros)
+                                                    (when (:verbose opts) (debug-prn "Checking :use-macros for" (:name ast)))
+                                                    (binding [ana/*analyze-deps* (:*analyze-deps* bound-vars)
+                                                              env/*compiler* (:*compiler* bound-vars)]
+                                                      (ana/check-use-macros use-macros env)))
+                                                  {:value nil}
+                                                  (catch :default cause
+                                                    (wrap-error
+                                                      (ana/error ana-env
+                                                        (str "Could not parse ns form " (:name ast)) cause))))]
+                                       (if (:error res')
+                                         (cb res')
                                          (try
                                            (binding [ana/*analyze-deps* (:*analyze-deps* bound-vars)
                                                      env/*compiler* (:*compiler* bound-vars)]
@@ -554,6 +575,7 @@
        (binding [env/*compiler*         (:*compiler* bound-vars)
                  ana/*cljs-ns*          ns
                  ana/*cljs-static-fns*  (:static-fns opts)
+                 ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
                  ana/*passes*           (:*passes* bound-vars)
                  r/*alias-map*          (current-alias-map)
@@ -602,27 +624,30 @@
    source (string)
      the ClojureScript source
 
-   name (symbol)
+   name (symbol or string)
      optional, the name of the source
 
    opts (map)
      compilation options.
 
-      :eval          - eval function to invoke, see *eval-fn*
-      :load          - library resolution function, see *load-fn*
-      :source-map    - set to true to generate inline source map information
-      :def-emits-var - sets whether def (and derived) forms return either a Var
-                       (if set to true) or the def init value (if false). Default
-                       is false.
-      :static-fns    - employ static dispatch to specific function arities in
-                       emitted JavaScript, as opposed to making use of the
-                       `call` construct. Default is false.
-      :ns            - optional, the namespace in which to evaluate the source.
-      :verbose       - optional, emit details from compiler activity. Defaults to
-                       false.
-      :context       - optional, sets the context for the source. Possible values
-                       are `:expr`, `:statement` and `:return`. Defaults to
-                       `:expr`.
+      :eval             - eval function to invoke, see *eval-fn*
+      :load             - library resolution function, see *load-fn*
+      :source-map       - set to true to generate inline source map information
+      :def-emits-var    - sets whether def (and derived) forms return either a Var
+                          (if set to true) or the def init value (if false).
+                          Defaults to false.
+      :static-fns       - employ static dispatch to specific function arities in
+                          emitted JavaScript, as opposed to making use of the
+                          `call` construct. Defaults to false.
+      :fn-invoke-direct - if `true`, does not generate `.call(null...)` calls for
+                          unknown functions, but instead direct invokes via
+                          `f(a0,a1...)`. Defaults to `false`.
+      :ns               - optional, the namespace in which to evaluate the source.
+      :verbose          - optional, emit details from compiler activity. Defaults to
+                          false.
+      :context          - optional, sets the context for the source. Possible values
+                          are `:expr`, `:statement` and `:return`. Defaults to
+                          `:expr`.
 
    cb (function)
      callback, will be invoked with a map. If successful the map will contain
@@ -657,6 +682,7 @@
               *eval-fn*              (:*eval-fn* bound-vars)
               ana/*cljs-ns*          (:*cljs-ns* bound-vars)
               ana/*cljs-static-fns*  (:static-fns opts)
+              ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
               *ns*                   (create-ns (:*cljs-ns* bound-vars))
               r/*alias-map*          (current-alias-map)
               r/*data-readers*       (:*data-readers* bound-vars)
@@ -697,21 +723,24 @@
    opts (map)
      compilation options.
 
-      :eval          - eval function to invoke, see *eval-fn*
-      :load          - library resolution function, see *load-fn*
-      :source-map    - set to true to generate inline source map information
-      :def-emits-var - sets whether def (and derived) forms return either a Var
-                       (if set to true) or the def init value (if false). Default
-                       is false.
-      :static-fns    - employ static dispatch to specific function arities in
-                       emitted JavaScript, as opposed to making use of the
-                       `call` construct. Default is false.
-      :ns            - optional, the namespace in which to evaluate the source.
-      :verbose       - optional, emit details from compiler activity. Defaults to
-                       false.
-      :context       - optional, sets the context for the source. Possible values
-                       are `:expr`, `:statement` and `:return`. Defaults to
-                       `:expr`.
+      :eval             - eval function to invoke, see *eval-fn*
+      :load             - library resolution function, see *load-fn*
+      :source-map       - set to true to generate inline source map information
+      :def-emits-var    - sets whether def (and derived) forms return either a Var
+                          (if set to true) or the def init value (if false). Default
+                          is false.
+      :static-fns       - employ static dispatch to specific function arities in
+                          emitted JavaScript, as opposed to making use of the
+                          `call` construct. Defaults to false.
+      :fn-invoke-direct - if `true`, does not generate `.call(null...)` calls for
+                          unknown functions, but instead direct invokes via
+                          `f(a0,a1...)`. Defaults to `false`.
+      :ns               - optional, the namespace in which to evaluate the source.
+      :verbose          - optional, emit details from compiler activity. Defaults to
+                          false.
+      :context          - optional, sets the context for the source. Possible values
+                          are `:expr`, `:statement` and `:return`. Defaults to
+                          `:expr`.
 
    cb (function)
      callback, will be invoked with a map. If successful the map will contain
@@ -746,6 +775,7 @@
                  *eval-fn*              (:*eval-fn* bound-vars)
                  ana/*cljs-ns*          ns
                  ana/*cljs-static-fns*  (:static-fns opts)
+                 ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
                  r/*alias-map*          (current-alias-map)
                  r/*data-readers*       (:*data-readers* bound-vars)
@@ -796,27 +826,30 @@
    source (string)
      the ClojureScript source
 
-   name (symbol)
+   name (symbol or string)
      optional, the name of the source
 
    opts (map)
      compilation options.
 
-      :eval          - eval function to invoke, see *eval-fn*
-      :load          - library resolution function, see *load-fn*
-      :source-map    - set to true to generate inline source map information
-      :def-emits-var - sets whether def (and derived) forms return either a Var
-                       (if set to true) or the def init value (if false). Default
-                       is false.
-      :static-fns    - employ static dispatch to specific function arities in
-                       emitted JavaScript, as opposed to making use of the
-                       `call` construct. Default is false.
-      :ns            - optional, the namespace in which to evaluate the source.
-      :verbose       - optional, emit details from compiler activity. Defaults to
-                       false.
-      :context       - optional, sets the context for the source. Possible values
-                       are `:expr`, `:statement` and `:return`. Defaults to
-                       `:expr`.
+      :eval             - eval function to invoke, see *eval-fn*
+      :load             - library resolution function, see *load-fn*
+      :source-map       - set to true to generate inline source map information
+      :def-emits-var    - sets whether def (and derived) forms return either a Var
+                          (if set to true) or the def init value (if false). Default
+                          is false.
+      :static-fns       - employ static dispatch to specific function arities in
+                          emitted JavaScript, as opposed to making use of the
+                          `call` construct. Defaults to false.
+      :fn-invoke-direct - if `true`, does not generate `.call(null...)` calls for
+                          unknown functions, but instead direct invokes via
+                          `f(a0,a1...)`. Defaults to `false`.
+      :ns               - optional, the namespace in which to evaluate the source.
+      :verbose          - optional, emit details from compiler activity. Defaults to
+                          false.
+      :context          - optional, sets the context for the source. Possible values
+                          are `:expr`, `:statement` and `:return`. Defaults to
+                          `:expr`.
 
    cb (function)
      callback, will be invoked with a map. If successful the map will contain
@@ -858,6 +891,7 @@
                  *eval-fn*              (:*eval-fn* bound-vars)
                  ana/*cljs-ns*          ns
                  ana/*cljs-static-fns*  (:static-fns opts)
+                 ana/*fn-invoke-direct* (and (:static-fns opts) (:fn-invoke-direct opts))
                  *ns*                   (create-ns ns)
                  r/*alias-map*          (current-alias-map)
                  r/*data-readers*       (:*data-readers* bound-vars)
@@ -903,6 +937,8 @@
                    (when (:source-map opts)
                      (append-source-map env/*compiler*
                        aname source sb @comp/*source-map-data* opts))
+                   (when (symbol? aname)
+                     (ana/dump-specs aname))
                    (let [js-source (.toString sb)
                          evalm     {:lang   :clj
                                     :name   name
@@ -934,31 +970,34 @@
   source (string)
     the ClojureScript source
 
-  name (symbol)
+  name (symbol or string)
     optional, the name of the source
 
   opts (map)
     compilation options.
 
-    :eval          - eval function to invoke, see *eval-fn*
-    :load          - library resolution function, see *load-fn*
-    :source-map    - set to true to generate inline source map information
-    :cache-source  - optional, a function to run side-effects with the
-                     compilation result prior to actual evalution. This function
-                     takes two arguments, the first is the eval map, the source
-                     will be under :source. The second argument is a callback of
-                     one argument. If an error occurs an :error key should be
-                     supplied.
-    :def-emits-var - sets whether def (and derived) forms return either a Var
-                     (if set to true) or the def init value (if false). Default
-                     is false.
-    :static-fns    - employ static dispatch to specific function arities in
-                     emitted JavaScript, as opposed to making use of the
-                     `call` construct. Default is false.
-    :ns            - optional, the namespace in which to evaluate the source.
-    :verbose       - optional, emit details from compiler activity. Defaults to
-                     false.
-    :context       - optional, sets the context for the source. Possible values
+    :eval             - eval function to invoke, see *eval-fn*
+    :load             - library resolution function, see *load-fn*
+    :source-map       - set to true to generate inline source map information
+    :cache-source     - optional, a function to run side-effects with the
+                        compilation result prior to actual evalution. This function
+                        takes two arguments, the first is the eval map, the source
+                        will be under :source. The second argument is a callback of
+                        one argument. If an error occurs an :error key should be
+                        supplied.
+    :def-emits-var    - sets whether def (and derived) forms return either a Var
+                        (if set to true) or the def init value (if false). Default
+                        is false.
+    :static-fns       - employ static dispatch to specific function arities in
+                        emitted JavaScript, as opposed to making use of the
+                        `call` construct. Defaults to false.
+    :fn-invoke-direct - if `true`, does not generate `.call(null...)` calls for
+                        unknown functions, but instead direct invokes via
+                        `f(a0,a1...)`. Defaults to `false`.
+    :ns               - optional, the namespace in which to evaluate the source.
+    :verbose          - optional, emit details from compiler activity. Defaults to
+                        false.
+    :context          - optional, sets the context for the source. Possible values
                      are `:expr`, `:statement` and `:return`. Defaults to
                       `:expr`.
 

@@ -37,7 +37,7 @@ lein dev
 ## production build
 
 ```shell
-lein build
+lein build-web
 ```
 
 ### cursive/IntelliJ figwheel+repl
@@ -84,7 +84,7 @@ there:
 At that stage, you should have both a running figwheel and the ability
 to evaluate forms in the browser from emacs.
 
-## Dependencies
+## Bundling dependencies
 
 In order to work in an ordinary web browser, ClojureScript needs to be
 'compiled' (or _converted_) to javascript. During compilation, all project
@@ -99,36 +99,23 @@ In order to work in an ordinary web browser, ClojureScript needs to be
 
 [cljs-live](https://www.github.com/mhuebert/cljs-live) is a tool for bundling
 dependencies for the self-hosted ClojureScript compiler while including all of this
-extra information. Its general goals are:
+extra information.
 
-1. Determine _all_ necessary dependencies for a project
-2. Include precompiled javascript where possible (much faster than compiling
-from source in the browser)
-3. Include cached data from the ClojureScript compiler ('analysis cache'), to allow
- the compiler to make sense of precompiled data
-4. Put all of this information in a single, publicly available file for browsers
- to load
-5. Copy original source files to a publicly available directory, for Maria to access
- when looking up the source code for compiled javascript
-
-### Bundling dependencies
 
 ///\\\///\\\
 
-warning, cljs-live is not yet fully documented and tested. making changes here is not
-for the faint of heart.
+warning, cljs-live is not yet stable.
 
 ///\\\///\\\
+
+To update the live dependency bundles (which also updates sources for the `(source ...)` REPL command):
 
  1. Make sure planck is installed (this has been tested with version `2.4.0`)
- 2. Clone (git@github.com:mhuebert/cljs-live.git) into the same parent directory as maria
- 3. Compile maria in development mode at least once (via `lein dev` or one of the
- repl builds specified above in this readme)
- 4. In this directory (maria), run `../cljs_live/bundle.sh live-deps.clj` to update
- bundles.
+ 2. Run `lein build-bundles`
 
  Dependencies are specified in `live-deps.clj`; This is the file you would edit if
- you wanted to include new dependencies.
+ you wanted to modify or add dependencies.
 
  Bundles are written to `resources/public/js/cljs_bundles` and are checked into
- version control (this may change in the future as cljs-live stabilizes).
+ version control (this may change in the future as cljs-live stabilizes and we
+ develop a better build process).

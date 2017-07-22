@@ -1,11 +1,11 @@
 (ns magic-tree-codemirror.addons
   (:require [cljsjs.codemirror]
+            [cljs.core.match :refer-macros [match]]
             [fast-zip.core :as z]
             [goog.events :as events]
             [cljs.pprint :refer [pprint]]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.util :as cm]
-            [goog.events.KeyCodes :as KeyCodes]))
+            [magic-tree-codemirror.util :as cm]))
 
 (specify! (.-prototype js/CodeMirror)
   ILookup
@@ -37,32 +37,21 @@
            {:node    node
             :handles (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
 
-(defn update-bracket-loc! [cm e]
-  (let [meta-key (.-metaKey e)
-        shift-key (.-shiftKey e)
-        cursor-loc (get-in cm [:magic/cursor :loc])
-        bracket-loc (when cursor-loc
-                      (case [meta-key shift-key]
-                        [true false] (tree/nearest-bracket-region cursor-loc)
-                        [true true] (tree/top-loc cursor-loc)
-                        nil))]
-    (swap! cm update :magic/cursor merge {:bracket-loc bracket-loc
-                                          :bracket-node (some-> bracket-loc (z/node))})))
-
-(defn reset-highlight! [cm]
-  (some->> (get-in cm [:magic/cursor :bracket-loc])
-           (z/node)
-           (highlight-node! cm)))
+(defn reset-highlight! [cm meta-key shift-key bracket-loc]
+  (clear-highlight! cm)
+  (when meta-key
+    (some->> (z/node bracket-loc) (highlight-node! cm)))
+  #_(when-let [loc (case [meta-key shift-key]
+                   [true false] bracket-loc
+                   [true true] (some-> bracket-loc (tree/top-loc))
+                   nil)]
+    (some->> (z/node loc) (highlight-node! cm))))
 
 (defn update-highlights! [cm e]
-  (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))]
-    (when (= 16 key-code)
-      (update-bracket-loc! cm e))
+  (let [{{bracket-loc :bracket-loc} :magic/cursor} cm]
     (when (and (#{"keyup" "keydown"} (.-type e))
-               (#{16 91} key-code))
-      (if (.-metaKey e)
-        (reset-highlight! cm)
-        (clear-highlight! cm)))))
+               (#{16 91} (.-which e)))
+      (reset-highlight! cm (.-metaKey e) (.-shiftKey e) bracket-loc))))
 
 (defn clear-brackets! [cm]
   (doseq [handle (get-in cm [:magic/cursor :handles])]
@@ -148,7 +137,7 @@
 
                    (.on cm "keyup" update-highlights!)
                    (.on cm "keydown" update-highlights!)
-                   (events/listen js/window "blur" #(clear-highlight! cm))
-                   (events/listen js/window "blur" #(clear-brackets! cm))
+                   (when-let [^js/HTMLElement el (aget cm "display" "wrapper")]
+                     (events/listen el "mousemove" (partial update-highlights! cm)))
 
                    (swap! cm assoc :magic/brackets? true))))

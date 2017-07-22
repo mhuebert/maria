@@ -6,18 +6,21 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
-                 [org.clojure/clojurescript "1.9.562"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
+                 [org.clojure/clojurescript "1.9.671"]
                  [org.clojure/core.match "0.3.0-alpha4"]
+                 [org.clojure/tools.reader "1.0.3"]
                  [com.cognitect/transit-cljs "0.8.239"]
+                 [com.cognitect/transit-clj "0.8.300"]
 
                  [fast-zip "0.7.0"]
 
                  [re-view "0.3.20-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
-                 [cljs-live "0.2.0-SNAPSHOT"]
+                 [cljs-live "0.2.1-SNAPSHOT"]
                  [magic-tree "0.0.7-SNAPSHOT"]
+                 [org.clojure/data.json "0.2.6"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]
@@ -33,8 +36,6 @@
                                     "target"]
 
   :source-paths ["src" "script"]
-
-  :main build.live-deps
 
   :cljsbuild {:builds [{:id           "user-dev"
                         :source-paths ["src"]
@@ -80,21 +81,22 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
-  :aliases {"dev"   ["figwheel" "user-dev" "trusted-dev"]
-            "build" ["cljsbuild" "once" "user-prod" "trusted-prod"]
-            ;; magic happens
+  :aliases {"dev"           ["figwheel" "user-dev" "trusted-dev"]
+            "build-web"     ["cljsbuild" "once" "user-prod" "trusted-prod"]
+            "build-bundles" ["with-profile" "bundles" "run" "live-deps.clj"]
             }
 
   :deploy-via :clojars
 
-  :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.1-SNAPSHOT"]
-                                  [binaryage/devtools "0.8.2"]
-                                  [figwheel-sidecar "0.5.10"]
-                                  [com.cemerick/piggieback "0.2.1"]]
-                   ;; need to add dev source path here to get user.clj loaded
-                   :source-paths ["src" "dev"]
-                   ;; for CIDER
-                   ;:plugins      [[cider/cider-nrepl "0.14.0"]]
-                   :repl-options {; for nREPL dev you really need to limit output
-                                  :init             (set! *print-length* 50)
-                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})
+  :profiles {:dev     {:dependencies [[figwheel-pushstate-server "0.1.1-SNAPSHOT"]
+                                      [binaryage/devtools "0.8.2"]
+                                      [figwheel-sidecar "0.5.10"]
+                                      [com.cemerick/piggieback "0.2.1"]]
+                       ;; need to add dev source path here to get user.clj loaded
+                       :source-paths ["src" "dev"]
+                       ;; for CIDER
+                       ;:plugins      [[cider/cider-nrepl "0.14.0"]]
+                       :repl-options {; for nREPL dev you really need to limit output
+                                      :init             (set! *print-length* 50)
+                                      :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
+             :bundles {:main build.live-deps}})

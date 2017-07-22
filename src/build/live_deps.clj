@@ -1,8 +1,5 @@
 (ns build.live-deps
-  (:require [cljs-live.bundle :as bundle]
-            [cljs-live.clj-scratch :as scratch]))
+  (:require [cljs-live.bundle :as bundle]))
 
 (defn -main [bundle-spec-path]
-  #_(bundle/build bundle-spec-path)
-  (scratch/main)
-  )
+  (bundle/main bundle-spec-path))

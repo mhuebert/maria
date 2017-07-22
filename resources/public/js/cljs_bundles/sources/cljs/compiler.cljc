@@ -43,18 +43,33 @@
 
 (def cljs-reserved-file-names #{"deps.cljs"})
 
-(defn ns-first-segments []
-  (letfn [(get-first-ns-segment [ns] (first (string/split (str ns) #"\.")))]
-    (map get-first-ns-segment (keys (::ana/namespaces @env/*compiler*)))))
+(defn get-first-ns-segment
+  "Gets the part up to the first `.` of a namespace.
+   Returns the empty string for nil.
+   Returns the entire string if no `.` in namespace"
+  [ns]
+  (let [ns (str ns)
+        idx (.indexOf ns ".")]
+    (if (== -1 idx)
+      ns
+      (subs ns 0 idx))))
+
+(defn find-ns-starts-with [needle]
+  (reduce-kv
+    (fn [xs ns _]
+      (when (= needle (get-first-ns-segment ns))
+        (reduced needle)))
+    nil
+    (::ana/namespaces @env/*compiler*)))
 
 ; Helper fn
 (defn shadow-depth [s]
   (let [{:keys [name info]} s]
     (loop [d 0, {:keys [shadow]} info]
       (cond
-       shadow (recur (inc d) shadow)
-       (some #{(str name)} (ns-first-segments)) (inc d)
-       :else d))))
+        shadow (recur (inc d) shadow)
+        (find-ns-starts-with (str name)) (inc d)
+        :else d))))
 
 (defn hash-scope [s]
   #?(:clj (System/identityHashCode s)
@@ -188,7 +203,8 @@
 
 (defn emitln [& xs]
   (apply emits xs)
-  (println)
+  (binding [*flush-on-newline* false]
+    (println))
   (when *source-map-data*
     (swap! *source-map-data*
       (fn [{:keys [gen-line] :as m}]
@@ -314,24 +330,26 @@
 (defmethod emit* :no-op [m])
 
 (defmethod emit* :var
-  [{:keys [info env form] :as arg}]
-  (let [var-name (:name info)
-        info (if (= (namespace var-name) "js")
-               (let [js-module-name (get-in @env/*compiler* [:js-module-index (name var-name)])]
-                 (or js-module-name (name var-name)))
-               info)]
-    ; We need a way to write bindings out to source maps and javascript
-    ; without getting wrapped in an emit-wrap calls, otherwise we get
-    ; e.g. (function greet(return x, return y) {}).
-    (if (:binding-form? arg)
-      ; Emit the arg map so shadowing is properly handled when munging
-      ; (prevents duplicate fn-param-names)
-      (emits (munge arg))
-      (when-not (= :statement (:context env))
-        (emit-wrap env
-          (emits
-            (cond-> info
-              (not= form 'js/-Infinity) munge)))))))
+  [{:keys [info env form] :as ast}]
+  (if-let [const-expr (:const-expr ast)]
+    (emit (assoc const-expr :env env))
+    (let [var-name (:name info)
+          info (if (= (namespace var-name) "js")
+                 (let [js-module-name (get-in @env/*compiler* [:js-module-index (name var-name)])]
+                   (or js-module-name (name var-name)))
+                 info)]
+      ; We need a way to write bindings out to source maps and javascript
+      ; without getting wrapped in an emit-wrap calls, otherwise we get
+      ; e.g. (function greet(return x, return y) {}).
+      (if (:binding-form? ast)
+        ; Emit the arg map so shadowing is properly handled when munging
+        ; (prevents duplicate fn-param-names)
+        (emits (munge ast))
+        (when-not (= :statement (:context env))
+          (emit-wrap env
+            (emits
+              (cond-> info
+                (not= form 'js/-Infinity) munge))))))))
 
 (defmethod emit* :var-special
   [{:keys [env var sym meta] :as arg}]
@@ -731,6 +749,8 @@
         (emit param)
         (when-not (= param (last params)) (emits ",")))
       (emitln "){")
+      (when type
+        (emitln "var self__ = this;"))
       (when recurs (emitln "while(true){"))
       (emits expr)
       (when recurs
@@ -954,8 +974,9 @@
                       (= (get (string/split ns-str #"\.") 0 nil) "goog"))
                     (not (contains? (::ana/namespaces @env/*compiler*) ns))))
 
-        keyword? (and (= (-> f :op) :constant)
-                      (keyword? (-> f :form)))
+        keyword? (or (= 'cljs.core/Keyword (ana/infer-tag env f))
+                     (and (= (-> f :op) :constant)
+                          (keyword? (-> f :form))))
         [f variadic-invoke]
         (if fn?
           (let [arity (count args)
@@ -1011,8 +1032,9 @@
        (let [mfa (:max-fixed-arity variadic-invoke)]
         (emits f "(" (comma-sep (take mfa args))
                (when-not (zero? mfa) ",")
-               "cljs.core.array_seq([" (comma-sep (drop mfa args)) "], 0))"))
-       
+               "cljs.core.prim_seq.cljs$core$IFn$_invoke$arity$2(["
+               (comma-sep (drop mfa args)) "], 0))"))
+
        (or fn? js? goog?)
        (emits f "(" (comma-sep args)  ")")
        
@@ -1020,7 +1042,11 @@
        (if (and ana/*cljs-static-fns* (= (:op f) :var))
          ;; higher order case, static information missing
          (let [fprop (str ".cljs$core$IFn$_invoke$arity$" (count args))]
-           (emits "(" f fprop " ? " f fprop "(" (comma-sep args) ") : " f ".call(" (comma-sep (cons "null" args)) "))"))
+           (if ana/*fn-invoke-direct*
+             (emits "(" f fprop " ? " f fprop "(" (comma-sep args) ") : "
+                    f "(" (comma-sep args) "))")
+             (emits "(" f fprop " ? " f fprop "(" (comma-sep args) ") : "
+                    f ".call(" (comma-sep (cons "null" args)) "))")))
          (emits f ".call(" (comma-sep (cons "null" args)) ")"))))))
 
 (defmethod emit* :new
@@ -1105,7 +1131,7 @@
       (emitln "this." fld " = " fld ";"))
     (doseq [[pno pmask] pmasks]
       (emitln "this.cljs$lang$protocol_mask$partition" pno "$ = " pmask ";"))
-    (emitln "})")
+    (emitln "});")
     (emit body)))
 
 (defmethod emit* :defrecord*
@@ -1122,7 +1148,7 @@
       (emitln "this." fld " = " fld ";"))
     (doseq [[pno pmask] pmasks]
       (emitln "this.cljs$lang$protocol_mask$partition" pno "$ = " pmask ";"))
-    (emitln "})")
+    (emitln "});")
     (emit body)))
 
 (defmethod emit* :dot
@@ -1184,7 +1210,7 @@
      (.getPath (.toURL (.toURI f)))))
 
 (defn- build-affecting-options [opts]
-  (select-keys opts [:static-fns :optimize-constants :elide-asserts :target]))
+  (select-keys opts [:static-fns :fn-invoke-direct :optimize-constants :elide-asserts :target]))
 
 #?(:clj
    (defn compiled-by-string
