@@ -101,8 +101,11 @@
      "The value `%1` can't be used as a sequence or collection."]
     ["% call is not a function"
      "The value `%1` isn't a function, but it's being called like one."]
+    ;; FIXME this fits way more scenarios than the one it currently targets:
     ["Could not compile %" ;; https://github.com/yogthos/clojure-error-message-catalog/blob/master/cljs/duplicate-case-test-constant.md
-     "It looks like you're declaring a function, but it has more than one overload that takes the same number (or \"arity\") of arguments."]]))
+     "It looks like you're declaring a function, but it has more than one overload that takes the same number (or \"arity\") of arguments."]
+    ["nth not supported on this type %"
+     "It looks like you're trying to iterate over something that isn't a sequence. Perhaps you're trying to destructure something that is not a sequence?"]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
