@@ -34,13 +34,17 @@ webpack -p;
 lein dev
 ```
 
-### production build (:optimizations :simple)
+### production build
+
+(uses `:optimizations :simple`)
 
 ```shell
 lein build-web
 ```
 
-### build fresh dependency bundles (via [cljs-live](/mhuebert/cljs-live)) - requires latest Planck to be installed
+### build fresh dependency bundles
+
+(uses [cljs-live](/mhuebert/cljs-live)  - requires Planck 2.5.0 to be installed)
 
 _Note - this step can be problematic and is unnecessary for a lot of local development._
 
