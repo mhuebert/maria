@@ -110,10 +110,10 @@
   (let [match (match-in-tokens error-message-trie (tokenize message))]
     (if (some-> match (contains? :message))
       (reduce
-        (fn [message [i replacement]]
-          (string/replace message (str "%" (inc i)) replacement))
-        (:message match)
-        (map vector (range) (:context match)))
+       (fn [message [i replacement]]
+         (string/replace message (str "%" (inc i)) replacement))
+       (:message match)
+       (map vector (range) (:context match)))
       message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -171,7 +171,7 @@
                                 (humanize-sequence bad-types) ".")
        :undeclared-var (str "The above expression contains a reference to `"
                             (-> w :extra :suffix)
-                            "`, but it hasn't been defined!")
+                            "`, but that hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")
        (with-out-str (println (select-keys w [:type :extra]))))]))
 
 ;; NB took this out because we're already
