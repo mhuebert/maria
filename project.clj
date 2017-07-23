@@ -27,7 +27,13 @@
                  [cljsjs/marked "0.3.5-0"]
                  [cljsjs/react "15.5.4-0"]
                  [cljsjs/react-dom "15.5.4-0"]
-                 [cljsjs/firebase "4.0.0-0"]]
+                 [cljsjs/firebase "4.0.0-0"]
+
+
+
+                 ;; just for bundles
+                 [reagent "0.7.0" :exclusions [cljsjs/react]]
+                 ]
 
   :plugins [[lein-figwheel "0.5.10"]
             [lein-cljsbuild "1.1.6" :exclusions [org.clojure/clojure]]]
@@ -35,7 +41,7 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :source-paths ["src" "script"]
+  :source-paths ["src" "script" "bundles"]
 
   :cljsbuild {:builds [{:id           "user-dev"
                         :source-paths ["src"]

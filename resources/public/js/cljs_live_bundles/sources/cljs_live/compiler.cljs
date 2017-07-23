@@ -59,17 +59,19 @@
            (aset js/goog "provide"
                  (fn [name]
                    (set! *loaded-libs* (conj *loaded-libs* name))
-                   (try (goog-provide name) (catch js/Error _))))
+                   (try (goog-provide name) (catch js/Error _
+                                              (log "goog provide: namespace already provided." name)))))
 
            ;; wrap goog.require to avoid reloading existing namespaces
            (aset js/goog "require"
                  (fn [name reload]
-                   (when (or (not (is-provided name)) reload)
+                   (if (or (not (is-provided name)) reload)
                      (let [content (namespace-content name)]
                        (cond content (do (set! *loaded-libs* (conj *loaded-libs* name))
                                          (js/eval content))
                              :else (do (set! *loaded-libs* (conj *loaded-libs* name))
-                                       (goog-require name reload)))))))))
+                                       (goog-require name reload))))
+                     (log "goog require: prevented the load of " name))))))
 
 (defn- transit-json->cljs
   [json]
@@ -111,21 +113,20 @@
                                cache (merge {:cache cache})
                                source (merge {:source source
                                               :lang   lang}))]
-            (when (or cache source)
+            (when (and cache (not source))
               (set! *loaded-libs* (conj *loaded-libs* (str name))) 0)
 
             ;; determine if we can take this out
-            (when (and cache (not source))
-              (swap! c-state assoc-in [:cljs.analyzer/namespaces name] cache))
+            #_(when (and cache (not source))
+                (swap! c-state assoc-in [:cljs.analyzer/namespaces name] cache))
 
             (when debug?
-              (when (and (not js-provided?) (not source) (.test #"^goog" (str name)))
+              (when (and (not js-provided?) (not source) #_(.test #"^goog" (str name)))
                 (log (str "Missing dependency: " name)))
               (log [(if (boolean source) "source" "      ")
                     (if (boolean cache) "cache" "     ")
                     (if js-provided? "js-provided" "           ")
                     (when (boolean source) lang)] name))
-
             result)))))
 
 (defn get-json [path cb]
@@ -141,7 +142,8 @@
   [bundle]
   (let [bundle (reduce-kv (fn [bundle k v]
                             (cond-> bundle
-                                    (.test #"^goog" k)
+                                    (or (string/starts-with? v "goog")
+                                        (string/starts-with? k "goog"))
                                     ;; there may be other libs that need to be parsed,
                                     ;; but on the wrong kind of files this can be
                                     ;; SLOW - 25 seconds for cljs.spec.alpha$macros.
