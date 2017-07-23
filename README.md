@@ -34,10 +34,18 @@ webpack -p;
 lein dev
 ```
 
-## production build
+### production build (:optimizations :simple)
 
 ```shell
 lein build-web
+```
+
+### build fresh dependency bundles (via [cljs-live](/mhuebert/cljs-live)) - requires latest Planck to be installed
+
+_Note - this step can be problematic and is unnecessary for a lot of local development._
+
+```shell
+lein build-bundles
 ```
 
 ### cursive/IntelliJ figwheel+repl
@@ -83,39 +91,3 @@ there:
 
 At that stage, you should have both a running figwheel and the ability
 to evaluate forms in the browser from emacs.
-
-## Bundling dependencies
-
-In order to work in an ordinary web browser, ClojureScript needs to be
-'compiled' (or _converted_) to javascript. During compilation, all project
- files (eg. source code you've written, plus dependencies) are gathered,
- converted to javascript, and mashed into a single file.
-
- The process of compilation is designed for maximum efficiency: a lot of
- information is stripped out of the original ClojureScript files because it
- isn't necessary for the program to be run. This is optimal for most apps, but
- development tools like Maria are different: we need access to all the original
- information so that we can provide a fully-functioning 'live environment'.
-
-[cljs-live](https://www.github.com/mhuebert/cljs-live) is a tool for bundling
-dependencies for the self-hosted ClojureScript compiler while including all of this
-extra information.
-
-
-///\\\///\\\
-
-warning, cljs-live is not yet stable.
-
-///\\\///\\\
-
-To update the live dependency bundles (which also updates sources for the `(source ...)` REPL command):
-
- 1. Make sure planck is installed (this has been tested with version `2.4.0`)
- 2. Run `lein build-bundles`
-
- Dependencies are specified in `live-deps.clj`; This is the file you would edit if
- you wanted to modify or add dependencies.
-
- Bundles are written to `resources/public/js/cljs_bundles` and are checked into
- version control (this may change in the future as cljs-live stabilizes and we
- develop a better build process).

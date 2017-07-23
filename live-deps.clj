@@ -1,5 +1,5 @@
 {:cljsbuild-out "resources/public/js/compiled/out-cljs-live"
- :bundle-out    "resources/public/js/cljs_bundles"
+ :bundle-out    "resources/public/js/cljs_live_bundles"
  :source-paths  ["src"]
  :bundles       [{:name     cljs.spec.alpha
                   :entry    [cljs.spec.alpha

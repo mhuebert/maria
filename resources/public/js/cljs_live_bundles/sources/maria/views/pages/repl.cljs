@@ -17,9 +17,9 @@
 
 (defn init []
   ;(set! cljs-live.compiler/debug? true)
-  (c/load-bundles! ["/js/cljs_bundles/cljs.core.json"
-                    "/js/cljs_bundles/maria.user.json"
-                    "/js/cljs_bundles/cljs.spec.alpha.json"]
+  (c/load-bundles! ["/js/cljs_live_bundles/cljs.core.json"
+                    "/js/cljs_live_bundles/maria.user.json"
+                    "/js/cljs_live_bundles/cljs.spec.alpha.json"]
                    (fn []
                      (eval/eval '(require '[cljs.core :include-macros true]))
                      (eval/eval '(require '[maria.user :include-macros true]))
