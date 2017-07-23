@@ -1,6 +1,7 @@
 (ns maria.user
   (:require re-view-hiccup.core
             maria.messages
+            goog.net.jsloader
             maria.user.loaders
             maria.repl-specials
             [maria.user.shapes :as shapes :refer [show

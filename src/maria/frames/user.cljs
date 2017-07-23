@@ -25,8 +25,6 @@
             [maria.persistence.github :as github]
             [maria.frames.user-actions :as user-actions]
 
-
-            [clojure.spec.alpha :include-macros true]
             [maria.live.analyzer]))
 
 (enable-console-print!)

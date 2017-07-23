@@ -5,14 +5,11 @@
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
             [cljs-live.compiler :as c]
-            [goog.net.XhrIo :as xhr])
+            [goog.net.XhrIo :as xhr]
+            [maria.util :as util])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
-
-(defn ensure-str [s]
-  (when (and (string? s) (not (identical? s "")))
-    s))
 
 (defn index-position
   "Given an index into a string, returns the 1-indexed line+column position"
@@ -73,7 +70,7 @@
   (memoize
     (fn [f]
       (when (fn? f)
-        (or (when-let [munged-sym (ensure-str (aget f "name"))]
+        (or (when-let [munged-sym (util/some-str (aget f "name"))]
               (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
             (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
                          [_ the-var] (ns-data :defs)

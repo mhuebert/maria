@@ -9,7 +9,8 @@
             [re-db.d :as d]
             [re-view-material.core :as ui]
             [clojure.string :as string]
-            [cljs.core.match :refer-macros [match]]))
+            [cljs.core.match :refer-macros [match]]
+            [maria.util :as util]))
 
 (def send (partial frame/send frame/trusted-frame))
 
@@ -168,7 +169,7 @@
                               (when-not (= filename prev-filename)
                                 (.updateWindowTitle this)))
    :update-window-title     (fn [{:keys [filename]}]
-                              (frame/send frame/trusted-frame [:window/set-title filename]))}
+                              (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
   [{{:keys [persisted local]} :project
     :keys                     [filename id view/state] :as this}]
 

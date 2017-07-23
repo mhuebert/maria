@@ -50,7 +50,7 @@
                                    :status [:.dark-red "Error:"]
                                    :error error)
                             (let [project value
-                                  [_ {source :content}] (first  (:files project))]
+                                  [_ {source :content}] (first (:files project))]
                               (eval/eval-str source)
                               (swap! status assoc
                                      :status "Gist loaded."
