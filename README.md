@@ -19,6 +19,16 @@ The [curriculum](https://github.com/mhuebert/maria/blob/master/doc/pedagogy.md) 
 So...please go to [maria.cloud](https://maria.cloud) and play around with it live! :)
 
 
+## Contributing
+
+Areas where we could especially benefit from community effort include:
+
+ - playing around! 😸
+ - reporting any bugs you find while playing as GitHub issues
+ - reporting any un-wrapped Clojure errors you find in our list in [the Error Handling wiki page](https://github.com/mhuebert/maria/wiki/Error-Handling), so we can protect users from jargon-filled error messages
+ - writing a curriculum module in a gist! See step 2 of our [Curriculum Overview](https://github.com/mhuebert/maria/blob/master/doc/pedagogy.md#curriculum-overview) for an idea of what we're looking to build out.
+
+
 ## Development
 
 First, compile stylesheets:
