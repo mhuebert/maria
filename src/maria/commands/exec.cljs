@@ -12,22 +12,32 @@
    :doc-toolbar current-doc-toolbar
    :signed-in?  (d/get :auth-public :signed-in?)})
 
-(defn some-command
-  "Returns command associated with name, if it exists and is valid given the provided context."
-  ([context name]
-   (let [{:keys [pred] :as command-entry} (get @registry/commands name)]
-     (when (or (nil? pred) (pred context))
-       command-entry))))
+(defn get-command
+  "Returns command associated with name, if it exists.
+  Add contextual data, :exec? and :intercept?."
+  [context name]
+  (when-let [{:keys [exec-pred intercept-pred] :as command-entry} (get @registry/commands name)]
+    (let [exec? (or (nil? exec-pred) (exec-pred context))
+          intercept? (if intercept-pred (intercept-pred context)
+                                        exec?)]
+      (assoc command-entry
+        :exec? exec?
+        :intercept? intercept?))))
 
 (defn stop-event [e]
   (.stopPropagation e)
   (.preventDefault e))
 
 (defn exec-command
-  [command-name]
+  "Execute a command (returned by `get-command`)"
+  [context {:keys [command exec? intercept?] :as thing}]
+  (let [result (when exec? (command context))]
+    {:intercept! (and intercept? (not (= result (.-Pass js/CodeMirror))))}))
+
+(defn exec-command-name
+  [name]
   (let [context (get-context)]
-    (when-let [{:keys [command]} (some-command context command-name)]
-      (command context))))
+    (exec-command context (get-command context name))))
 
 (defn contextual-hints [modifiers-down]
   (let [current-context (get-context)]
@@ -36,7 +46,8 @@
                  (when (set/subset? modifiers-down keyset)
                    ;; change this later for multi-step keysets
                    (some->> (seq exec)
-                            (keep (partial some-command current-context))))))
+                            (map (partial get-command current-context))
+                            (filter :exec?)))))
          (apply concat)
          (distinct))))
 
@@ -50,20 +61,27 @@
         handle-keydown (fn [e]
                          (let [keycode (registry/normalize-keycode (.-keyCode e))
                                keys-down (d/get :commands :modifiers-down)
-                               modifier? (contains? registry/modifiers keycode)]
-                           (if-let [commands (seq (registry/get-keyset-commands (conj keys-down keycode)))]
-                             (let [results (mapv exec-command commands)]
-                               (when-not (contains? (set results) (.-Pass js/CodeMirror))
-                                 (stop-event e))
-                               (clear-which-key!))
-                             (when modifier?
-                               (clear-timeout!)
-                               (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
-                                             [:db/add :commands :timeout (-> #(let [keys-down (d/get :commands :modifiers-down)]
-                                                                                (when (and (seq keys-down)
-                                                                                           (not= keys-down #{(registry/endkey->keycode "shift")}))
-                                                                                  (d/transact! [[:db/add :commands :which-key/active? true]])))
-                                                                             (js/setTimeout which-key-delay))]])))))]
+                               modifier? (contains? registry/modifiers keycode)
+                               command-names (seq (registry/get-keyset-commands (conj keys-down keycode)))
+                               context (when command-names
+                                         (get-context))
+                               commands (when command-names
+                                          (mapv #(get-command context %) command-names))
+                               results (when command-names
+                                         (mapv #(exec-command context %) commands))]
+
+                           (when (seq (keep :intercept! results))
+                             (stop-event e)
+                             (clear-which-key!))
+
+                           (when modifier?
+                             (clear-timeout!)
+                             (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
+                                           [:db/add :commands :timeout (-> #(let [keys-down (d/get :commands :modifiers-down)]
+                                                                              (when (and (seq keys-down)
+                                                                                         (not= keys-down #{(registry/endkey->keycode "shift")}))
+                                                                                (d/transact! [[:db/add :commands :which-key/active? true]])))
+                                                                           (js/setTimeout which-key-delay))]]))))]
     (clear-keys)
     (events/listen js/window "keydown" handle-keydown true)
 
@@ -71,7 +89,7 @@
                    (fn [e]
                      (doseq [command (-> (conj (d/get :commands :modifiers-down) (.-button e))
                                          (registry/get-keyset-commands))]
-                       (exec-command command))))
+                       (exec-command-name command))))
 
     (events/listen js/window "keyup"
                    (fn [e]
