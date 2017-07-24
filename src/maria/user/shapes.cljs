@@ -60,7 +60,7 @@
       :x      0
       :y      0
       :width  size
-      :height h
+      :height size
       :points [[0 size]
                [(/ size 2) (- size h)]
                [size size]]
