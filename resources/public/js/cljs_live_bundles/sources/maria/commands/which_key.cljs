@@ -32,7 +32,7 @@
       [:.flex-auto
        (for [{:keys [display-name name bindings]} hints]
          [:.flex.items-center.ws-nowrap.pointer.hover-bg-near-white.pl1.br2
-          {:on-mouse-down #(exec/exec-command name)
+          {:on-mouse-down #(exec/exec-command-name name)
            :style         {:height row-height}}
           display-name
           [:.flex-auto]

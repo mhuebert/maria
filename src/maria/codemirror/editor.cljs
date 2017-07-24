@@ -20,14 +20,14 @@
 (defview editor
   {:view/spec               {:props {:event/mousedown :Function
                                      :event/keydown   :Function}}
-   :view/did-mount          (fn [{:keys [default-value on-ast-update value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
+   :view/did-mount          (fn [{:keys [default-value auto-focus on-ast-update value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
                                     editor (js/CodeMirror dom-node
                                                           (clj->js (merge cm-opts
                                                                           (cond-> options
                                                                                   read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                                                 (assoc :readOnly "nocursor"))))))]
+                                                                                                 (assoc :readOnly true))))))]
                                 (set! (.-view editor) this)
                                 (set! (.-setValueAndRefresh editor) #(do
                                                                        (.setValue editor %)
@@ -52,7 +52,7 @@
 
                                 (some->> (or value default-value) (str) (.setValueAndRefresh editor))
 
-                                (.focus editor)
+                                (when auto-focus (.focus editor))
 
                                 (when on-update
                                   (.on editor "change" #(on-update (.getValue %1))))

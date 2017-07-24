@@ -105,7 +105,6 @@
            source] :as result}]
   (let [error? (or error (seq warnings))]
     (when error
-      (prn :kind (:error/kind result))
       (.error js/console error))
     [:div.bb.b--darken.overflow-hidden
      {:class (when error? "bg-darken-red")}
@@ -118,10 +117,11 @@
      [:.ws-prewrap.relative.mv3
       (if error?
         [:.ph3.overflow-auto
-         (for [message (cons (when error (messages/reformat-error result))
-                             (map messages/reformat-warning (distinct warnings)))
-               :when message]
-           [:.mv2 message])]
+         (->> (for [message (concat (map messages/reformat-warning (distinct warnings))
+                                    (messages/reformat-error result))
+                    :when message]
+                [:.mv2 message])
+              (interpose [:.bb.b--red.o-20.bw2]))]
 
         [:.ph3 (format-value value)])]]))
 

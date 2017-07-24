@@ -91,31 +91,35 @@
 (def error-message-trie
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-   [["cannot read property call of %"
-     "It looks like you're trying to call a function that has not been defined yet."]
-    ["invalid arity %"
-     "%1 is too many arguments!"]
-    ["no protocol method icollection conj defined for type % %"
-     "The %1 `%2` can't be used as a collection."]
-    ["% is not iseqable"
-     "The value `%1` can't be used as a sequence or collection."]
-    ["% call is not a function"
-     "The value `%1` isn't a function, but it's being called like one."]
-    ["Could not compile %"
-     "It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"]
-    ["nth not supported on this type %"
-     "It looks like you're trying to iterate over something that isn't a sequence. Perhaps you're trying to destructure something that is not a sequence?"]]))
-
+    [["cannot read property call of %"
+      "It looks like you're trying to call a function that has not been defined yet."]
+     ["invalid arity %"
+      "%1 is too many arguments!"]
+     ["no protocol method icollection conj defined for type % %"
+      "The %1 `%2` can't be used as a collection."]
+     ["% is not iseqable"
+      "The value `%1` can't be used as a sequence or collection."]
+     ["% call is not a function"
+      "The value `%1` isn't a function, but it's being called like one."]
+     ["Parameter declaration missing"
+      "This function is missing its parameter declaration, the vector of arguments that comes after its name or docstring."]
+     ["Could not compile"
+      "Compile error: we were unable to compile this code into JavaScript."]
+     ["let requires an even number"
+      "`let` requires an even number of forms in its binding vector."]
+     ["nth not supported on this type %"
+      "It looks like you're trying to iterate over something that isn't a sequence. Perhaps you're trying to destructure something that is not a sequence?"]]))
+;;"It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
   [message]
   (let [match (match-in-tokens error-message-trie (tokenize message))]
     (if (some-> match (contains? :message))
       (reduce
-       (fn [message [i replacement]]
-         (string/replace message (str "%" (inc i)) replacement))
-       (:message match)
-       (map vector (range) (:context match)))
+        (fn [message [i replacement]]
+          (string/replace message (str "%" (inc i)) replacement))
+        (:message match)
+        (map vector (range) (:context match)))
       message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -123,10 +127,14 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error-position]}]
-  [:div
-   [:p (prettify-error-message (ex-message error))]
-   [:p (ex-message (ex-cause error))]
-   [:pre (some-> (ex-cause error) (aget "stack"))]])
+
+  (let [error-message (ex-message error)
+        cause-message (ex-message (ex-cause error))]
+    (list
+      (some-> cause-message (prettify-error-message))
+      (some-> error-message (prettify-error-message))
+      (when-let [stack (some-> (ex-cause error) (aget "stack"))]
+        [:pre stack]))))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -154,27 +162,37 @@
 ;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
-(defn reformat-warning [{:keys [source env] :as w}]
+(defn parse-warning [{warning-type :type :as w}]
   (let [bad-types (map type-to-name
                        (remove (partial = 'number)
                                (:types (:extra w))))]
+    (case warning-type
+      :fn-arity {:name "Incorrect function arity"
+                 :doc  (str "The function `"
+                            (name (-> w :extra :name))
+                            "` in the expression above needs "
+                            (if (= 0 (-> w :extra :argc))   ;; TODO get arity from meta
+                              "more"
+                              "a different number of")
+                            " arguments.")}
+      :invalid-arithmetic {:name "Invalid arithmetic"
+                           :doc  (str "In the above expression, the arithmetic operator `"
+                                      (name (-> w :extra :js-op))
+                                      "` can't be used on non-numbers, like "
+                                      (humanize-sequence bad-types) ".")}
+      :undeclared-var {:name "Undeclared var"
+                       :doc  (str "The above expression contains a reference to `"
+                                  (-> w :extra :suffix)
+                                  "`, but that hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")}
+      :overload-arity {:name "Arity overload"
+                       :doc  "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments."}
+      (with-out-str (println (select-keys w [:type :extra]))))))
+
+(defn reformat-warning [warning]
+  (let [{:keys [name doc]} (parse-warning warning)]
     [:div
-     (case (:type w)
-       :fn-arity (str "The function `"
-                      (name (-> w :extra :name))
-                      "` in the expression above needs "
-                      (if (= 0 (-> w :extra :argc))         ;; TODO get arity from meta
-                        "more"
-                        "a different number of")
-                      " arguments.")
-       :invalid-arithmetic (str "In the above expression, the arithmetic operator `"
-                                (name (-> w :extra :js-op))
-                                "` can't be used on non-numbers, like "
-                                (humanize-sequence bad-types) ".")
-       :undeclared-var (str "The above expression contains a reference to `"
-                            (-> w :extra :suffix)
-                            "`, but that hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")
-       (with-out-str (println (select-keys w [:type :extra]))))]))
+     doc
+     [:.o-50.i "(" name ")"]]))
 
 ;; NB took this out because we're already
 ;; printing the expression in a nicer way
@@ -193,13 +211,13 @@
   (what-is :b)                                              ;"a keyword"
   (what-is (fn [_]))                                        ;"a function"
 
-  (reformat-error "Error: No protocol method ICollection.-conj defined for type number: 5")
+  (first (reformat-error "Error: No protocol method ICollection.-conj defined for type number: 5"))
   ;;=> "The number `5` can't be used as a collection."
 
-  (reformat-error "Error: 1 is not ISeqable")
+  (first (reformat-error "Error: 1 is not ISeqable"))
   ;;=> "The value `1` can't be used as a sequence or collection."
 
-  (reformat-error "TypeError: 1.call is not a function")
+  (first (reformat-error "TypeError: 1.call is not a function"))
   ;;=> "The value `1` isn't a function, but it's being called like one."
 
   (reformat-warning '{:type  :invalid-arithmetic,

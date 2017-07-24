@@ -120,6 +120,7 @@
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
               (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+                              :auto-focus    true
                               :on-ast-update pretty-comments/handle-ast-update
                               :event/focus   #(set! exec/current-editor %2)
                               :event/blur    #(set! exec/current-editor nil)

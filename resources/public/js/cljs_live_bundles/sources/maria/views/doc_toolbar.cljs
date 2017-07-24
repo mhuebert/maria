@@ -47,8 +47,8 @@
   ([context command-name icon]
    (command-button context command-name icon nil))
   ([context command-name icon else-icon]
-   (if (exec/some-command context command-name)
-     (toolbar-button [#(exec/exec-command command-name) icon])
+   (if (:exec? (exec/get-command context command-name))
+     (toolbar-button [#(exec/exec-command-name command-name) icon])
      (when else-icon
        (toolbar-button [nil else-icon])))))
 
@@ -118,8 +118,9 @@
 
 (defcommand :doc/new
   "Create a blank doc"
-  {:bindings ["Command-B"]
-   :when     :doc-toolbar}
+  {:bindings       ["Command-B"]
+   :intercept-when true
+   :when           :doc-toolbar}
   [{{:keys [view/state get-editor id]} :doc-toolbar}]
   (github/clear-new!)
   ;(some-> title-input (.focus))
@@ -132,18 +133,20 @@
 
 (defcommand :doc/save
   "Save the current doc"
-  {:bindings ["Command-S"]
-   :when     #(and (:signed-in? %)
-                   (#{:create :save} (persistence-mode (:doc-toolbar %))))}
+  {:bindings       ["Command-S"]
+   :intercept-when true
+   :when           #(and (:signed-in? %)
+                         (#{:create :save} (persistence-mode (:doc-toolbar %))))}
   [{:keys [doc-toolbar]}]
   (persist! doc-toolbar))
 
 (defcommand :doc/save-a-copy
   "Save a new copy of a project"
-  {:bindings ["Command-Shift-S"]
-   :when     #(and (:signed-in? %)
-                   (get-in % [:doc-toolbar :project :persisted])
-                   (valid-content? (:doc-toolbar %)))}
+  {:bindings       ["Command-Shift-S"]
+   :intercept-when true
+   :when           #(and (:signed-in? %)
+                         (get-in % [:doc-toolbar :project :persisted])
+                         (valid-content? (:doc-toolbar %)))}
   [{:keys [doc-toolbar]}]
   (copy! doc-toolbar))
 
