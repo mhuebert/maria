@@ -43,22 +43,22 @@
 
   :source-paths ["src" "script" "bundles"]
 
-  :cljsbuild {:builds [{:id           "user-dev"
+  :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.frames.user"
-                                       :output-to      "resources/public/js/compiled/user.js"
-                                       :output-dir     "resources/public/js/compiled/out-user-dev"
-                                       :asset-path     "/js/compiled/out-user-dev"
+                        :compiler     {:main           "maria.frames.live"
+                                       :output-to      "resources/public/js/compiled/live.js"
+                                       :output-dir     "resources/public/js/compiled/out-live-dev"
+                                       :asset-path     "/js/compiled/out-live-dev"
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
-                       {:id           "user-prod"
+                       {:id           "live-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.frames.user"
-                                       :output-to      "resources/public/js/compiled/user.js"
-                                       :output-dir     "resources/public/js/compiled/out-user-prod"
-                                       :asset-path     "/js/compiled/out-user-prod"
+                        :compiler     {:main           "maria.frames.live"
+                                       :output-to      "resources/public/js/compiled/live.js"
+                                       :output-dir     "resources/public/js/compiled/out-live-prod"
+                                       :asset-path     "/js/compiled/out-live-prod"
                                        :cache-analysis false
                                        :dump-core      false
                                        :parallel-build true
@@ -87,10 +87,9 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
-  :aliases {"dev"           ["figwheel" "user-dev" "trusted-dev"]
-            "build-web"     ["cljsbuild" "once" "user-prod" "trusted-prod"]
-            "build-bundles" ["with-profile" "bundles" "run" "live-deps.clj"]
-            }
+  :aliases {"dev"           ["figwheel" "live-dev" "trusted-dev"]
+            "build-web"     ["cljsbuild" "once" "live-prod" "trusted-prod"]
+            "build-bundles" ["with-profile" "bundles" "run" "live-deps.clj"]}
 
   :deploy-via :clojars
 

@@ -4,10 +4,10 @@
  :bundles       [{:name     cljs.spec.alpha
                   :entry    [cljs.spec.alpha
                              cljs.spec.alpha$macros]
-                  :provided [maria.frames.user]}
+                  :provided [maria.frames.live]}
                  {:name            maria.user
                   :entry           #{maria.user}
-                  :provided        #{maria.frames.user}
+                  :provided        #{maria.frames.live}
                   :entry/no-follow #{maria.eval
                                      cljs-live.eval
                                      cljs.js
@@ -20,4 +20,4 @@
                  {:name          reagent.core
                   :entry         maria.bundles.reagent
                   :entry/exclude #{cljsjs.react}
-                  :provided      #{maria.frames.user}}]}
+                  :provided      #{maria.frames.live}}]}

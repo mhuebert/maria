@@ -7,7 +7,6 @@
             [magic-tree-codemirror.util :as cm]
             [magic-tree-codemirror.edit :as edit]
             [fast-zip.core :as z]
-            [maria.live.ns-utils :as ns-utils]
             [clojure.set :as set]))
 
 (def pass #(.-Pass js/CodeMirror))

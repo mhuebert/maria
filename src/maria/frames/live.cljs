@@ -1,4 +1,4 @@
-(ns maria.frames.user
+(ns maria.frames.live
   (:require [cljsjs.react]
             [cljsjs.react.dom]
             [maria.views.pages.repl :as repl]
@@ -23,7 +23,7 @@
             [clojure.string :as string]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
-            [maria.frames.user-actions :as user-actions]
+            [maria.frames.live-actions :as user-actions]
 
             [maria.live.analyzer]))
 
