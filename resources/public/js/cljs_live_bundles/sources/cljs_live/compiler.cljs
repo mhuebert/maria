@@ -12,7 +12,7 @@
 
 (def cljs-cache (atom {"provided" #{}}))
 
-(defn is-provided
+(defn is-provided?
   "Determine if a namespace is already provided. If using :optimizations :none,
   we can use `goog.isProvided_`, otherwise we need to use the list of `provided`
   namespaces in our cljs-live cache.
@@ -36,12 +36,11 @@
              :when (not (re-matches #"^ *\*.*" x))]
          x)
        (take-while #(not (re-matches #".*=[\s]*function\(.*\)[\s]*[{].*" %)))
+       (take 100)
        (map #(re-matches #".*goog\.provide\(['\"](.*)['\"]\)" %))
        (remove nil?)
        (map #(drop 1 %))
-       (reduce (fn [provides ns]
-                 (let [munged-ns (string/replace (last ns) "_" "-")]
-                   (conj provides munged-ns))) [])))
+       (last)))
 
 (defn namespace-content
   "Get local js content for a namespace"
@@ -50,28 +49,31 @@
                  (str (string/replace (munge (str name)) \. \/) ".js"))]
     (get @cljs-cache path)))
 
+(defn wrapped-goog-provide
+  "Wrap goog.provide to ignore 'Namespace %name already provided' errors"
+  [goog-provide]
+  (fn [name]
+    (set! *loaded-libs* (conj *loaded-libs* name))
+    (try (goog-provide name) (catch js/Error _
+                               (log "goog provide: namespace already provided." name)))))
+
+(defn wrapped-goog-require
+  "Wrap goog.require to avoid reloading existing namespaces"
+  [goog-require]
+  (fn [name reload]
+    (if (or (not (is-provided? name)) reload)
+      (let [content (namespace-content name)]
+        (cond content (do (set! *loaded-libs* (conj *loaded-libs* name))
+                          (js/eval content))
+              :else (do (set! *loaded-libs* (conj *loaded-libs* name))
+                        (goog-require name reload))))
+      (log "goog require: prevented the load of " name))))
+
 (defonce _
-         (let [goog-provide (aget js/goog "provide")
-               goog-require (aget js/goog "require")]
+         (do
            (set! *loaded-libs* (or *loaded-libs* #{}))
-
-           ;; wrap goog.provide to ignore 'Namespace %name already provided' errors
-           (aset js/goog "provide"
-                 (fn [name]
-                   (set! *loaded-libs* (conj *loaded-libs* name))
-                   (try (goog-provide name) (catch js/Error _
-                                              (log "goog provide: namespace already provided." name)))))
-
-           ;; wrap goog.require to avoid reloading existing namespaces
-           (aset js/goog "require"
-                 (fn [name reload]
-                   (if (or (not (is-provided name)) reload)
-                     (let [content (namespace-content name)]
-                       (cond content (do (set! *loaded-libs* (conj *loaded-libs* name))
-                                         (js/eval content))
-                             :else (do (set! *loaded-libs* (conj *loaded-libs* name))
-                                       (goog-require name reload))))
-                     (log "goog require: prevented the load of " name))))))
+           (aset js/goog "provide" (wrapped-goog-provide (aget js/goog "provide")))
+           (aset js/goog "require" (wrapped-goog-require (aget js/goog "require")))))
 
 (defn- transit-json->cljs
   [json]
@@ -96,7 +98,7 @@
                      macros (str "$macros"))
         name (if-not macros name
                             (symbol (str name "$macros")))
-        js-provided? (is-provided name)
+        js-provided? (is-provided? name)
         c-state-provided? (contains? (get-in @c-state [::loaded]) name)]
     (swap! c-state update ::loaded (fnil conj #{}) name)
     (cb (if (and (*loaded-libs* (str name)) c-state-provided?)
@@ -114,11 +116,9 @@
                                source (merge {:source source
                                               :lang   lang}))]
             (when (and cache (not source))
+              ;; if we have the cache but not the source,
+              ;; we assume the source is provided.
               (set! *loaded-libs* (conj *loaded-libs* (str name))) 0)
-
-            ;; determine if we can take this out
-            #_(when (and cache (not source))
-                (swap! c-state assoc-in [:cljs.analyzer/namespaces name] cache))
 
             (when debug?
               (when (and (not js-provided?) (not source) #_(.test #"^goog" (str name)))
@@ -143,18 +143,22 @@
   (let [bundle (reduce-kv (fn [bundle k v]
                             (cond-> bundle
                                     (or (string/starts-with? v "goog")
-                                        (string/starts-with? k "goog"))
-                                    ;; there may be other libs that need to be parsed,
-                                    ;; but on the wrong kind of files this can be
-                                    ;; SLOW - 25 seconds for cljs.spec.alpha$macros.
-                                    #_(and (string/ends-with? k ".js")
-                                           (not (string/ends-with? k "$macros.js")))
-                                    ;; parse google provide statements to enable
-                                    ;; dependency resolution for arbitrary google closure modules.
-                                    (update "name-to-path" merge (time (let [provides (parse-goog-provides v)]
-                                                                         (when (empty? provides)
-                                                                           (println k ": " provides "\n"))
-                                                                         (apply hash-map (interleave provides (repeat k)))))))) bundle bundle)]
+                                        (string/starts-with? k "goog")
+                                        (and (string/ends-with? k ".js")
+                                             ;; for a JS file, see if a goog.provide statement shows up
+                                             ;; in teh first 300 characters.
+                                             (some-> v (> (.indexOf (subs v 0 300) "goog.provide") -1))))
+
+
+                                    ;;
+                                    ;; parse google provide statements to enable dependency resolution
+                                    ;; for arbitrary google closure modules.
+                                    ;; this is a slow operation so we don't want to do it on all files.
+
+                                    (update "name-to-path" merge (let [provides (parse-goog-provides v)]
+                                                                   (when (empty? provides)
+                                                                     (log k ": " provides "\n"))
+                                                                   (apply hash-map (interleave provides (repeat k))))))) bundle bundle)]
     (swap! cljs-cache (partial merge-with (fn [v1 v2]
                                             (if (coll? v1) (into v1 v2) v2))) bundle)
     bundle))

@@ -16,7 +16,7 @@
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
 (defn init []
-  (set! cljs-live.compiler/debug? true)
+  #_(set! cljs-live.compiler/debug? true)
   (let [bundles ["cljs.core"
                  "maria.user"
                  "cljs.spec.alpha"
@@ -67,7 +67,6 @@
    [:.flex-auto]
    ;; ...toolbar items
    ])
-
 
 (defn loader [message]
   [:.w-100.sans-serif.tc

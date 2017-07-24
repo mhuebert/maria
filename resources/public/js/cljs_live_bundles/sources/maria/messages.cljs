@@ -101,8 +101,10 @@
      "The value `%1` can't be used as a sequence or collection."]
     ["% call is not a function"
      "The value `%1` isn't a function, but it's being called like one."]
-    ["Could not compile %" ;; https://github.com/yogthos/clojure-error-message-catalog/blob/master/cljs/duplicate-case-test-constant.md
-     "It looks like you're declaring a function, but it has more than one overload that takes the same number (or \"arity\") of arguments."]]))
+    ["Could not compile %"
+     "It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"]
+    ["nth not supported on this type %"
+     "It looks like you're trying to iterate over something that isn't a sequence. Perhaps you're trying to destructure something that is not a sequence?"]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
@@ -110,10 +112,10 @@
   (let [match (match-in-tokens error-message-trie (tokenize message))]
     (if (some-> match (contains? :message))
       (reduce
-        (fn [message [i replacement]]
-          (string/replace message (str "%" (inc i)) replacement))
-        (:message match)
-        (map vector (range) (:context match)))
+       (fn [message [i replacement]]
+         (string/replace message (str "%" (inc i)) replacement))
+       (:message match)
+       (map vector (range) (:context match)))
       message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -171,7 +173,7 @@
                                 (humanize-sequence bad-types) ".")
        :undeclared-var (str "The above expression contains a reference to `"
                             (-> w :extra :suffix)
-                            "`, but it hasn't been defined!")
+                            "`, but that hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")
        (with-out-str (println (select-keys w [:type :extra]))))]))
 
 ;; NB took this out because we're already
