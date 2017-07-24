@@ -118,10 +118,10 @@
       (if error?
         [:.ph3.overflow-auto
          (->> (for [message (concat (map messages/reformat-warning (distinct warnings))
-                                    (list (when error (messages/reformat-error result))))
+                                    (messages/reformat-error result))
                     :when message]
                 [:.mv2 message])
-              (interpose [:.bb.b--red.o-50]))]
+              (interpose [:.bb.b--red.o-20.bw2]))]
 
         [:.ph3 (format-value value)])]]))
 
