@@ -27,9 +27,9 @@
   (map #(colorize (hsl (rescale % 0 1000 120 220) 90 90)
                 (rectangle 500 5))
      (range 0 1000 5)))
- 
+
 ;; rolling triangle rainbow
-(apply layer 
+(apply layer
   (concat [(colorize "white" (rectangle 750 75))]
           (map #(->> (triangle 25)
                      (position (* 2 %) 20)
@@ -40,11 +40,11 @@
 ;; cartwheel rectangles
 (layer
   (fill "white" (rectangle 750 70))
-  (apply beside  
-       (map #(->> (rectangle 30 50)                                          
-                  (rotate %)                    	 
-                  (opacity 0.5) 	                 
-                  (fill (hsl % 90 45)))               
+  (apply beside
+       (map #(->> (rectangle 30 50)
+                  (rotate %)
+                  (opacity 0.5)
+                  (fill (hsl % 90 45)))
             (range 0 375 15))))
 
 ;; confetti
@@ -76,7 +76,7 @@
                   (position 41 182 (colorize "grey" (rectangle 5 158)))
                   (position 41 170 (colorize "grey" (rectangle 2 158)))
                   (position 27 170 (colorize "grey" (rectangle 2 158))))
-      
+
       small-brown-rectangles (layer
                               ;;center of sphere small dark rectangle
                               (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))
@@ -109,7 +109,7 @@
                                   ;; orange triangle
                                   (position 35 97 (opacity 0.5 (colorize "orange" (circle 15))))
                                   ;; yellow triangle
-                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20)))) 
+                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20))))
                                   ;;center of sphere small dark rectangle
                                   (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
 
@@ -135,7 +135,7 @@
                                         (position 55 93 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
 
       reflections-on-sphere-base (layer
-                                  ;; white circle 
+                                  ;; white circle
                                   (position 40 90 (opacity 0.75 (colorize "white" (circle 20))))
                                   ;; lower blue circle
                                   (position 28 90 (opacity 0.75 (colorize "lightblue" (circle 15))))
@@ -144,9 +144,9 @@
                                   ;; orange triangle
                                   (position 35 97 (opacity 0.5 (colorize "orange" (circle 15))))
                                   ;; yellow triangle
-                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20)))) 
+                                  (position 28 90 (opacity 0.5 (colorize "yellow" (triangle 20))))
                                   ;;center of sphere small dark rectangle
-                                  (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6))))) 
+                                  (position 35 90 (opacity 0.5 (colorize "brown" (rectangle 4 6)))))
 
       antenna-shaft-highlights (layer
                                 ;; skinny orange horizontal highlight
