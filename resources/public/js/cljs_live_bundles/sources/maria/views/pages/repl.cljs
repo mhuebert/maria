@@ -20,7 +20,8 @@
   (let [bundles ["cljs.core"
                  "maria.user"
                  "cljs.spec.alpha"
-                 "reagent.core"]]
+                 #_"reagent.core"
+                 #_"bach-leipzig"]]
     (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
                      (fn []
                        (eval/eval '(require '[cljs.core :include-macros true]))

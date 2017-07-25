@@ -18,7 +18,7 @@
                  [re-view "0.3.20-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
-                 [cljs-live "0.2.1-SNAPSHOT"]
+                 [cljs-live "0.2.2"]
                  [magic-tree "0.0.7-SNAPSHOT"]
                  [org.clojure/data.json "0.2.6"]
 
@@ -33,6 +33,8 @@
 
                  ;; just for bundles
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
+                 [leipzig "0.10.0"]
+                 [cljs-bach "0.2.0"]
                  ]
 
   :plugins [[lein-figwheel "0.5.10"]
@@ -41,7 +43,7 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :source-paths ["src" "script" "bundles"]
+  :source-paths ["src" "script"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

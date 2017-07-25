@@ -1,6 +1,6 @@
 {:cljsbuild-out "resources/public/js/compiled/out-cljs-live"
  :bundle-out    "resources/public/js/cljs_live_bundles"
- :source-paths  ["src" "bundles"]
+ :source-paths  ["src"]
  :bundles       [{:name     cljs.spec.alpha
                   :entry    [cljs.spec.alpha
                              cljs.spec.alpha$macros]
@@ -18,6 +18,14 @@
                                      maria.views.repl-specials
                                      maria.live.analyzer}}
                  {:name          reagent.core
-                  :entry         maria.bundles.reagent
-                  :entry/exclude #{cljsjs.react}
-                  :provided      #{maria.frames.live}}]}
+                  :entry         reagent.core
+                  :entry/exclude cljsjs.react
+                  :provided      maria.frames.live}
+                 {:name     bach-leipzig
+                  :entry    #{leipzig.canon
+                              leipzig.chord
+                              leipzig.melody
+                              leipzig.scale
+                              leipzig.temperament
+                              cljs-bach.synthesis}
+                  :provided maria.frames.live}]}
