@@ -77,7 +77,7 @@
                          :when (= f (e/var-value the-var))]
                      the-var)))))))
 
-(def source-path "/js/cljs_bundles/sources")
+(def source-path "/js/cljs_live_bundles/sources")
 
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
