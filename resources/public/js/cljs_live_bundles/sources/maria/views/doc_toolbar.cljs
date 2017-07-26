@@ -118,7 +118,7 @@
 
 (defcommand :doc/new
   "Create a blank doc"
-  {:bindings       ["Command-B"]
+  {:bindings       ["M1-B"]
    :intercept-when true
    :when           :doc-toolbar}
   [{{:keys [view/state get-editor id]} :doc-toolbar}]
@@ -133,7 +133,7 @@
 
 (defcommand :doc/save
   "Save the current doc"
-  {:bindings       ["Command-S"]
+  {:bindings       ["M1-S"]
    :intercept-when true
    :when           #(and (:signed-in? %)
                          (#{:create :save} (persistence-mode (:doc-toolbar %))))}
@@ -142,7 +142,7 @@
 
 (defcommand :doc/save-a-copy
   "Save a new copy of a project"
-  {:bindings       ["Command-Shift-S"]
+  {:bindings       ["M1-Shift-S"]
    :intercept-when true
    :when           #(and (:signed-in? %)
                          (get-in % [:doc-toolbar :project :persisted])

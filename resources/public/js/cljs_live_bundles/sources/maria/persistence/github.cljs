@@ -57,8 +57,10 @@
   (d/transact! [{:db/id           id
                  :loading-message "Loading gist..."}])
   (get-gist id (fn [{:keys [value error]}]
-                 (d/transact! [[:db/add id :persisted (or value {:error error})]
-                               [:db/add id :loading-message false]]))))
+                 (d/transact! [{:db/id           id
+                                :persisted       value
+                                :persisted-error error
+                                :loading-message false}]))))
 
 (defn get-user-gists [username cb]
   (send (str "https://api.github.com/users/" username "/gists")
@@ -68,7 +70,7 @@
               (cb {:value (->> (js->clj (.getResponseJson target) :keywordize-keys true)
                                (map gist->project)
                                (filter #(> (count (:files %)) 0)))})
-              (cb {:error (.getLastError target)}))))
+              (cb nil))))
         "GET"
         nil
         (tokens/auth-headers :github)))

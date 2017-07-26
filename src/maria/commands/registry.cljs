@@ -88,7 +88,7 @@
 
          "M3" (if mac? "CTRL"
                        "META")
- 
+
          (throw (js/Error. "Invalid modifier. Must be M1, M2, M3, or SHIFT.")))
        (gobj/get KeyCodes)))
 

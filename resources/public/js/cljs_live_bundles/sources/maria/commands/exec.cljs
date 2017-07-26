@@ -70,7 +70,7 @@
                                results (when command-names
                                          (mapv #(exec-command context %) commands))]
 
-                           (when (seq (keep :intercept! results))
+                           (when (seq (filter :intercept! results))
                              (stop-event e)
                              (clear-which-key!))
 

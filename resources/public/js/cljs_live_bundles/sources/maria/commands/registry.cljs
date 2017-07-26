@@ -12,6 +12,8 @@
                      [:path {:d "M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"}]]
                     (with-meta (name "z"))))
 
+
+
 (defn endkey->keycode [k]
   (let [k (string/upper-case k)
         k (get {"1"            "ONE"
@@ -40,7 +42,18 @@
                 "CLICK_RIGHT"  2} k k)]
     (gobj/get KeyCodes k k)))
 
-(defn modifier->keycode [k]
+
+
+(def mac? (let [platform (.. js/navigator -platform)]
+            (or (string/starts-with? platform "Mac")
+                (string/starts-with? platform "iP"))))
+
+(defn modifier->keycode
+  "Given a modifier string, which must be M1, M2, M3, or SHIFT,
+  returns an appropriate keycode for the current platform.
+
+  We may add to or modify this as we discover more variance in platform behaviour."
+  [k]
   (->> (case (string/upper-case k)
          ("CMD"
            "M"
@@ -55,8 +68,28 @@
            "OPT"
            "OPTION") "ALT"
 
-         ("SHIFT"
-           "S") "SHIFT")
+         "SHIFT" "SHIFT"
+
+         ;; We use M1, M2, and M3 to express "primary, secondary, and tertiary" modifiers
+         ;; which will be mapped to keys most likely to work on the user's platform.
+         ;;
+         ;; Primary      M1     Mac: Command
+         ;;                     PC:  Control
+         ;;
+         ;; Secondary    M2     Mac: Option
+         ;;                     PC:  Alt
+         ;;
+         ;; Tertiary     M3     Mac: Control
+         ;;                     PC:  Windows/Meta
+
+         "M1" (if mac? "META"
+                       "CTRL")
+         "M2" "ALT"
+
+         "M3" (if mac? "CTRL"
+                       "META")
+
+         (throw (js/Error. "Invalid modifier. Must be M1, M2, M3, or SHIFT.")))
        (gobj/get KeyCodes)))
 
 (defn normalize-keyset-string [patterns]

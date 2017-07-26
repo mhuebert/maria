@@ -18,7 +18,7 @@
                  [re-view "0.3.20-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
-                 [cljs-live "0.2.2"]
+                 [cljs-live "0.2.3"]
                  [magic-tree "0.0.7-SNAPSHOT"]
                  [org.clojure/data.json "0.2.6"]
 

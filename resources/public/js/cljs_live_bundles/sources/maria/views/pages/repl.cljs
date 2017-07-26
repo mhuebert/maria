@@ -160,7 +160,7 @@
 
 (defcommand :repl/clear
   "Clear the repl output"
-  {:bindings ["Cmd-Shift-B"]}
+  {:bindings ["M1-Shift-B"]}
   []
   (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
 
