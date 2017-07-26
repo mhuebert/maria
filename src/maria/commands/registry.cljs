@@ -48,7 +48,7 @@
             (or (string/starts-with? platform "Mac")
                 (string/starts-with? platform "iP"))))
 
-(defn modifier->keycode
+(defn modifier-keycode
   "Given a modifier string, which must be M1, M2, M3, or SHIFT,
   returns an appropriate keycode for the current platform.
 
@@ -96,7 +96,7 @@
   (->> (string/split patterns #"\s")
        (mapv (fn [s]
                (let [keys (string/split s #"[-+]")]
-                 (conj (set (mapv modifier->keycode (drop-last keys)))
+                 (conj (set (mapv modifier-keycode (drop-last keys)))
                        (endkey->keycode (last keys))))))))
 
 (def code->symbol

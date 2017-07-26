@@ -97,7 +97,8 @@
                        (when (registry/modifiers keycode)
                          (d/transact! [[:db/update-attr :commands :modifiers-down disj keycode]])
                          (when (empty? (d/get :commands :modifiers-down))
-                           (d/transact! [[:db/add :commands :which-key/active? false]]))))))
+                           (d/transact! [[:db/add :commands :which-key/active? false]])))))
+                   true)
 
     (events/listen js/window #js ["blur" "focus"] #(when (= (.-target %) (.-currentTarget %))
                                                      (clear-keys)))))
