@@ -120,9 +120,8 @@
                                    :id         id
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
-              ;; top-level
-              #_top-level/editor
               (codemirror/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+                                  :class         "pl3"
                                   :auto-focus    true
                                   :event/focus   #(set! exec/current-editor %2)
                                   :event/blur    #(set! exec/current-editor nil)
@@ -136,17 +135,6 @@
 
 (defview layout
   [{:keys [window-id]}]
-
-  ;; top-level
-  #_[:.h-100.flex.items-stretch.bg-light-gray
-     [:.relative.border-box.flex.flex-column
-      (when-let [segments (d/get :layout window-id)]
-        (match segments
-               ["new"] (edit-file {:id "new"})
-               ["gist" id filename] (edit-file {:id       id
-                                                :filename filename})
-               ["gists" username] (gists-list {:username username})))]]
-
   [:.h-100.flex.items-stretch
    [:.w-50.relative.border-box.flex.flex-column
     (when-let [segments (d/get :layout window-id)]

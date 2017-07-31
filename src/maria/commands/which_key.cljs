@@ -23,7 +23,7 @@
 
 (defn show-namespace-hints [modifiers-down [namespace hints]]
   (let [row-height 24]
-    [:.c-avoid.bt.b--near-white.pv1
+    [:.avoid-break.bt.b--near-white.pv1
      [:.flex
       [:.pr1.flex-none.tr.b.pv2.flex.items-center.justify-end
        {:style {:min-width 70
@@ -42,7 +42,7 @@
   []
   (let [modifiers-down (d/get :commands :modifiers-down)]
     (if-let [hints (seq (exec/contextual-hints modifiers-down))]
-      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns.overflow-auto
+      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns
        {:style {:max-height 150}}
        (->> hints
             (group-by :namespace)

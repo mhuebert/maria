@@ -93,6 +93,7 @@ code {
     background: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    padding-right: 1rem;
 }
 
 .bg-maria-light {
@@ -227,8 +228,9 @@ code {
 
 .hint-columns {
     column-width: 14rem;
+    overflow: hidden;
 }
-.c-avoid {
+.avoid-break {
     break-inside: avoid;
 }
 
