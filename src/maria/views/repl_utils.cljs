@@ -1,7 +1,7 @@
 (ns maria.views.repl-utils
   (:require [re-view.core :as v :refer [defview]]))
 
-(def card-classes "mh3 mv2 shadow-4 bg-white pv1")
+(def card-classes "mv2 shadow-4 bg-white pv1")
 
 (v/defn card
   {:spec/props {:spec/keys []}
