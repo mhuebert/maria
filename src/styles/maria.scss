@@ -84,11 +84,15 @@ div.CodeMirror {
     line-height: 155%;
 }
 
+code {
+    padding: 2px 3px;
+    background-color: rgba(0,0,0,0.05);
+}
+
 .CodeMirror {
     background: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
-    padding: 0 1rem;
 }
 
 .bg-maria-light {
@@ -226,4 +230,8 @@ div.CodeMirror {
 }
 .c-avoid {
     break-inside: avoid;
+}
+
+.cursor-text {
+    cursor: text;
 }

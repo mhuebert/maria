@@ -7,7 +7,7 @@
 
             [maria.eval :as eval]
             [maria.views.repl-utils :as repl-ui]
-            [maria.codemirror.editor :as editor]
+            [maria.editor.codemirror :as codemirror]
 
             [goog.net.jsloader :as jsl]
 
@@ -32,7 +32,7 @@
 
    (when (and @state source)
      [:.overflow-scroll.ph3.nl3.nr3.bt.bb.b--darken.pv2
-      {:style {:max-height 200}} (editor/viewer source)])
+      {:style {:max-height 200}} (codemirror/viewer source)])
 
    [:.gray.pv2.overflow-auto.w-100.pv2 {:style {:font-size 13}} url]
 

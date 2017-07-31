@@ -7,7 +7,7 @@
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
             [maria.live.magic-tree :as magic]
-            [maria.codemirror.editor :as editor]
+            [maria.editor.codemirror :as codemirror]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [cljs.pprint :refer [pprint]])
@@ -67,7 +67,7 @@
            (icons/class "mln1 mrn1 o-50"))]
       (when expanded?
         (or (some-> (source-lookups/js-source->clj-source (.toString value))
-                    (editor/viewer))
+                    (codemirror/viewer))
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
@@ -111,9 +111,9 @@
      (when source
        [:.code.overflow-auto.pre.gray.mv3
         {:style {:max-height 200}}
-        (editor/viewer {:error-ranges (cond-> []
-                                              error (conj (magic/error-range source error-position))
-                                              (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
+        (codemirror/viewer {:error-ranges (cond-> []
+                                                  error (conj (magic/error-range source error-position))
+                                                  (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
      [:.ws-prewrap.relative.mv3
       (if error?
         [:.ph3.overflow-auto

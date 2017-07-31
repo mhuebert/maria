@@ -2,7 +2,8 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
-            [maria.codemirror.editor :as editor]
+            [maria.editor.codemirror :as codemirror]
+            [maria.editor.top-level-tree :as top-level]
             [maria.eval :as eval]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
@@ -11,7 +12,6 @@
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
-            [maria.codemirror.pretty-comments :as pretty-comments]
             [maria.commands.exec :as exec])
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
@@ -120,21 +120,33 @@
                                    :id         id
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
-              (editor/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-                              :auto-focus    true
-                              :on-ast-update pretty-comments/handle-ast-update
-                              :event/focus   #(set! exec/current-editor %2)
-                              :event/blur    #(set! exec/current-editor nil)
-                              :on-update     (fn [source]
-                                               (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                              :source-id     id
-                              :value         (or local-value persisted-value)
-                              :default-value default-value})]]))))
+              ;; top-level
+              #_top-level/editor
+              (codemirror/editor {:ref           #(when % (swap! state assoc :repl-editor %))
+                                  :auto-focus    true
+                                  :event/focus   #(set! exec/current-editor %2)
+                                  :event/blur    #(set! exec/current-editor nil)
+                                  :on-update     (fn [source]
+                                                   (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                  :source-id     id
+                                  :value         (or local-value persisted-value)
+                                  :default-value default-value})]]))))
 
 
 
 (defview layout
   [{:keys [window-id]}]
+
+  ;; top-level
+  #_[:.h-100.flex.items-stretch.bg-light-gray
+     [:.relative.border-box.flex.flex-column
+      (when-let [segments (d/get :layout window-id)]
+        (match segments
+               ["new"] (edit-file {:id "new"})
+               ["gist" id filename] (edit-file {:id       id
+                                                :filename filename})
+               ["gists" username] (gists-list {:username username})))]]
+
   [:.h-100.flex.items-stretch
    [:.w-50.relative.border-box.flex.flex-column
     (when-let [segments (d/get :layout window-id)]

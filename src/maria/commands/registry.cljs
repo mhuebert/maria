@@ -100,14 +100,14 @@
                        (endkey->keycode (last keys))))))))
 
 (def code->symbol
-  (->> {(.-CTRL KeyCodes)                 "⌃"
-        (.-META KeyCodes)                 "⌘"
-        (.-SHIFT KeyCodes)                "⇧"
-        (.-ALT KeyCodes)                  "⎇"
-        (.-ENTER KeyCodes)                "⏎"
+  (->> {(.-CTRL KeyCodes)                 "Ctrl" #_"⌃"
+        (.-META KeyCodes)                 (if mac? "⌘" "Meta")
+        (.-SHIFT KeyCodes)                "Shift"       #_"⇧"
+        (.-ALT KeyCodes)                  (if mac? "⎇" "Alt")
+        (.-ENTER KeyCodes)                "Enter"             #_"⏎"
         (.-BACKSPACE KeyCodes)            "⌫"
         (.-LEFT KeyCodes)                 "←"
-        (.-TAB KeyCodes)                  "⇥"
+        (.-TAB KeyCodes)                  "Tab" #_"⇥"
         (.-RIGHT KeyCodes)                "→"
         (.-UP KeyCodes)                   "↑"
         (.-DOWN KeyCodes)                 "↓"

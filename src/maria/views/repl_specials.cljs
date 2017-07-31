@@ -1,7 +1,7 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.live.ns-utils :as ns-utils]
-            [maria.codemirror.editor :as editor]
+            [maria.editor.codemirror :as codemirror]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]
@@ -50,10 +50,10 @@
   [{:keys [view/state special-form name]}]
   (let [{:keys [value error] :as result} @state]
     (cond (nil? result) [:.pa2 "Loading..."]
-          error  [:.ma3 (if special-form
+          error [:.ma3 (if special-form
                           (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
                           error)]
-          value (repl-ui/card (editor/viewer value)))))
+          value (repl-ui/card (codemirror/viewer value)))))
 
 (defview dir
   {:view/initial-state {:expanded? false}}

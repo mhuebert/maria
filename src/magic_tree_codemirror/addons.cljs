@@ -98,7 +98,7 @@
     (swap! cm assoc-in [:magic/errors :handles] handles)))
 
 (defn update-ast!
-  [{:keys [ast on-ast-update] :as cm}]
+  [{:keys [ast] :as cm}]
   (when-let [{:keys [errors] :as next-ast} (try (tree/ast (.getValue cm))
                                                 (catch js/Error e (.debug js/console e)))]
     (when (not= next-ast ast)
@@ -106,8 +106,6 @@
         (clear-parse-errors! cm)
         (when-let [error (first errors)]
           (highlight-parse-errors! cm [error]))
-        (when on-ast-update
-          (on-ast-update cm next-ast next-zip))
         (if (seq errors)
           (swap! cm dissoc :ast :zipper)
           (swap! cm assoc

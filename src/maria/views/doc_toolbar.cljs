@@ -118,7 +118,10 @@
 
 (defcommand :doc/new
   "Create a blank doc"
-  {:bindings       ["M1-B"]
+  {
+   ;; the ordinary shortcuts for new docs are always captured by browsers.
+   ;; hold off and use M-X-style command for this.
+   ;:bindings       ["Alt-N"]
    :intercept-when true
    :when           :doc-toolbar}
   [{{:keys [view/state get-editor id]} :doc-toolbar}]
@@ -175,7 +178,6 @@
                               (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
   [{{:keys [persisted local]} :project
     :keys                     [filename id view/state] :as this}]
-
   (let [signed-in? (d/get :auth-public :signed-in?)
         {parent-url :maria-url parent-username :username} (or (:parent this) (:owner persisted) (d/entity :auth-public))
         current-filename (or (get-in local [:files filename :filename]) filename)
@@ -185,7 +187,12 @@
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
         command-context (exec/get-context)]
-    [:.bb.b--light-gray.flex.sans-serif.f6.items-stretch.br.b--light-gray.f7.flex-none
+    [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none
+     {:class "b--light-gray br"
+      (comment
+        "b--near-white bg-white"
+        ;; top-level
+        )}
      [:.ph2.flex-auto.flex.items-center
 
       [:a.hover-underline.gray.no-underline.pl2 {:href parent-url} parent-username]

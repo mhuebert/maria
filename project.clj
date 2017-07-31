@@ -18,6 +18,7 @@
                  [re-view "0.3.21"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6-SNAPSHOT"]
+                 [re-view-prosemirror "0.1.5-SNAPSHOT"]
                  [cljs-live "0.2.3"]
                  [magic-tree "0.0.8"]
                  [org.clojure/data.json "0.2.6"]
@@ -37,8 +38,8 @@
                  [cljs-bach "0.2.0"]
                  ]
 
-  :plugins [[lein-figwheel "0.5.10"]
-            [lein-cljsbuild "1.1.6" :exclusions [org.clojure/clojure]]]
+  :plugins [[lein-figwheel "0.5.11"]
+            [lein-cljsbuild "1.1.6"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]

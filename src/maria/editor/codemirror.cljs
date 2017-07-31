@@ -1,4 +1,4 @@
-(ns maria.codemirror.editor
+(ns maria.editor.codemirror
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]
@@ -20,7 +20,16 @@
 (defview editor
   {:view/spec               {:props {:event/mousedown :Function
                                      :event/keydown   :Function}}
-   :view/did-mount          (fn [{:keys [default-value auto-focus on-ast-update value on-update read-only? on-mount cm-opts view/state view/props error-ranges]
+   :view/did-mount          (fn [{:keys [default-value
+                                         auto-focus
+                                         value
+                                         on-update
+                                         read-only?
+                                         on-mount
+                                         cm-opts
+                                         view/state
+                                         view/props
+                                         error-ranges]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
                                     editor (js/CodeMirror dom-node
@@ -34,9 +43,6 @@
                                                                        (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
-
-                                (some->> on-ast-update
-                                         (swap! editor assoc :on-ast-update))
 
                                 (when-not read-only?
 
@@ -73,7 +79,7 @@
                                     :else nil))
    :life/should-update      (fn [_] false)}
   [{:keys [view/state on-focus on-blur view/props] :as this}]
-  [:.flex-auto
+  [:.flex-auto.cursor-text
    (-> (select-keys props [:style :class :classes])
        (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
                             (let [editor (:editor @state)]
