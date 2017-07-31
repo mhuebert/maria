@@ -121,7 +121,6 @@
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
               (codemirror/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-                                  :class         "pl3"
                                   :auto-focus    true
                                   :event/focus   #(set! exec/current-editor %2)
                                   :event/blur    #(set! exec/current-editor nil)
