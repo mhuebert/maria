@@ -1,6 +1,6 @@
 (ns maria.views.pages.paredit-inspect
   (:require [magic-tree.core :as tree]
-            [maria.editor.codemirror :as cm]
+            [maria.cells.codemirror :as cm]
             [fast-zip.core :as z]
             [re-view.core :as v :refer [defview]]))
 

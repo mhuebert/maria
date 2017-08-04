@@ -6,8 +6,8 @@
             [re-view-hiccup.core :as hiccup]
 
             [maria.eval :as eval]
-            [maria.views.repl-utils :as repl-ui]
-            [maria.editor.codemirror :as codemirror]
+            [maria.views.repl-ui :as repl-ui]
+            [maria.cells.codemirror :as codemirror]
 
             [goog.net.jsloader :as jsl]
 

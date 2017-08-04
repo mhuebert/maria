@@ -6,10 +6,14 @@
 
 (def current-doc-toolbar nil)
 (def current-editor nil)
+(def current-text nil)
 
 (defn get-context []
+  ;; TODO
+  ;; change :editor to :cell/code
   {:editor      current-editor
    :doc-toolbar current-doc-toolbar
+   :cell/prose  current-text
    :signed-in?  (d/get :auth-public :signed-in?)})
 
 (defn get-command

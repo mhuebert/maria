@@ -47,10 +47,6 @@ html, body, #maria-main {
     font-family: "et-book", Georgia, Times New Roman, serif;
 }
 
-div.CodeMirror {
-    height: 100%;
-}
-
 div.CodeMirror pre {
     padding: 0;
 }
@@ -84,16 +80,21 @@ div.CodeMirror {
     line-height: 155%;
 }
 
-code {
-    padding: 2px 3px;
-    background-color: rgba(0,0,0,0.05);
-}
+
 
 .CodeMirror {
     background: transparent !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    height: auto;
+}
+
+.cm-ph3 .CodeMirror {
     padding: 0 1rem;
+}
+
+.cm-h-100 div.CodeMirror {
+    height: 100%;
 }
 
 .bg-maria-light {
@@ -236,4 +237,25 @@ code {
 
 .cursor-text {
     cursor: text;
+}
+
+.prosemirror-content {
+    blockquote {
+        border-left: 4px solid rgba(0,0,0,0.05);
+        padding-left: 0.5rem;
+        margin-left: 0.5rem;
+    }
+    pre {
+        white-space: pre-wrap;
+        background-color: rgba(0,0,0,.05);
+        padding: 0.5rem;
+        code {
+            background-color: transparent;
+            text-indent: 0;
+        }
+    }
+    code {
+        padding: 2px 3px;
+        background-color: rgba(0,0,0,0.05);
+    }
 }

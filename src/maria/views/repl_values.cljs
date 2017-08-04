@@ -7,7 +7,7 @@
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
             [maria.live.magic-tree :as magic]
-            [maria.editor.codemirror :as codemirror]
+            [maria.cells.codemirror :as codemirror]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [cljs.pprint :refer [pprint]])
@@ -96,25 +96,29 @@
        :else (try (string/trim-newline (with-out-str (pprint value)))
                   (catch js/Error e "error printing result"))))])
 
+(defn display-source [{:keys [source error error-position warnings]}]
+  [:.code.overflow-auto.pre.gray.mv3.ph3
+   {:style {:max-height 200}}
+   (codemirror/viewer {:error-ranges (cond-> []
+                                             error (conj (magic/error-range source error-position))
+                                             (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
+
 (defview display-result
   {:key :id}
   [{:keys [value
            error
            error-position
            warnings
+           show-source?
            source] :as result}]
   (let [error? (or error (seq warnings))]
     (when error
       (.error js/console error))
-    [:div.bb.b--darken.overflow-hidden
+    [:div.overflow-hidden
      {:class (when error? "bg-darken-red")}
-     (when source
-       [:.code.overflow-auto.pre.gray.mv3
-        {:style {:max-height 200}}
-        (codemirror/viewer {:error-ranges (cond-> []
-                                                  error (conj (magic/error-range source error-position))
-                                                  (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
-     [:.ws-prewrap.relative.mv3
+     (when (and source (or show-source? error (seq warnings)))
+       (display-source result))
+     [:.ws-prewrap.relative                                 ;.mv3.pv1
       (if error?
         [:.ph3.overflow-auto
          (->> (for [message (concat (map messages/reformat-warning (distinct warnings))

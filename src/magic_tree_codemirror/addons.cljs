@@ -102,6 +102,9 @@
   (when-let [{:keys [errors] :as next-ast} (try (tree/ast (.getValue cm))
                                                 (catch js/Error e (.debug js/console e)))]
     (when (not= next-ast ast)
+      (when-let [on-ast (-> cm :view :on-ast)]
+        (on-ast next-ast))
+
       (let [next-zip (tree/ast-zip next-ast)]
         (clear-parse-errors! cm)
         (when-let [error (first errors)]

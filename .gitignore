@@ -4,6 +4,7 @@ target
 pom.xml
 .idea
 node_modules
+resources/public/js/cljs_live_bundles
 resources/public/js/compiled
 resources/public/css
 checkouts

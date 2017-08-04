@@ -2,13 +2,13 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
-            [maria.editor.codemirror :as codemirror]
-            [maria.editor.top-level-tree :as top-level]
+            [maria.cells.codemirror :as codemirror]
+            [maria.cells.list-view :as top-level]
             [maria.eval :as eval]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
             [maria.views.repl-values :as repl-values]
-            [maria.views.repl-utils :as repl-ui]
+            [maria.views.repl-ui :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
@@ -49,7 +49,10 @@
 
 
 (defn add-to-repl-out! [result]
-  (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) (assoc result :id (d/unique-id))]]))
+  (let [result (assoc result :id (d/unique-id))]
+    (when-let [cb (some-> exec/current-editor :view :on-eval-result)]
+      (cb result))
+    (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]])))
 
 (defn eval-str-to-repl [source]
   (add-to-repl-out! (-> (eval/eval-str source)
@@ -75,7 +78,7 @@
 
 (defview gists-list [{:keys [username]}]
   (let [gists (d/get username :gists)]
-    [:.flex-auto.flex.flex-column.relative
+    [:.flex-auto.flex.flex-column.relative.bg-white
      (toolbar/doc-toolbar {:parent (:owner (first gists))})
      [:.flex-auto.overflow-auto.sans-serif.f6
       (if-let [message (d/get username :loading-message)]
@@ -106,7 +109,8 @@
                 error]
          :as   project} (d/entity id)
         filenames (.projectFiles this)
-        filename (.currentFile this)]
+        filename (.currentFile this)
+        in-place-eval? (d/get :feature :in-place-eval)]
     (cond loading-message (loader loading-message)
           error [:.pa2.dark-red (str error)]
           (empty? filenames) [:.pa2 "Empty gist."]
@@ -120,65 +124,55 @@
                                    :id         id
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
-              (codemirror/editor {:ref           #(when % (swap! state assoc :repl-editor %))
-                                  :auto-focus    true
-                                  :event/focus   #(set! exec/current-editor %2)
-                                  :event/blur    #(set! exec/current-editor nil)
-                                  :on-update     (fn [source]
-                                                   (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                  :source-id     id
-                                  :value         (or local-value persisted-value)
-                                  :default-value default-value})]]))))
+              ((if in-place-eval?
+                 top-level/cell-list
+                 codemirror/editor) {:ref                 #(when % (swap! state assoc :repl-editor %))
+                                     :auto-focus          true
+                                     :capture-event/focus #(set! exec/current-editor (.getEditor %2))
+                                     :capture-event/blur  #(set! exec/current-editor nil)
+                                     :on-update           (fn [source]
+                                                            (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                     :source-id           id
+                                     :class               "flex-auto"
+                                     :value               (or local-value persisted-value)
+                                     :default-value       default-value})]]))))
 
 
 
 (defview layout
   [{:keys [window-id]}]
-  [:.h-100.flex.items-stretch
-   [:.w-50.relative.border-box.flex.flex-column
-    (when-let [segments (d/get :layout window-id)]
-      (match segments
-             ["new"] (edit-file {:id "new"})
-             ["gist" id filename] (edit-file {:id       id
-                                              :filename filename})
-             ["gists" username] (gists-list {:username username})))
-    ]
-   [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
-    {:style {:box-shadow "-1px -1px 0 0 #eee"}}
+  (let [in-place-eval (d/get :feature :in-place-eval)]
+    [:div
+     {:class (if in-place-eval "bg-light-gray"
+                               "flex items-stretch h-100")
+      :style {:min-height "100%"}}
+     [:.relative.border-box.flex.flex-column
+      {:class (if in-place-eval "w-100" "w-50 cm-ph3 cm-h-100")}
+      (when-let [segments (d/get :layout window-id)]
+        (match segments
+               ["new"] (edit-file {:id "new"})
+               ["gist" id filename] (edit-file {:id       id
+                                                :filename filename})
+               ["gists" username] (gists-list {:username username})))]
+     (when (d/get :commands :which-key/active?)
+       (which-key/show-hints))
+     (when-not in-place-eval
+       [:.w-50.h-100.bg-near-white.relative.flex.flex-column.bl.b--light-gray
+        {:style {:box-shadow "-1px -1px 0 0 #eee"}}
 
-    (when (d/get :commands :which-key/active?)
-      (which-key/show-hints))
 
-    (repl-ui/ScrollBottom
-      [:.flex-auto.overflow-auto.code
-       (if-let [eval-log (d/get :repl/state :eval-log)]
-         (map repl-values/display-result (->> (subvec eval-log (d/get :repl/state :cleared-index 0))
-                                              (last-n 50)))
-         [:.pa3.gray "Loading..."])])
-    result-toolbar]])
+        (repl-ui/ScrollBottom
+          [:.flex-auto.overflow-auto.code
+           (if-let [eval-log (d/get :repl/state :eval-log)]
+             (->> (map (v/partial repl-values/display-result {:show-source? true})
+                       (->> (subvec eval-log (d/get :repl/state :cleared-index 0))
+                            (last-n 50)))
+                  (interpose [:.bt.b--darken]))
+             [:.pa3.gray "Loading..."])])
+        result-toolbar])]))
 
 (defcommand :repl/clear
   "Clear the repl output"
   {:bindings ["M1-Shift-B"]}
   []
   (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
-
-
-
-#_(defview current-namespace
-    {:view/spec {:props {:ns symbol?}}}
-    [{:keys [ns]}]
-    [:.dib
-     (ui/SimpleMenuWithTrigger
-       (ui/Button {:label   (str ns)
-                   :compact true
-                   :dense   true
-                   :style   {:margin-left "-0.25rem"}})
-       (map (fn [item-ns] (ui/SimpleMenuItem {:text-primary (str item-ns)
-                                              :ripple       false
-                                              :style        (when (= item-ns ns)
-                                                              {:background-color "rgba(0,0,0,0.05)"})
-                                              :on-click     #(eval/eval-str (str `(~'in-ns ~item-ns)))})) (-> (cons ns (ns-utils/user-namespaces @eval/c-state))
-                                                                                                              (distinct))))
-     (when-let [ns-doc (:doc (ns-utils/analyzer-ns @eval/c-state ns))]
-       [:span.pl2.f7.o-50 ns-doc])])

@@ -63,7 +63,7 @@ fields, and Java class static fields."}
                    :doc   "The symbol must resolve to a var, and the Var object
 itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 
-(defn- special-doc [name-symbol]
+(defn special-doc [name-symbol]
   (some-> (special-doc-map name-symbol)
           (assoc :name (symbol "clojure.core" (name name-symbol))
                  :special-form true)))

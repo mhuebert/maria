@@ -1,11 +1,11 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.live.ns-utils :as ns-utils]
-            [maria.editor.codemirror :as codemirror]
+            [maria.cells.codemirror :as codemirror]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]
-            [maria.views.repl-utils :as repl-ui]))
+            [maria.views.repl-ui :as repl-ui]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)

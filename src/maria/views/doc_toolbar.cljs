@@ -121,7 +121,7 @@
   {
    ;; the ordinary shortcuts for new docs are always captured by browsers.
    ;; hold off and use M-X-style command for this.
-   ;:bindings       ["Alt-N"]
+   :bindings       ["M1-Shift-B"]
    :intercept-when true
    :when           :doc-toolbar}
   [{{:keys [view/state get-editor id]} :doc-toolbar}]
@@ -188,6 +188,7 @@
                                                                                                        :content  (or local-content persisted-content)}))]])
         command-context (exec/get-context)]
     [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
+     {:class (when (d/get :feature :in-place-eval) "bg-white")}
      [:.ph2.flex-auto.flex.items-center
       [:a.hover-underline.gray.no-underline.pl2 {:href parent-url} parent-username]
       [:.ph1.gray "/"]
