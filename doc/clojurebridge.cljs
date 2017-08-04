@@ -1,10 +1,11 @@
 ;;;; Intro
 
-"Good morning, ClojureBridgers!"
+(+ 3 4)
 
 (max 8 17 2)
 
-(fill "red" (circle 50))
+(print-str "Hello, World!")
+
 
 ;;;; Simple values
 
