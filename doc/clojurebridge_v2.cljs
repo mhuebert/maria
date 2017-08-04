@@ -8,4 +8,6 @@
 
 ;;;; Simple values
 
-"I am a String. Strings are letters (technically, alphanumeric \"characters\") between double quotes."
+"I am a String."
+
+"I'm another String. Strings are letters (technically, alphanumeric \"characters\") between double quotes."
