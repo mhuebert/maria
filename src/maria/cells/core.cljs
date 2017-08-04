@@ -1,5 +1,5 @@
 (ns maria.cells.core
-  (:refer-clojure :exclude [empty? trim])
+  (:refer-clojure :exclude [empty?])
   (:require [magic-tree.core :as tree]
             [clojure.string :as string]
             [fast-zip.core :as z]
@@ -23,8 +23,14 @@
 
 (defprotocol ICell
   (empty? [this])
-  (emit [this])
-  (trim [this]))
+  (emit [this]))
+
+(defprotocol IEval
+  (eval [this]))
+
+;; TODO
+;; eval cells to re-db, so that we can track prev. evaluation results
+;; and get rid of the existing weird eval tracking code.
 
 (defrecord CodeCell [id value]
   ICell
@@ -32,8 +38,7 @@
     (= 0 (count (filter (complement tree/whitespace?) value))))
   (emit [this]
     (str (->> (mapv (comp string/trim-newline tree/string) value)
-              (string/join "\n\n"))))
-  (trim [this]))
+              (string/join "\n\n")))))
 
 (defrecord ProseCell [id value]
   ICell
@@ -42,8 +47,7 @@
   (emit [this]
     (.replace (->> (string/split value #"\n")
                    (mapv #(string/replace % #"^ ?" "\n;; "))
-                   (clojure.string/join)) #"^\n" ""))
-  (trim [this]))
+                   (clojure.string/join)) #"^\n" "")))
 
 (defn emit-many
   "Return the concatenated source of a list of editor groups."
