@@ -5,7 +5,8 @@
             [fast-zip.core :as z]
             [re-db.d :as d]
             [re-view.core :as v]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [re-view-prosemirror.core :as pm]))
 
 (def cell-index (atom {}))
 
@@ -28,8 +29,12 @@
   (empty? [this])
   (emit [this]))
 
-(defprotocol IEval
+(defprotocol ICode
   (eval [this]))
+
+(defprotocol IText
+  (prepend-paragraph [this])
+  (trim-paragraph-left [this]))
 
 ;; TODO
 ;; eval cells to re-db, so that we can track prev. evaluation results
@@ -40,24 +45,40 @@
   (empty? [this]
     (= 0 (count (filter (complement tree/whitespace?) value))))
   (emit [this]
-    (str (->> (mapv (comp string/trim-newline tree/string) value)
-              (string/join "\n\n")))))
+    (when-not (empty? this)
+      (str (->> (mapv (comp string/trim-newline tree/string) value)
+                (string/join "\n\n"))))))
 
 (defrecord ProseCell [id value]
   ICell
   (empty? [this]
     (util/whitespace-string? value))
   (emit [this]
-    (.replace (->> (string/split value #"\n")
-                   (mapv #(string/replace % #"^ ?" "\n;; "))
-                   (clojure.string/join)) #"^\n" "")))
+    (when-not (empty? this)
+      (.replace (->> (string/split value #"\n")
+                     (mapv #(string/replace % #"^ ?" "\n;; "))
+                     (clojure.string/join)) #"^\n" "")))
+  IText
+  (prepend-paragraph [this]
+    (when-let [prose-view (.pmView (get-view this))]
+      (let [state (.-state prose-view)
+            dispatch (.-dispatch prose-view)]
+        (dispatch (.insert (.-tr state) 0 (.createAndFill (pm/get-node state :paragraph)))))))
+  (trim-paragraph-left [this]
+    (when-let [prose-view (:prose-editor-view @(:view/state (get-view this)))]
+      (let [new-value (.replace value #"^[\n\s]*" "")]
+        (.resetDoc prose-view new-value)
+        (assoc this :value new-value)))))
 
 (defn emit-many
   "Return the concatenated source of a list of editor groups."
   [cells]
-  (->> (mapv emit cells)
-       (string/join "\n\n")
-       (str "\n")))
+  (transduce (comp (filter (complement empty?))
+                   (map emit))
+             (fn [out item]
+               (str out item "\n\n"))
+             "\n"
+             cells))
 
 (defn some-right [loc]
   (when loc (z/right loc)))
@@ -108,19 +129,26 @@
 (defn ensure-cells [cells]
   (if (clojure.core/empty? cells) [(->ProseCell (d/unique-id) "")] cells))
 
-(defn splice-by-id [cells id values]
-  (if (and (clojure.core/empty? values)
-           (= 1 (count cells)))
-    (let [cells (ensure-cells nil)]
-      (with-meta cells {:before (first cells)}))
-    (let [pred #(not= id (:id %))
-          [before [match & after]] (split-with pred cells)]
-      (assert match)
-      (with-meta (-> (vec before)
-                     (into values)
-                     (into after))
-                 {:before (last before)
-                  :after  (first after)}))))
+(defn splice-by-id
+  ([cells id values]
+   (splice-by-id cells id 0 values))
+  ([cells id n values]
+   (if (and (clojure.core/empty? values)
+            (= 1 (count cells)))
+     (let [cells (ensure-cells nil)]
+       (with-meta cells {:before (first cells)}))
+     (let [pred #(not= id (:id %))
+           [before [match & after]] (split-with pred cells)
+           before (cond->> before
+                           (neg? n) (drop-last (.abs js/Math n)))
+           after (cond->> after
+                          (pos? n) (drop n))]
+       (assert match)
+       (with-meta (-> (vec before)
+                      (into values)
+                      (into after))
+                  {:before (last before)
+                   :after  (first after)})))))
 
 (defn before [cells id]
   (last (take-while (comp (partial not= id) :id) cells)))

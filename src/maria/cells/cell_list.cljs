@@ -35,7 +35,9 @@
                                   (on-update updated-source))))}
   [{:keys [view/state]}]
   (let [{:keys [cells]} @state
-        splice! #(swap! state assoc :cells (Cell/splice-by-id (:cells @state) %1 %2))]
+        splice! (fn splice
+                  ([id value] (splice id value 0))
+                  ([id value n] (swap! state assoc :cells (Cell/splice-by-id (:cells @state) id n value))))]
     [:.w-100.flex-none.pv3
      (->> cells
           (map
@@ -43,10 +45,14 @@
               (let [props {:id           id
                            :cell         cell
                            :cells        cells
-                           :splice-self! #(:cells (swap! state update :cells Cell/splice-by-id id %))
+                           :splice-self! (fn splice
+                                           ([value]
+                                            (splice 0 value))
+                                           ([n value]
+                                              (:cells (swap! state update :cells Cell/splice-by-id id n value))))
                            :on-update    #(swap! state update :cells Cell/splice-by-id id [(Cell/->ProseCell id %)])}]
                 (condp instance? cell
-                  Cell/ProseCell (prose/prose-view (assoc props
+                  Cell/ProseCell (prose/prose-cell-view (assoc props
                                                      :on-update #(splice! id [(Cell/->ProseCell id %)])))
                   Cell/CodeCell (code/code-view (assoc props
                                                   :on-ast #(splice! id [(Cell/->CodeCell id (:value %))]))))))))]))

@@ -50,6 +50,10 @@
 
 (defn add-to-repl-out! [result]
   (let [result (assoc result :id (d/unique-id))]
+    ;; TODO
+    ;; handle this differently.
+    ;; `eval` commands should be aware of the ID of the cell they are eval'ing,
+    ;; and shove values into the appropriate place instead of just calling add-to-repl-out!.
     (when-let [cb (some-> exec/code-cell :editor :view :on-eval-result)]
       (cb result))
     (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]])))
