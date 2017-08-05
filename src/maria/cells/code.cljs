@@ -10,6 +10,7 @@
   {:key                :id
    :view/did-mount     #(Cell/mount (:cell %) %)
    :view/will-unmount  #(Cell/unmount (:cell %))
+   :view/should-update #(do false)
    :focus              #(.focus (:editor-view @(:view/state %)))
    :view/initial-state {:eval-log []}}
   [{:keys [view/state on-ast splice-self! cells id] :as this}]

@@ -8,7 +8,8 @@
             [maria.commands.exec :as exec]
             [maria.commands.registry :refer-macros [defcommand]]
             [re-db.d :as d]
-            [maria.cells.core :as Cell]))
+            [maria.cells.core :as Cell]
+            [maria.util :as util]))
 
 (defn log-ret [x]
   (println x)
@@ -16,11 +17,12 @@
 
 
 (defview prose-view
-  {:key               :id
-   :pm-view           #(.pmView (:pm-view @(:view/state %)))
-   :focus             #(.focus (.pmView %1))
-   :view/did-mount    #(Cell/mount (:cell %) %)
-   :view/will-unmount #(Cell/unmount (:cell %))}
+  {:key                :id
+   :pm-view            #(.pmView (:pm-view @(:view/state %)))
+   :focus              #(.focus (.pmView %1))
+   :view/did-mount     #(Cell/mount (:cell %) %)
+   :view/should-update #(do false)
+   :view/will-unmount  #(Cell/unmount (:cell %))}
   [{:keys [view/state on-update splice-self! cell id] :as this}]
   (prose/Editor {:default-value (:value cell)
                  :class         " serif f4 ph3 w-50 cf"
@@ -45,26 +47,24 @@
                                                            (Cell/focus!)))))
                                  "Enter"     (commands/chain
                                                (fn [state dispatch]
-                                                 (let [cell (:cell this)
-                                                       empty-cell? (Cell/empty? cell)
-                                                       end-of-doc? (= (.-pos (.-$head (.-selection state)))
-                                                                      (.-pos (.-$head (.atEnd pm/Selection (.. state -doc)))))
-                                                       root? (= 1 (pm/cursor-depth state))
+                                                 (let [root? (= 1 (pm/cursor-depth state))
                                                        paragraph? (pm/is-node-type? state :paragraph)
-                                                       empty-node? (commands/empty-node? (pm/cursor-node state))
-
-                                                       split? false]
-
-                                                   (when (and root? paragraph? empty-node? end-of-doc?)
-                                                     ;; differentiate on end-of-doc?.
-                                                     ;; SPLIT if root+paragraph+empty and middle.
-                                                     (commands/delete-cursor-node state dispatch)
-                                                     (let [the-cell (Cell/->CodeCell (d/unique-id) [])]
+                                                       empty-node? (commands/empty-node? (pm/cursor-node state))]
+                                                   (when (and root? paragraph? empty-node?)
+                                                     (let [$head (.. state -selection -$head)
+                                                           $end (.-$head (.atEnd pm/Selection (.. state -doc)))
+                                                           $start (.-$head (.atStart pm/Selection (.. state -doc)))
+                                                           markdown-before (prose/serialize-selection (.between pm/TextSelection $start $head))
+                                                           markdown-after (prose/serialize-selection (.between pm/TextSelection $head $end))
+                                                           new-cell (Cell/->CodeCell (d/unique-id) [])]
                                                        (splice-self! (cond-> []
-                                                                             (not empty-cell?)
-                                                                             (conj cell)
-                                                                             true (conj the-cell)))
-                                                       (Cell/focus! the-cell))
+                                                                             (not (util/whitespace-string? markdown-before))
+                                                                             (conj (Cell/->ProseCell (d/unique-id) markdown-before))
+
+                                                                             true (conj new-cell)
+                                                                             (not (util/whitespace-string? markdown-after))
+                                                                             (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
+                                                       (Cell/focus! new-cell))
                                                      true)))
                                                commands/enter)
                                  "Tab"       commands/indent

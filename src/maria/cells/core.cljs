@@ -4,7 +4,8 @@
             [clojure.string :as string]
             [fast-zip.core :as z]
             [re-db.d :as d]
-            [re-view.core :as v]))
+            [re-view.core :as v]
+            [maria.util :as util]))
 
 (def cell-index (atom {}))
 
@@ -43,7 +44,7 @@
 (defrecord ProseCell [id value]
   ICell
   (empty? [this]
-    (re-find #"^[\s\n]*$" value))
+    (util/whitespace-string? value))
   (emit [this]
     (.replace (->> (string/split value #"\n")
                    (mapv #(string/replace % #"^ ?" "\n;; "))

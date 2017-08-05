@@ -18,3 +18,6 @@
   (-> (subvec the-vector 0 index)
       (into items)
       (into (subvec the-vector (+ index n) (count the-vector)))))
+
+(defn whitespace-string? [s]
+  (re-find #"^[\s\n]*$" s))

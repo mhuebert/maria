@@ -1,4 +1,4 @@
-(ns maria.cells.list-view
+(ns maria.cells.cell-list
   (:require [re-view.core :as v :refer [defview]]
             [maria.cells.code :as code]
             [clojure.core.match :refer-macros [match]]

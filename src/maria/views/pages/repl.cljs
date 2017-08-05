@@ -3,7 +3,7 @@
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
             [maria.cells.codemirror :as codemirror]
-            [maria.cells.list-view :as top-level]
+            [maria.cells.cell-list :as top-level]
             [maria.eval :as eval]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
