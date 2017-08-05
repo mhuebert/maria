@@ -65,17 +65,12 @@
                                               "Enter"     (fn [cm e]
                                                             (let [last-line (.lastLine cm)
                                                                   cursor (.getCursor cm)]
-                                                              (if (and (= (.-line cursor) last-line) (= "" (.getLine cm last-line)))
+                                                              (if (and (= (.-line cursor) last-line)
+                                                                       (= (.-ch cursor) (count (.getLine cm last-line))))
                                                                 (let [doc-empty? (re-find #"^\s*$" (.getValue cm))
                                                                       next-cell (Cell/after cells id)
                                                                       new-cell (when-not (instance? Cell/ProseCell next-cell)
                                                                                  (Cell/->ProseCell (d/unique-id) ""))]
-                                                                  (when-not doc-empty?
-                                                                    (.replaceRange cm ""
-                                                                                   #js {:line (dec last-line)
-                                                                                        :ch   (count (.getLine cm (dec last-line)))}
-                                                                                   #js {:line last-line
-                                                                                        :ch   0}))
                                                                   (splice-self! (vec (keep identity [(when-not doc-empty? (:cell this))
                                                                                                      new-cell])))
                                                                   (Cell/focus! (or new-cell next-cell) :start))
