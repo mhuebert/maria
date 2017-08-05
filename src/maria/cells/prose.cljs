@@ -15,11 +15,35 @@
   (println x)
   x)
 
+(defn split-with-code-cell [splice-self! state {:keys [content cursor-coords]}]
+  (let [$head (.. state -selection -$head)
+        $end (.-$head (.atEnd pm/Selection (.. state -doc)))
+        $start (.-$head (.atStart pm/Selection (.. state -doc)))
+        markdown-before (prose/serialize-selection (.between pm/TextSelection $start $head))
+        markdown-after (prose/serialize-selection (.between pm/TextSelection $head $end))
+        new-cell (if content (first (Cell/from-source content)) (Cell/->CodeCell (d/unique-id) []))]
+    (splice-self! (cond-> []
+                          (not (util/whitespace-string? markdown-before))
+                          (conj (Cell/->ProseCell (d/unique-id) markdown-before))
+
+                          true (conj new-cell)
+                          (not (util/whitespace-string? markdown-after))
+                          (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
+    (Cell/focus! new-cell cursor-coords)))
+
 
 (defview prose-view
   {:key                :id
    :pm-view            #(.pmView (:pm-view @(:view/state %)))
-   :focus              #(.focus (.pmView %1))
+   :focus              (fn [this coords]
+                         (let [pm-view (.pmView this)
+                               state (.-state pm-view)]
+                           (when coords
+                             (.dispatch pm-view (.setSelection (.-tr state)
+                                                               (case coords :start (.atStart pm/Selection (.-doc state))
+                                                                            :end (.atEnd pm/Selection (.-doc state)))))
+                             )
+                           (.focus pm-view)))
    :view/did-mount     #(Cell/mount (:cell %) %)
    :view/should-update #(do false)
    :view/will-unmount  #(Cell/unmount (:cell %))}
@@ -32,39 +56,35 @@
                                  commands/rule-block-code-start
                                  commands/rule-toggle-code
                                  commands/rule-block-heading-start
-                                 commands/rule-paragraph-start]
+                                 commands/rule-paragraph-start
+                                 (pm/InputRule.
+                                   #"^[\(\[\{]$"
+                                   (fn [state [bracket] & _]
+                                     (let [other-bracket ({\( \) \[ \] \{ \}} bracket)]
+                                       (js/setTimeout
+                                         #(split-with-code-cell splice-self! state {:content       (str bracket other-bracket)
+                                                                                    :cursor-coords #js {:line 0
+                                                                                                        :ch   1}}) 0))
+                                     (.-tr state)))]
                  :keymap        {"ArrowUp"   (fn [state dispatch]
                                                (let [pos (.-pos (.-$head (.-selection state)))
                                                      beginning-of-doc? (= pos (.-pos (.-$head (.atStart pm/Selection (.. state -doc)))))]
                                                  (when beginning-of-doc?
                                                    (some-> (Cell/before (:cells this) id)
-                                                           (Cell/focus!)))))
+                                                           (Cell/focus! :end)))))
                                  "ArrowDown" (fn [state dispatch]
                                                (let [pos (.-pos (.-$head (.-selection state)))
                                                      end-of-doc? (= pos (.-pos (.-$head (.atEnd pm/Selection (.. state -doc)))))]
                                                  (when end-of-doc?
                                                    (some-> (Cell/after (:cells this) id)
-                                                           (Cell/focus!)))))
+                                                           (Cell/focus! :start)))))
                                  "Enter"     (commands/chain
                                                (fn [state dispatch]
                                                  (let [root? (= 1 (pm/cursor-depth state))
                                                        paragraph? (pm/is-node-type? state :paragraph)
                                                        empty-node? (commands/empty-node? (pm/cursor-node state))]
                                                    (when (and root? paragraph? empty-node?)
-                                                     (let [$head (.. state -selection -$head)
-                                                           $end (.-$head (.atEnd pm/Selection (.. state -doc)))
-                                                           $start (.-$head (.atStart pm/Selection (.. state -doc)))
-                                                           markdown-before (prose/serialize-selection (.between pm/TextSelection $start $head))
-                                                           markdown-after (prose/serialize-selection (.between pm/TextSelection $head $end))
-                                                           new-cell (Cell/->CodeCell (d/unique-id) [])]
-                                                       (splice-self! (cond-> []
-                                                                             (not (util/whitespace-string? markdown-before))
-                                                                             (conj (Cell/->ProseCell (d/unique-id) markdown-before))
-
-                                                                             true (conj new-cell)
-                                                                             (not (util/whitespace-string? markdown-after))
-                                                                             (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
-                                                       (Cell/focus! new-cell))
+                                                     (split-with-code-cell splice-self! state nil)
                                                      true)))
                                                commands/enter)
                                  "Tab"       commands/indent
@@ -73,7 +93,8 @@
                                                  (when (Cell/empty? (:cell this))
                                                    (let [result (splice-self! [])
                                                          {:keys [before after]} (meta result)]
-                                                     (Cell/focus! (or before after)))
+                                                     (if before (Cell/focus! before :end)
+                                                                (Cell/focus! after :start)))
                                                    true))
                                                commands/backspace)}
                  :on-focus      #(set! exec/current-text {:prosemirror (.pmView (:pm-view @state))
@@ -89,7 +110,8 @@
   [{:keys [cell/prose]}]
   (let [{:keys [splice-self!]} (:cell-view prose)]
     (let [{:keys [before after]} (meta (splice-self! []))]
-      (Cell/focus! (or before after)))))
+      (Cell/focus! (if before (Cell/focus! before :end)
+                              (Cell/focus! after :start))))))
 
 (defcommand :prose/shrink-selection
   {:bindings ["M1-2"

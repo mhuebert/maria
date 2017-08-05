@@ -15,14 +15,24 @@
   x)
 
 (defview cell-list
-  {:view/initial-state      (fn [{:keys [value]}]
-                              {:source value
-                               :cells  (Cell/ensure-cells (Cell/from-source value))})
+  {:view/initial-state      (fn [{source :value}]
+                              {:last-update source
+                               :cells       (Cell/ensure-cells (Cell/from-source source))})
    :view/did-mount          (fn [{:keys [view/state]}]
-                              (Cell/focus! (first (:cells @state))))
+                              (Cell/focus! (first (:cells @state)) :start))
+   :view/will-receive-props (fn [{source :value
+                                  state  :view/state}]
+                              ;; normally, the source we are passed from above during editing
+                              ;; is the source we last passed upwards in :will-receive-state.
+                              ;; if these are different, the document has changed and we
+                              ;; should re-parse from scratch.
+                              (when (not= source (:last-confirmed-source @state))
+                                (swap! state assoc :cells (Cell/ensure-cells (Cell/from-source source)))))
    :view/will-receive-state (fn [{:keys [view/state view/prev-state on-update]}]
                               (when-not (= (:cells @state) (:cells prev-state))
-                                (on-update (Cell/emit-many (:cells @state)))))}
+                                (let [updated-source (Cell/emit-many (:cells @state))]
+                                  (v/swap-silently! state assoc :last-confirmed-source updated-source)
+                                  (on-update updated-source))))}
   [{:keys [view/state]}]
   (let [{:keys [cells]} @state
         splice! #(swap! state assoc :cells (Cell/splice-by-id (:cells @state) %1 %2))]

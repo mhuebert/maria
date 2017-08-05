@@ -12,9 +12,11 @@
 (defn get-view [cell]
   (@cell-index (:id cell)))
 
-(defn focus! [cell]
-  (v/flush!)
-  (.focus (get-view cell)))
+(defn focus!
+  ([cell] (focus! cell nil))
+  ([cell coords]
+   (v/flush!)
+   (.focus (get-view cell) coords)))
 
 (defn mount [cell view]
   (swap! cell-index assoc (:id cell) view))

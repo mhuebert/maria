@@ -11,7 +11,8 @@
    :view/did-mount     #(Cell/mount (:cell %) %)
    :view/will-unmount  #(Cell/unmount (:cell %))
    :view/should-update #(do false)
-   :focus              #(.focus (:editor-view @(:view/state %)))
+   :focus              (fn [this coords]
+                         (.focus (:editor-view @(:view/state this)) coords))
    :view/initial-state {:eval-log []}}
   [{:keys [view/state on-ast splice-self! cells id] :as this}]
   [:.flex.pv3.cursor-text
@@ -22,7 +23,7 @@
                         :keymap              {"Backspace" (fn [cm e]
                                                             (if (= "" (.getValue cm))
                                                               (let [{:keys [before after]} (meta (splice-self! []))]
-                                                                (Cell/focus! (or before after)))
+                                                                (Cell/focus! (or before after) :end))
                                                               js/CodeMirror.Pass))
                                               ";"         (fn [cm e]
                                                             (let [line (.-line (.getCursor cm))]
@@ -51,7 +52,7 @@
                                                             (let [cursor (.getCursor cm)]
                                                               (if (= [0 0] [(.-line cursor) (.-ch cursor)])
                                                                 (some-> (Cell/before (:cells this) id)
-                                                                        (Cell/focus!))
+                                                                        (Cell/focus! :end))
                                                                 js/CodeMirror.Pass)))
                                               "Down"      (fn [cm e]
                                                             (let [cursor (.getCursor cm)]
@@ -59,7 +60,7 @@
                                                                       (count (.getLine cm (.lastLine cm)))]
                                                                      [(.-line cursor) (.-ch cursor)])
                                                                 (some-> (Cell/after (:cells this) id)
-                                                                        (Cell/focus!))
+                                                                        (Cell/focus! :start))
                                                                 js/CodeMirror.Pass)))
                                               "Enter"     (fn [cm e]
                                                             (let [last-line (.lastLine cm)
@@ -77,7 +78,7 @@
                                                                                         :ch   0}))
                                                                   (splice-self! (vec (keep identity [(when-not doc-empty? (:cell this))
                                                                                                      new-cell])))
-                                                                  (Cell/focus! (or new-cell next-cell)))
+                                                                  (Cell/focus! (or new-cell next-cell) :start))
                                                                 js/CodeMirror.Pass)))}
                         :ref                 #(v/swap-silently! state assoc :editor-view %)
                         :default-value       (Cell/emit (:cell this))
