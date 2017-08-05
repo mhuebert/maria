@@ -8,8 +8,8 @@
 
 (defview code-view
   {:key                :id
-   :view/did-mount     #(Cell/mount (:cell %) %)
-   :view/will-unmount  #(Cell/unmount (:cell %))
+   :view/did-mount     #(Cell/mount (:id %) %)
+   :view/will-unmount  #(Cell/unmount (:id %))
    :view/should-update #(do false)
    :focus              (fn [this coords]
                          (.focus (:editor-view @(:view/state this)) coords))
@@ -84,7 +84,7 @@
                         :default-value       (Cell/emit (:cell this))
                         :on-ast              on-ast
                         :on-eval-result      #(swap! state update :eval-log conj %)
-                        :capture-event/focus #(set! exec/current-editor (.getEditor %2))
-                        :capture-event/blur  #(set! exec/current-editor nil)})]
+                        :capture-event/focus #(set! exec/code-cell {:editor (.getEditor %2)})
+                        :capture-event/blur  #(set! exec/code-cell nil)})]
 
    [:.w-50.flex-none.code.overflow-hidden (some-> (last (:eval-log @state)) (repl-values/display-result))]])

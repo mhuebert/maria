@@ -50,7 +50,7 @@
 
 (defn add-to-repl-out! [result]
   (let [result (assoc result :id (d/unique-id))]
-    (when-let [cb (some-> exec/current-editor :view :on-eval-result)]
+    (when-let [cb (some-> exec/code-cell :editor :view :on-eval-result)]
       (cb result))
     (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]])))
 
@@ -128,8 +128,8 @@
                  top-level/cell-list
                  codemirror/editor) {:ref                 #(when % (swap! state assoc :repl-editor %))
                                      :auto-focus          true
-                                     :capture-event/focus #(set! exec/current-editor (.getEditor %2))
-                                     :capture-event/blur  #(set! exec/current-editor nil)
+                                     :capture-event/focus #(set! exec/code-cell {:editor (.getEditor %2)})
+                                     :capture-event/blur  #(set! exec/code-cell nil)
                                      :on-update           (fn [source]
                                                             (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                                      :source-id           id

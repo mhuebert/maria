@@ -18,11 +18,11 @@
    (v/flush!)
    (.focus (get-view cell) coords)))
 
-(defn mount [cell view]
-  (swap! cell-index assoc (:id cell) view))
+(defn mount [id view]
+  (swap! cell-index assoc id view))
 
-(defn unmount [cell]
-  (swap! cell-index dissoc (:id cell)))
+(defn unmount [id]
+  (swap! cell-index dissoc id))
 
 (defprotocol ICell
   (empty? [this])

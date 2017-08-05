@@ -5,15 +5,15 @@
             [clojure.set :as set]))
 
 (def current-doc-toolbar nil)
-(def current-editor nil)
-(def current-text nil)
+(def code-cell nil)
+(def text-cell nil)
 
 (defn get-context []
   ;; TODO
   ;; change :editor to :cell/code
-  {:editor      current-editor
-   :doc-toolbar current-doc-toolbar
-   :cell/prose  current-text
+  {:doc-toolbar current-doc-toolbar
+   :cell/code   code-cell
+   :cell/prose  text-cell
    :signed-in?  (d/get :auth-public :signed-in?)})
 
 (defn get-command
