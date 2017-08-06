@@ -1,6 +1,7 @@
 (ns maria.live.source-lookups
-  (:require [cljs.tools.reader :as r]
-            [cljs.tools.reader.reader-types :as rt]
+  (:require [cljs.tools.reader.reader-types :as rt]
+            [magic-tree.parse :as parse]
+            [magic-tree.core :as tree]
             [clojure.string :as string]
             [maria.eval :as e]
             [cljs-live.eval :as cljs-eval]
@@ -10,6 +11,9 @@
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
+
+(defn read-node [reader]
+  (parse/parse-next reader))
 
 (defn index-position
   "Given an index into a string, returns the 1-indexed line+column position"
@@ -33,9 +37,23 @@
 (defn source-of-form-at-position
   "Given a 1-indexed position in a source string, return the first form."
   [source position]
-  (let [reader (rt/source-logging-push-back-reader (source-from source position))
-        form (r/read reader)]
-    (:source (meta form))))
+  (let [reader (parse/indexing-reader (source-from source position))
+        node (read-node reader)]
+    (tree/string node)))
+
+(defn source-of-top-level-form
+  "Given a 1-indexed position in a source string, return the first form."
+  [source {:keys [line] :as the-var}]
+  (let [line (dec line)
+        reader (parse/indexing-reader source #_(source-from source (assoc position :column 1)))]
+    (loop []
+      (let [the-node (read-node reader)]
+        (cond (nil? the-node)
+              nil
+              (and (>= (:end-line the-node) line)
+                   (not (tree/whitespace? the-node)))
+              (tree/string the-node)
+              :else (recur))))))
 
 (defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]
   (or (some->> intermediate-values
@@ -90,14 +108,14 @@
                                (string/replace path "$macros" ""))
           file (re-find (re-pattern (str namespace-path ".*")) file)]
       (if-let [source (get @c/cljs-cache file)]
-        (cb {:value (source-of-form-at-position source the-var)})
+        (cb {:value (source-of-top-level-form source the-var)})
         (xhr/send (str source-path "/" file)
                   (fn [e]
                     (let [target (.-target e)]
                       (if (.isSuccess target)
                         (let [source (.getResponseText target)]
                           ;; strip source to line/col from meta
-                          (cb {:value (source-of-form-at-position source meta)}))
+                          (cb {:value (source-of-top-level-form source meta)}))
                         (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
                   "GET")))
     (cb {:error (str "File not specified for `" name "`")})))

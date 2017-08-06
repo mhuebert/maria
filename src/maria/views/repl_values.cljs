@@ -111,7 +111,11 @@
            warnings
            show-source?
            source] :as result}]
-  (let [error? (or error (seq warnings))]
+  (let [warnings (sequence (comp (distinct)
+                                 (map messages/reformat-warning)
+                                 (keep identity)) warnings)
+        error? (or error (seq warnings))]
+
     (when error
       (.error js/console error))
     [:div.overflow-hidden
@@ -121,7 +125,7 @@
      [:.ws-prewrap.relative                                 ;.mv3.pv1
       (if error?
         [:.ph3.overflow-auto
-         (->> (for [message (concat (map messages/reformat-warning (distinct warnings))
+         (->> (for [message (concat warnings
                                     (messages/reformat-error result))
                     :when message]
                 [:.mv2 message])
