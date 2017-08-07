@@ -6,7 +6,8 @@
             [re-db.d :as d]
             [re-view.core :as v]
             [maria.util :as util]
-            [re-view-prosemirror.core :as pm]))
+            [re-view-prosemirror.core :as pm]
+            [maria.cells.code-eval :as code-eval]))
 
 (def cell-index (atom {}))
 
@@ -47,7 +48,10 @@
   (emit [this]
     (when-not (empty? this)
       (str (->> (mapv (comp string/trim-newline tree/string) value)
-                (string/join "\n\n"))))))
+                (string/join "\n\n")))))
+  ICode
+  (eval [this]
+    (code-eval/eval-str id (emit this))))
 
 (defrecord ProseCell [id value]
   ICell
@@ -63,7 +67,9 @@
     (when-let [prose-view (.pmView (get-view this))]
       (let [state (.-state prose-view)
             dispatch (.-dispatch prose-view)]
-        (dispatch (.insert (.-tr state) 0 (.createAndFill (pm/get-node state :paragraph)))))))
+        (dispatch (-> (.-tr state)
+                      (.insert 0 (.createAndFill (pm/get-node state :paragraph)))
+                      (.scrollIntoView))))))
   (trim-paragraph-left [this]
     (when-let [prose-view (:prose-editor-view @(:view/state (get-view this)))]
       (let [new-value (.replace value #"^[\n\s]*" "")]

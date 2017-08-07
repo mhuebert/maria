@@ -4,6 +4,7 @@
             [maria.commands.which-key :as which-key]
             [maria.cells.codemirror :as codemirror]
             [maria.cells.cell-list :as top-level]
+            [maria.cells.code-eval :as code-eval]
             [maria.eval :as eval]
             [cljs-live.compiler :as c]
             [maria.repl-specials]
@@ -46,26 +47,6 @@
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
-
-
-(defn add-to-repl-out! [result]
-  (let [result (assoc result :id (d/unique-id))]
-    ;; TODO
-    ;; handle this differently.
-    ;; `eval` commands should be aware of the ID of the cell they are eval'ing,
-    ;; and shove values into the appropriate place instead of just calling add-to-repl-out!.
-    (when-let [cb (some-> exec/code-cell :editor :view :on-eval-result)]
-      (cb result))
-    (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]])))
-
-(defn eval-str-to-repl [source]
-  (add-to-repl-out! (-> (eval/eval-str source)
-                        (assoc :source source))))
-
-(defn eval-to-repl [form]
-  (add-to-repl-out! (-> (eval/eval form)
-                        (assoc :form form))))
-
 
 
 (def result-toolbar
@@ -132,8 +113,8 @@
                  top-level/cell-list
                  codemirror/editor) {:ref                 #(when % (swap! state assoc :repl-editor %))
                                      :auto-focus          true
-                                     :capture-event/focus #(set! exec/code-cell {:editor (.getEditor %2)})
-                                     :capture-event/blur  #(set! exec/code-cell nil)
+                                     :capture-event/focus #(exec/set-context! :cell/code {:editor (.getEditor %2)})
+                                     :capture-event/blur  #(exec/set-context! :cell/code nil)
                                      :on-update           (fn [source]
                                                             (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                                      :source-id           id

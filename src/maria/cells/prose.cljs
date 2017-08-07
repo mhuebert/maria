@@ -84,8 +84,8 @@
                                (-> this :view/state (deref) :last-update)))
    :view/will-unmount  (fn [this] (Cell/unmount (:id this))
                          ;; prosemirror doesn't fire `blur` command when unmounted
-                         (when (= (:cell-view exec/text-cell) this)
-                           (set! exec/text-cell nil)))}
+                         (when (= (:cell-view (:cell/text @exec/context)) this)
+                           (exec/set-context! :cell/text nil)))}
   [{:keys [view/state on-update splice-self! cell id] :as this}]
   (prose/Editor {:value       (:value cell)
                  :class       " serif f4 ph3 w-50 cf"
@@ -133,9 +133,9 @@
                                                         (Cell/focus! before :end))
                                                       :else false))
                                               commands/backspace)}
-                 :on-focus    #(set! exec/text-cell {:prosemirror (.pmView (:prose-editor-view @state))
-                                                     :cell-view   this})
-                 :on-blur     #(set! exec/text-cell nil)
+                 :on-focus    #(exec/set-context! :cell/text {:prosemirror (.pmView (:prose-editor-view @state))
+                                                              :cell-view   this})
+                 :on-blur     #(exec/set-context! :cell/text nil)
                  :ref         #(v/swap-silently! state assoc :prose-editor-view %)
                  :on-dispatch #(let [out (.serialize (:prose-editor-view @state))]
                                  (v/swap-silently! state assoc :last-update out)

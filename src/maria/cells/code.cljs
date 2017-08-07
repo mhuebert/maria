@@ -6,7 +6,9 @@
             [re-view-prosemirror.core :as pm]
             [re-view-prosemirror.commands :as pm-commands]
             [re-db.d :as d]
-            [maria.cells.core :as Cell]))
+            [maria.cells.core :as Cell]
+            [maria.eval :as eval]))
+
 
 (defn edge-left [this id cm e]
   (let [cursor (.getCursor cm)]
@@ -91,7 +93,9 @@
                         :default-value       (Cell/emit (:cell this))
                         :on-ast              on-ast
                         :on-eval-result      #(swap! state update :eval-log conj %)
-                        :capture-event/focus #(set! exec/code-cell {:editor (.getEditor %2)})
-                        :capture-event/blur  #(set! exec/code-cell nil)})]
+                        :capture-event/focus #(exec/set-context! :cell/code {:editor    (.getEditor %2)
+                                                                             :cell-view this})
+                        :capture-event/blur  #(exec/set-context! :cell/code nil)})]
 
-   [:.w-50.flex-none.code.overflow-hidden (some-> (last (:eval-log @state)) (repl-values/display-result))]])
+   [:.w-50.flex-none.code.overflow-hidden (some-> (peek (d/get id :eval-log))
+                                                  (repl-values/display-result))]])

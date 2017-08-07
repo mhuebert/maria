@@ -4,17 +4,13 @@
             [maria.commands.registry :as registry]
             [clojure.set :as set]))
 
-(def current-doc-toolbar nil)
-(def code-cell nil)
-(def text-cell nil)
+(def context (volatile! {}))
+
+(defn set-context! [key value]
+  (vswap! context assoc key value))
 
 (defn get-context []
-  ;; TODO
-  ;; change :editor to :cell/code
-  {:doc-toolbar current-doc-toolbar
-   :cell/code   code-cell
-   :cell/prose  text-cell
-   :signed-in?  (d/get :auth-public :signed-in?)})
+  (assoc @context :signed-in? (d/get :auth-public :signed-in?)))
 
 (defn get-command
   "Returns command associated with name, if it exists.

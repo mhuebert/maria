@@ -5,7 +5,8 @@
             [cljsjs.markdown-it]
             [maria.cells.prose :as prose]
             [re-db.d :as d]
-            [maria.cells.core :as Cell]))
+            [maria.cells.core :as Cell]
+            [maria.commands.exec :as exec]))
 
 
 (d/transact! [[:db/add :feature :in-place-eval true]])
@@ -18,8 +19,10 @@
   {:view/initial-state      (fn [{source :value}]
                               {:last-update source
                                :cells       (Cell/ensure-cells (Cell/from-source source))})
-   :view/did-mount          (fn [{:keys [view/state]}]
-                              (Cell/focus! (first (:cells @state)) :start))
+   :view/did-mount          (fn [{:keys [view/state] :as this}]
+                              (Cell/focus! (first (:cells @state)) :start)
+                              (exec/set-context! :cell-list this))
+   :view/will-unmount       #(exec/set-context! :cell-list nil)
    :view/will-receive-props (fn [{source :value
                                   state  :view/state}]
                               ;; normally, the source we are passed from above during editing
@@ -49,11 +52,11 @@
                                            ([value]
                                             (splice 0 value))
                                            ([n value]
-                                              (:cells (swap! state update :cells Cell/splice-by-id id n value))))
+                                            (:cells (swap! state update :cells Cell/splice-by-id id n value))))
                            :on-update    #(swap! state update :cells Cell/splice-by-id id [(Cell/->ProseCell id %)])}]
                 (condp instance? cell
                   Cell/ProseCell (prose/prose-cell-view (assoc props
-                                                     :on-update #(splice! id [(Cell/->ProseCell id %)])))
+                                                          :on-update #(splice! id [(Cell/->ProseCell id %)])))
                   Cell/CodeCell (code/code-view (assoc props
                                                   :on-ast #(splice! id [(Cell/->CodeCell id (:value %))]))))))))]))
 

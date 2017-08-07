@@ -123,8 +123,8 @@
    ;; hold off and use M-X-style command for this.
    :bindings       ["M1-Shift-B"]
    :intercept-when true
-   :when           :doc-toolbar}
-  [{{:keys [view/state get-editor id]} :doc-toolbar}]
+   :when           :current-doc}
+  [{{:keys [view/state get-editor id]} :current-doc}]
   (github/clear-new!)
   ;(some-> title-input (.focus))
   (when (and (= id "new") get-editor)
@@ -139,27 +139,27 @@
   {:bindings       ["M1-S"]
    :intercept-when true
    :when           #(and (:signed-in? %)
-                         (#{:create :save} (persistence-mode (:doc-toolbar %))))}
-  [{:keys [doc-toolbar]}]
-  (persist! doc-toolbar))
+                         (#{:create :save} (persistence-mode (:current-doc %))))}
+  [{:keys [current-doc]}]
+  (persist! current-doc))
 
 (defcommand :doc/save-a-copy
   "Save a new copy of a project"
   {:bindings       ["M1-Shift-S"]
    :intercept-when true
    :when           #(and (:signed-in? %)
-                         (get-in % [:doc-toolbar :project :persisted])
-                         (valid-content? (:doc-toolbar %)))}
-  [{:keys [doc-toolbar]}]
-  (copy! doc-toolbar))
+                         (get-in % [:current-doc :project :persisted])
+                         (valid-content? (:current-doc %)))}
+  [{:keys [current-doc]}]
+  (copy! current-doc))
 
 (defcommand :doc/revert
-  {:when (fn [{:keys [doc-toolbar]}]
-           (and (get-in doc-toolbar [:project :persisted])
-                (unsaved-changes? doc-toolbar)))}
+  {:when (fn [{:keys [current-doc]}]
+           (and (get-in current-doc [:project :persisted])
+                (unsaved-changes? current-doc)))}
   [{{{persisted :persisted} :project
      filename               :filename
-     get-editor             :get-editor} :doc-toolbar}]
+     get-editor             :get-editor} :current-doc}]
   (d/transact! [[:db/add (:id persisted) :local persisted]])
   (some-> (get-editor)
           (.setValueAndRefresh (get-in persisted [:files filename :content]))))
@@ -167,8 +167,8 @@
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
-                              (set! exec/current-doc-toolbar this))
-   :view/will-unmount       #(set! exec/current-doc-toolbar nil)
+                              (exec/set-context! :current-doc this))
+   :view/will-unmount       #(exec/set-context! :current-doc nil)
    :view/will-receive-props (fn [{filename                  :filename
                                   {prev-filename :filename} :view/prev-props
                                   :as                       this}]

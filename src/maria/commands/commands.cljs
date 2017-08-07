@@ -1,13 +1,14 @@
 (ns maria.commands.commands
   (:require [maria.commands.registry :refer-macros [defcommand]]
-            [maria.views.pages.repl :as repl]
+            [maria.cells.code-eval :as code-cell]
             [maria.repl-specials :as repl-specials]
             [maria.eval :as eval]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
             [magic-tree-codemirror.edit :as edit]
             [fast-zip.core :as z]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [maria.cells.core :as Cell]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -119,14 +120,18 @@
                              :bracket-loc
                              (tree/string (:ns @eval/c-env))))]
 
-    (repl/eval-str-to-repl source)))
+    (code-cell/eval-str (:id (:cell-view code)) source)))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
   {:bindings ["M1-M2-Enter"]
-   :when     :cell/code}
-  [{:keys [cell/code]}]
-  (repl/eval-str-to-repl (.getValue (:editor code))))
+   :when     #(or (:cell-list %) (:cell/code %))}
+  [{:keys [cell-list cell/code]}]
+  (if cell-list
+    (doseq [cell (:cells @(:view/state cell-list))]
+      (when (satisfies? Cell/ICode cell)
+        (Cell/eval cell)))
+    (code-cell/eval-str (:id (:cell-view code)) (.getValue (:editor code)))))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"
@@ -135,30 +140,29 @@
     [{:keys [cell/code]}]
     (eval-scope (:editor code) :bracket))
 
-(defn get-info [node]
-  (let [sexp (some-> node tree/sexp)]
-    (if (and (symbol? sexp) (repl-specials/resolve-var-or-special eval/c-state eval/c-env sexp))
-      (repl/eval-to-repl (list 'doc sexp))
-      (repl/eval-to-repl (list 'maria.messages/what-is (list 'quote sexp))))))
-
 (defcommand :meta/info
   "Show documentation for current form"
   {:bindings ["M1-I"
               "M1-Shift-I"]
    :when     #(some-> % :cell/code :magic/cursor :bracket-loc z/node)}
   [{:keys [cell/code]}]
-  (get-info (some-> (:editor code) :magic/cursor :bracket-loc z/node)))
+  (let [form (some-> (:editor code) :magic/cursor :bracket-loc z/node tree/sexp)
+        id (:id (:cell-view code))]
+    (if (and (symbol? form) (repl-specials/resolve-var-or-special eval/c-state eval/c-env form))
+      (code-cell/eval-form id (list 'doc form))
+      (code-cell/eval-form id (list 'maria.messages/what-is (list 'quote form))))))
 
 (defcommand :meta/source
   "Show source code for the current var"
   {:bindings ["M1-Shift-S"]
    :when     #(some->> % :cell/code :magic/cursor :bracket-loc z/node tree/sexp symbol?)}
   [{:keys [cell/code]}]
-  (repl/eval-to-repl (list 'source (some-> (:editor code) :magic/cursor :bracket-loc z/node tree/sexp))))
+  (code-cell/eval-form (:id (:cell-view code)) (list 'source (some-> (:editor code) :magic/cursor :bracket-loc z/node tree/sexp))))
 
 (defcommand :meta/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]}
   [{:keys [cell/code]}]
-  (repl/add-to-repl-out! (some-> (:editor code) :magic/cursor :bracket-loc z/node tree/string eval/compile-str (set/rename-keys {:compiled-js :value}))))
+  (code-cell/log-eval-result! (:id (:cell-view code))
+                         (some-> (:editor code) :magic/cursor :bracket-loc z/node tree/string eval/compile-str (set/rename-keys {:compiled-js :value}))))
 
