@@ -15,7 +15,7 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.23"]
+                 [re-view "0.3.24"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6"]
                  [re-view-prosemirror "0.1.6"]

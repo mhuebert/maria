@@ -16,6 +16,7 @@
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
         (set? value) ["#{" "}"]
+        (map? value) ["{" "}"]
         :else ["(" ")"]))
 
 (declare format-value)
@@ -39,15 +40,43 @@
 (def expander-label :.inline-flex.items-center)
 
 (defview format-collection
-  {:view/initial-state 20}
-  [{limit :view/state} value]
-  (let [[lb rb] (bracket-type value)
-        more? (= (count (take (inc @limit) value)) (inc @limit))]
-    [:div
-     [:span.output-bracket lb]
-     (interpose " " (v-util/map-with-keys format-value (take @limit value)))
-     (when more? [expander-outter {:on-click #(swap! limit + 20)} [expander-label "…"]])
-     [:span.output-bracket rb]]))
+  {:view/initial-state {:limit-n     20
+                        :limit-depth 5}}
+  [{state :view/state} depth value]
+  (let [{:keys [limit-n limit-depth]} @state
+        [lb rb] (bracket-type value)
+        more? (= (count (take (inc limit-n) value)) (inc limit-n))]
+    (if (= depth limit-depth)
+      [:div [expander-outter {:on-click #(swap! state update :limit-depth inc)} [expander-label "…"]]]
+      [:div
+       [:span.output-bracket lb]
+       (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))
+       (when more? [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]])
+       [:span.output-bracket rb]])))
+
+(defview format-map
+  {:view/initial-state {:limit-n     20
+                        :limit-depth 1}}
+  [{state :view/state} depth value]
+  (let [{:keys [limit-n limit-depth]} @state
+        more? (= (count (take (inc limit-n) value)) (inc limit-n))
+        last-n (if more? limit-n (count value))]
+    (if (> depth limit-depth)
+      [expander-outter {:on-click #(swap! state assoc :limit-depth (inc depth))} [expander-label "…"]]
+      [:table.fl.relative.mh2.cb
+       [:tbody
+        (->> (take limit-n value)
+             (map-indexed (fn [n [a b]]
+                            [:tr
+                             {:key n}
+                             [:td.v-top
+                              (if (= n 0) "{" " ")
+                              (format-value (inc depth) a)]
+                             [:td.v-top
+                              (format-value (inc depth) b)
+                              (when (= (inc n) last-n) "}")]])))
+        (when more? [:tr [:td {:col-span 2}
+                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]]]])]])))
 
 (defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
@@ -71,30 +100,42 @@
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
-(defn format-value [value]
-  [:span
-   (case (messages/kind value)
+(def ^:dynamic *format-depth* 0)
 
-     :maria.kinds/shape (shapes/show value)
+(defn format-value
+  ([value] (format-value 1 value))
+  ([depth value]
+   [:span
+    (case (messages/kind value)
 
-     (:maria.kinds/vector
-       :maria.kinds/sequence
-       :maria.kinds/set) (format-collection value)
+      :maria.kinds/shape (shapes/show value)
 
-     :maria.kinds/var (.toString value)
+      (:maria.kinds/vector
+        :maria.kinds/sequence
+        :maria.kinds/set) (format-collection nil depth value)
 
-     :maria.kinds/nil "nil"
+      :maria.kinds/map (format-map nil depth value)
 
-     :maria.kinds/function (format-function value)
+      :maria.kinds/var (.toString value)
 
-     :maria.kinds/atom (format-value (gobj/get value "state"))
+      :maria.kinds/nil "nil"
 
-     (cond
-       (v/is-react-element? value) value
-       (instance? cljs.core/Namespace value) (str value)
-       (instance? Deferred value) (display-deferred {:deferred value})
-       :else (try (string/trim-newline (with-out-str (pprint value)))
-                  (catch js/Error e "error printing result"))))])
+      :maria.kinds/function (format-function value)
+
+      :maria.kinds/atom (format-value depth (gobj/get value "state"))
+
+      (cond
+        (v/is-react-element? value) value
+        (instance? cljs.core/Namespace value) (str value)
+        (instance? Deferred value) (display-deferred {:deferred value})
+        :else (try (string/trim-newline (with-out-str (pprint value)))
+                   (catch js/Error e
+                     (do "error printing result"
+                         (.log js/console e)
+                         (prn (type value))
+                         (prn :kind (messages/kind value))
+                         (.log js/console value)
+                         (prn value))))))]))
 
 (defn display-source [{:keys [source error error-position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3

@@ -9,22 +9,27 @@
             [maria.cells.core :as Cell]
             [maria.eval :as eval]))
 
+(defn at-start? [cm]
+  (let [cursor (.getCursor cm)]
+    (= [0 0] [(.-line cursor) (.-ch cursor)])))
+
+(defn at-end? [cm]
+  (let [cursor (.getCursor cm)]
+    (= [(.lastLine cm)
+        (count (.getLine cm (.lastLine cm)))]
+       [(.-line cursor) (.-ch cursor)])))
 
 (defn edge-left [this id cm e]
-  (let [cursor (.getCursor cm)]
-    (if (= [0 0] [(.-line cursor) (.-ch cursor)])
-      (some-> (Cell/before (:cells this) id)
-              (Cell/focus! :end))
-      js/CodeMirror.Pass)))
+  (if (at-start? cm)
+    (some-> (Cell/before (:cells this) id)
+            (Cell/focus! :end))
+    js/CodeMirror.Pass))
 
 (defn edge-right [this id cm e]
-  (let [cursor (.getCursor cm)]
-    (if (= [(.lastLine cm)
-            (count (.getLine cm (.lastLine cm)))]
-           [(.-line cursor) (.-ch cursor)])
-      (some-> (Cell/after (:cells this) id)
-              (Cell/focus! :start))
-      js/CodeMirror.Pass)))
+  (if (at-end? cm)
+    (some-> (Cell/after (:cells this) id)
+            (Cell/focus! :start))
+    js/CodeMirror.Pass))
 
 (defview code-view
   {:key                :id
@@ -43,7 +48,7 @@
                         :keymap              {"Backspace" (fn [cm e]
                                                             (let [before (Cell/before (:cells this) id)]
                                                               (cond
-                                                                (Cell/empty? before)
+                                                                (and (at-start? cm) (Cell/empty? before))
                                                                 (splice-self! -1 [(:cell this)])
 
                                                                 (Cell/empty? (:cell this))

@@ -37,6 +37,9 @@
   (prepend-paragraph [this])
   (trim-paragraph-left [this]))
 
+(extend-type nil ICell
+  (empty? [this] true))
+
 ;; TODO
 ;; eval cells to re-db, so that we can track prev. evaluation results
 ;; and get rid of the existing weird eval tracking code.
