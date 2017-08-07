@@ -6,7 +6,8 @@
             [maria.cells.prose :as prose]
             [re-db.d :as d]
             [maria.cells.core :as Cell]
-            [maria.commands.exec :as exec]))
+            [maria.commands.exec :as exec]
+            [maria.cells.code-eval :as code-eval]))
 
 
 (d/transact! [[:db/add :feature :in-place-eval true]])
@@ -21,7 +22,9 @@
                                :cells       (Cell/ensure-cells (Cell/from-source source))})
    :view/did-mount          (fn [{:keys [view/state] :as this}]
                               (Cell/focus! (first (:cells @state)) :start)
-                              (exec/set-context! :cell-list this))
+                              (exec/set-context! :cell-list this)
+                              (when (= (str (d/get-in :router/location [:query :eval])) "true")
+                                (code-eval/on-load #(exec/exec-command-name :eval/doc))))
    :view/will-unmount       #(exec/set-context! :cell-list nil)
    :view/will-receive-props (fn [{source :value
                                   state  :view/state}]

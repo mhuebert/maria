@@ -2,6 +2,7 @@
   (:require [cljsjs.react]
             [cljsjs.react.dom]
             [maria.views.pages.repl :as repl]
+            [maria.cells.code-eval :as code-eval]
             [cljs.core.match :refer-macros [match]]
 
             [maria.commands.exec]
@@ -48,9 +49,9 @@
 (defn main []
 
   (local/init-storage "new" github/blank)
-  (repl/init)
+  (code-eval/init)
 
-  (v/render-to-dom (repl/layout {:window-id 1}) "maria-env")
+  (v/render-to-dom (repl/layout {}) "maria-env")
 
   (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))

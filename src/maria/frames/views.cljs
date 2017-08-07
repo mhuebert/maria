@@ -40,9 +40,9 @@
 
 (defview editor-frame-view
   {:spec/props {:default-value :String}}
-  [{:keys [entity-id db/transactions]}]
+  [{:keys [current-entity db/transactions]}]
   (frame-view {:db/transactions (into [(or (d/entity :auth-public)
                                            [:db/retract-entity :auth-public])
-                                       (some-> entity-id (d/entity))]
+                                       (some-> current-entity (d/entity))]
                                       transactions)
-               :on-message      (actions/handle-message entity-id)}))
+               :on-message      (actions/handle-message current-entity)}))

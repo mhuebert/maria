@@ -5,8 +5,6 @@
             [maria.cells.codemirror :as codemirror]
             [maria.cells.cell-list :as top-level]
             [maria.cells.code-eval :as code-eval]
-            [maria.eval :as eval]
-            [cljs-live.compiler :as c]
             [maria.repl-specials]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-ui :as repl-ui]
@@ -16,34 +14,9 @@
             [maria.commands.exec :as exec])
   (:require-macros [maria.commands.registry :refer [defcommand]]))
 
-(defn init []
-  #_(set! cljs-live.compiler/debug? true)
-  (let [bundles ["cljs.core"
-                 "maria.user"
-                 "cljs.spec.alpha"
-                 #_"reagent.core"
-                 #_"bach-leipzig"]]
-    (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
-                     (fn []
-                       (eval/eval '(require '[cljs.core :include-macros true]))
-                       (eval/eval '(require '[maria.user :include-macros true]))
-                       (eval/eval '(inject 'cljs.core '{what-is   maria.messages/what-is
-                                                        load-gist maria.user.loaders/load-gist
-                                                        load-js   maria.user.loaders/load-js
-                                                        load-npm  maria.user.loaders/load-npm
-                                                        html      re-view-hiccup.core/element}))
-                       (eval/eval '(in-ns maria.user))
-
-                       (add-watch eval/c-env :log-namespace-changes
-                                  (fn [_ _ {prev-ns :ns} {ns :ns}]
-                                    (when (not= prev-ns ns)
-                                      (js/setTimeout #(d/transact! [[:db/update-attr :repl/state :eval-log
-                                                                     conj
-                                                                     {:id    (d/unique-id)
-                                                                      :value (repl-ui/plain [:span.gray "Namespace: "] (str ns))}]]) 0))))
-                       (d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
-                                                                      :value (repl-ui/plain [:span.gray "Ready."])}]]])))))
-
+(defonce _
+         (code-eval/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
+                                                                            :value (repl-ui/plain [:span.gray "Ready."])}]]])))
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -133,7 +106,7 @@
       :style {:min-height "100%"}}
      [:.relative.border-box.flex.flex-column
       {:class (if in-place-eval "w-100" "w-50 cm-ph3 cm-h-100")}
-      (when-let [segments (d/get :layout window-id)]
+      (when-let [segments (d/get :router/location :segments)]
         (match segments
                ["new"] (edit-file {:id "new"})
                ["gist" id filename] (edit-file {:id       id
