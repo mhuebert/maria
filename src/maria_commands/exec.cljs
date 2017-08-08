@@ -10,13 +10,12 @@
   (vswap! context merge values))
 
 (defn get-context []
-  (let [{:keys [cell-view] :as context} @context
-        cell (some-> cell-view (:cell))
-        editor (some-> cell-view (.getEditor))]
-    (merge
-      (assoc context :signed-in? (d/get :auth-public :signed-in?)
-                     :editor editor
-                     :cell cell))))
+  (let [{:keys [cell-view] :as context} @context]
+    (-> context
+        (assoc :signed-in? (d/get :auth-public :signed-in?))
+        (cond-> cell-view
+                (merge {:editor (.getEditor cell-view)}
+                       (select-keys cell-view [:cell :cells]))))))
 
 (defn get-command
   "Returns command associated with name, if it exists.

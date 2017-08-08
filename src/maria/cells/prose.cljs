@@ -1,4 +1,4 @@
-(ns maria.cells.prose-view
+(ns maria.cells.prose
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
@@ -6,36 +6,37 @@
             [maria.commands.prose :as prose-commands]
             [maria-commands.exec :as exec]
             [re-view-prosemirror.commands :as commands]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.cells.core :as Cell]
+            [clojure.string :as string]))
 
-
-
-(defview prose-cell-view
+(defview prose-view
   {:key                :id
-   :pm-view            (fn [this] (.pmView (:prose-editor-view @(:view/state this))))
    :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
    :scroll-into-view   #(apply-command (.getEditor %) (fn [state dispatch]
                                                         (dispatch (.scrollIntoView (.-tr state)))))
-   :focus              (fn [{:keys [view/state] :as this} coords]
-                         (let [prose-editor-view (.pmView this)
-                               state (.-state prose-editor-view)]
+   :focus              (fn [this coords]
+                         (let [pm-view (.getEditor this)
+                               state (.-state pm-view)]
                            (when coords
-                             (.dispatch prose-editor-view (-> (.-tr state)
-                                                              (.setSelection (case coords :start (.atStart pm/Selection (.-doc state))
-                                                                                          :end (.atEnd pm/Selection (.-doc state)))))))
-                           (.focus prose-editor-view)
+                             (.dispatch pm-view (-> (.-tr state)
+                                                    (.setSelection (case coords :start (.atStart pm/Selection (.-doc state))
+                                                                                :end (.atEnd pm/Selection (.-doc state)))))))
+                           (.focus pm-view)
                            (js/setTimeout (.-scrollIntoView this) 0)))
    :view/initial-state (fn [this]
                          {:last-update (:value (:cell this))})
    :view/should-update (fn [this]
                          (not= (-> this :cell :value)
                                (-> this :view/state (deref) :last-update)))
+   :view/did-mount     #(Cell/mount (:cell %) %)
    :view/will-unmount  (fn [this]
+                         (Cell/unmount (:cell this))
                          ;; prosemirror doesn't fire `blur` command when unmounted
                          (when (= (:cell-view @exec/context) this)
                            (exec/set-context! {:cell/prose nil
                                                :cell-view  nil})))}
-  [{:keys [view/state on-update cell] :as this}]
+  [{:keys [view/state cell-list cell] :as this}]
   (prose/Editor {:value       (:value cell)
                  :class       " serif f4 ph3 cb"
                  :input-rules (prose-commands/input-rules this)
@@ -49,11 +50,56 @@
                                             (.-doc prev-state))
                                   (let [out (.serialize editor-view)]
                                     (v/swap-silently! state assoc :last-update out)
-                                    (on-update out))))}))
+                                    (.splice cell-list cell [(assoc cell :value out)]))))}))
 
 
 
+(extend-type Cell/ProseCell
+  Cell/ICell
 
+  (empty? [this]
+    (util/whitespace-string? (:value this)))
+
+  (at-start? [this]
+    (let [state (.-state (Cell/editor this))]
+      (= (.-pos (pm/cursor-$pos state))
+         (.-pos (pm/start-$pos state)))))
+
+  (at-end? [this]
+    (let [state (.-state (Cell/editor this))]
+      (= (.-pos (pm/cursor-$pos state))
+         (.-pos (pm/end-$pos state)))))
+
+  (emit [this]
+    (when-not (empty? this)
+      (.replace (->> (string/split (:value this) #"\n")
+                     (mapv #(string/replace % #"^ ?" "\n;; "))
+                     (clojure.string/join)) #"^\n" "")))
+
+  (selection-expand [this]
+    (commands/apply-command (Cell/editor this) commands/expand-selection))
+
+  (selection-contract [this]
+    (commands/apply-command (Cell/editor this) commands/contract-selection))
+
+  (render [this props]
+    (prose-view (assoc props
+                  :cell this
+                  :id (:id this))))
+
+  Cell/IText
+  (prepend-paragraph [this]
+    (when-let [prose-view (Cell/editor this)]
+      (let [state (.-state prose-view)
+            dispatch (.-dispatch prose-view)]
+        (dispatch (-> (.-tr state)
+                      (.insert 0 (.createAndFill (pm/get-node state :paragraph)))
+                      (.scrollIntoView))))))
+  (trim-paragraph-left [this]
+    (when-let [prose-view (:prose-editor-view @(:view/state (Cell/get-view this)))]
+      (let [new-value (.replace (:value this) #"^[\n\s]*" "")]
+        (.resetDoc prose-view new-value)
+        (assoc this :value new-value)))))
 
 
 ;; TODO
@@ -120,20 +166,21 @@
              :dangerouslySetInnerHTML {:__html (.render md s)}}]))
 
 #_(defn select-near-click [e pm-view]
-  (let [{:keys [bottom right left top]} (util/js-lookup (.getBoundingClientRect (.-dom pm-view)))
-        {mouseX :clientX
-         mouseY :clientY} (util/js-lookup e)
-        $pos (some->> (.posAtCoords pm-view #js {:left (cond (> mouseX right) (dec right)
-                                                             (< mouseX left) (inc left)
-                                                             :else mouseX)
-                                                 :top  (cond (> mouseY bottom) (dec bottom)
-                                                             (< mouseY top) (inc top)
-                                                             :else mouseY)})
-                      (.-pos)
-                      (.resolve (.. pm-view -state -doc)))]
-    (when $pos
-      (commands/apply-command pm-view
-                              (fn [state dispatch]
-                                (dispatch (.setSelection (.-tr state)
-                                                         (.near pm/Selection $pos -1)))
-                                (.focus pm-view))))))
+    (let [{:keys [bottom right left top]} (util/js-lookup (.getBoundingClientRect (.-dom pm-view)))
+          {mouseX :clientX
+           mouseY :clientY} (util/js-lookup e)
+          $pos (some->> (.posAtCoords pm-view #js {:left (cond (> mouseX right) (dec right)
+                                                               (< mouseX left) (inc left)
+                                                               :else mouseX)
+                                                   :top  (cond (> mouseY bottom) (dec bottom)
+                                                               (< mouseY top) (inc top)
+                                                               :else mouseY)})
+                        (.-pos)
+                        (.resolve (.. pm-view -state -doc)))]
+      (when $pos
+        (commands/apply-command pm-view
+                                (fn [state dispatch]
+                                  (dispatch (.setSelection (.-tr state)
+                                                           (.near pm/Selection $pos -1)))
+                                  (.focus pm-view))))))
+

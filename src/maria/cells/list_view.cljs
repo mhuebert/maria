@@ -1,9 +1,9 @@
 (ns maria.cells.list-view
   (:require [re-view.core :as v :refer [defview]]
-            [maria.cells.code-view :as code]
+            [maria.cells.code :as code]
             [clojure.core.match :refer-macros [match]]
             [cljsjs.markdown-it]
-            [maria.cells.prose-view :as prose]
+            [maria.cells.prose :as prose]
             [re-db.d :as d]
             [maria.cells.core :as Cell]
             [maria-commands.exec :as exec]
@@ -43,27 +43,16 @@
                                   (let [updated-source (Cell/emit-many (:cells @state))]
                                     (v/swap-silently! state assoc :last-update updated-source)
                                     (on-update updated-source)))
-                                cells-changed?))}
-  [{:keys [view/state]}]
+                                cells-changed?))
+   :get-cells               #(:cells @(:view/state %))
+   :splice                  (fn splice
+                              ([this cell value] (splice this cell 0 value))
+                              ([this cell n value]
+                               (:cells (swap! (:view/state this) update :cells Cell/splice-by-id (:id cell) n value))))}
+  [{:keys [view/state] :as this}]
   (let [{:keys [cells]} @state]
     [:.w-100.flex-none.pv3
-     (->> cells
-          (map
-            (fn [{:keys [id] :as cell}]
-              (let [props {:id        id
-                           :cell      cell
-                           :cells     cells
-                           :ref       #(if % (Cell/mount id %)
-                                             (Cell/unmount id))
-                           :splice!   (fn splice
-                                        ([id value]
-                                         (splice id 0 value))
-                                        ([id n value]
-                                         (:cells (swap! state update :cells Cell/splice-by-id id n value))))
-                           :on-update #(swap! state update :cells Cell/splice-by-id id [(Cell/->ProseCell id %)])}]
-                (condp instance? cell
-                  Cell/ProseCell (prose/prose-cell-view (assoc props
-                                                          :on-update #(swap! state update :cells Cell/splice-by-id id [(Cell/->ProseCell id %)])))
-                  Cell/CodeCell (code/code-view (assoc props
-                                                  :on-ast #(swap! state update :cells Cell/splice-by-id id [(Cell/->CodeCell id (:value %))]))))))))]))
+     (map (fn [cell]
+            (Cell/render cell {:cells     cells
+                               :cell-list this})) cells)]))
 

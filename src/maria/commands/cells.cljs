@@ -1,32 +1,33 @@
 (ns maria.commands.cells
   (:require [maria-commands.registry :refer-macros [defcommand]]
-            [maria.cells.core :as Cell]
-            [maria.eval :as e]))
+            [maria.cells.core :as Cell]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
   {:bindings ["M1-M2-Enter"]
-   :when     #(or (:cell-list %) (:cell/code %))}
-  [{:keys [cell-list cell-view editor]}]
-  (if cell-list
-    (doseq [cell (:cells @(:view/state cell-list))]
-      (when (satisfies? Cell/ICode cell)
-        (Cell/eval cell)))
-    (e/logged-eval-str (:id cell-view) (.getValue editor))))
+   :when     :cell-list}
+  [{:keys [cell-list]}]
+  (doseq [cell (.getCells cell-list)]
+    (when (satisfies? Cell/ICode cell)
+      (Cell/eval cell))))
 
 (defcommand :cell/next-cell
   {:bindings ["Down"
               "Right"]
    :when     #(some-> (:cell %) Cell/at-end?)}
-  [{:keys [cell]}]
-  (Cell/edge-right cell))
+  [{:keys [cell cells]}]
+  (when (Cell/at-end? cell)
+    (some-> (Cell/after cells cell)
+            (Cell/focus! :start))))
 
 (defcommand :cell/previous-cell
   {:bindings ["Up"
               "Left"]
    :when     #(some-> (:cell %) Cell/at-start?)}
-  [{:keys [cell]}]
-  (Cell/edge-left cell))
+  [{:keys [cell cells]}]
+  (when (Cell/at-start? cell)
+    (some-> (Cell/before cells cell)
+            (Cell/focus! :end))))
 
 (defcommand :selection/expand
   "Expand current selection"

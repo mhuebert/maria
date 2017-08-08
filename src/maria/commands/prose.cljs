@@ -13,31 +13,31 @@
        (pm/is-node-type? state :paragraph)
        (commands/empty-node? (pm/cursor-node state))))
 
-(defn split-with-code-cell [splice! id state {:keys [content cursor-coords]}]
+(defn split-with-code-cell [cell-list cell state {:keys [content cursor-coords]}]
   (when (empty-root-paragraph? state)
     (let [$head (.. state -selection -$head)
           markdown-before (prose/serialize-selection (.between pm/TextSelection (pm/start-$pos state) $head))
           markdown-after (prose/serialize-selection (.between pm/TextSelection $head (pm/end-$pos state)))
           new-cells (or (some-> content (Cell/from-source))
                         [(Cell/->CodeCell (d/unique-id) [])])]
-      (splice! id (cond-> []
-                          (not (util/whitespace-string? markdown-before))
-                          (conj (Cell/->ProseCell (d/unique-id) markdown-before))
+      (.splice cell-list cell (cond-> []
+                                      (not (util/whitespace-string? markdown-before))
+                                      (conj (Cell/->ProseCell (d/unique-id) markdown-before))
 
-                          true (into new-cells)
-                          (not (util/whitespace-string? markdown-after))
-                          (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
+                                      true (into new-cells)
+                                      (not (util/whitespace-string? markdown-after))
+                                      (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
       (Cell/focus! (first new-cells) cursor-coords)
       true)))
 
 (defcommand :prose-cell/enter
   {:bindings ["Enter"]
    :when     :cell/prose}
-  [{{:keys [splice! id] :as cell-view} :cell-view}]
-  (commands/apply-command (.getEditor cell-view)
+  [{:keys [editor cell cell-list]}]
+  (commands/apply-command editor
                           (commands/chain
                             (fn [state dispatch]
-                              (split-with-code-cell splice! id state nil))
+                              (split-with-code-cell cell-list cell state nil))
                             commands/enter)))
 
 (defcommand :prose/newline
@@ -45,105 +45,105 @@
                     "M2-Enter"]
    :when           :cell/prose
    :intercept-when true}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/newline-in-code))
+  [context]
+  (apply-command (:editor context) commands/newline-in-code))
 
 (defcommand :prose/undo
   {:bindings ["M1-z"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/undo))
+  [context]
+  (apply-command (:editor context) commands/undo))
 
 
 (defcommand :prose/redo
   {:bindings ["M1-y"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/redo))
+  [context]
+  (apply-command (:editor context) commands/redo))
 
 
 (defcommand :prose/redo
   {:bindings ["Shift-M1-z"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/redo))
+  [context]
+  (apply-command (:editor context) commands/redo))
 
 
 (defcommand :prose/inline-bold
   {:bindings ["M1-b"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/inline-bold))
+  [context]
+  (apply-command (:editor context) commands/inline-bold))
 
 
 (defcommand :prose/inline-italic
   {:bindings ["M1-I"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/inline-italic))
+  [context]
+  (apply-command (:editor context) commands/inline-italic))
 
 
 (defcommand :prose/inline-code
   {:bindings ["M3-`"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/inline-code))
+  [context]
+  (apply-command (:editor context) commands/inline-code))
 
 
 (defcommand :prose/block-list-bullet
   {:bindings ["Shift-Ctrl-8"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/block-list-bullet))
+  [context]
+  (apply-command (:editor context) commands/block-list-bullet))
 
 
 (defcommand :prose/block-list-ordered
   {:bindings ["Shift-Ctrl-9"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/block-list-ordered))
+  [context]
+  (apply-command (:editor context) commands/block-list-ordered))
 
 
 (defcommand :prose/block-paragraph
   {:bindings ["Shift-Ctrl-0"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/block-paragraph))
+  [context]
+  (apply-command (:editor context) commands/block-paragraph))
 
 
 (defcommand :prose/outdent
   {:bindings ["Shift-Tab"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) (commands/chain commands/heading->paragraph
-                                                        commands/outdent)))
+  [context]
+  (apply-command (:editor context) (commands/chain commands/heading->paragraph
+                                                   commands/outdent)))
 
 
 (defcommand :prose/indent
   {:bindings ["Tab"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/indent))
+  [context]
+  (apply-command (:editor context) commands/indent))
 
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
    :when     :cell/prose}
-  [{{:keys [id cell cells splice!] :as cell-view} :cell-view}]
-  (apply-command (.getEditor cell-view)
+  [{:keys [editor cell cells cell-list]}]
+  (apply-command editor
                  (commands/chain
                    (fn [state dispatch]
                      (cond (Cell/empty? cell)
-                           (let [result (splice! id [])
+                           (let [result (.splice cell-list cell [])
                                  {:keys [before after]} (meta result)]
                              (if before (Cell/focus! before :end)
                                         (Cell/focus! after :start))
                              true)
                            (and (Cell/at-start? cell)
-                                (some-> (Cell/before cells id) (Cell/empty?)))
+                                (some-> (Cell/before cells cell) (Cell/empty?)))
                            (let [self (Cell/trim-paragraph-left cell)]
-                             (splice! id -1 (if (Cell/empty? self)
-                                              []
-                                              [self]))
+                             (.splice cell-list cell -1 (if (Cell/empty? self)
+                                                          []
+                                                          [self]))
                              true)
                            :else false))
                    commands/backspace)))
@@ -151,33 +151,33 @@
 (defcommand :prose/join-up
   {:bindings ["M2-Up"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/join-up))
+  [context]
+  (apply-command (:editor context) commands/join-up))
 
 (defcommand :prose/join-down
   {:bindings ["M2-Down"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/join-down))
+  [context]
+  (apply-command (:editor context) commands/join-down))
 
 (defcommand :prose/select-all
   {:bindings ["M1-A"]
    :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/select-all))
+  [context]
+  (apply-command (:editor context) commands/select-all))
 
 (comment
   (defcommand :prose/increase-size
     {:bindings ["M1-="]
      :when     :cell/prose}
-    [{:keys [cell-view]}]
-    (apply-command (.getEditor cell-view) (partial commands/adjust-font-size dec)))
+    [context]
+    (apply-command (:editor context) (partial commands/adjust-font-size dec)))
 
   (defcommand :prose/decrease-size
     {:bindings ["M1-DASH"]
      :when     :cell/prose}
-    [{:keys [cell-view]}]
-    (apply-command (.getEditor cell-view) (partial commands/adjust-font-size inc))))
+    [context]
+    (apply-command (:editor context) (partial commands/adjust-font-size inc))))
 
 (defn input-rules [cell-view]
   [commands/rule-blockquote-start
@@ -193,7 +193,9 @@
        (when (empty-root-paragraph? state)
          (let [other-bracket ({\( \) \[ \] \{ \}} bracket)]
            (js/setTimeout
-             #(split-with-code-cell (:splice! cell-view) (:id cell-view) state {:content       (str bracket other-bracket)
-                                                                                :cursor-coords #js {:line 0
-                                                                                                    :ch   1}}) 0))
+             #(split-with-code-cell (:cell-list cell-view)
+                                    (:cell cell-view)
+                                    state {:content       (str bracket other-bracket)
+                                           :cursor-coords #js {:line 0
+                                                               :ch   1}}) 0))
          (.-tr state))))])
