@@ -1,23 +1,29 @@
-(ns maria.commands.exec
+(ns maria-commands.exec
   (:require [re-db.d :as d]
             [goog.events :as events]
-            [maria.commands.registry :as registry]
+            [maria-commands.registry :as registry]
             [clojure.set :as set]))
 
 (def context (volatile! {}))
 
-(defn set-context! [key value]
-  (vswap! context assoc key value))
+(defn set-context! [values]
+  (vswap! context merge values))
 
 (defn get-context []
-  (assoc @context :signed-in? (d/get :auth-public :signed-in?)))
+  (let [{:keys [cell-view] :as context} @context
+        cell (some-> cell-view (:cell))
+        editor (some-> cell-view (.getEditor))]
+    (merge
+      (assoc context :signed-in? (d/get :auth-public :signed-in?)
+                     :editor editor
+                     :cell cell))))
 
 (defn get-command
   "Returns command associated with name, if it exists.
   Add contextual data, :exec? and :intercept?."
   [context name]
   (when-let [{:keys [exec-pred intercept-pred] :as command-entry} (get @registry/commands name)]
-    (let [exec? (or (nil? exec-pred) (exec-pred context))
+    (let [exec? (boolean (or (nil? exec-pred) (exec-pred context)))
           intercept? (if intercept-pred (intercept-pred context)
                                         exec?)]
       (assoc command-entry
@@ -30,9 +36,10 @@
 
 (defn exec-command
   "Execute a command (returned by `get-command`)"
-  [context {:keys [command exec? intercept?] :as thing}]
+  [context {:keys [command exec? intercept?]}]
   (let [result (when exec? (command context))]
-    {:intercept! (and intercept? (not (= result (.-Pass js/CodeMirror))))}))
+    {:intercept! (and intercept? (not (or (false? result)
+                                          (= result (.-Pass js/CodeMirror)))))}))
 
 (defn exec-command-name
   [name]

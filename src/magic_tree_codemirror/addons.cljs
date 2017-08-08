@@ -6,7 +6,7 @@
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]
-            [maria.commands.registry :as registry]
+            [maria-commands.registry :as registry]
             [re-db.d :as d]))
 
 (specify! (.-prototype js/CodeMirror)

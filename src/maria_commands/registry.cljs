@@ -1,4 +1,4 @@
-(ns maria.commands.registry
+(ns maria-commands.registry
   (:require [goog.object :as gobj]
             [clojure.string :as string]
             [goog.events.KeyCodes :as KeyCodes])

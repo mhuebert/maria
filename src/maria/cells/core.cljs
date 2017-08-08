@@ -9,7 +9,7 @@
             [re-view-prosemirror.core :as pm]
             [maria.cells.code-eval :as code-eval]))
 
-(def cell-index (atom {}))
+(def cell-index (volatile! {}))
 
 (defn get-view [cell]
   (@cell-index (:id cell)))
@@ -21,14 +21,17 @@
    (.focus (get-view cell) coords)))
 
 (defn mount [id view]
-  (swap! cell-index assoc id view))
+  (vswap! cell-index assoc id view))
 
 (defn unmount [id]
-  (swap! cell-index dissoc id))
+  (vswap! cell-index dissoc id))
 
 (defprotocol ICell
   (empty? [this])
-  (emit [this]))
+  (emit [this])
+  (at-end? [this])
+  (at-start? [this])
+  #_(render [this]))
 
 (defprotocol ICode
   (eval [this]))
@@ -48,6 +51,15 @@
   ICell
   (empty? [this]
     (= 0 (count (filter (complement tree/whitespace?) value))))
+  (at-end? [this]
+    (let [cm (.getEditor (get-view this))
+          cursor (.getCursor cm)]
+      (= [(.lastLine cm)
+          (count (.getLine cm (.lastLine cm)))]
+         [(.-line cursor) (.-ch cursor)])))
+  (at-start? [this]
+    (let [cursor (.getCursor (.getEditor (get-view this)))]
+      (= [0 0] [(.-line cursor) (.-ch cursor)])))
   (emit [this]
     (when-not (empty? this)
       (str (->> (mapv (comp string/trim-newline tree/string) value)
@@ -60,6 +72,14 @@
   ICell
   (empty? [this]
     (util/whitespace-string? value))
+  (at-start? [this]
+    (let [state (.-state (.getEditor (get-view this)))]
+      (= (.-pos (pm/cursor-$pos state))
+         (.-pos (pm/start-$pos state)))))
+  (at-end? [this]
+    (let [state (.-state (.getEditor (get-view this)))]
+      (= (.-pos (pm/cursor-$pos state))
+         (.-pos (pm/end-$pos state)))))
   (emit [this]
     (when-not (empty? this)
       (.replace (->> (string/split value #"\n")
@@ -67,7 +87,7 @@
                      (clojure.string/join)) #"^\n" "")))
   IText
   (prepend-paragraph [this]
-    (when-let [prose-view (.pmView (get-view this))]
+    (when-let [prose-view (.getEditor (get-view this))]
       (let [state (.-state prose-view)
             dispatch (.-dispatch prose-view)]
         (dispatch (-> (.-tr state)
@@ -165,3 +185,21 @@
 (defn after [cells id]
   (second (drop-while (comp (partial not= id) :id) cells)))
 
+(defn edge-left [cell]
+  (when (at-start? cell)
+    (let [{:keys [cells id]} (get-view cell)]
+      (some-> (before cells id)
+              (focus! :end)))))
+
+(defn edge-right [cell]
+  (when (at-end? cell)
+    (let [{:keys [cells id]} (get-view cell)]
+      (some-> (after cells id)
+              (focus! :start)))))
+
+(defn delete-cell [{:keys [view/state] :as cell-list-view} cell]
+  (let [next-cells (splice-by-id (:cells @state) (:id cell) [])]
+    (swap! state assoc :cells next-cells)
+    (let [{:keys [before after]} (meta next-cells)]
+      (if before (focus! before :end)
+                 (focus! after :start)))))

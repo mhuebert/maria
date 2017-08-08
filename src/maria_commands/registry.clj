@@ -1,4 +1,4 @@
-(ns maria.commands.registry
+(ns maria-commands.registry
   (:require [clojure.string :as string]))
 
 (defn spaced-name [the-name]
@@ -42,9 +42,9 @@
         normalized-key-patterns (if (string? key-patterns) [key-patterns] key-patterns)
         _ (when (nil? arglist)
             (assert (empty? body)))
-        commands 'maria.commands.registry/commands
-        mappings 'maria.commands.registry/mappings
-        normalize-keyset-string 'maria.commands.registry/normalize-keyset-string
+        commands 'maria-commands.registry/commands
+        mappings 'maria-commands.registry/mappings
+        normalize-keyset-string 'maria-commands.registry/normalize-keyset-string
         form `(let [parsed-key-patterns# (mapv ~normalize-keyset-string ~normalized-key-patterns)]
                 (swap! ~commands assoc ~command-name {:name             ~command-name
                                                       :namespace        ~(some-> (namespace command-name) (spaced-name))

@@ -1,7 +1,7 @@
 (ns maria.views.doc-toolbar
   (:require [re-view.core :as v :refer [defview]]
-            [maria.commands.registry :refer-macros [defcommand]]
-            [maria.commands.exec :as exec]
+            [maria-commands.registry :refer-macros [defcommand]]
+            [maria-commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.communication :as frame]
             [re-view-material.icons :as icons]
@@ -167,8 +167,8 @@
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
-                              (exec/set-context! :current-doc this))
-   :view/will-unmount       #(exec/set-context! :current-doc nil)
+                              (exec/set-context! {:current-doc this}))
+   :view/will-unmount       #(exec/set-context! {:current-doc nil})
    :view/will-receive-props (fn [{filename                  :filename
                                   {prev-filename :filename} :view/prev-props
                                   :as                       this}]

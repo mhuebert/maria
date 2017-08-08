@@ -128,7 +128,8 @@
                         [rows current-line]))
    :lastLineX       (fn [this ch]
                       (+ ch (* (dec (.rows this)) (.cols this))))
-   :focus           (fn [{:keys [view/state]}] (.focus (:input-element @state)))
+   :focus           (fn [{:keys [view/state]}]
+                      (.focus (:input-element @state)))
    :cursorPos       (fn [{:keys [view/state]}] (get-cursor-pos (:input-element @state)))}
   [{:keys [value placeholder style on-key-down view/props view/state] :as this}]
   (let [placeholder (or placeholder "...")

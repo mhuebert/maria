@@ -5,7 +5,7 @@
             [maria.cells.code-eval :as code-eval]
             [cljs.core.match :refer-macros [match]]
 
-            [maria.commands.exec]
+            [maria-commands.exec]
 
     ;; include to precompile for self-hosted env
             [clojure.set]
@@ -20,7 +20,7 @@
             [goog.events :as events]
 
             [maria.frames.communication :as frame]
-            [maria.commands.commands]
+            [maria.commands.code]
             [clojure.string :as string]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]

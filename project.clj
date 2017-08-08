@@ -18,7 +18,7 @@
                  [re-view "0.3.24"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6"]
-                 [re-view-prosemirror "0.1.6"]
+                 [re-view-prosemirror "0.1.7-SNAPSHOT"]
                  [cljs-live "0.2.5-SNAPSHOT"]
                  [magic-tree "0.0.10"]
                  [org.clojure/data.json "0.2.6"]
@@ -53,6 +53,7 @@
                                        :output-to      "resources/public/js/compiled/live.js"
                                        :output-dir     "resources/public/js/compiled/out-live-dev"
                                        :asset-path     "/js/compiled/out-live-dev"
+                                       :language-in    :ecmascript5
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
@@ -62,6 +63,7 @@
                                        :output-to      "resources/public/js/compiled/live.js"
                                        :output-dir     "resources/public/js/compiled/out-live-prod"
                                        :asset-path     "/js/compiled/out-live-prod"
+                                       :language-in    :ecmascript5
                                        :cache-analysis false
                                        :dump-core      false
                                        :parallel-build true
@@ -73,6 +75,7 @@
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-dev"
                                        :asset-path     "/js/compiled/out-trusted-dev"
+                                       :language-in    :ecmascript5
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
@@ -82,6 +85,7 @@
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-prod"
                                        :asset-path     "/js/compiled/out-trusted-prod"
+                                       :language-in    :ecmascript5
                                        :optimizations  :advanced
                                        :dump-core      false
                                        :parallel-build true}}]}

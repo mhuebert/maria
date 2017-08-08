@@ -6,15 +6,12 @@
             [maria.cells.prose :as prose]
             [re-db.d :as d]
             [maria.cells.core :as Cell]
-            [maria.commands.exec :as exec]
+            [maria-commands.exec :as exec]
+            [maria.commands.cell]
             [maria.cells.code-eval :as code-eval]))
 
 
 (d/transact! [[:db/add :feature :in-place-eval true]])
-
-(defn log-ret [label x]
-  (prn label x)
-  x)
 
 (defview cell-list
   {:view/initial-state      (fn [{source :value}]
@@ -22,10 +19,10 @@
                                :cells       (Cell/ensure-cells (Cell/from-source source))})
    :view/did-mount          (fn [{:keys [view/state] :as this}]
                               (Cell/focus! (first (:cells @state)) :start)
-                              (exec/set-context! :cell-list this)
+                              (exec/set-context! {:cell-list this})
                               (when (= (str (d/get-in :router/location [:query :eval])) "true")
                                 (code-eval/on-load #(exec/exec-command-name :eval/doc))))
-   :view/will-unmount       #(exec/set-context! :cell-list nil)
+   :view/will-unmount       #(exec/set-context! {:cell-list nil})
    :view/will-receive-props (fn [{source :value
                                   state  :view/state}]
                               ;; normally, the source we are passed from above during editing
@@ -51,6 +48,8 @@
               (let [props {:id           id
                            :cell         cell
                            :cells        cells
+                           :ref          #(if % (Cell/mount id %)
+                                                (Cell/unmount id))
                            :splice-self! (fn splice
                                            ([value]
                                             (splice 0 value))

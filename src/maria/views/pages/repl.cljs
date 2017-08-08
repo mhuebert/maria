@@ -1,7 +1,7 @@
 (ns maria.views.pages.repl
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.commands.which-key :as which-key]
+            [maria-commands.which-key :as which-key]
             [maria.cells.codemirror :as codemirror]
             [maria.cells.cell-list :as top-level]
             [maria.cells.code-eval :as code-eval]
@@ -11,8 +11,8 @@
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
-            [maria.commands.exec :as exec])
-  (:require-macros [maria.commands.registry :refer [defcommand]]))
+            [maria-commands.exec :as exec])
+  (:require-macros [maria-commands.registry :refer [defcommand]]))
 
 (defonce _
          (code-eval/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -85,9 +85,10 @@
               ((if in-place-eval?
                  top-level/cell-list
                  codemirror/editor) {:ref                 #(when % (swap! state assoc :repl-editor %))
-                                     :auto-focus          true
-                                     :capture-event/focus #(exec/set-context! :cell/code {:editor (.getEditor %2)})
-                                     :capture-event/blur  #(exec/set-context! :cell/code nil)
+                                     :auto-focus          (not in-place-eval?)
+                                                    ;; no longer attempting to keep old cell view working
+                                     ;:capture-event/focus #(exec/set-context! {:cell/code {:editor (.getEditor %2)}})
+                                     ;:capture-event/blur  #(exec/set-context! {:cell/code nil})
                                      :on-update           (fn [source]
                                                             (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                                      :source-id           id

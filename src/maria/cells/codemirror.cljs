@@ -41,7 +41,9 @@
                                                                           (cond-> options
                                                                                   keymap (assoc :extraKeys (clj->js keymap))
                                                                                   read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                                                 (assoc :readOnly true))))))]
+                                                                                                 (assoc
+                                                                                                   :readOnly true
+                                                                                                   :tabindex -1))))))]
                                 (set! (.-view editor) this)
                                 (swap! editor assoc :view this)
                                 (set! (.-setValueAndRefresh editor) #(do (.setValue editor %)
