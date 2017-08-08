@@ -1,4 +1,4 @@
-(ns maria.cells.prose
+(ns maria.cells.prose-view
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]

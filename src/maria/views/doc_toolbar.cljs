@@ -118,20 +118,11 @@
 
 (defcommand :doc/new
   "Create a blank doc"
-  {
-   ;; the ordinary shortcuts for new docs are always captured by browsers.
-   ;; hold off and use M-X-style command for this.
-   :bindings       ["M1-Shift-B"]
+  {:bindings       ["M1-Shift-B"]
    :intercept-when true
    :when           :current-doc}
-  [{{:keys [view/state get-editor id]} :current-doc}]
+  [{{:keys [view/state doc-editor id]} :current-doc}]
   (github/clear-new!)
-  ;(some-> title-input (.focus))
-  (when (and (= id "new") get-editor)
-    ;; if we are already in the document with the id "new", clear the editor.
-    ;; otherwise, we will get a blank editor by switching ids.
-    (some-> (get-editor)
-            (.setValue "")))
   (frame/send frame/trusted-frame [:window/navigate "/new" {}]))
 
 (defcommand :doc/save
@@ -158,11 +149,8 @@
            (and (get-in current-doc [:project :persisted])
                 (unsaved-changes? current-doc)))}
   [{{{persisted :persisted} :project
-     filename               :filename
-     get-editor             :get-editor} :current-doc}]
-  (d/transact! [[:db/add (:id persisted) :local persisted]])
-  (some-> (get-editor)
-          (.setValueAndRefresh (get-in persisted [:files filename :content]))))
+     filename               :filename} :current-doc}]
+  (d/transact! [[:db/add (:id persisted) :local persisted]]))
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]

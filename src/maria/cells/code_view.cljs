@@ -1,4 +1,4 @@
-(ns maria.cells.code
+(ns maria.cells.code-view
   (:require [re-view.core :as v :refer [defview]]
             [maria-commands.exec :as exec]
             [maria.views.repl-values :as repl-values]
