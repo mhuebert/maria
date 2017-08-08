@@ -1,4 +1,4 @@
-(ns maria.live.analyzer
+(ns maria.live.analyze
   (:require [cljs.js :as cljs]
             [cljs.analyzer :as ana]
             [cljs.env :as env]

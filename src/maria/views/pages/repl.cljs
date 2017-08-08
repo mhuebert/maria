@@ -2,9 +2,9 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria-commands.which-key :as which-key]
-            [maria.cells.codemirror :as codemirror]
-            [maria.cells.cell-list :as top-level]
-            [maria.cells.code-eval :as code-eval]
+            [maria.views.codemirror :as codemirror]
+            [maria.cells.list :as cell-list]
+            [maria.eval :as e]
             [maria.repl-specials]
             [maria.views.repl-values :as repl-values]
             [maria.views.repl-ui :as repl-ui]
@@ -15,8 +15,8 @@
   (:require-macros [maria-commands.registry :refer [defcommand]]))
 
 (defonce _
-         (code-eval/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
-                                                                            :value (repl-ui/plain [:span.gray "Ready."])}]]])))
+         (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
+                                                                    :value (repl-ui/plain [:span.gray "Ready."])}]]])))
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -83,18 +83,18 @@
                                    :get-editor #(.getEditor this)})
              [:.flex.flex-auto
               ((if in-place-eval?
-                 top-level/cell-list
-                 codemirror/editor) {:ref                 #(when % (swap! state assoc :repl-editor %))
-                                     :auto-focus          (not in-place-eval?)
-                                                    ;; no longer attempting to keep old cell view working
+                 cell-list/cell-list
+                 codemirror/editor) {:ref           #(when % (swap! state assoc :repl-editor %))
+                                     :auto-focus    (not in-place-eval?)
+                                     ;; no longer attempting to keep old cell view working
                                      ;:capture-event/focus #(exec/set-context! {:cell/code {:editor (.getEditor %2)}})
                                      ;:capture-event/blur  #(exec/set-context! {:cell/code nil})
-                                     :on-update           (fn [source]
-                                                            (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                     :source-id           id
-                                     :class               "flex-auto"
-                                     :value               (or local-value persisted-value)
-                                     :default-value       default-value})]]))))
+                                     :on-update     (fn [source]
+                                                      (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                     :source-id     id
+                                     :class         "flex-auto"
+                                     :value         (or local-value persisted-value)
+                                     :default-value default-value})]]))))
 
 
 

@@ -3,14 +3,16 @@
             [magic-tree.range :as range]
             [fast-zip.core :as z]))
 
-(defn error-range [source error-location]
+(defn highlights-for-position
+  "Return ranges for appropriate highlights for a position within given Clojure source."
+  [source position]
   (when-let [highlights (some-> (tree/ast source)
                                 (tree/ast-zip)
-                                (tree/node-at error-location)
+                                (tree/node-at position)
                                 (z/node)
                                 (tree/node-highlights))]
     (case (count highlights)
       0 nil
       1 (first highlights)
       2 (merge (second highlights)
-               (range/boundaries (first highlights)  :left)))))
+               (range/boundaries (first highlights) :left)))))

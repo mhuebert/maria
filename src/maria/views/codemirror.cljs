@@ -1,4 +1,4 @@
-(ns maria.cells.codemirror
+(ns maria.views.codemirror
   (:require [cljsjs.codemirror]
             [cljsjs.codemirror.mode.clojure]
             [cljsjs.codemirror.addon.edit.closebrackets]

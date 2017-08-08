@@ -5,7 +5,7 @@
             [re-view-routing.core :as routing]
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]
-            [maria.frames.communication :as frame]
+            [maria.frames.frame-communication :as frame]
             [re-view-routing.core :as r]))
 
 (defn navigate! [url opts]

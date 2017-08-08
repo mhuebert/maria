@@ -7,7 +7,7 @@
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
             [maria.live.magic-tree :as magic]
-            [maria.cells.codemirror :as codemirror]
+            [maria.views.codemirror :as codemirror]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [cljs.pprint :refer [pprint]])
@@ -141,8 +141,8 @@
   [:.code.overflow-auto.pre.gray.mv3.ph3
    {:style {:max-height 200}}
    (codemirror/viewer {:error-ranges (cond-> []
-                                             error (conj (magic/error-range source error-position))
-                                             (seq warnings) (into (map #(magic/error-range source (:warning-position %)) warnings)))} source)])
+                                             error (conj (magic/highlights-for-position source error-position))
+                                             (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
 
 (defview display-result
   {:key :id}

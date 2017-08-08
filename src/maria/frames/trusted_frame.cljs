@@ -1,4 +1,4 @@
-(ns maria.frames.trusted
+(ns maria.frames.trusted-frame
   (:require
     [cljsjs.react]
     [cljsjs.react.dom]

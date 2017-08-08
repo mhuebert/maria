@@ -1,8 +1,8 @@
-(ns maria.frames.live
+(ns maria.frames.live-frame
   (:require [cljsjs.react]
             [cljsjs.react.dom]
             [maria.views.pages.repl :as repl]
-            [maria.cells.code-eval :as code-eval]
+            [maria.eval :as e]
             [cljs.core.match :refer-macros [match]]
 
             [maria-commands.exec]
@@ -19,14 +19,14 @@
 
             [goog.events :as events]
 
-            [maria.frames.communication :as frame]
+            [maria.frames.frame-communication :as frame]
             [maria.commands.code]
             [clojure.string :as string]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
             [maria.frames.live-actions :as user-actions]
 
-            [maria.live.analyzer]))
+            [maria.live.analyze]))
 
 (enable-console-print!)
 
@@ -49,7 +49,7 @@
 (defn main []
 
   (local/init-storage "new" github/blank)
-  (code-eval/init)
+  (e/init)
 
   (v/render-to-dom (repl/layout {}) "maria-env")
 

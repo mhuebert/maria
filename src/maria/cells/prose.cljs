@@ -4,7 +4,11 @@
             [re-view-prosemirror.core :as pm]
             [re-view-prosemirror.commands :refer [apply-command]]
             [maria.commands.prose :as prose-commands]
-            [maria-commands.exec :as exec]))
+            [maria-commands.exec :as exec]
+            [re-view-prosemirror.commands :as commands]
+            [maria.util :as util]))
+
+
 
 (defview prose-cell-view
   {:key                :id
@@ -31,19 +35,21 @@
                          (when (= (:cell-view @exec/context) this)
                            (exec/set-context! {:cell/prose nil
                                                :cell-view  nil})))}
-  [{:keys [view/state on-update splice-self! cell id] :as this}]
+  [{:keys [view/state on-update cell] :as this}]
   (prose/Editor {:value       (:value cell)
-                 :class       " serif f4 ph3 w-50 cf"
+                 :class       " serif f4 ph3 cb"
                  :input-rules (prose-commands/input-rules this)
-                 :on-focus    #(do (exec/set-context! {:cell/prose true
-                                                       :cell-view  this})
-                                   (.scrollIntoView this))
+                 :on-focus    #(exec/set-context! {:cell/prose true
+                                                   :cell-view  this})
                  :on-blur     #(exec/set-context! {:cell/prose nil
                                                    :cell-view  nil})
                  :ref         #(v/swap-silently! state assoc :prose-editor-view %)
-                 :on-dispatch #(let [out (.serialize (:prose-editor-view @state))]
-                                 (v/swap-silently! state assoc :last-update out)
-                                 (on-update out))}))
+                 :on-dispatch (fn [editor-view pm-view prev-state]
+                                (when (not= (.-doc (.-state pm-view))
+                                            (.-doc prev-state))
+                                  (let [out (.serialize editor-view)]
+                                    (v/swap-silently! state assoc :last-update out)
+                                    (on-update out))))}))
 
 
 
@@ -109,6 +115,25 @@
       [:.cf {:ref                     #(v/swap-silently! state assoc :md-view %)
              :on-click                #(swap! state assoc
                                               :editing? true
-                                              :clicked-coords {:left (.-clientX %)
-                                                               :top  (.-clientY %)})
+                                              :clicked-coords {:left (.-mouseX %)
+                                                               :top  (.-mouseY %)})
              :dangerouslySetInnerHTML {:__html (.render md s)}}]))
+
+#_(defn select-near-click [e pm-view]
+  (let [{:keys [bottom right left top]} (util/js-lookup (.getBoundingClientRect (.-dom pm-view)))
+        {mouseX :clientX
+         mouseY :clientY} (util/js-lookup e)
+        $pos (some->> (.posAtCoords pm-view #js {:left (cond (> mouseX right) (dec right)
+                                                             (< mouseX left) (inc left)
+                                                             :else mouseX)
+                                                 :top  (cond (> mouseY bottom) (dec bottom)
+                                                             (< mouseY top) (inc top)
+                                                             :else mouseY)})
+                      (.-pos)
+                      (.resolve (.. pm-view -state -doc)))]
+    (when $pos
+      (commands/apply-command pm-view
+                              (fn [state dispatch]
+                                (dispatch (.setSelection (.-tr state)
+                                                         (.near pm/Selection $pos -1)))
+                                (.focus pm-view))))))

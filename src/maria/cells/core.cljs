@@ -6,18 +6,25 @@
             [re-db.d :as d]
             [re-view.core :as v]
             [maria.util :as util]
+            [maria.eval :as e]
             [re-view-prosemirror.core :as pm]
-            [maria.cells.code-eval :as code-eval]))
+            [magic-tree-codemirror.edit :as edit]
+            [re-view-prosemirror.commands :as commands]))
 
 (def cell-index (volatile! {}))
 
 (defn get-view [cell]
   (@cell-index (:id cell)))
 
+(defn editor [cell]
+  (.getEditor (get-view cell)))
+
 (defn focus!
-  ([cell] (focus! cell nil))
+  ([cell]
+   (focus! cell nil))
   ([cell coords]
-   (v/flush!)
+   (when-not (get-view cell)
+     (v/flush!))
    (.focus (get-view cell) coords)))
 
 (defn mount [id view]
@@ -31,6 +38,8 @@
   (emit [this])
   (at-end? [this])
   (at-start? [this])
+  (selection-expand [this])
+  (selection-contract [this])
   #_(render [this]))
 
 (defprotocol ICode
@@ -49,45 +58,67 @@
 
 (defrecord CodeCell [id value]
   ICell
+
   (empty? [this]
     (= 0 (count (filter (complement tree/whitespace?) value))))
+
   (at-end? [this]
-    (let [cm (.getEditor (get-view this))
+    (let [cm (editor this)
           cursor (.getCursor cm)]
       (= [(.lastLine cm)
           (count (.getLine cm (.lastLine cm)))]
          [(.-line cursor) (.-ch cursor)])))
+
   (at-start? [this]
-    (let [cursor (.getCursor (.getEditor (get-view this)))]
+    (let [cursor (.getCursor (editor this))]
       (= [0 0] [(.-line cursor) (.-ch cursor)])))
+
   (emit [this]
     (when-not (empty? this)
       (str (->> (mapv (comp string/trim-newline tree/string) value)
                 (string/join "\n\n")))))
+
+  (selection-expand [this]
+    (edit/expand-selection (editor this)))
+
+  (selection-contract [this]
+    (edit/shrink-selection (editor this)))
+
   ICode
   (eval [this]
-    (code-eval/eval-str id (emit this))))
+    (e/logged-eval-str id (emit this))))
 
 (defrecord ProseCell [id value]
   ICell
+
   (empty? [this]
     (util/whitespace-string? value))
+
   (at-start? [this]
-    (let [state (.-state (.getEditor (get-view this)))]
+    (let [state (.-state (editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/start-$pos state)))))
+
   (at-end? [this]
-    (let [state (.-state (.getEditor (get-view this)))]
+    (let [state (.-state (editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/end-$pos state)))))
+
   (emit [this]
     (when-not (empty? this)
       (.replace (->> (string/split value #"\n")
                      (mapv #(string/replace % #"^ ?" "\n;; "))
                      (clojure.string/join)) #"^\n" "")))
+
+  (selection-expand [this]
+    (commands/apply-command (editor this) commands/expand-selection))
+
+  (selection-contract [this]
+    (commands/apply-command (editor this) commands/contract-selection))
+
   IText
   (prepend-paragraph [this]
-    (when-let [prose-view (.getEditor (get-view this))]
+    (when-let [prose-view (editor this)]
       (let [state (.-state prose-view)
             dispatch (.-dispatch prose-view)]
         (dispatch (-> (.-tr state)

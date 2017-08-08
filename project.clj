@@ -15,7 +15,7 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.24"]
+                 [re-view "0.3.25-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.6"]
                  [re-view-prosemirror "0.1.7-SNAPSHOT"]
@@ -49,7 +49,7 @@
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.frames.live"
+                        :compiler     {:main           "maria.frames.live-frame"
                                        :output-to      "resources/public/js/compiled/live.js"
                                        :output-dir     "resources/public/js/compiled/out-live-dev"
                                        :asset-path     "/js/compiled/out-live-dev"
@@ -59,7 +59,7 @@
                                        :parallel-build true}}
                        {:id           "live-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.frames.live"
+                        :compiler     {:main           "maria.frames.live-frame"
                                        :output-to      "resources/public/js/compiled/live.js"
                                        :output-dir     "resources/public/js/compiled/out-live-prod"
                                        :asset-path     "/js/compiled/out-live-prod"
@@ -71,7 +71,7 @@
                        {:id           "trusted-dev"
                         :source-paths ["src"]
                         :figwheel     true
-                        :compiler     {:main           "maria.frames.trusted"
+                        :compiler     {:main           "maria.frames.trusted-frame"
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-dev"
                                        :asset-path     "/js/compiled/out-trusted-dev"
@@ -81,7 +81,7 @@
                                        :parallel-build true}}
                        {:id           "trusted-prod"
                         :source-paths ["src"]
-                        :compiler     {:main           "maria.frames.trusted"
+                        :compiler     {:main           "maria.frames.trusted-frame"
                                        :output-to      "resources/public/js/compiled/trusted.js"
                                        :output-dir     "resources/public/js/compiled/out-trusted-prod"
                                        :asset-path     "/js/compiled/out-trusted-prod"

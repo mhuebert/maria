@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [maria-commands.exec :as exec]
             [maria.views.repl-values :as repl-values]
-            [maria.cells.codemirror :as codemirror]
+            [maria.views.codemirror :as codemirror]
             [re-db.d :as d]
             [maria.cells.core :as Cell]
             [maria.util :as util]))

@@ -7,7 +7,7 @@
 
             [maria.eval :as eval]
             [maria.views.repl-ui :as repl-ui]
-            [maria.cells.codemirror :as codemirror]
+            [maria.views.codemirror :as codemirror]
 
             [goog.net.jsloader :as jsl]
 

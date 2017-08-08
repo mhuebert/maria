@@ -21,7 +21,7 @@
               (d/transact! [{:local (local-get id)
                              :db/id id}])
               (d/listen {:ea_ [[id :local]]}
-                        (gf/debounce #(local-put id (d/get id :local)) 500)))
+                        (gf/throttle #(local-put id (d/get id :local)) 300)))
              ([id initial-content]
               (when (and (nil? (local-get id)) initial-content)
                 (local-put id initial-content))

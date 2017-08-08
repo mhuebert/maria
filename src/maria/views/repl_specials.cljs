@@ -1,7 +1,7 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.live.ns-utils :as ns-utils]
-            [maria.cells.codemirror :as codemirror]
+            [maria.views.codemirror :as codemirror]
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]

@@ -3,7 +3,7 @@
             [maria-commands.registry :refer-macros [defcommand]]
             [maria-commands.exec :as exec]
             [maria.views.text :as text]
-            [maria.frames.communication :as frame]
+            [maria.frames.frame-communication :as frame]
             [re-view-material.icons :as icons]
             [maria.persistence.github :as github]
             [re-db.d :as d]

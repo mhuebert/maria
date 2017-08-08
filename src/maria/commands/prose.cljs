@@ -5,52 +5,40 @@
             [re-view-prosemirror.core :as pm]
             [maria.cells.core :as Cell]
             [re-db.d :as d]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [re-view.core :as v]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
        (pm/is-node-type? state :paragraph)
        (commands/empty-node? (pm/cursor-node state))))
 
-(defn split-with-code-cell [splice-self! state {:keys [content cursor-coords]}]
+(defn split-with-code-cell [splice! id state {:keys [content cursor-coords]}]
   (when (empty-root-paragraph? state)
     (let [$head (.. state -selection -$head)
           markdown-before (prose/serialize-selection (.between pm/TextSelection (pm/start-$pos state) $head))
           markdown-after (prose/serialize-selection (.between pm/TextSelection $head (pm/end-$pos state)))
-          new-cell (if content (first (Cell/from-source content)) (Cell/->CodeCell (d/unique-id) []))]
-      (splice-self! (cond-> []
-                            (not (util/whitespace-string? markdown-before))
-                            (conj (Cell/->ProseCell (d/unique-id) markdown-before))
+          new-cells (or (some-> content (Cell/from-source))
+                        [(Cell/->CodeCell (d/unique-id) [])])]
+      (splice! id (cond-> []
+                          (not (util/whitespace-string? markdown-before))
+                          (conj (Cell/->ProseCell (d/unique-id) markdown-before))
 
-                            true (conj new-cell)
-                            (not (util/whitespace-string? markdown-after))
-                            (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
-      (Cell/focus! new-cell cursor-coords)
+                          true (into new-cells)
+                          (not (util/whitespace-string? markdown-after))
+                          (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
+      (Cell/focus! (first new-cells) cursor-coords)
       true)))
 
 (defcommand :prose-cell/enter
   {:bindings ["Enter"]
-   :when :cell/prose}
-  [{{:keys [splice-self!] :as cell-view} :cell-view}]
+   :when     :cell/prose}
+  [{{:keys [splice! id] :as cell-view} :cell-view}]
   (commands/apply-command (.getEditor cell-view)
                           (commands/chain
                             (fn [state dispatch]
-                              (split-with-code-cell splice-self! state nil))
+                              (split-with-code-cell splice! id state nil))
                             commands/enter)))
-
-(defcommand :prose/shrink-selection
-  {:bindings ["M1-2"
-              "M1-["]
-   :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/shrink-selection))
-
-(defcommand :prose/expand-selection
-  {:bindings ["M1-1"
-              "M1-]"]
-   :when     :cell/prose}
-  [{:keys [cell-view]}]
-  (apply-command (.getEditor cell-view) commands/expand-selection))
 
 (defcommand :prose/newline
   {:bindings       ["Shift-Enter"
@@ -140,12 +128,12 @@
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
    :when     :cell/prose}
-  [{{:keys [id cell cells splice-self!] :as cell-view} :cell-view}]
+  [{{:keys [id cell cells splice!] :as cell-view} :cell-view}]
   (apply-command (.getEditor cell-view)
                  (commands/chain
                    (fn [state dispatch]
                      (cond (Cell/empty? cell)
-                           (let [result (splice-self! [])
+                           (let [result (splice! id [])
                                  {:keys [before after]} (meta result)]
                              (if before (Cell/focus! before :end)
                                         (Cell/focus! after :start))
@@ -153,9 +141,9 @@
                            (and (Cell/at-start? cell)
                                 (some-> (Cell/before cells id) (Cell/empty?)))
                            (let [self (Cell/trim-paragraph-left cell)]
-                             (splice-self! -1 (if (Cell/empty? self)
-                                                []
-                                                [self]))
+                             (splice! id -1 (if (Cell/empty? self)
+                                              []
+                                              [self]))
                              true)
                            :else false))
                    commands/backspace)))
@@ -205,7 +193,7 @@
        (when (empty-root-paragraph? state)
          (let [other-bracket ({\( \) \[ \] \{ \}} bracket)]
            (js/setTimeout
-             #(split-with-code-cell (:splice-self! cell-view) state {:content       (str bracket other-bracket)
-                                                                     :cursor-coords #js {:line 0
-                                                                                         :ch   1}}) 0))
+             #(split-with-code-cell (:splice! cell-view) (:id cell-view) state {:content       (str bracket other-bracket)
+                                                                                :cursor-coords #js {:line 0
+                                                                                                    :ch   1}}) 0))
          (.-tr state))))])

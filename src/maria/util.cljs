@@ -1,7 +1,7 @@
 (ns maria.util
   (:require [goog.events :as events]
             [goog.object :as gobj]
-            [re-view.core :as v ]))
+            [re-view.core :as v]))
 
 (defn some-str [s]
   (when (and (string? s) (not (identical? s "")))
@@ -26,20 +26,36 @@
 (defn is-object? [o]
   (== (js/Object o) o))
 
-(defn js-lookup
-  "Wrap a js object to support `get` by keyword"
-  [o]
-  (if (or (not (is-object? o))
-          (satisfies? ILookup o))
-    o
-    (specify! o
-      ILookup
-      (-lookup
-        ([this k]
-          ;; recursively wrap in js-lookup, for nested lookups
-         (js-lookup (gobj/get this (name k))))
-        ([this k not-found]
-         (js-lookup (gobj/get this (name k) not-found)))))))
+(deftype JSLookup [o]
+  ILookup
+  (-lookup [this k]
+    (let [value (gobj/get o (name k))]
+      (if (is-object? value)
+        (new JSLookup value) value)))
+  (-lookup [this k not-found]
+    (let [value (gobj/get o (name k) not-found)]
+      (if (is-object? value)
+        (new JSLookup value) value)))
+  IDeref
+  (-deref [this] o))
+
+(defn js-lookup [o]
+  (JSLookup. o))
+
+#_(defn js-lookup
+    "Wrap a js object to support `get` by keyword"
+    [o]
+    (if (or (not (is-object? o))
+            (satisfies? ILookup o))
+      o
+      (specify! o
+        ILookup
+        (-lookup
+          ([this k]
+            ;; recursively wrap in js-lookup, for nested lookups
+           (js-lookup (gobj/get this (name k))))
+          ([this k not-found]
+           (js-lookup (gobj/get this (name k) not-found)))))))
 
 (defn scroll-into-view [y-pos]
   (let [{:keys [scrollY innerHeight]} (js-lookup js/window)]

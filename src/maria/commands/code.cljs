@@ -1,8 +1,7 @@
 (ns maria.commands.code
   (:require [maria-commands.registry :refer-macros [defcommand]]
-            [maria.cells.code-eval :as code-cell]
             [maria.repl-specials :as repl-specials]
-            [maria.eval :as eval]
+            [maria.eval :as e]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
             [magic-tree-codemirror.edit :as edit]
@@ -44,7 +43,7 @@
   {:bindings "Enter"
    :when     :cell/code}
   [{:keys [cell-view editor]}]
-  (let [{:keys [id splice-self!] :as this} cell-view]
+  (let [{:keys [id splice!] :as this} cell-view]
     (let [last-line (.lastLine editor)
           {cursor-line :line
            cursor-ch   :ch} (util/js-lookup (.getCursor editor))]
@@ -65,19 +64,18 @@
                          (Cell/->ProseCell (d/unique-id) ""))]
           (case edge-position
             :end (do
-                   (splice-self! (if adjacent-prose 1 0)
-                                 (cond-> []
-                                         (not (Cell/empty? cell)) (conj cell)
-                                         true (conj (or new-cell
-                                                        adjacent-prose))))
+                   (splice! id (if adjacent-prose 1 0)
+                            (cond-> []
+                                    (not (Cell/empty? cell)) (conj cell)
+                                    true (conj (or new-cell
+                                                   adjacent-prose))))
 
                    (when (satisfies? Cell/IText adjacent-prose)
                      (Cell/prepend-paragraph adjacent-prose))
-
                    (Cell/focus! (or new-cell adjacent-prose) :start))
-            :start (splice-self! (cond-> []
-                                         new-cell (conj new-cell)
-                                         true (conj cell)))))
+            :start (splice! id (cond-> []
+                                       new-cell (conj new-cell)
+                                       true (conj cell)))))
         js/CodeMirror.Pass))))
 
 (defcommand :delete/form
@@ -92,15 +90,17 @@
   "Delete"
   {:bindings ["Backspace"]
    :when     :cell/code}
-  [{{:keys [splice-self! cell cells id]} :cell-view}]
+  [{{:keys [splice! cell cells id]} :cell-view}]
   (let [before (Cell/before cells id)]
     (cond
-      (and (Cell/at-start? cell) (Cell/empty? before))
-      (splice-self! -1 [cell])
+      (and (Cell/at-start? cell) (and before (Cell/empty? before)))
+      (splice! id -1 [cell])
+
 
       (Cell/empty? cell)
       (let [new-cell (when-not before (Cell/->ProseCell (d/unique-id) ""))]
-        (splice-self! (if new-cell [new-cell] []))
+        (splice! id (if new-cell [new-cell] []))
+
         (Cell/focus! (or before new-cell) :end))
       :else js/CodeMirror.Pass)))
 
@@ -127,20 +127,6 @@
   "Move cursor to bottom of current doc"
   {:bindings "M1-Down"
    :when     :cell/code})
-
-(defcommand :selection/expand
-  "Select parent form, or form under cursor"
-  {:bindings ["M1-]" "M1-1"]
-   :when     :cell/code}
-  [{:keys [editor]}]
-  (edit/expand-selection editor))
-
-(defcommand :selection/shrink
-  "Select child of current form (remembers :expand-selection history)"
-  {:bindings ["M1-[" "M1-2"]
-   :when     :cell/code}
-  [{:keys [editor]}]
-  (edit/shrink-selection editor))
 
 (defcommand :comment/line
   "Comment the current line"
@@ -179,20 +165,9 @@
                         (->> editor
                              :magic/cursor
                              :bracket-loc
-                             (tree/string (:ns @eval/c-env))))]
+                             (tree/string (:ns @e/c-env))))]
 
-    (code-cell/eval-str (:id cell-view) source)))
-
-(defcommand :eval/doc
-  "Evaluate whole doc"
-  {:bindings ["M1-M2-Enter"]
-   :when     #(or (:cell-list %) (:cell/code %))}
-  [{:keys [cell-list cell-view editor]}]
-  (if cell-list
-    (doseq [cell (:cells @(:view/state cell-list))]
-      (when (satisfies? Cell/ICode cell)
-        (Cell/eval cell)))
-    (code-cell/eval-str (:id cell-view) (.getValue editor))))
+    (e/logged-eval-str (:id cell-view) source)))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"
@@ -209,9 +184,9 @@
                    (some-> % :editor :magic/cursor :bracket-loc z/node))}
   [{:keys [cell-view editor cell]}]
   (let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
-    (if (and (symbol? form) (repl-specials/resolve-var-or-special eval/c-state eval/c-env form))
-      (code-cell/eval-form (:id cell) (list 'doc form))
-      (code-cell/eval-form (:id cell) (list 'maria.messages/what-is (list 'quote form))))))
+    (if (and (symbol? form) (repl-specials/resolve-var-or-special e/c-state e/c-env form))
+      (e/logged-eval-form (:id cell) (list 'doc form))
+      (e/logged-eval-form (:id cell) (list 'maria.messages/what-is (list 'quote form))))))
 
 (defcommand :meta/source
   "Show source code for the current var"
@@ -219,13 +194,13 @@
    :when     #(and (:cell/code %)
                    (some->> % :cell-view (.getEditor) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
   [{:keys [cell editor]}]
-  (code-cell/eval-form (:id cell) (list 'source
-                                        (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+  (e/logged-eval-form (:id cell) (list 'source
+                                       (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
 (defcommand :meta/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]}
   [{:keys [cell editor]}]
-  (code-cell/log-eval-result! (:id cell)
-                              (some-> editor :magic/cursor :bracket-loc z/node tree/string eval/compile-str (set/rename-keys {:compiled-js :value}))))
+  (e/log-eval-result! (:id cell)
+                      (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
 

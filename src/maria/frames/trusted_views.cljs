@@ -1,8 +1,7 @@
-(ns maria.frames.views
+(ns maria.frames.trusted-views
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria.frames.communication :as frame]
-            [maria.persistence.local :as local]
+            [maria.frames.frame-communication :as frame]
             [cljs.core.match :refer-macros [match]]
             [maria.frames.trusted-actions :as actions]))
 
