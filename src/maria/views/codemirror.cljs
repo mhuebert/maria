@@ -5,7 +5,6 @@
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
-            [goog.events :as events]
             [maria.util :as util]))
 
 (def options

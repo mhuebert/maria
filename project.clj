@@ -15,22 +15,19 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.25-SNAPSHOT"]
+                 [re-view "0.3.26"]
                  [re-view-routing "0.1.3"]
-                 [re-view-material "0.1.6"]
-                 [re-view-prosemirror "0.1.7-SNAPSHOT"]
+                 [re-view-material "0.1.7"]
+                 [re-view-prosemirror "0.1.7"]
                  [cljs-live "0.2.5-SNAPSHOT"]
                  [magic-tree "0.0.10"]
                  [org.clojure/data.json "0.2.6"]
 
-
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/marked "0.3.5-0"]
-                 [cljsjs/react "15.5.4-0"]
-                 [cljsjs/react-dom "15.5.4-0"]
+                 [cljsjs/react "16.0.0-beta.2-0"]
+                 [cljsjs/react-dom "16.0.0-beta.2-0"]
                  [cljsjs/firebase "4.0.0-0"]
-
-
 
                  ;; just for bundles
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
@@ -38,7 +35,7 @@
                  [cljs-bach "0.2.0"]
                  ]
 
-  :plugins [[lein-figwheel "0.5.11"]
+  :plugins [[lein-figwheel "0.5.12"]
             [lein-cljsbuild "1.1.6"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
@@ -57,6 +54,21 @@
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
+                       {:id           "modules"
+                        :source-paths ["src"]
+                        :figwheel     true
+                        :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
+                                                                        :output-to "resources/public/js/compiled/live.js"}
+                                                        :trusted-frame {:entries   #{maria.frames.trusted-frame}
+                                                                        :output-to "resources/public/js/compiled/trusted.js"}}
+                                       :output-dir     "resources/public/js/compiled/out-modules-dev"
+                                       :asset-path     "/js/compiled/out-modules-dev"
+                                       :language-in    :ecmascript5
+                                       :source-map     true
+                                       :optimizations  :none
+                                       :install-deps   true
+                                       :parallel-build true}}
+
                        {:id           "live-prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.frames.live-frame"
