@@ -10,6 +10,7 @@
             [maria.views.codemirror :as codemirror]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
+            [maria.views.error :as error-view]
             [cljs.pprint :refer [pprint]])
   (:import [goog.async Deferred]))
 
@@ -151,28 +152,29 @@
            error-position
            warnings
            show-source?
+           cell-id
            source] :as result}]
-  (let [warnings (sequence (comp (distinct)
-                                 (map messages/reformat-warning)
-                                 (keep identity)) warnings)
-        error? (or error (seq warnings))]
+  (error-view/error-boundary {:cell-id cell-id}
+    (let [warnings (sequence (comp (distinct)
+                                   (map messages/reformat-warning)
+                                   (keep identity)) warnings)
+          error? (or error (seq warnings))]
+      (when error
+        (.error js/console error))
+      [:div.overflow-hidden
+       {:class (when error? "bg-darken-red")}
+       (when (and source (or show-source? error (seq warnings)))
+         (display-source result))
+       [:.ws-prewrap.relative                               ;.mv3.pv1
+        (if error?
+          [:.ph3.overflow-auto
+           (->> (for [message (concat warnings
+                                      (messages/reformat-error result))
+                      :when message]
+                  [:.mv2 message])
+                (interpose [:.bb.b--red.o-20.bw2]))]
 
-    (when error
-      (.error js/console error))
-    [:div.overflow-hidden
-     {:class (when error? "bg-darken-red")}
-     (when (and source (or show-source? error (seq warnings)))
-       (display-source result))
-     [:.ws-prewrap.relative                                 ;.mv3.pv1
-      (if error?
-        [:.ph3.overflow-auto
-         (->> (for [message (concat warnings
-                                    (messages/reformat-error result))
-                    :when message]
-                [:.mv2 message])
-              (interpose [:.bb.b--red.o-20.bw2]))]
-
-        [:.ph3 (format-value value)])]]))
+          [:.ph3 (format-value value)])]])))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

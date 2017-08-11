@@ -1,5 +1,6 @@
 (ns maria.messages
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [cljs.pprint :refer [pprint]]))
 
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
@@ -130,7 +131,6 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error-position]}]
-
   (let [error-message (ex-message error)
         cause-message (ex-message (ex-cause error))]
     (list
@@ -193,13 +193,17 @@
       ;; ignore infer warnings for now
       :infer-warning nil
 
-      (with-out-str (println (select-keys w [:type :extra]))))))
+      {:name (str warning-type)
+       :doc  (list [:div (str "Unhandled warning: " warning-type)]
+                   (with-out-str (pprint (:extra w))))})))
 
 (defn reformat-warning [warning]
-  (when-let [{:keys [name doc]} (parse-warning warning)]
-    [:div
-     doc
-     [:.o-50.i "(" name ")"]]))
+  (when-let [{:keys [name doc] :as the-warning} (parse-warning warning)]
+    (if (string? the-warning)
+      the-warning
+      [:div
+       doc
+       [:.o-50.i "(" name ")"]])))
 
 ;; NB took this out because we're already
 ;; printing the expression in a nicer way

@@ -15,7 +15,7 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.26"]
+                 [re-view "0.3.27"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.7"]
                  [re-view-prosemirror "0.1.7"]
@@ -117,7 +117,15 @@
                                       [figwheel-sidecar "0.5.10"]
                                       [com.cemerick/piggieback "0.2.1"]]
                        ;; need to add dev source path here to get user.clj loaded
-                       :source-paths ["src" "dev"]
+                       :source-paths ["src"
+                                      "dev"
+                                      "checkouts/re_view/src"
+                                      "checkouts/re_view_hiccup/src"
+                                      "checkouts/re_view_routing/src"
+                                      "checkouts/re_view_prosemirror/src"
+                                      "checkouts/magic_tree/src"
+                                      "checkouts/re_db/src"
+                                      "checkouts/cljs_live/src"]
                        ;; for CIDER
                        ;:plugins      [[cider/cider-nrepl "0.14.0"]]
                        :repl-options {; for nREPL dev you really need to limit output

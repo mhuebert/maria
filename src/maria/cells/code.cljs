@@ -36,6 +36,7 @@
                                                                   :cell-view nil})})]
 
    [:.w-50.flex-none.code.overflow-hidden (some-> (peek (d/get (:id cell) :eval-log))
+                                                  (assoc :cell-id (:id cell))
                                                   (repl-values/display-result))]])
 
 (extend-type Cell/CodeCell
