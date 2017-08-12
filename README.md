@@ -31,7 +31,7 @@ Areas where we could especially benefit from community effort include:
 
 ## Development
 
-First, compile stylesheets:
+First, install javascript dependencies and compile stylesheets:
 
 ```
 yarn install;

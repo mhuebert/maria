@@ -1,7 +1,5 @@
 (ns maria.frames.trusted-frame
   (:require
-    [cljsjs.react]
-    [cljsjs.react.dom]
     [re-view-routing.core :as routing]
     [re-view.core :as v :refer [defview]]
     [maria.frames.trusted-routes :as routes]

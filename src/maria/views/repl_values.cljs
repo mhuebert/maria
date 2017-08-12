@@ -138,18 +138,17 @@
                          (.log js/console value)
                          (prn value))))))]))
 
-(defn display-source [{:keys [source error error-position warnings]}]
+(defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
    {:style {:max-height 200}}
    (codemirror/viewer {:error-ranges (cond-> []
-                                             error (conj (magic/highlights-for-position source error-position))
+                                             position (conj (magic/highlights-for-position source position))
                                              (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
 
 (defview display-result
   {:key :id}
   [{:keys [value
            error
-           error-position
            warnings
            show-source?
            cell-id

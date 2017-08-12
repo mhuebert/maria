@@ -1,7 +1,5 @@
 (ns maria.frames.live-frame
-  (:require [cljsjs.react]
-            [cljsjs.react.dom]
-            [maria.views.pages.repl :as repl]
+  (:require [maria.views.pages.repl :as repl]
             [maria.eval :as e]
             [cljs.core.match :refer-macros [match]]
 

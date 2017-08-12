@@ -19,7 +19,7 @@
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.7"]
                  [re-view-prosemirror "0.1.7"]
-                 [cljs-live "0.2.5-SNAPSHOT"]
+                 [cljs-live "0.2.5"]
                  [magic-tree "0.0.10"]
                  [org.clojure/data.json "0.2.6"]
 

@@ -130,7 +130,7 @@
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [source error error-position]}]
+  [{:keys [source error error/position]}]
   (let [error-message (ex-message error)
         cause-message (ex-message (ex-cause error))]
     (list
