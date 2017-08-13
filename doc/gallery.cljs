@@ -50,9 +50,9 @@
 ;; confetti
 (let [palette (cycle ["aqua" "springgreen" "magenta"])]
   (->> (repeat 20 (triangle 20))
-     (map #(position [(rand-int 500) (rand-int 500)] %))
-     (map colorize palette)
-     (apply group)))
+       (map #(position [(rand-int 500) (rand-int 500)] %))
+       (map colorize palette)
+       (apply layer)))
 
 ;; Halloween pumpkin
 (layer
