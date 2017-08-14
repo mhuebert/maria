@@ -1,4 +1,4 @@
-;;;; Intro
+;; # Intro
 
 ;; Put your cursor at the end of the following lines and press `Command-enter`.
 
@@ -9,14 +9,14 @@
 (fill "red" (circle 50))
 
 
-;;;; Simple values
+;; # Simple values
 
 "I am a String."
 
 "I'm another String. Strings are letters between double-quotes."
 
 
-;;;; Arithmetic
+;; # Arithmetic
 
 (+ 5 1)
 
@@ -27,7 +27,7 @@
 (+ 1 (* 3 3))
 
 
-;;;; Defining names
+;; # Defining names
 
 ;; If I just need the names for a little while, I use `let` like this:
 (let [mangoes 3
@@ -43,10 +43,12 @@
         oranges 5]
     (+ mangoes oranges)))
 
-(/ fruit 2) ;; average amount of each fruit
+(/ fruit 2)
+
+;; We've calculated the average amount of each fruit.
 
 
-;;;; EXERCISE 1: Basic arithmetic
+;; # EXERCISE 1: Basic arithmetic
 
 ;; 1. How many minutes have elapsed since you arrived at the workshop today?
 
