@@ -63,6 +63,7 @@
         clear-timeout! #(some-> (d/get :commands :timeout) (js/clearTimeout))
         clear-which-key! #(do (clear-timeout!)
                               (d/transact! [[:db/add :commands :which-key/active? false]]))
+
         which-key-delay 500
         handle-keydown (fn [e]
                          (let [keycode (registry/normalize-keycode (.-keyCode e))
@@ -80,8 +81,9 @@
                              (stop-event e)
                              (clear-which-key!))
 
+                           (clear-timeout!)
+
                            (when modifier?
-                             (clear-timeout!)
                              (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
                                            [:db/add :commands :timeout (-> #(let [keys-down (d/get :commands :modifiers-down)]
                                                                               (when (and (seq keys-down)
