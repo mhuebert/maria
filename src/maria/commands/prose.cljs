@@ -154,6 +154,7 @@
   (apply-command editor
                  (commands/chain
                    commands/open-link
+                   commands/open-image
                    (remove-empty-cell context)
                    (join-previous-cell context)
                    commands/backspace)))
@@ -212,7 +213,7 @@
    commands/rule-toggle-code
    commands/rule-block-heading-start
    commands/rule-paragraph-start
-   commands/rule-link
+   commands/rule-image-and-links
    (pm/InputRule.
      #"^\($"
      (fn [state [bracket] & _]
