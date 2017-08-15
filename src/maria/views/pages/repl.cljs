@@ -2,16 +2,15 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria-commands.which-key :as which-key]
-            [maria.views.codemirror :as codemirror]
             [maria.cells.list-view :as cell-list]
             [maria.eval :as e]
             [maria.repl-specials]
-            [maria.views.repl-values :as repl-values]
             [maria.views.repl-ui :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
-            [maria-commands.exec :as exec])
+            [goog.events :as events]
+            [re-view-routing.core :as r])
   (:require-macros [maria-commands.registry :refer [defcommand]]))
 
 (defonce _
@@ -87,13 +86,29 @@
                                     :value         (or local-value persisted-value)
                                     :default-value default-value})]]))))
 
-
+(defview dropdown-view
+  {:view/did-mount    (fn [{:keys [view/state] :as this}]
+                        (let [callback (fn [e]
+                                         (when-not (r/closest (.-target e) (partial = (v/dom-node this)))
+                                           (d/transact! [[:db/retract-attr :ui/globals :dropdown]])))]
+                          (events/listen js/window #js ["click" "resize" "scroll" "keydown"] callback)
+                          (v/swap-silently! state assoc :callback callback)))
+   :view/will-unmount (fn [{:keys [view/state]}]
+                        (events/unlisten js/window #js ["click" "resize" "scroll" "keydown"] (:callback @state)))}
+  [{:keys [rect component props]}]
+  [:.fixed.pa2.shadow-4.bg-white.br2.z-999
+   {:style {:top  (+ (.-top rect) (.-height rect) 5)
+            :left (.-left rect)}}
+   (component (assoc props :close!
+                           #(d/transact! [[:db/retract-attr :ui/globals :dropdown]])))])
 
 (defview layout
   [{:keys []}]
   [:div
    {:class "bg-light-gray"
     :style {:min-height "100%"}}
+   (some-> (d/get :ui/globals :dropdown)
+           (dropdown-view))
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
       (match segments

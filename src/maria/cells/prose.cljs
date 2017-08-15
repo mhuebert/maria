@@ -8,7 +8,24 @@
             [re-view-prosemirror.commands :as commands]
             [maria.util :as util]
             [maria.cells.core :as Cell]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [goog.dom.classes :as classes]
+            [re-view-routing.core :as r]
+            [re-view-material.icons :as icons]
+            [re-db.d :as d]))
+
+(defview link-dropdown [{:keys [href editor close!]}]
+  [:.flex.items-center
+   [:.dib.pointer
+    {:on-click (fn [e]
+                 (.preventDefault e)
+                 (.stopPropagation e)
+                 (commands/apply-command editor (partial commands/open-link true))
+                 (close!))}
+    (-> icons/ModeEdit
+        (icons/size 16)
+        (icons/class "mr1 o-50"))]
+   [:a.pm-link {:href href} href]])
 
 (defview prose-view
   {:key                :id
@@ -27,8 +44,10 @@
    :view/initial-state (fn [this]
                          {:last-update (:value (:cell this))})
    :view/should-update (fn [this]
-                         (not= (-> this :cell :value)
-                               (-> this :view/state (deref) :last-update)))
+                         (or (not= (:dropdown @(:view/state this))
+                                   (:dropdown (:view/prev-state this)))
+                             (not= (-> this :cell :value)
+                                   (-> this :view/state (deref) :last-update))))
    :view/did-mount     #(Cell/mount (:cell %) %)
    :view/will-unmount  (fn [this]
                          (Cell/unmount (:cell this))
@@ -44,6 +63,14 @@
                                                    :cell-view  this})
                  :on-blur     #(exec/set-context! {:cell/prose nil
                                                    :cell-view  nil})
+                 :on-click    (fn [e]
+                                (when-let [a (r/closest (.-target e) r/link?)]
+                                  (when-not (classes/has a "pm-link")
+                                    (do (.stopPropagation e)
+                                        (d/transact! [[:db/add :ui/globals :dropdown {:rect    (.getBoundingClientRect a)
+                                                                                      :component link-dropdown
+                                                                                      :props   {:href   (.-href a)
+                                                                                                :editor (.getEditor this)}}]])))))
                  :ref         #(v/swap-silently! state assoc :prose-editor-view %)
                  :on-dispatch (fn [editor-view pm-view prev-state]
                                 (when (not= (.-doc (.-state pm-view))

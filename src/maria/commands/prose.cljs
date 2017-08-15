@@ -203,8 +203,6 @@
     [context]
     (apply-command (:editor context) (partial commands/adjust-font-size inc))))
 
-
-
 (defn input-rules [cell-view]
   [commands/rule-blockquote-start
    commands/rule-block-list-bullet-start

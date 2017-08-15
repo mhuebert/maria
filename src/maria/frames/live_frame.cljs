@@ -24,7 +24,8 @@
             [maria.persistence.github :as github]
             [maria.frames.live-actions :as user-actions]
 
-            [maria.live.analyze]))
+            [maria.live.analyze]
+            [re-db.d :as d]))
 
 (enable-console-print!)
 
@@ -40,6 +41,8 @@
                  (when-let [a (r/closest (.-target e) r/link?)]
                    (.preventDefault e)
                    (navigate a))))
+
+
 
 (defview not-found []
   [:div "We couldn't find this page!"])
