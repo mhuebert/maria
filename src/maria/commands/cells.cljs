@@ -31,14 +31,16 @@
 
 (defcommand :selection/expand
   "Expand current selection"
-  {:bindings ["M1-]" "M1-1"]
+  {:bindings ["M1-]"
+              "M1-1"]
    :when     :cell}
   [{:keys [cell] :as context}]
   (Cell/selection-expand cell))
 
 (defcommand :selection/shrink
   "Contract selection (reverse of expand-selection)"
-  {:bindings ["M1-[" "M1-2"]
+  {:bindings ["M1-["
+              "M1-2"]
    :when     :cell}
   [{:keys [cell] :as context}]
   (Cell/selection-contract cell))

@@ -68,6 +68,8 @@
            "OPT"
            "OPTION") "ALT"
 
+         "TAB" "TAB"
+
          "SHIFT" "SHIFT"
 
          ;; We use M1, M2, and M3 to express "primary, secondary, and tertiary" modifiers
@@ -132,7 +134,8 @@
 (def modifiers #{(.-META KeyCodes)
                  (.-CTRL KeyCodes)
                  (.-ALT KeyCodes)
-                 (.-SHIFT KeyCodes)})
+                 (.-SHIFT KeyCodes)
+                 (.-TAB KeyCodes)})
 
 (defn show-key [key-code]
   (or (get code->symbol key-code)

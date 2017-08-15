@@ -60,7 +60,7 @@
 (defn init-listeners []
   (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
                                   [:db/add :commands :which-key/active? false]])
-        clear-timeout! #(some-> (d/get :commands :timeout) (js/clearTimeout))
+        clear-timeout! #(some-> (d/get :commands :which-key/timeout) (js/clearTimeout))
         clear-which-key! #(do (clear-timeout!)
                               (d/transact! [[:db/add :commands :which-key/active? false]]))
 
@@ -77,6 +77,12 @@
                                results (when command-names
                                          (mapv #(exec-command context %) commands))]
 
+                           ;; if we use Tab as a modifier,
+                           ;; we'll stop its default behaviour
+                           #_(when (= 9 keycode)
+                             (.preventDefault e)
+                             (.stopPropagation e))
+
                            (when (seq (filter :intercept! results))
                              (stop-event e)
                              (clear-which-key!))
@@ -85,11 +91,13 @@
 
                            (when modifier?
                              (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
-                                           [:db/add :commands :timeout (-> #(let [keys-down (d/get :commands :modifiers-down)]
-                                                                              (when (and (seq keys-down)
-                                                                                         (not= keys-down #{(registry/endkey->keycode "shift")}))
-                                                                                (d/transact! [[:db/add :commands :which-key/active? true]])))
-                                                                           (js/setTimeout which-key-delay))]]))))]
+                                           [:db/add :commands :which-key/timeout
+                                            (js/setTimeout
+                                              #(let [keys-down (d/get :commands :modifiers-down)]
+                                                 (when (and (seq keys-down)
+                                                            (not= keys-down #{(registry/endkey->keycode "shift")}))
+                                                   (d/transact! [[:db/add :commands :which-key/active? true]])))
+                                              which-key-delay)]]))))]
     (clear-keys)
     (events/listen js/window "keydown" handle-keydown true)
 

@@ -58,7 +58,11 @@
 
   (emit [this]
     (when-not (empty? this)
-      (str (->> (mapv (comp string/trim-newline tree/string) (:value this))
+      (str (->> (:value this)
+                (reduce (fn [forms node]
+                          (let [s (tree/string node)]
+                          (cond-> forms
+                                  s (conj (string/trim-newline s))))) [] )
                 (string/join "\n\n")))))
 
   (selection-expand [this]

@@ -6,7 +6,8 @@
             [maria.cells.core :as Cell]
             [re-db.d :as d]
             [maria.util :as util]
-            [re-view.core :as v]))
+            [re-view.core :as v]
+            [clojure.string :as string]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
@@ -77,14 +78,15 @@
 
 
 (defcommand :prose/inline-italic
-  {:bindings ["M1-I"]
+  {:bindings ["M1-i"]
    :when     :cell/prose}
   [context]
   (apply-command (:editor context) commands/inline-italic))
 
 
 (defcommand :prose/inline-code
-  {:bindings ["M3-`"]
+  {:bindings ["M3-`"
+              "M1-`"]
    :when     :cell/prose}
   [context]
   (apply-command (:editor context) commands/inline-code))
@@ -125,28 +127,43 @@
   [context]
   (apply-command (:editor context) commands/indent))
 
+(defn remove-empty-cell [{:keys [cells cell-list cell]}]
+  (fn [_ _]
+    (when (Cell/empty? cell)
+      (let [result (.splice cell-list cell [])
+            {:keys [before after]} (meta result)]
+        (if before (Cell/focus! before :end)
+                   (Cell/focus! after :start))
+        true))))
+
+(defn join-previous-cell [{:keys [cells cell-list cell]}]
+  (fn [_ _]
+    (when (and (Cell/at-start? cell)
+               (some-> (Cell/before cells cell) (Cell/empty?)))
+      (let [self (Cell/trim-paragraph-left cell)]
+        (.splice cell-list cell -1 (if (Cell/empty? self)
+                                     []
+                                     [self]))
+        true))))
+
+
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
    :when     :cell/prose}
-  [{:keys [editor cell cells cell-list]}]
+  [{:keys [editor cell cells cell-list] :as context}]
   (apply-command editor
                  (commands/chain
-                   (fn [state dispatch]
-                     (cond (Cell/empty? cell)
-                           (let [result (.splice cell-list cell [])
-                                 {:keys [before after]} (meta result)]
-                             (if before (Cell/focus! before :end)
-                                        (Cell/focus! after :start))
-                             true)
-                           (and (Cell/at-start? cell)
-                                (some-> (Cell/before cells cell) (Cell/empty?)))
-                           (let [self (Cell/trim-paragraph-left cell)]
-                             (.splice cell-list cell -1 (if (Cell/empty? self)
-                                                          []
-                                                          [self]))
-                             true)
-                           :else false))
+                   commands/open-link
+                   (remove-empty-cell context)
+                   (join-previous-cell context)
                    commands/backspace)))
+
+(defcommand :prose/space
+  {:bindings       ["Space"]
+   :when           :cell/prose
+   :intercept-when false}
+  [context]
+  (apply-command (:editor context) commands/end-link))
 
 (defcommand :prose/join-up
   {:bindings ["M2-Up"]
@@ -166,6 +183,12 @@
   [context]
   (apply-command (:editor context) commands/select-all))
 
+(defcommand :prose/remove-all-marks
+  {:bindings ["Esc"]
+   :when     :cell/prose}
+  [context]
+  (apply-command (:editor context) commands/clear-stored-marks))
+
 (comment
   (defcommand :prose/increase-size
     {:bindings ["M1-="]
@@ -179,6 +202,8 @@
     [context]
     (apply-command (:editor context) (partial commands/adjust-font-size inc))))
 
+
+
 (defn input-rules [cell-view]
   [commands/rule-blockquote-start
    commands/rule-block-list-bullet-start
@@ -187,8 +212,9 @@
    commands/rule-toggle-code
    commands/rule-block-heading-start
    commands/rule-paragraph-start
+   commands/rule-link
    (pm/InputRule.
-     #"^[\(\[\{]$"
+     #"^\($"
      (fn [state [bracket] & _]
        (when (empty-root-paragraph? state)
          (let [other-bracket ({\( \) \[ \] \{ \}} bracket)]

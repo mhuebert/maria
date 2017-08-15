@@ -45,7 +45,7 @@
     (clear-highlight! cm)
     (swap! cm assoc :magic/highlight
            {:node    node
-            :handles (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-eval-highlight"})})))
+            :handles (cm/mark-ranges! cm [(tree/boundaries node)] #js {:className "CodeMirror-eval-highlight"})})))
 
 (defn update-bracket-loc! [cm]
   (let [cursor-loc (get-in cm [:magic/cursor :loc])
