@@ -8,7 +8,7 @@
    :when     :cell-list}
   [{:keys [cell-list]}]
   (doseq [cell (.getCells cell-list)]
-    (when (satisfies? Cell/ICode cell)
+    (when (satisfies? Cell/IEval cell)
       (Cell/eval cell))))
 
 (defcommand :cell/next-cell

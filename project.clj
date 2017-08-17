@@ -18,9 +18,9 @@
                  [re-view "0.3.28-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.7"]
-                 [re-view-prosemirror "0.1.7"]
+                 [re-view-prosemirror "0.1.8"]
                  [cljs-live "0.2.5"]
-                 [magic-tree "0.0.10"]
+                 [magic-tree "0.0.11"]
                  [org.clojure/data.json "0.2.6"]
 
                  [cljsjs/codemirror "5.19.0-0"]

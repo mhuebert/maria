@@ -20,14 +20,14 @@
           markdown-before (prose/serialize-selection (.between pm/TextSelection (pm/start-$pos state) $head))
           markdown-after (prose/serialize-selection (.between pm/TextSelection $head (pm/end-$pos state)))
           new-cells (or (some-> content (Cell/from-source))
-                        [(Cell/->CodeCell (d/unique-id) [])])]
+                        [(Cell/create :code)])]
       (.splice cell-list cell (cond-> []
                                       (not (util/whitespace-string? markdown-before))
-                                      (conj (Cell/->ProseCell (d/unique-id) markdown-before))
+                                      (conj (Cell/create :prose markdown-before))
 
                                       true (into new-cells)
                                       (not (util/whitespace-string? markdown-after))
-                                      (conj (Cell/->ProseCell (d/unique-id) markdown-after))))
+                                      (conj (Cell/create :prose markdown-after))))
       (Cell/focus! (first new-cells) cursor-coords)
       true)))
 
@@ -129,23 +129,19 @@
 
 (defn remove-empty-cell [{:keys [cells cell-list cell]}]
   (fn [_ _]
-    (when (Cell/empty? cell)
+    (when (and (Cell/empty? cell) (Cell/before cells cell))
       (let [result (.splice cell-list cell [])
             {:keys [before after]} (meta result)]
         (if before (Cell/focus! before :end)
                    (Cell/focus! after :start))
         true))))
 
-(defn join-previous-cell [{:keys [cells cell-list cell]}]
+(defn clear-previous-empty [{:keys [cells cell-list cell]}]
   (fn [_ _]
     (when (and (Cell/at-start? cell)
                (some-> (Cell/before cells cell) (Cell/empty?)))
-      (let [self (Cell/trim-paragraph-left cell)]
-        (.splice cell-list cell -1 (if (Cell/empty? self)
-                                     []
-                                     [self]))
-        true))))
-
+      (.splice cell-list cell -1 [cell])
+      true)))
 
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
@@ -156,7 +152,7 @@
                    commands/open-link
                    commands/open-image
                    (remove-empty-cell context)
-                   (join-previous-cell context)
+                   (clear-previous-empty context)
                    commands/backspace)))
 
 (defcommand :prose/space

@@ -8,10 +8,12 @@
             [re-view-prosemirror.commands :as commands]
             [maria.util :as util]
             [maria.cells.core :as Cell]
-            [clojure.string :as string]
+            [magic-tree.core :as tree]
             [goog.dom.classes :as classes]
             [re-view-routing.core :as r]
+            [cljs.pprint :refer [pprint]]
             [re-view-material.icons :as icons]
+
             [re-db.d :as d]))
 
 (defview link-dropdown [{:keys [href editor close!]}]
@@ -27,27 +29,33 @@
         (icons/class "mr1 o-50"))]
    [:a.pm-link {:href href} href]])
 
+
+
 (defview prose-view
   {:key                :id
    :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
    :scroll-into-view   #(apply-command (.getEditor %) (fn [state dispatch]
                                                         (dispatch (.scrollIntoView (.-tr state)))))
-   :focus              (fn [this coords]
+   :focus              (fn [this position]
+                         (v/flush!)
                          (let [pm-view (.getEditor this)
                                state (.-state pm-view)]
-                           (when coords
-                             (.dispatch pm-view (-> (.-tr state)
-                                                    (.setSelection (case coords :start (.atStart pm/Selection (.-doc state))
-                                                                                :end (.atEnd pm/Selection (.-doc state)))))))
+                           (when-let [selection (cond (keyword? position)
+                                                      (case position :start (.atStart pm/Selection (.-doc state))
+                                                                     :end (.atEnd pm/Selection (.-doc state)))
+
+                                                      (object? position)
+                                                      (pm/coords-selection pm-view position)
+                                                      :else nil)]
+                             (.dispatch pm-view (.setSelection (.-tr state) selection)))
                            (.focus pm-view)
                            (js/setTimeout (.-scrollIntoView this) 0)))
    :view/initial-state (fn [this]
-                         {:last-update (:value (:cell this))})
-   :view/should-update (fn [this]
-                         (or (not= (:dropdown @(:view/state this))
-                                   (:dropdown (:view/prev-state this)))
-                             (not= (-> this :cell :value)
-                                   (-> this :view/state (deref) :last-update))))
+                         {:last-update (:cell this)})
+   :view/should-update (fn [{:keys [view/state view/prev-state cell]}]
+                         (or (not= (:dropdown @state)
+                                   (:dropdown prev-state))
+                             (not= cell (:last-update @state))))
    :view/did-mount     #(Cell/mount (:cell %) %)
    :view/will-unmount  (fn [this]
                          (Cell/unmount (:cell this))
@@ -56,52 +64,41 @@
                            (exec/set-context! {:cell/prose nil
                                                :cell-view  nil})))}
   [{:keys [view/state cell-list cell] :as this}]
-  (prose/Editor {:value       (:value cell)
+  (prose/Editor {:value       (:value (:node cell))
                  :class       " serif f4 ph3 cb"
                  :input-rules (prose-commands/input-rules this)
                  :on-focus    #(exec/set-context! {:cell/prose true
                                                    :cell-view  this})
                  :on-blur     #(exec/set-context! {:cell/prose nil
                                                    :cell-view  nil})
-                 :on-click    (fn [e]
-                                (when-let [a (r/closest (.-target e) r/link?)]
-                                  (when-not (classes/has a "pm-link")
-                                    (do (.stopPropagation e)
-                                        (d/transact! [[:db/add :ui/globals :dropdown {:rect    (.getBoundingClientRect a)
-                                                                                      :component link-dropdown
-                                                                                      :props   {:href   (.-href a)
-                                                                                                :editor (.getEditor this)}}]])))))
                  :ref         #(v/swap-silently! state assoc :prose-editor-view %)
                  :on-dispatch (fn [editor-view pm-view prev-state]
                                 (when (not= (.-doc (.-state pm-view))
                                             (.-doc prev-state))
-                                  (let [out (.serialize editor-view)]
-                                    (v/swap-silently! state assoc :last-update out)
-                                    (.splice cell-list cell [(assoc cell :value out)]))))}))
+                                  (let [out (.serialize editor-view)
+                                        updated-cell (assoc-in cell [:node :value] out)]
+                                    (v/swap-silently! state assoc :last-update updated-cell)
+                                    (.splice cell-list cell [updated-cell]))))}))
 
 
 
 (extend-type Cell/ProseCell
-  Cell/ICell
 
-  (empty? [this]
-    (util/whitespace-string? (:value this)))
+  Cell/ICursor
+
+  (cursor-coords [this]
+    (pm/cursor-coords (Cell/editor this)))
 
   (at-start? [this]
     (let [state (.-state (Cell/editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/start-$pos state)))))
 
+
   (at-end? [this]
     (let [state (.-state (Cell/editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/end-$pos state)))))
-
-  (emit [this]
-    (when-not (empty? this)
-      (.replace (->> (string/split (:value this) #"\n")
-                     (mapv #(string/replace % #"^ ?" "\n;; "))
-                     (clojure.string/join)) #"^\n" "")))
 
   (selection-expand [this]
     (commands/apply-command (Cell/editor this) commands/expand-selection))
@@ -109,12 +106,33 @@
   (selection-contract [this]
     (commands/apply-command (Cell/editor this) commands/contract-selection))
 
+  Cell/ICell
+
+  (kind [this] :prose)
+
+  (empty? [this]
+    (util/whitespace-string? (:value (:node this))))
+
+  (append? [this other-cell]
+    (= :prose (Cell/kind other-cell)))
+
+  (append [this other-cell]
+    (when (Cell/append? this other-cell)
+      (update-in this [:node :value] str "\n\n" (or (util/some-str (get-in other-cell [:node :value])) "\n"))))
+
+
+
+  (emit [this]
+    (tree/string (:node this)))
+
+
+
   (render [this props]
     (prose-view (assoc props
                   :cell this
                   :id (:id this))))
 
-  Cell/IText
+  Cell/IParagraph
   (prepend-paragraph [this]
     (when-let [prose-view (Cell/editor this)]
       (let [state (.-state prose-view)
@@ -126,8 +144,81 @@
     (when-let [prose-view (:prose-editor-view @(:view/state (Cell/get-view this)))]
       (let [new-value (.replace (:value this) #"^[\n\s]*" "")]
         (.resetDoc prose-view new-value)
-        (assoc this :value new-value)))))
+        (assoc-in this [:node :value] new-value)))))
 
+(comment
+  (js/setTimeout
+    #(do (let [cells [(Cell/create :prose "A")
+                      (Cell/create :prose "B")
+                      (Cell/create :prose "C")
+                      (Cell/create :code)
+                      (Cell/create :prose "D")
+                      (Cell/create :prose "E")]
+               A-id (:id (nth cells 0))
+               B-id (:id (nth cells 1))
+               C-id (:id (nth cells 2))
+               code-id (:id (nth cells 3))
+               D-id (:id (nth cells 4))
+               E-id (:id (nth cells 5))
+               test (fn [spliced before-value after-value first-value spliced-count]
+                      (let [{:keys [before after]} (meta spliced)]
+                        (try
+                          (assert (= spliced-count (count spliced)))
+                          (assert (= before-value (:value (:node before))))
+                          (assert (= first-value (:value (:node (first spliced)))))
+                          (assert (= after-value (:value (:node after))))
+                          (catch js/Error e
+
+                            (pprint {:before  [(:value (:node before)) :expected before-value]
+                                     :after   [(:value (:node after)) :expected after-value]
+                                     :spliced spliced})
+                            (throw e)))))]
+           (assert (= 3 (count (Cell/join-cells cells))))
+
+           ;;
+           ;; Removals
+
+           (test (Cell/splice-by-id cells A-id [])
+                 nil "B\n\nC" "B\n\nC" 3)
+
+           (test (Cell/splice-by-id cells B-id [])
+                 "A\n\nC" [] "A\n\nC" 3)
+
+           (test (Cell/splice-by-id cells C-id [])
+                 "A\n\nB" [] "A\n\nB" 3)
+
+           ;; NOTE
+           ;; if 'before' cell was merged with 'after' cell,
+           ;;    'after' is nil.
+           (test (Cell/splice-by-id cells code-id [])
+                 "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
+
+           (test (Cell/splice-by-id cells D-id [])
+                 [] "E" "A\n\nB\n\nC" 3)
+
+           ;;
+           ;; Insertions
+
+           (test (Cell/splice-by-id cells A-id [(Cell/create :prose "X")])
+                 nil [] "X\n\nB\n\nC" 3)
+           ;; replacing 'A' has side-effect of joining with B and C.
+           ;; in the real world, prose cells will always be joined.
+
+
+           (test (Cell/splice-by-id cells B-id 1 [])
+                 "A" [] "A" 3)
+
+           (test (Cell/splice-by-id cells B-id -1 [])
+                 nil "C" "C" 3)
+
+           (test (Cell/splice-by-id cells B-id 2 [])
+                 "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
+
+           (test (Cell/splice-by-id cells A-id 5 [])
+                 nil nil nil 0)
+
+           (test (Cell/splice-by-id cells E-id -5 [])
+                 nil nil nil 0))) 0))
 
 ;; TODO
 

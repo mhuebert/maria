@@ -40,15 +40,17 @@
                                          on-update]}]
                               (let [cells-changed? (not= (:cells @state) (:cells prev-state))]
                                 (when cells-changed?
-                                  (let [updated-source (Cell/emit-many (:cells @state))]
+                                  (let [updated-source (Cell/emit-list (:cells @state))]
                                     (v/swap-silently! state assoc :last-update updated-source)
                                     (on-update updated-source)))
                                 cells-changed?))
    :get-cells               #(:cells @(:view/state %))
    :splice                  (fn splice
                               ([this cell value] (splice this cell 0 value))
-                              ([this cell n value]
-                               (:cells (swap! (:view/state this) update :cells Cell/splice-by-id (:id cell) n value))))}
+                              ([{:keys [view/state]} cell n value]
+                               (let [cells (Cell/splice-by-id (:cells @state) (:id cell) n value)]
+                                 (js/setTimeout #(swap! state update :cells Cell/join-cells) 0)
+                                 (:cells (swap! state assoc :cells cells)))))}
   [{:keys [view/state] :as this}]
   (let [{:keys [cells]} @state]
     [:.w-100.flex-none.pv3

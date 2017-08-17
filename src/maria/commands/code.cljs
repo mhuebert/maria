@@ -9,8 +9,9 @@
             [clojure.set :as set]
             [maria.cells.core :as Cell]
             [re-db.d :as d]
-            [maria.util :as util]))
-
+            [maria.util :as util]
+            [re-view.core :as v]))
+ 
 (def pass #(.-Pass js/CodeMirror))
 
 (def selection? #(and (:cell/code %)
@@ -39,14 +40,17 @@
   (edit/cut-form (:editor context)))
 
 
+
 (defcommand :code-cell/enter
   {:bindings "Enter"
    :when     :cell/code}
   [{:keys [cell-view editor cell-list cell cells]}]
   (let [last-line (.lastLine editor)
         {cursor-line :line
-         cursor-ch   :ch} (util/js-lookup (.getCursor editor))]
-    (if-let [edge-position (cond (and (= cursor-line last-line)
+         cursor-ch   :ch} (util/js-lookup (.getCursor editor))
+        empty-cell (Cell/empty? cell)]
+    (if-let [edge-position (cond empty-cell :empty
+                                 (and (= cursor-line last-line)
                                       (= cursor-ch (count (.getLine editor last-line))))
                                  :end
                                  (and (= cursor-line 0)
@@ -55,25 +59,29 @@
                                  :else nil)]
       (let [adjacent-cell ((case edge-position
                              :end Cell/after
-                             :start Cell/before) cells cell)
-            adjacent-prose (when (satisfies? Cell/IText adjacent-cell)
-                             adjacent-cell)
-            new-cell (when-not adjacent-prose
-                       (Cell/->ProseCell (d/unique-id) ""))]
+                             (:empty :start) Cell/before) cells cell)
+            prev-prose (when (satisfies? Cell/IParagraph adjacent-cell)
+                         adjacent-cell)
+            new-cell (when-not prev-prose
+                       (Cell/create :prose))]
         (case edge-position
           :end (do
-                 (.splice cell-list cell (if adjacent-prose 1 0)
+                 (.splice cell-list cell (if prev-prose 1 0)
                           (cond-> []
                                   (not (Cell/empty? cell)) (conj cell)
                                   true (conj (or new-cell
-                                                 adjacent-prose))))
+                                                 prev-prose))))
 
-                 (when (satisfies? Cell/IText adjacent-prose)
-                   (Cell/prepend-paragraph adjacent-prose))
-                 (Cell/focus! (or new-cell adjacent-prose) :start))
-          :start (.splice cell-list cell (cond-> []
-                                                 new-cell (conj new-cell)
-                                                 true (conj cell)))))
+                 (when (satisfies? Cell/IParagraph prev-prose)
+                   (Cell/prepend-paragraph prev-prose))
+                 (Cell/focus! (or new-cell prev-prose) :start))
+
+          (:empty :start)
+          (do (.splice cell-list cell (cond-> []
+                                              new-cell (conj new-cell)
+                                              (not empty-cell) (conj cell)))
+              (when empty-cell
+                (Cell/focus! (or new-cell prev-prose) :end)))))
       js/CodeMirror.Pass)))
 
 (defcommand :delete/form
@@ -83,6 +91,12 @@
    :when     :cell/code}
   [context]
   (edit/delete-form (:editor context)))
+
+(defn clear-empty-code-cell [cell-list cells cell]
+  (let [before (Cell/before cells cell)
+        replacement (when-not before (Cell/create :prose))]
+    (.splice cell-list cell (if replacement [replacement] []))
+    (Cell/focus! (or before replacement) :end)))
 
 (defcommand :delete/code
   "Delete"
@@ -94,13 +108,10 @@
       (and (Cell/at-start? cell) (and before (Cell/empty? before)))
       (.splice cell-list cell -1 [cell])
 
-
       (Cell/empty? cell)
-      (let [new-cell (when-not before (Cell/->ProseCell (d/unique-id) ""))]
-        (.splice cell-list cell (if new-cell [new-cell] []))
+      (clear-empty-code-cell cell-list cells cell)
 
-        (Cell/focus! (or before new-cell) :end))
-      :else js/CodeMirror.Pass)))
+      :else false)))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
