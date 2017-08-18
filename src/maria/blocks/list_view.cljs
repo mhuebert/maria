@@ -5,7 +5,7 @@
             [re-db.d :as d]
             [maria.blocks.code]
             [maria.blocks.prose]
-            [maria.blocks.core :as Block]
+            [maria.blocks.blocks :as Block]
             [maria-commands.exec :as exec]
             [maria.commands.blocks]
             [maria.eval :as e]))

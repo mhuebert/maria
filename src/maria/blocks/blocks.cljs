@@ -1,4 +1,4 @@
-(ns maria.blocks.core
+(ns maria.blocks.blocks
   (:refer-clojure :exclude [empty?])
   (:require [magic-tree.core :as tree]
             [clojure.core.match :refer-macros [match]]
@@ -11,6 +11,7 @@
             [re-view-prosemirror.core :as pm]))
 
 (def block-index (volatile! {}))
+
 
 (defn get-view
   "Retrieve the mounted view for the block, if it exists"

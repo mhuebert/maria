@@ -4,11 +4,12 @@
             [maria.views.values :as repl-values]
             [maria.views.codemirror :as codemirror]
             [re-db.d :as d]
-            [maria.blocks.core :as Block]
+            [maria.blocks.blocks :as Block]
             [maria.util :as util]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.edit :as edit]
-            [maria.eval :as e]))
+            [maria.eval :as e]
+            [magic-tree-codemirror.util :as cm]))
 
 (defview code-view
   {:key                :id
@@ -97,4 +98,12 @@
 
   Block/IEval
   (eval [this]
-    (e/logged-eval-str (:id this) (Block/emit this))))
+    (binding [e/*eval-block* this]
+      (let [editor (Block/editor this)
+            source (or (cm/selection-text editor)
+                       (->> editor
+                            :magic/cursor
+                            :bracket-loc
+                            (tree/string (:ns @e/c-env)))
+                       (Block/emit this))]
+        (e/logged-eval-str (:id this) source)))))

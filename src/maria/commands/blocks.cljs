@@ -1,6 +1,6 @@
 (ns maria.commands.blocks
   (:require [maria-commands.registry :refer-macros [defcommand]]
-            [maria.blocks.core :as Block]))
+            [maria.blocks.blocks :as Block]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"

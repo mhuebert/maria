@@ -79,6 +79,23 @@
                                        :install-deps   true
                                        :parallel-build true}}
 
+                       {:id           "modules-prod"
+                        :source-paths ["src"]
+                        :figwheel     true
+                        :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
+                                                                        :output-to "resources/public/js/compiled/live.js"}
+                                                        :trusted-frame {:entries   #{maria.frames.trusted-frame}
+                                                                        :output-to "resources/public/js/compiled/trusted.js"}}
+                                       :npm-deps       {:react     "next"
+                                                        :react-dom "next"}
+                                       :output-dir     "resources/public/js/compiled/out-modules-prod"
+                                       :asset-path     "/js/compiled/out-modules-prod"
+                                       :language-in    :ecmascript5
+                                       :source-map     true
+                                       :optimizations  :simple
+                                       :install-deps   true
+                                       :parallel-build true}}
+
                        {:id           "live-prod"
                         :source-paths ["src"]
                         :compiler     {:main           "maria.frames.live-frame"

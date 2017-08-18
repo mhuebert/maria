@@ -1,6 +1,7 @@
 (ns cells.core
   (:require [re-db.d :as d]
-            [re-db.patterns :as patterns :include-macros true]))
+            [re-db.patterns :as patterns :include-macros true]
+            [maria.blocks.blocks]))
 
 (def ^:dynamic *current-cell* nil)
 

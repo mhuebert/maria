@@ -117,9 +117,8 @@
 
       :maria.kinds/map (format-map nil depth value)
 
-      :maria.kinds/var (format-value depth @value)
-
-      :maria.kinds/cell @value
+      (:maria.kinds/var
+        :maria.kinds/cell) (format-value depth @value)
 
       :maria.kinds/nil "nil"
 

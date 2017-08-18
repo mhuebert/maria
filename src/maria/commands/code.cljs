@@ -7,7 +7,7 @@
             [magic-tree-codemirror.edit :as edit]
             [fast-zip.core :as z]
             [clojure.set :as set]
-            [maria.blocks.core :as Block]
+            [maria.blocks.blocks :as Block]
             [maria.util :as util]))
 
 (def pass #(.-Pass js/CodeMirror))
@@ -167,14 +167,8 @@
   {:bindings ["M1-Enter"
               "M1-Shift-Enter"]
    :when     :block/code}
-  [{:keys [editor block-view]}]
-  (when-let [source (or (cm/selection-text editor)
-                        (->> editor
-                             :magic/cursor
-                             :bracket-loc
-                             (tree/string (:ns @e/c-env))))]
-
-    (e/logged-eval-str (:id block-view) source)))
+  [{:keys [editor block-view block]}]
+  (Block/eval block))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"

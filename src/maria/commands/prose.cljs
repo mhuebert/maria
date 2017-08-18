@@ -3,7 +3,7 @@
             [re-view-prosemirror.commands :as commands :refer [apply-command]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
-            [maria.blocks.core :as Block]
+            [maria.blocks.blocks :as Block]
             [re-db.d :as d]
             [maria.util :as util]
             [re-view.core :as v]

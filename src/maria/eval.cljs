@@ -7,6 +7,8 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
+(def ^:dynamic *eval-block* nil)
+
 (defn resolve-var
   ([sym] (e/resolve-var c-state c-env sym))
   ([c-state c-env sym] (e/resolve-var c-state c-env sym)))
@@ -38,7 +40,7 @@
     (f)))
 
 (defn init []
-  (set! cljs-live.compiler/debug? true)
+  ;(set! cljs-live.compiler/debug? true)
   (let [bundles ["cljs.core"
                  "maria.user"
                  "cljs.spec.alpha"

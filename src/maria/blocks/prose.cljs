@@ -7,7 +7,7 @@
             [maria-commands.exec :as exec]
             [re-view-prosemirror.commands :as commands]
             [maria.util :as util]
-            [maria.blocks.core :as Block]
+            [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
             [goog.dom.classes :as classes]
             [re-view-routing.core :as r]
