@@ -2,18 +2,22 @@
 # yarn lockfile v1
 
 
-"@cljs-oss/module-deps@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@cljs-oss/module-deps/-/module-deps-1.0.0.tgz#b0de50b641ef6735c2117fd77bca95a78bf7ad6f"
+"@cljs-oss/module-deps@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@cljs-oss/module-deps/-/module-deps-1.1.1.tgz#62667f282164f3f10f6ab9f124ba416fd12439fa"
   dependencies:
     JSONStream "^1.0.3"
+    babel-traverse "^6.23.1"
+    babylon "^6.15.0"
     browser-resolve "^1.7.0"
     cached-path-relative "^1.0.0"
     concat-stream "~1.5.0"
     defined "^1.0.0"
     detective "^4.0.0"
     duplexer2 "^0.1.2"
+    enhanced-resolve "3.4.1"
     inherits "^2.0.1"
+    konan "1.1.0"
     parents "^1.0.0"
     readable-stream "^2.0.2"
     resolve "^1.1.3"
@@ -1718,6 +1722,15 @@ end-of-stream@^1.0.0, end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
+enhanced-resolve@3.4.1:
+  version "3.4.1"
+  resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-3.4.1.tgz#0421e339fd71419b3da13d129b3979040230476e"
+  dependencies:
+    graceful-fs "^4.1.2"
+    memory-fs "^0.4.0"
+    object-assign "^4.0.1"
+    tapable "^0.2.7"
+
 enhanced-resolve@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-3.1.0.tgz#9f4b626f577245edcf4b2ad83d86e17f4f421dec"
@@ -3031,7 +3044,7 @@ klaw@^1.0.0:
   optionalDependencies:
     graceful-fs "^4.1.9"
 
-konan@^1.1.0:
+konan@1.1.0, konan@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/konan/-/konan-1.1.0.tgz#337743c4b97b4bd1ef8b62a24b315eb8bc4b2094"
   dependencies:
@@ -5245,6 +5258,10 @@ tachyons@^4.7.4:
 tapable@^0.2.5, tapable@~0.2.5:
   version "0.2.6"
   resolved "https://registry.yarnpkg.com/tapable/-/tapable-0.2.6.tgz#206be8e188860b514425375e6f1ae89bfb01fd8d"
+
+tapable@^0.2.7:
+  version "0.2.8"
+  resolved "https://registry.yarnpkg.com/tapable/-/tapable-0.2.8.tgz#99372a5c999bf2df160afc0d74bed4f47948cd22"
 
 tar-fs@^1.15.1:
   version "1.15.3"

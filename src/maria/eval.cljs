@@ -38,7 +38,7 @@
     (f)))
 
 (defn init []
-  #_(set! cljs-live.compiler/debug? true)
+  (set! cljs-live.compiler/debug? true)
   (let [bundles ["cljs.core"
                  "maria.user"
                  "cljs.spec.alpha"

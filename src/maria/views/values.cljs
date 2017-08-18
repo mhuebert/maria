@@ -1,4 +1,4 @@
-(ns maria.views.repl-values
+(ns maria.views.values
   (:require [clojure.string :as string]
             [goog.object :as gobj]
             [maria.messages :as messages]
@@ -117,7 +117,9 @@
 
       :maria.kinds/map (format-map nil depth value)
 
-      :maria.kinds/var (.toString value)
+      :maria.kinds/var (format-value depth @value)
+
+      :maria.kinds/cell @value
 
       :maria.kinds/nil "nil"
 
@@ -151,29 +153,29 @@
            error
            warnings
            show-source?
-           cell-id
+           block-id
            source] :as result}]
-  (error-view/error-boundary {:cell-id cell-id}
-    (let [warnings (sequence (comp (distinct)
-                                   (map messages/reformat-warning)
-                                   (keep identity)) warnings)
-          error? (or error (seq warnings))]
-      (when error
-        (.error js/console error))
-      [:div.overflow-hidden
-       {:class (when error? "bg-darken-red")}
-       (when (and source (or show-source? error (seq warnings)))
-         (display-source result))
-       [:.ws-prewrap.relative                               ;.mv3.pv1
-        (if error?
-          [:.ph3.overflow-auto
-           (->> (for [message (concat warnings
-                                      (messages/reformat-error result))
-                      :when message]
-                  [:.mv2 message])
-                (interpose [:.bb.b--red.o-20.bw2]))]
+  (error-view/error-boundary {:block-id block-id}
+                             (let [warnings (sequence (comp (distinct)
+                                                            (map messages/reformat-warning)
+                                                            (keep identity)) warnings)
+                                   error? (or error (seq warnings))]
+                               (when error
+                                 (.error js/console error))
+                               [:div.overflow-hidden
+                                {:class (when error? "bg-darken-red")}
+                                (when (and source (or show-source? error (seq warnings)))
+                                  (display-source result))
+                                [:.ws-prewrap.relative      ;.mv3.pv1
+                                 (if error?
+                                   [:.ph3.overflow-auto
+                                    (->> (for [message (concat warnings
+                                                               (messages/reformat-error result))
+                                               :when message]
+                                           [:.mv2 message])
+                                         (interpose [:.bb.b--red.o-20.bw2]))]
 
-          [:.ph3 (format-value value)])]])))
+                                   [:.ph3 (format-value value)])]])))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

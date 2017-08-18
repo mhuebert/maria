@@ -7,7 +7,7 @@
   :min-lein-version "2.7.1"
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
-                 [org.clojure/clojurescript "1.9.854"]
+                 [org.clojure/clojurescript "1.9.912"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/tools.reader "1.0.3"]
                  [com.cognitect/transit-cljs "0.8.239"]
@@ -19,7 +19,7 @@
                  [re-view-routing "0.1.3"]
                  [re-view-material "0.1.7"]
                  [re-view-prosemirror "0.1.8"]
-                 [cljs-live "0.2.5"]
+                 [cljs-live "0.2.6-SNAPSHOT"]
                  [magic-tree "0.0.11"]
                  [org.clojure/data.json "0.2.6"]
 
@@ -36,12 +36,20 @@
                  ]
 
   :plugins [[lein-figwheel "0.5.12"]
-            [lein-cljsbuild "1.1.6"]]
+            [lein-cljsbuild "1.1.7"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :source-paths ["src" "script"]
+  :source-paths ["src"
+                 "script"
+                 "checkouts/re_view/src"
+                 "checkouts/re_view_hiccup/src"
+                 "checkouts/re_view_routing/src"
+                 "checkouts/re_view_prosemirror/src"
+                 "checkouts/magic_tree/src"
+                 "checkouts/re_db/src"
+                 "checkouts/cljs_live/src"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]
@@ -61,6 +69,8 @@
                                                                         :output-to "resources/public/js/compiled/live.js"}
                                                         :trusted-frame {:entries   #{maria.frames.trusted-frame}
                                                                         :output-to "resources/public/js/compiled/trusted.js"}}
+                                       :npm-deps       {:react     "next"
+                                                        :react-dom "next"}
                                        :output-dir     "resources/public/js/compiled/out-modules-dev"
                                        :asset-path     "/js/compiled/out-modules-dev"
                                        :language-in    :ecmascript5
@@ -108,7 +118,7 @@
 
   :aliases {"dev"           ["figwheel" "live-dev" "trusted-dev"]
             "build-web"     ["cljsbuild" "once" "live-prod" "trusted-prod"]
-            "build-bundles" ["with-profile" "bundles" "run" "live-deps.clj"]}
+            "build-bundles" ["run" "-m" "cljs-live.bundle/main" "live-deps.clj"]}
 
   :deploy-via :clojars
 
@@ -118,17 +128,9 @@
                                       [com.cemerick/piggieback "0.2.1"]]
                        ;; need to add dev source path here to get user.clj loaded
                        :source-paths ["src"
-                                      "dev"
-                                      "checkouts/re_view/src"
-                                      "checkouts/re_view_hiccup/src"
-                                      "checkouts/re_view_routing/src"
-                                      "checkouts/re_view_prosemirror/src"
-                                      "checkouts/magic_tree/src"
-                                      "checkouts/re_db/src"
-                                      "checkouts/cljs_live/src"]
+                                      "dev"]
                        ;; for CIDER
                        ;:plugins      [[cider/cider-nrepl "0.14.0"]]
                        :repl-options {; for nREPL dev you really need to limit output
                                       :init             (set! *print-length* 50)
-                                      :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}
-             :bundles {:main build.live-deps}})
+                                      :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})

@@ -1,25 +1,9 @@
 (ns maria-commands.registry
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [re-view.util :refer [parse-opt-args]]))
 
 (defn spaced-name [the-name]
   (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
-
-(defn parse-opt-args [preds args]
-  (loop [preds preds
-         args args
-         out []]
-    (if (empty? preds)
-      (conj out args)
-      (let [match? ((first preds) (first args))]
-        (recur (rest preds)
-               (cond-> args match? (rest))
-               (conj out (if match? (first args) nil)))))))
-
-(comment
-  (doseq [[args opts] [[["a" {} 1 2] ["a" {} '(1 2)]]
-                       [[{} 1 2] [nil {} '(1 2)]]
-                       [["a" 1 2] ["a" nil '(1 2)]]]]
-    (assert (= (parse-opt-args [string? map?] args) opts))))
 
 (defmacro defcommand
   "Defines a command. command-name should be a namespaced keyword, followed by the optional positional args:

@@ -1,10 +1,10 @@
-(ns maria.cells.code
+(ns maria.blocks.code
   (:require [re-view.core :as v :refer [defview]]
             [maria-commands.exec :as exec]
-            [maria.views.repl-values :as repl-values]
+            [maria.views.values :as repl-values]
             [maria.views.codemirror :as codemirror]
             [re-db.d :as d]
-            [maria.cells.core :as Cell]
+            [maria.blocks.core :as Block]
             [maria.util :as util]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.edit :as edit]
@@ -13,13 +13,13 @@
 (defview code-view
   {:key                :id
    :view/should-update #(do false)
-   :view/did-mount     #(Cell/mount (:cell %) %)
-   :view/will-unmount  #(Cell/unmount (:cell %))
+   :view/did-mount     #(Block/mount (:block %) %)
+   :view/will-unmount  #(Block/unmount (:block %))
    :get-editor         #(.getEditor (:editor-view @(:view/state %)))
    :scroll-into-view   #(util/scroll-to-cursor (.getEditor %))
    :focus              (fn [this coords]
                          (.focus (:editor-view @(:view/state this)) coords))}
-  [{:keys [view/state cell-list cell] :as this}]
+  [{:keys [view/state block-list block] :as this}]
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (.focus this))
@@ -27,29 +27,29 @@
    [:.w-50.flex-none
     (codemirror/editor {:class               "pa3 bg-white"
                         :ref                 #(v/swap-silently! state assoc :editor-view %)
-                        :default-value       (Cell/emit (:cell this))
+                        :default-value       (Block/emit (:block this))
                         :on-ast              (fn [node]
                                                (when (not= (tree/string node)
-                                                           (tree/string (:node (:cell this))))
-                                                 (.splice cell-list cell [(assoc cell :node node)])))
-                        :capture-event/focus #(exec/set-context! {:cell/code true
-                                                                  :cell-view this})
-                        :capture-event/blur  #(exec/set-context! {:cell/code nil
-                                                                  :cell-view nil})})]
+                                                           (tree/string (:node (:block this))))
+                                                 (.splice block-list block [(assoc block :node node)])))
+                        :capture-event/focus #(exec/set-context! {:block/code true
+                                                                  :block-view this})
+                        :capture-event/blur  #(exec/set-context! {:block/code nil
+                                                                  :block-view nil})})]
 
-   [:.w-50.flex-none.code.overflow-hidden (some-> (peek (d/get (:id cell) :eval-log))
-                                                  (assoc :cell-id (:id cell))
+   [:.w-50.flex-none.code.overflow-hidden (some-> (peek (d/get (:id block) :eval-log))
+                                                  (assoc :block-id (:id block))
                                                   (repl-values/display-result))]])
 
-(extend-type Cell/CodeCell
+(extend-type Block/CodeBlock
 
-  Cell/ICursor
+  Block/ICursor
   (cursor-edge [this]
-    (let [editor (Cell/editor this)
+    (let [editor (Block/editor this)
           last-line (.lastLine editor)
           {cursor-line :line
            cursor-ch   :ch} (util/js-lookup (.getCursor editor))]
-      (cond (Cell/empty? this) :empty
+      (cond (Block/empty? this) :empty
             (and (= cursor-line last-line)
                  (= cursor-ch (count (.getLine editor last-line))))
             :end
@@ -59,48 +59,42 @@
             :else nil)))
 
   (cursor-coords [this]
-    (.cursorCoords (Cell/editor this)))
+    (.cursorCoords (Block/editor this)))
 
   (at-end? [this]
-    (let [cm (Cell/editor this)
+    (let [cm (Block/editor this)
           cursor (.getCursor cm)]
       (= [(.lastLine cm)
           (count (.getLine cm (.lastLine cm)))]
          [(.-line cursor) (.-ch cursor)])))
 
   (at-start? [this]
-    (let [cursor (.getCursor (Cell/editor this))]
+    (let [cursor (.getCursor (Block/editor this))]
       (= [0 0] [(.-line cursor) (.-ch cursor)])))
 
   (selection-expand [this]
-    (edit/expand-selection (Cell/editor this)))
+    (edit/expand-selection (Block/editor this)))
 
   (selection-contract [this]
-    (edit/shrink-selection (Cell/editor this)))
+    (edit/shrink-selection (Block/editor this)))
 
-  Cell/ICell
-
+  Block/IBlock
   (kind [this] :code)
-
-  (append? [this other-cell] false)
-
+  (append? [this other-block] false)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]
       (= 0 (count (filter (complement tree/whitespace?) (if (= :base tag)
                                                           (:value node)
                                                           [node]))))))
 
-
-
   (emit [this] (tree/string (:node this)))
-
 
 
   (render [this props]
     (code-view (assoc props
-                 :cell this
+                 :block this
                  :id (:id this))))
 
-  Cell/IEval
+  Block/IEval
   (eval [this]
-    (e/logged-eval-str (:id this) (Cell/emit this))))
+    (e/logged-eval-str (:id this) (Block/emit this))))

@@ -1,7 +1,8 @@
 (ns maria.frames.live-frame
-  (:require [maria.views.pages.repl :as repl]
+  (:require [maria.views.pages.blocks :as repl]
             [maria.eval :as e]
             [cljs.core.match :refer-macros [match]]
+            [cells.core]
 
             [maria-commands.exec]
 

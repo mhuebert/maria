@@ -5,7 +5,7 @@
             [re-view-material.icons :as icons]
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]
-            [maria.views.repl-ui :as repl-ui]))
+            [maria.views.cards :as repl-ui]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)

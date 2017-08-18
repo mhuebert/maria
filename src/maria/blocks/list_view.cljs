@@ -1,31 +1,29 @@
-(ns maria.cells.list-view
+(ns maria.blocks.list-view
   (:require [re-view.core :as v :refer [defview]]
-            [maria.cells.code :as code]
             [clojure.core.match :refer-macros [match]]
             [cljsjs.markdown-it]
-            [maria.cells.prose :as prose]
             [re-db.d :as d]
-            [maria.cells.core :as Cell]
+            [maria.blocks.code]
+            [maria.blocks.prose]
+            [maria.blocks.core :as Block]
             [maria-commands.exec :as exec]
-            [maria.commands.cells]
-            [maria.eval :as e]
-            [maria.util :as util]
-            [cljs.pprint :as pp]))
+            [maria.commands.blocks]
+            [maria.eval :as e]))
 
 
 (d/transact! [[:db/add :feature :in-place-eval true]])
 
-(defview cell-list
+(defview block-list
   {:key                     :source-id
    :view/initial-state      (fn [{value :value}]
                               {:last-update value
-                               :cells       (Cell/ensure-cells (Cell/from-source value))})
+                               :blocks      (Block/ensure-blocks (Block/from-source value))})
    :view/did-mount          (fn [{:keys [view/state] :as this}]
-                              (Cell/focus! (first (:cells @state)) :start)
-                              (exec/set-context! {:cell-list this})
+                              (Block/focus! (first (:blocks @state)) :start)
+                              (exec/set-context! {:block-list this})
                               (when (= (str (d/get-in :router/location [:query :eval])) "true")
                                 (e/on-load #(exec/exec-command-name :eval/doc))))
-   :view/will-unmount       #(exec/set-context! {:cell-list nil})
+   :view/will-unmount       #(exec/set-context! {:block-list nil})
    :view/will-receive-props (fn [{value :value
                                   state :view/state
                                   :as   this}]
@@ -34,27 +32,27 @@
                               ;; if these are different, the document has changed and we
                               ;; should re-parse from scratch.
                               (when (not= value (:last-update @state))
-                                (swap! state assoc :cells (Cell/ensure-cells (Cell/from-source value)))))
+                                (swap! state assoc :blocks (Block/ensure-blocks (Block/from-source value)))))
    :view/should-update      (fn [{:keys [view/state
                                          view/prev-state
                                          on-update]}]
-                              (let [cells-changed? (not= (:cells @state) (:cells prev-state))]
-                                (when cells-changed?
-                                  (let [updated-source (Cell/emit-list (:cells @state))]
+                              (let [blocks-changed? (not= (:blocks @state) (:blocks prev-state))]
+                                (when blocks-changed?
+                                  (let [updated-source (Block/emit-list (:blocks @state))]
                                     (v/swap-silently! state assoc :last-update updated-source)
                                     (on-update updated-source)))
-                                cells-changed?))
-   :get-cells               #(:cells @(:view/state %))
+                                blocks-changed?))
+   :get-blocks              #(:blocks @(:view/state %))
    :splice                  (fn splice
-                              ([this cell value] (splice this cell 0 value))
-                              ([{:keys [view/state]} cell n value]
-                               (let [cells (Cell/splice-by-id (:cells @state) (:id cell) n value)]
-                                 (js/setTimeout #(swap! state update :cells Cell/join-cells) 0)
-                                 (:cells (swap! state assoc :cells cells)))))}
+                              ([this block value] (splice this block 0 value))
+                              ([{:keys [view/state]} block n value]
+                               (let [blocks (Block/splice-by-id (:blocks @state) (:id block) n value)]
+                                 (js/setTimeout #(swap! state update :blocks Block/join-blocks) 0)
+                                 (:blocks (swap! state assoc :blocks blocks)))))}
   [{:keys [view/state] :as this}]
-  (let [{:keys [cells]} @state]
+  (let [{:keys [blocks]} @state]
     [:.w-100.flex-none.pv3
-     (map (fn [cell]
-            (Cell/render cell {:cells     cells
-                               :cell-list this})) cells)]))
+     (map (fn [block]
+            (Block/render block {:blocks     blocks
+                                 :block-list this})) blocks)]))
 

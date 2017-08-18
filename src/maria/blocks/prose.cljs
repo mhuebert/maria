@@ -1,4 +1,4 @@
-(ns maria.cells.prose
+(ns maria.blocks.prose
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
@@ -7,7 +7,7 @@
             [maria-commands.exec :as exec]
             [re-view-prosemirror.commands :as commands]
             [maria.util :as util]
-            [maria.cells.core :as Cell]
+            [maria.blocks.core :as Block]
             [magic-tree.core :as tree]
             [goog.dom.classes :as classes]
             [re-view-routing.core :as r]
@@ -51,74 +51,82 @@
                            (.focus pm-view)
                            (js/setTimeout (.-scrollIntoView this) 0)))
    :view/initial-state (fn [this]
-                         {:last-update (:cell this)})
-   :view/should-update (fn [{:keys [view/state view/prev-state cell]}]
+                         {:last-update (:block this)})
+   :view/should-update (fn [{:keys [view/state view/prev-state block]}]
                          (or (not= (:dropdown @state)
                                    (:dropdown prev-state))
-                             (not= cell (:last-update @state))))
-   :view/did-mount     #(Cell/mount (:cell %) %)
+                             (not= block (:last-update @state))))
+   :view/did-mount     #(Block/mount (:block %) %)
    :view/will-unmount  (fn [this]
-                         (Cell/unmount (:cell this))
+                         (Block/unmount (:block this))
                          ;; prosemirror doesn't fire `blur` command when unmounted
-                         (when (= (:cell-view @exec/context) this)
-                           (exec/set-context! {:cell/prose nil
-                                               :cell-view  nil})))}
-  [{:keys [view/state cell-list cell] :as this}]
-  (prose/Editor {:value       (:value (:node cell))
+                         (when (= (:block-view @exec/context) this)
+                           (exec/set-context! {:block/prose nil
+                                               :block-view  nil})))}
+  [{:keys [view/state block-list block] :as this}]
+  (prose/Editor {:value       (:value (:node block))
                  :class       " serif f4 ph3 cb"
                  :input-rules (prose-commands/input-rules this)
-                 :on-focus    #(exec/set-context! {:cell/prose true
-                                                   :cell-view  this})
-                 :on-blur     #(exec/set-context! {:cell/prose nil
-                                                   :cell-view  nil})
+                 :on-focus    #(exec/set-context! {:block/prose true
+                                                   :block-view  this})
+                 :on-blur     #(exec/set-context! {:block/prose nil
+                                                   :block-view  nil})
+                 :on-click    (fn [e]
+                                (when-let [a (r/closest (.-target e) r/link?)]
+                                  (when-not (classes/has a "pm-link")
+                                    (do (.stopPropagation e)
+                                        (d/transact! [[:db/add :ui/globals :dropdown {:rect      (.getBoundingClientRect a)
+                                                                                      :component link-dropdown
+                                                                                      :props     {:href   (.-href a)
+                                                                                                  :editor (.getEditor this)}}]])))))
                  :ref         #(v/swap-silently! state assoc :prose-editor-view %)
                  :on-dispatch (fn [editor-view pm-view prev-state]
                                 (when (not= (.-doc (.-state pm-view))
                                             (.-doc prev-state))
                                   (let [out (.serialize editor-view)
-                                        updated-cell (assoc-in cell [:node :value] out)]
-                                    (v/swap-silently! state assoc :last-update updated-cell)
-                                    (.splice cell-list cell [updated-cell]))))}))
+                                        updated-block (assoc-in block [:node :value] out)]
+                                    (v/swap-silently! state assoc :last-update updated-block)
+                                    (.splice block-list block [updated-block]))))}))
 
 
 
-(extend-type Cell/ProseCell
+(extend-type Block/ProseBlock
 
-  Cell/ICursor
+  Block/ICursor
 
   (cursor-coords [this]
-    (pm/cursor-coords (Cell/editor this)))
+    (pm/cursor-coords (Block/editor this)))
 
   (at-start? [this]
-    (let [state (.-state (Cell/editor this))]
+    (let [state (.-state (Block/editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/start-$pos state)))))
 
 
   (at-end? [this]
-    (let [state (.-state (Cell/editor this))]
+    (let [state (.-state (Block/editor this))]
       (= (.-pos (pm/cursor-$pos state))
          (.-pos (pm/end-$pos state)))))
 
   (selection-expand [this]
-    (commands/apply-command (Cell/editor this) commands/expand-selection))
+    (commands/apply-command (Block/editor this) commands/expand-selection))
 
   (selection-contract [this]
-    (commands/apply-command (Cell/editor this) commands/contract-selection))
+    (commands/apply-command (Block/editor this) commands/contract-selection))
 
-  Cell/ICell
+  Block/IBlock
 
   (kind [this] :prose)
 
   (empty? [this]
     (util/whitespace-string? (:value (:node this))))
 
-  (append? [this other-cell]
-    (= :prose (Cell/kind other-cell)))
+  (append? [this other-block]
+    (= :prose (Block/kind other-block)))
 
-  (append [this other-cell]
-    (when (Cell/append? this other-cell)
-      (update-in this [:node :value] str "\n\n" (or (util/some-str (get-in other-cell [:node :value])) "\n"))))
+  (append [this other-block]
+    (when (Block/append? this other-block)
+      (update-in this [:node :value] str "\n\n" (or (util/some-str (get-in other-block [:node :value])) "\n"))))
 
 
 
@@ -129,37 +137,37 @@
 
   (render [this props]
     (prose-view (assoc props
-                  :cell this
+                  :block this
                   :id (:id this))))
 
-  Cell/IParagraph
+  Block/IParagraph
   (prepend-paragraph [this]
-    (when-let [prose-view (Cell/editor this)]
+    (when-let [prose-view (Block/editor this)]
       (let [state (.-state prose-view)
             dispatch (.-dispatch prose-view)]
         (dispatch (-> (.-tr state)
                       (.insert 0 (.createAndFill (pm/get-node state :paragraph)))
                       (.scrollIntoView))))))
   (trim-paragraph-left [this]
-    (when-let [prose-view (:prose-editor-view @(:view/state (Cell/get-view this)))]
+    (when-let [prose-view (:prose-editor-view @(:view/state (Block/get-view this)))]
       (let [new-value (.replace (:value this) #"^[\n\s]*" "")]
         (.resetDoc prose-view new-value)
         (assoc-in this [:node :value] new-value)))))
 
 (comment
   (js/setTimeout
-    #(do (let [cells [(Cell/create :prose "A")
-                      (Cell/create :prose "B")
-                      (Cell/create :prose "C")
-                      (Cell/create :code)
-                      (Cell/create :prose "D")
-                      (Cell/create :prose "E")]
-               A-id (:id (nth cells 0))
-               B-id (:id (nth cells 1))
-               C-id (:id (nth cells 2))
-               code-id (:id (nth cells 3))
-               D-id (:id (nth cells 4))
-               E-id (:id (nth cells 5))
+    #(do (let [blocks [(Block/create :prose "A")
+                      (Block/create :prose "B")
+                      (Block/create :prose "C")
+                      (Block/create :code)
+                      (Block/create :prose "D")
+                      (Block/create :prose "E")]
+               A-id (:id (nth blocks 0))
+               B-id (:id (nth blocks 1))
+               C-id (:id (nth blocks 2))
+               code-id (:id (nth blocks 3))
+               D-id (:id (nth blocks 4))
+               E-id (:id (nth blocks 5))
                test (fn [spliced before-value after-value first-value spliced-count]
                       (let [{:keys [before after]} (meta spliced)]
                         (try
@@ -173,51 +181,51 @@
                                      :after   [(:value (:node after)) :expected after-value]
                                      :spliced spliced})
                             (throw e)))))]
-           (assert (= 3 (count (Cell/join-cells cells))))
+           (assert (= 3 (count (Block/join-blocks blocks))))
 
            ;;
            ;; Removals
 
-           (test (Cell/splice-by-id cells A-id [])
+           (test (Block/splice-by-id blocks A-id [])
                  nil "B\n\nC" "B\n\nC" 3)
 
-           (test (Cell/splice-by-id cells B-id [])
+           (test (Block/splice-by-id blocks B-id [])
                  "A\n\nC" [] "A\n\nC" 3)
 
-           (test (Cell/splice-by-id cells C-id [])
+           (test (Block/splice-by-id blocks C-id [])
                  "A\n\nB" [] "A\n\nB" 3)
 
            ;; NOTE
-           ;; if 'before' cell was merged with 'after' cell,
+           ;; if 'before' block was merged with 'after' block,
            ;;    'after' is nil.
-           (test (Cell/splice-by-id cells code-id [])
+           (test (Block/splice-by-id blocks code-id [])
                  "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
 
-           (test (Cell/splice-by-id cells D-id [])
+           (test (Block/splice-by-id blocks D-id [])
                  [] "E" "A\n\nB\n\nC" 3)
 
            ;;
            ;; Insertions
 
-           (test (Cell/splice-by-id cells A-id [(Cell/create :prose "X")])
+           (test (Block/splice-by-id blocks A-id [(Block/create :prose "X")])
                  nil [] "X\n\nB\n\nC" 3)
            ;; replacing 'A' has side-effect of joining with B and C.
-           ;; in the real world, prose cells will always be joined.
+           ;; in the real world, prose blocks will always be joined.
 
 
-           (test (Cell/splice-by-id cells B-id 1 [])
+           (test (Block/splice-by-id blocks B-id 1 [])
                  "A" [] "A" 3)
 
-           (test (Cell/splice-by-id cells B-id -1 [])
+           (test (Block/splice-by-id blocks B-id -1 [])
                  nil "C" "C" 3)
 
-           (test (Cell/splice-by-id cells B-id 2 [])
+           (test (Block/splice-by-id blocks B-id 2 [])
                  "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
 
-           (test (Cell/splice-by-id cells A-id 5 [])
+           (test (Block/splice-by-id blocks A-id 5 [])
                  nil nil nil 0)
 
-           (test (Cell/splice-by-id cells E-id -5 [])
+           (test (Block/splice-by-id blocks E-id -5 [])
                  nil nil nil 0))) 0))
 
 ;; TODO

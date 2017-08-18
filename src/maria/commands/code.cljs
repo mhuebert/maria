@@ -7,16 +7,14 @@
             [magic-tree-codemirror.edit :as edit]
             [fast-zip.core :as z]
             [clojure.set :as set]
-            [maria.cells.core :as Cell]
-            [re-db.d :as d]
-            [maria.util :as util]
-            [re-view.core :as v]))
- 
+            [maria.blocks.core :as Block]
+            [maria.util :as util]))
+
 (def pass #(.-Pass js/CodeMirror))
 
-(def selection? #(and (:cell/code %)
+(def selection? #(and (:block/code %)
                       (some-> (:editor %) (.somethingSelected))))
-(def no-selection? #(and (:cell/code %)
+(def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
 
 (defcommand :copy/form
@@ -35,21 +33,21 @@
   "Cuts current highlight"
   {:bindings ["M1-X"
               "M1-Shift-X"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/cut-form (:editor context)))
 
 
 
-(defcommand :code-cell/enter
+(defcommand :code-block/enter
   {:bindings "Enter"
-   :when     :cell/code}
-  [{:keys [cell-view editor cell-list cell cells]}]
+   :when     :block/code}
+  [{:keys [block-view editor block-list block blocks]}]
   (let [last-line (.lastLine editor)
         {cursor-line :line
          cursor-ch   :ch} (util/js-lookup (.getCursor editor))
-        empty-cell (Cell/empty? cell)]
-    (if-let [edge-position (cond empty-cell :empty
+        empty-block (Block/empty? block)]
+    (if-let [edge-position (cond empty-block :empty
                                  (and (= cursor-line last-line)
                                       (= cursor-ch (count (.getLine editor last-line))))
                                  :end
@@ -57,110 +55,110 @@
                                       (= cursor-ch 0))
                                  :start
                                  :else nil)]
-      (let [adjacent-cell ((case edge-position
-                             :end Cell/after
-                             (:empty :start) Cell/before) cells cell)
-            prev-prose (when (satisfies? Cell/IParagraph adjacent-cell)
-                         adjacent-cell)
-            new-cell (when-not prev-prose
-                       (Cell/create :prose))]
+      (let [adjacent-block ((case edge-position
+                             :end Block/after
+                             (:empty :start) Block/before) blocks block)
+            prev-prose (when (satisfies? Block/IParagraph adjacent-block)
+                         adjacent-block)
+            new-block (when-not prev-prose
+                       (Block/create :prose))]
         (case edge-position
           :end (do
-                 (.splice cell-list cell (if prev-prose 1 0)
+                 (.splice block-list block (if prev-prose 1 0)
                           (cond-> []
-                                  (not (Cell/empty? cell)) (conj cell)
-                                  true (conj (or new-cell
+                                  (not (Block/empty? block)) (conj block)
+                                  true (conj (or new-block
                                                  prev-prose))))
 
-                 (when (satisfies? Cell/IParagraph prev-prose)
-                   (Cell/prepend-paragraph prev-prose))
-                 (Cell/focus! (or new-cell prev-prose) :start))
+                 (when (satisfies? Block/IParagraph prev-prose)
+                   (Block/prepend-paragraph prev-prose))
+                 (Block/focus! (or new-block prev-prose) :start))
 
           (:empty :start)
-          (do (.splice cell-list cell (cond-> []
-                                              new-cell (conj new-cell)
-                                              (not empty-cell) (conj cell)))
-              (when empty-cell
-                (Cell/focus! (or new-cell prev-prose) :end)))))
+          (do (.splice block-list block (cond-> []
+                                              new-block (conj new-block)
+                                              (not empty-block) (conj block)))
+              (when empty-block
+                (Block/focus! (or new-block prev-prose) :end)))))
       js/CodeMirror.Pass)))
 
 (defcommand :delete/form
   "Deletes current highlight"
   {:bindings ["M1-Backspace"
               "M1-Shift-Backspace"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/delete-form (:editor context)))
 
-(defn clear-empty-code-cell [cell-list cells cell]
-  (let [before (Cell/before cells cell)
-        replacement (when-not before (Cell/create :prose))]
-    (.splice cell-list cell (if replacement [replacement] []))
-    (Cell/focus! (or before replacement) :end)))
+(defn clear-empty-code-block [block-list blocks block]
+  (let [before (Block/before blocks block)
+        replacement (when-not before (Block/create :prose))]
+    (.splice block-list block (if replacement [replacement] []))
+    (Block/focus! (or before replacement) :end)))
 
 (defcommand :delete/code
   "Delete"
   {:bindings ["Backspace"]
-   :when     :cell/code}
-  [{:keys [cell-list cell cells]}]
-  (let [before (Cell/before cells cell)]
+   :when     :block/code}
+  [{:keys [block-list block blocks]}]
+  (let [before (Block/before blocks block)]
     (cond
-      (and (Cell/at-start? cell) (and before (Cell/empty? before)))
-      (.splice cell-list cell -1 [cell])
+      (and (Block/at-start? block) (and before (Block/empty? before)))
+      (.splice block-list block -1 [block])
 
-      (Cell/empty? cell)
-      (clear-empty-code-cell cell-list cells cell)
+      (Block/empty? block)
+      (clear-empty-code-block block-list blocks block)
 
       :else false)))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
   {:bindings ["M2-Left"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/hop-left (:editor context)))
 
 (defcommand :navigate/hop-right
   "Move cursor right one form"
   {:bindings ["M2-Right"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/hop-right (:editor context)))
 
 (defcommand :navigate/jump-to-top
   "Move cursor to top of current doc"
   {:bindings "M1-Up"
-   :when     :cell/code})
+   :when     :block/code})
 
 (defcommand :navigate/jump-to-bottom
   "Move cursor to bottom of current doc"
   {:bindings "M1-Down"
-   :when     :cell/code})
+   :when     :block/code})
 
 (defcommand :comment/line
   "Comment the current line"
   {:bindings ["M1-/"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/comment-line (:editor context)))
 
 (defcommand :comment/uneval-form
   {:bindings ["M1-;"
               "M1-Shift-;"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/uneval-form (:editor context)))
 
 (defcommand :edit/slurp
   {:bindings ["M1-Shift-K"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/slurp (:editor context)))
 
 (defcommand :edit/kill
   "Cuts to end of line"
   {:bindings ["M1-K"]
-   :when     :cell/code}
+   :when     :block/code}
   [context]
   (edit/kill (:editor context)))
 
@@ -168,48 +166,48 @@
   "Evaluate the current form"
   {:bindings ["M1-Enter"
               "M1-Shift-Enter"]
-   :when     :cell/code}
-  [{:keys [editor cell-view]}]
+   :when     :block/code}
+  [{:keys [editor block-view]}]
   (when-let [source (or (cm/selection-text editor)
                         (->> editor
                              :magic/cursor
                              :bracket-loc
                              (tree/string (:ns @e/c-env))))]
 
-    (e/logged-eval-str (:id cell-view) source)))
+    (e/logged-eval-str (:id block-view) source)))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"
     {:bindings ["Option-Click"]
-     :when     :cell/code}
-    [{:keys [cell-view]}]
-    (eval-scope (.getEditor cell-view) :bracket))
+     :when     :block/code}
+    [{:keys [block-view]}]
+    (eval-scope (.getEditor block-view) :bracket))
 
 (defcommand :meta/info
   "Show documentation for current form"
   {:bindings ["M1-I"
               "M1-Shift-I"]
-   :when     #(and (:cell/code %)
+   :when     #(and (:block/code %)
                    (some-> % :editor :magic/cursor :bracket-loc z/node))}
-  [{:keys [cell-view editor cell]}]
+  [{:keys [block-view editor block]}]
   (let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
     (if (and (symbol? form) (repl-specials/resolve-var-or-special e/c-state e/c-env form))
-      (e/logged-eval-form (:id cell) (list 'doc form))
-      (e/logged-eval-form (:id cell) (list 'maria.messages/what-is (list 'quote form))))))
+      (e/logged-eval-form (:id block) (list 'doc form))
+      (e/logged-eval-form (:id block) (list 'maria.messages/what-is (list 'quote form))))))
 
 (defcommand :meta/source
   "Show source code for the current var"
   {:bindings ["M1-Shift-S"]
-   :when     #(and (:cell/code %)
+   :when     #(and (:block/code %)
                    (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
-  [{:keys [cell editor]}]
-  (e/logged-eval-form (:id cell) (list 'source
+  [{:keys [block editor]}]
+  (e/logged-eval-form (:id block) (list 'source
                                        (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
 (defcommand :meta/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]}
-  [{:keys [cell editor]}]
-  (e/log-eval-result! (:id cell)
+  [{:keys [block editor]}]
+  (e/log-eval-result! (:id block)
                       (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
 

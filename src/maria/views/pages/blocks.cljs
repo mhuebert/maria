@@ -1,11 +1,11 @@
-(ns maria.views.pages.repl
+(ns maria.views.pages.blocks
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria-commands.which-key :as which-key]
-            [maria.cells.list-view :as cell-list]
+            [maria.blocks.list-view :as block-list]
             [maria.eval :as e]
             [maria.repl-specials]
-            [maria.views.repl-ui :as repl-ui]
+            [maria.views.cards :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.doc-toolbar :as toolbar]
             [maria.persistence.local :as local]
@@ -78,7 +78,7 @@
                                    :filename filename
                                    :id       id})
              [:.flex.flex-auto
-              (cell-list/cell-list {:ref           #(when % (swap! state assoc :doc-editor %))
+              (block-list/block-list {:ref         #(when % (swap! state assoc :doc-editor %))
                                     :on-update     (fn [source]
                                                      (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
                                     :source-id     id
@@ -95,7 +95,7 @@
                           (v/swap-silently! state assoc :callback callback)))
    :view/will-unmount (fn [{:keys [view/state]}]
                         (events/unlisten js/window #js ["click" "resize" "scroll" "keydown"] (:callback @state)))}
-  [{:keys [rect component props]}]
+  [{:keys [rect component props] :as this}]
   [:.fixed.pa2.shadow-4.bg-white.br2.z-999
    {:style {:top  (+ (.-top rect) (.-height rect) 5)
             :left (.-left rect)}}

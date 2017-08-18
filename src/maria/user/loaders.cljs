@@ -6,7 +6,7 @@
             [re-view-hiccup.core :as hiccup]
 
             [maria.eval :as eval]
-            [maria.views.repl-ui :as repl-ui]
+            [maria.views.cards :as repl-ui]
             [maria.views.codemirror :as codemirror]
 
             [goog.net.jsloader :as jsl]
