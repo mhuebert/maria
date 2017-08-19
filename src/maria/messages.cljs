@@ -3,6 +3,9 @@
             [cells.cell :as cell]
             [cljs.pprint :refer [pprint]]))
 
+(defprotocol IKind
+  (kind [this]))
+
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
    :maria.kinds/false        {:doc "false: the Boolean value 'false'"}

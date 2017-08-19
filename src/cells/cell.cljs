@@ -2,7 +2,8 @@
   (:require [re-db.d :as d]
             [maria.eval :as e]
             [re-db.patterns :as patterns :include-macros true]
-            [maria.blocks.blocks]))
+            [maria.blocks.blocks]
+            [goog.net.XhrIo :as xhr]))
 
 (def ^:dynamic *cell* nil)
 
@@ -21,6 +22,18 @@
                                             (e/teardown! cell)))) n)]
     (e/on-teardown cell #(js/clearInterval the-interval))
     (f @cell)))
+
+(defn slurp
+  ([url]
+    (slurp url (comp #(js->clj % :keywordize-keys true) js/JSON.parse) nil))
+  ([url format-value f]
+   (let [cell *cell*]
+     (js/setTimeout
+       #(xhr/send url (fn [response]
+                       (let [formatted-value (-> response (.-target) (.getResponseText) (format-value))]
+                         (-reset! cell (cond->> formatted-value
+                                                f (f @cell)))))) 0)
+     nil)))
 
 (defonce -teardowns (volatile! {}))
 
