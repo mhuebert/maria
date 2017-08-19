@@ -78,13 +78,13 @@
                                    :filename filename
                                    :id       id})
              [:.flex.flex-auto
-              (block-list/block-list {:ref         #(when % (swap! state assoc :doc-editor %))
-                                    :on-update     (fn [source]
-                                                     (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                    :source-id     id
-                                    :class         "flex-auto"
-                                    :value         (or local-value persisted-value)
-                                    :default-value default-value})]]))))
+              (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
+                                      :on-update     (fn [source]
+                                                       (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                      :source-id     id
+                                      :class         "flex-auto"
+                                      :value         (or local-value persisted-value)
+                                      :default-value default-value})]]))))
 
 (defview dropdown-view
   {:view/did-mount    (fn [{:keys [view/state] :as this}]

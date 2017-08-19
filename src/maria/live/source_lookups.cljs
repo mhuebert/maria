@@ -4,7 +4,7 @@
             [magic-tree.core :as tree]
             [clojure.string :as string]
             [maria.eval :as e]
-            [cljs-live.eval :as cljs-eval]
+            [cljs-live.eval :as live-eval]
             [cljs-live.compiler :as c]
             [goog.net.XhrIo :as xhr]
             [maria.util :as util])
@@ -71,7 +71,7 @@
   (when-let [{:keys [index source compiled-js source-map]} (->> @e/eval-log
                                                                 (keep (partial js-match js-source))
                                                                 (first))]
-    (let [pos (-> (cljs-eval/mapped-cljs-position (index-position index compiled-js) source-map)
+    (let [pos (-> (live-eval/mapped-cljs-position (index-position index compiled-js) source-map)
                   (update :line inc)
                   (update :column inc))]
       (source-of-form-at-position source pos))))
@@ -92,7 +92,7 @@
               (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
             (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
                          [_ the-var] (ns-data :defs)
-                         :when (= f (e/var-value the-var))]
+                         :when (= f (live-eval/var-value the-var))]
                      the-var)))))))
 
 (def source-path "/js/cljs_live_bundles/sources")

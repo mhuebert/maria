@@ -2,7 +2,7 @@
   (:require [maria.views.pages.blocks :as repl]
             [maria.eval :as e]
             [cljs.core.match :refer-macros [match]]
-            [cells.core]
+            [cells.cell]
 
             [maria-commands.exec]
 

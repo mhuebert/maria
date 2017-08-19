@@ -56,12 +56,12 @@
                                  :start
                                  :else nil)]
       (let [adjacent-block ((case edge-position
-                             :end Block/after
-                             (:empty :start) Block/before) blocks block)
+                              :end Block/after
+                              (:empty :start) Block/before) blocks block)
             prev-prose (when (satisfies? Block/IParagraph adjacent-block)
                          adjacent-block)
             new-block (when-not prev-prose
-                       (Block/create :prose))]
+                        (Block/create :prose))]
         (case edge-position
           :end (do
                  (.splice block-list block (if prev-prose 1 0)
@@ -76,8 +76,8 @@
 
           (:empty :start)
           (do (.splice block-list block (cond-> []
-                                              new-block (conj new-block)
-                                              (not empty-block) (conj block)))
+                                                new-block (conj new-block)
+                                                (not empty-block) (conj block)))
               (when empty-block
                 (Block/focus! (or new-block prev-prose) :end)))))
       js/CodeMirror.Pass)))
@@ -186,8 +186,8 @@
   [{:keys [block-view editor block]}]
   (let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
     (if (and (symbol? form) (repl-specials/resolve-var-or-special e/c-state e/c-env form))
-      (e/logged-eval-form (:id block) (list 'doc form))
-      (e/logged-eval-form (:id block) (list 'maria.messages/what-is (list 'quote form))))))
+      (Block/eval block :form (list 'doc form))
+      (Block/eval block :form (list 'maria.messages/what-is (list 'quote form))))))
 
 (defcommand :meta/source
   "Show source code for the current var"
@@ -195,13 +195,12 @@
    :when     #(and (:block/code %)
                    (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
   [{:keys [block editor]}]
-  (e/logged-eval-form (:id block) (list 'source
-                                       (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+  (Block/eval block :form (list 'source
+                                (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
 (defcommand :meta/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]}
   [{:keys [block editor]}]
-  (e/log-eval-result! (:id block)
-                      (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
+  (e/log-eval-result! (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
 

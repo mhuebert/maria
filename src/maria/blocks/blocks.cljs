@@ -6,37 +6,45 @@
             [re-view.core :as v]
             [clojure.string :as string]
             [cljs.pprint :refer [pprint]]
+            [maria.eval :as e]
             [maria.util :as util]
             [maria-commands.exec :as exec]
             [re-view-prosemirror.core :as pm]))
 
-(def block-index (volatile! {}))
+(def view-index (volatile! {}))
 
+(defn view [this]
+  (@view-index (:id this)))
 
-(defn get-view
-  "Retrieve the mounted view for the block, if it exists"
-  [block]
-  (@block-index (:id block)))
+(defn editor [this]
+  (.getEditor (view this)))
 
-(defn editor
-  "Retrieve the editor for the block, if it exists"
-  [block]
-  (.getEditor (get-view block)))
+(defn mount [this view]
+  (vswap! view-index assoc (:id this) view))
+
+(defn unmount [this]
+  (vswap! view-index dissoc (:id this)))
+
+(defprotocol IBlock
+
+  (empty? [this])
+  (emit [this])
+  (kind [this])
+
+  (render [this props]))
+
+(defprotocol IJoin
+  (join-forward? [this other-block])
+  (join-forward [this other-block]))
 
 (defn focus!
   ([block]
    (focus! block nil))
   ([block coords]
-   (when-not (get-view block)
+   (when-not (view block)
      (v/flush!))
-   (some-> (get-view block)
+   (some-> (view block)
            (.focus coords))))
-
-(defn mount [block view]
-  (vswap! block-index assoc (:id block) view))
-
-(defn unmount [block]
-  (vswap! block-index dissoc (:id block)))
 
 (defprotocol ICursor
   (cursor-edge [this])
@@ -46,18 +54,11 @@
   (selection-expand [this])
   (selection-contract [this]))
 
-(defprotocol IBlock
-  (empty? [this])
-  (emit [this])
-  (kind [this])
-
-  (append? [this other-block])
-  (append [this other-block])
-
-  (render [this props]))
-
 (defprotocol IEval
-  (eval [this]))
+  (eval [this] [this kind value])
+  (eval-log [this])
+  (-eval-log! [this value])
+  (prev-value [this]))
 
 (defprotocol IParagraph
   (prepend-paragraph [this])
@@ -72,6 +73,9 @@
 (defn from-node
   "Returns a block, given a magic-tree AST node."
   [{:keys [tag] :as node}]
+  ;; GET ID FROM NODE
+  ;; CAN WE GET IT FROM DEF, DEFN, etc. in a structured way?
+  ;; IE IF FIRST SYMBOL STARTS WITH DEF, READ NEXT SYMBOL
   (when-let [create* (case tag
                        :comment ->ProseBlock
                        (:newline :space :comma nil) nil
@@ -107,8 +111,8 @@
        (reduce (fn [blocks node]
                  (if-let [block (from-node node)]
                    (if (some-> (peek blocks)
-                               (append? block))
-                     (update blocks (dec (count blocks)) append block)
+                               (join-forward? block))
+                     (update blocks (dec (count blocks)) join-forward block)
                      (conj blocks block))
                    blocks)) [])))
 
@@ -128,14 +132,14 @@
                 (js/setTimeout
                   #(focus! focused-block focused-coords) 0))
               (with-meta blocks {:dropped dropped}))
-            (append? (nth blocks i) (nth blocks (inc i)))
+            (join-forward? (nth blocks i) (nth blocks (inc i)))
             (let [block (nth blocks i)
                   other-block (nth blocks (inc i))
                   next-focused-block (when (or (= block focused-block)
-                                              (= other-block focused-block))
-                                      block)]
+                                               (= other-block focused-block))
+                                       block)]
 
-              (recur (util/vector-splice blocks i 2 [(append (nth blocks i) (nth blocks (inc i)))])
+              (recur (util/vector-splice blocks i 2 [(join-forward (nth blocks i) (nth blocks (inc i)))])
                      (conj dropped (+ (inc i) (count dropped)))
                      (or next-focused-block focused-block)
                      i))
@@ -153,22 +157,32 @@
                   (= (:id (nth blocks i)) id) i
                   :else (recur (inc i))))))
 
-(defn splice-by-id
-  ([blocks id values]
-   (splice-by-id blocks id 0 values))
-  ([blocks id n values]
+(defn teardown-block [block]
+  (when (satisfies? IEval block)
+    (e/teardown! (prev-value block))))
+
+(defn splice-block
+  ([blocks block values]
+   (splice-block blocks block 0 values))
+  ([blocks block n values]
    (if (and (clojure.core/empty? values)
             (= 1 (count blocks)))
      (let [blocks (ensure-blocks nil)]
+       (teardown-block block)
        (with-meta blocks {:before (first blocks)}))
-     (let [index (cond-> (id-index blocks id)
+     (let [index (cond-> (id-index blocks (:id block))
                          (neg? n) (+ n))
-           _ (assert index)
            n (inc (.abs js/Math n))
            result (util/vector-splice blocks index n values)
            start (dec index)
            end (-> index
                    (+ (count values)))]
+       (assert index)
+       (let [incoming-block-ids (into #{} (mapv :id values))
+             replaced-blocks (subvec blocks index (+ index n))
+             removed-blocks (filterv (comp (complement incoming-block-ids) :id) replaced-blocks)]
+         (doseq [block removed-blocks]
+           (teardown-block block)))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))
@@ -181,7 +195,7 @@
   (second (drop-while (comp (partial not= (:id block)) :id) blocks)))
 
 #_(defn delete-block [{:keys [view/state] :as block-list-view} block]
-    (let [next-blocks (splice-by-id (:blocks @state) (:id block) [])]
+    (let [next-blocks (splice-block (:blocks @state) (:id block) [])]
       (swap! state assoc :blocks next-blocks)
       (let [{:keys [before after]} (meta next-blocks)]
         (if before (focus! before :end)

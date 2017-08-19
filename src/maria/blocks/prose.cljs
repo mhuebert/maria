@@ -114,6 +114,15 @@
   (selection-contract [this]
     (commands/apply-command (Block/editor this) commands/contract-selection))
 
+
+  Block/IJoin
+  (join-forward? [this other-block]
+    (= :prose (Block/kind other-block)))
+
+  (join-forward [this other-block]
+    (when (Block/join-forward? this other-block)
+      (update-in this [:node :value] str "\n\n" (or (util/some-str (get-in other-block [:node :value])) "\n"))))
+
   Block/IBlock
 
   (kind [this] :prose)
@@ -121,19 +130,8 @@
   (empty? [this]
     (util/whitespace-string? (:value (:node this))))
 
-  (append? [this other-block]
-    (= :prose (Block/kind other-block)))
-
-  (append [this other-block]
-    (when (Block/append? this other-block)
-      (update-in this [:node :value] str "\n\n" (or (util/some-str (get-in other-block [:node :value])) "\n"))))
-
-
-
   (emit [this]
     (tree/string (:node this)))
-
-
 
   (render [this props]
     (prose-view (assoc props
@@ -149,25 +147,19 @@
                       (.insert 0 (.createAndFill (pm/get-node state :paragraph)))
                       (.scrollIntoView))))))
   (trim-paragraph-left [this]
-    (when-let [prose-view (:prose-editor-view @(:view/state (Block/get-view this)))]
+    (when-let [prose-view (:prose-editor-view @(:view/state (Block/view this)))]
       (let [new-value (.replace (:value this) #"^[\n\s]*" "")]
         (.resetDoc prose-view new-value)
         (assoc-in this [:node :value] new-value)))))
 
 (comment
   (js/setTimeout
-    #(do (let [blocks [(Block/create :prose "A")
-                      (Block/create :prose "B")
-                      (Block/create :prose "C")
-                      (Block/create :code)
-                      (Block/create :prose "D")
-                      (Block/create :prose "E")]
-               A-id (:id (nth blocks 0))
-               B-id (:id (nth blocks 1))
-               C-id (:id (nth blocks 2))
-               code-id (:id (nth blocks 3))
-               D-id (:id (nth blocks 4))
-               E-id (:id (nth blocks 5))
+    #(do (let [[A B C Code_ D E :as blocks] [(Block/create :prose "A")
+                                             (Block/create :prose "B")
+                                             (Block/create :prose "C")
+                                             (Block/create :code)
+                                             (Block/create :prose "D")
+                                             (Block/create :prose "E")]
                test (fn [spliced before-value after-value first-value spliced-count]
                       (let [{:keys [before after]} (meta spliced)]
                         (try
@@ -186,46 +178,46 @@
            ;;
            ;; Removals
 
-           (test (Block/splice-by-id blocks A-id [])
+           (test (Block/splice-block blocks A [])
                  nil "B\n\nC" "B\n\nC" 3)
 
-           (test (Block/splice-by-id blocks B-id [])
+           (test (Block/splice-block blocks B [])
                  "A\n\nC" [] "A\n\nC" 3)
 
-           (test (Block/splice-by-id blocks C-id [])
+           (test (Block/splice-block blocks C [])
                  "A\n\nB" [] "A\n\nB" 3)
 
            ;; NOTE
            ;; if 'before' block was merged with 'after' block,
            ;;    'after' is nil.
-           (test (Block/splice-by-id blocks code-id [])
+           (test (Block/splice-block blocks Code_ [])
                  "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
 
-           (test (Block/splice-by-id blocks D-id [])
+           (test (Block/splice-block blocks D [])
                  [] "E" "A\n\nB\n\nC" 3)
 
            ;;
            ;; Insertions
 
-           (test (Block/splice-by-id blocks A-id [(Block/create :prose "X")])
+           (test (Block/splice-block blocks A [(Block/create :prose "X")])
                  nil [] "X\n\nB\n\nC" 3)
            ;; replacing 'A' has side-effect of joining with B and C.
            ;; in the real world, prose blocks will always be joined.
 
 
-           (test (Block/splice-by-id blocks B-id 1 [])
+           (test (Block/splice-block blocks B 1 [])
                  "A" [] "A" 3)
 
-           (test (Block/splice-by-id blocks B-id -1 [])
+           (test (Block/splice-block blocks B -1 [])
                  nil "C" "C" 3)
 
-           (test (Block/splice-by-id blocks B-id 2 [])
+           (test (Block/splice-block blocks B 2 [])
                  "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
 
-           (test (Block/splice-by-id blocks A-id 5 [])
+           (test (Block/splice-block blocks A 5 [])
                  nil nil nil 0)
 
-           (test (Block/splice-by-id blocks E-id -5 [])
+           (test (Block/splice-block blocks E -5 [])
                  nil nil nil 0))) 0))
 
 ;; TODO

@@ -9,7 +9,7 @@
   [{:keys [block-list]}]
   (doseq [block (.getBlocks block-list)]
     (when (satisfies? Block/IEval block)
-      (Block/eval block))))
+      (Block/eval block :string (Block/emit block)))))
 
 (defcommand :block/next-block
   {:bindings ["Down"

@@ -51,7 +51,7 @@
                                    :error error)
                             (let [project value
                                   [_ {source :content}] (first (:files project))]
-                              (eval/eval-str source)
+                              (eval/eval-str* source)
                               (swap! status assoc
                                      :status "Gist loaded."
                                      :source source)))))

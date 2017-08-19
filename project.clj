@@ -7,7 +7,7 @@
   :min-lein-version "2.7.1"
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
-                 [org.clojure/clojurescript "1.9.912"]
+                 [org.clojure/clojurescript "1.9.919"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/tools.reader "1.0.3"]
                  [com.cognitect/transit-cljs "0.8.239"]
@@ -133,21 +133,21 @@
              :css-dirs     ["resources/public/css"]
              :nrepl-port   7888}
 
-  :aliases {"dev"           ["figwheel" "live-dev" "trusted-dev"]
-            "build-web"     ["cljsbuild" "once" "live-prod" "trusted-prod"]
-            "build-bundles" ["run" "-m" "cljs-live.bundle/main" "live-deps.clj"]}
+  :aliases {"dev"     ["figwheel" "live-dev" "trusted-dev"]
+            "build"   ["cljsbuild" "once" "live-prod" "trusted-prod"]
+            "bundles" ["run" "-m" "cljs-live.bundle/main" "live-deps.clj"]}
 
   :deploy-via :clojars
 
-  :profiles {:dev     {:dependencies [[figwheel-pushstate-server "0.1.1-SNAPSHOT"]
-                                      [binaryage/devtools "0.8.2"]
-                                      [figwheel-sidecar "0.5.10"]
-                                      [com.cemerick/piggieback "0.2.1"]]
-                       ;; need to add dev source path here to get user.clj loaded
-                       :source-paths ["src"
-                                      "dev"]
-                       ;; for CIDER
-                       ;:plugins      [[cider/cider-nrepl "0.14.0"]]
-                       :repl-options {; for nREPL dev you really need to limit output
-                                      :init             (set! *print-length* 50)
-                                      :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})
+  :profiles {:dev {:dependencies [[figwheel-pushstate-server "0.1.1-SNAPSHOT"]
+                                  [binaryage/devtools "0.8.2"]
+                                  [figwheel-sidecar "0.5.10"]
+                                  [com.cemerick/piggieback "0.2.1"]]
+                   ;; need to add dev source path here to get user.clj loaded
+                   :source-paths ["src"
+                                  "dev"]
+                   ;; for CIDER
+                   ;:plugins      [[cider/cider-nrepl "0.14.0"]]
+                   :repl-options {; for nREPL dev you really need to limit output
+                                  :init             (set! *print-length* 50)
+                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}}})

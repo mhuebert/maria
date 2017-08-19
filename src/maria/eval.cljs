@@ -7,13 +7,23 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(def ^:dynamic *eval-block* nil)
+(defprotocol ITearDown
+  "Any value that implements ITearDown will be 'cleaned up' by Maria's eval commands"
+  (on-teardown [this f])
+  (-teardown! [this]))
+
+(defn teardown! [value]
+  (when (satisfies? ITearDown value)
+    (-teardown! value)))
+
+(defn result-value [x]
+  (if (var? x) @x x))
+
+(def var-value e/var-value)
 
 (defn resolve-var
   ([sym] (e/resolve-var c-state c-env sym))
   ([c-state c-env sym] (e/resolve-var c-state c-env sym)))
-
-(def var-value e/var-value)
 
 (defonce eval-log (atom (list)))
 
@@ -23,8 +33,8 @@
       (swap! eval-log conj result)
       result)))
 
-(def eval (eval-log-wrap (partial e/eval c-state c-env)))
-(def eval-str (eval-log-wrap (partial e/eval-str c-state c-env)))
+(def eval-form* (eval-log-wrap (partial e/eval c-state c-env)))
+(def eval-str* (eval-log-wrap (partial e/eval-str c-state c-env)))
 (def compile-str (partial e/compile-str c-state c-env))
 
 ;; Simple queue for functions to be executed
@@ -48,25 +58,25 @@
                  #_"bach-leipzig"]]
     (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
                      (fn []
-                       (eval '(require '[cljs.core :include-macros true]))
-                       (eval '(require '[maria.user :include-macros true]))
-                       (eval '(inject 'cljs.core '{what-is   maria.messages/what-is
+                       (eval-form* '(require '[cljs.core :include-macros true]))
+                       (eval-form* '(require '[maria.user :include-macros true]))
+                       (eval-form* '(inject 'cljs.core '{what-is  maria.messages/what-is
                                                         load-gist maria.user.loaders/load-gist
                                                         load-js   maria.user.loaders/load-js
                                                         load-npm  maria.user.loaders/load-npm
                                                         html      re-view-hiccup.core/element}))
-                       (eval '(in-ns maria.user))
+                       (eval-form* '(in-ns maria.user))
 
                        (loaded!)))))
 
 
-(defn log-eval-result! [id result]
+(defn log-eval-result! [result]
   (let [result (assoc result :id (d/unique-id))]
-    (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]
-                  (when id [:db/update-attr id :eval-log (fnil conj []) result])])))
+    (d/transact! [[:db/update-attr :repl/state :eval-log (fnil conj []) result]])
+    result))
 
-(defn logged-eval-str [id source]
-  (log-eval-result! id (eval-str source)))
+(defn eval-str [source]
+  (log-eval-result! (eval-str* source)))
 
-(defn logged-eval-form [id form]
-  (log-eval-result! id (eval form)))
+(defn eval-form [form]
+  (log-eval-result! (eval-form* form)))

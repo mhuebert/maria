@@ -1,6 +1,6 @@
 (ns maria.messages
   (:require [clojure.string :as string]
-            [cells.core :as cell]
+            [cells.cell :as cell]
             [cljs.pprint :refer [pprint]]))
 
 (def kinds

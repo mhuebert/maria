@@ -38,7 +38,7 @@
                         :capture-event/blur  #(exec/set-context! {:block/code nil
                                                                   :block-view nil})})]
 
-   [:.w-50.flex-none.code.overflow-hidden (some-> (peek (d/get (:id block) :eval-log))
+   [:.w-50.flex-none.code.overflow-hidden (some-> (first (Block/eval-log block))
                                                   (assoc :block-id (:id block))
                                                   (repl-values/display-result))]])
 
@@ -79,9 +79,11 @@
   (selection-contract [this]
     (edit/shrink-selection (Block/editor this)))
 
+  Block/IJoin
+  (join-forward? [this other-block] false)
+
   Block/IBlock
   (kind [this] :code)
-  (append? [this other-block] false)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]
       (= 0 (count (filter (complement tree/whitespace?) (if (= :base tag)
@@ -97,13 +99,24 @@
                  :id (:id this))))
 
   Block/IEval
-  (eval [this]
-    (binding [e/*eval-block* this]
-      (let [editor (Block/editor this)
-            source (or (cm/selection-text editor)
-                       (->> editor
-                            :magic/cursor
-                            :bracket-loc
-                            (tree/string (:ns @e/c-env)))
-                       (Block/emit this))]
-        (e/logged-eval-str (:id this) source)))))
+  (-eval-log! [this value]
+    (d/transact! [[:db/update-attr (:id this) :eval-log #(take 2 (conj % value))]])
+    value)
+  (eval-log [this]
+    (d/get (:id this) :eval-log))
+  (prev-value [this]
+    (e/result-value (:value (first (Block/eval-log this)))))
+  (eval
+    ([this]
+     (let [editor (Block/editor this)
+           source (or (cm/selection-text editor)
+                      (->> editor
+                           :magic/cursor
+                           :bracket-loc
+                           (tree/string (:ns @e/c-env)))
+                      (Block/emit this))]
+       (Block/eval this :string source)))
+    ([this kind value]
+     (e/teardown! (Block/prev-value this))
+     (Block/-eval-log! this ((case kind :form e/eval-form
+                                        :string e/eval-str) value)))))

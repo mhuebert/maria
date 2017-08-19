@@ -46,7 +46,7 @@
    :splice                  (fn splice
                               ([this block value] (splice this block 0 value))
                               ([{:keys [view/state]} block n value]
-                               (let [blocks (Block/splice-by-id (:blocks @state) (:id block) n value)]
+                               (let [blocks (Block/splice-block (:blocks @state) block n value)]
                                  (js/setTimeout #(swap! state update :blocks Block/join-blocks) 0)
                                  (:blocks (swap! state assoc :blocks blocks)))))}
   [{:keys [view/state] :as this}]
