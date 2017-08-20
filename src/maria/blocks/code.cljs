@@ -129,6 +129,6 @@
        (Block/eval this :string source)))
     ([this kind value]
      (e/dispose! this)
-     (binding [e/*block* this]
+     (binding [e/*eval-context* this]
        (Block/-eval-log! this ((case kind :form e/eval-form
                                           :string e/eval-str) value))))))

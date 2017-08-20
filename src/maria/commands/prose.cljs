@@ -4,10 +4,7 @@
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
-            [re-db.d :as d]
-            [maria.util :as util]
-            [re-view.core :as v]
-            [clojure.string :as string]))
+            [maria.util :as util]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))

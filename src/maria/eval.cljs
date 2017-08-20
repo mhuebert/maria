@@ -7,8 +7,6 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(def ^:dynamic *block* nil)
-
 (defprotocol IDispose
   (on-dispose [context f] "Register a callback to be fired when context is disposed.")
   (-dispose! [context]))
@@ -21,6 +19,13 @@
 
 (defn result-value [x]
   (if (var? x) @x x))
+
+(def persistent-context
+  (reify IDispose
+    (on-dispose [context f])
+    (-dispose! [context])))
+
+(def ^:dynamic *eval-context* persistent-context)
 
 (def var-value e/var-value)
 
@@ -63,11 +68,11 @@
                      (fn []
                        (eval-form* '(require '[cljs.core :include-macros true]))
                        (eval-form* '(require '[maria.user :include-macros true]))
-                       (eval-form* '(inject 'cljs.core '{what-is  maria.messages/what-is
-                                                        load-gist maria.user.loaders/load-gist
-                                                        load-js   maria.user.loaders/load-js
-                                                        load-npm  maria.user.loaders/load-npm
-                                                        html      re-view-hiccup.core/element}))
+                       (eval-form* '(inject 'cljs.core '{what-is   maria.messages/what-is
+                                                         load-gist maria.user.loaders/load-gist
+                                                         load-js   maria.user.loaders/load-js
+                                                         load-npm  maria.user.loaders/load-npm
+                                                         html      re-view-hiccup.core/element}))
                        (eval-form* '(in-ns maria.user))
 
                        (loaded!)))))

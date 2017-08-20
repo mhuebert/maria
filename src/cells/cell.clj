@@ -3,7 +3,8 @@
 
 (def bindings (vec (mapcat #(do [(symbol %) (symbol "cells.cell" %)])
                            ["interval"
-                            "fetch"])))
+                            "fetch"
+                            "geo-location"])))
 
 (defmacro defcell
   "Defines a named cell."
@@ -21,8 +22,10 @@
   `(let ~bindings
      (~'cells.cell/make-cell ~(util/uuid) (fn [~'self] ~@body))))
 
-(defmacro in-cell
+(defmacro cell-fn
+  "Returns an anonymous function which will evaluate with the current cell in the stack"
   [& body]
-  `(if-not ~'cells.cell/*cell*
-     (~'cells.cell/cell ~@body)
-     (do ~@body)))
+  `(let [the-cell# (first ~'cells.cell/*cell-stack*)]
+     (fn [& args#]
+       (binding [~'cells.cell/*cell-stack* (cons the-cell# ~'cells.cell/*cell-stack*)]
+         (apply (fn ~@body) args#)))))

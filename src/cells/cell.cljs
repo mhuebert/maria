@@ -1,18 +1,27 @@
 (ns cells.cell
   (:require [re-db.d :as d]
             [maria.eval :as e]
-            [re-db.patterns :as patterns :include-macros true]
             [maria.blocks.blocks]
             [goog.net.XhrIo :as xhr]
             [goog.net.ErrorCode :as errors]
-            [maria.show :as show])
-  (:require-macros [cells.cell :refer [cell in-cell]])
+            [maria.show :as show]
+            [re-view.core :as v]
+            [com.stuartsierra.dependency :as dep])
+  (:require-macros [cells.cell :refer [defcell cell cell-fn]])
   (:import [goog Uri]))
 
 (def ^:dynamic *cell-stack* (list))
+(def ^:dynamic *compute-dependents* true)
+
+(defonce dep-graph (volatile! (dep/graph)))
+
+(defn dependencies [cell] (dep/immediate-dependencies @dep-graph cell))
+(defn dependents [cell] (dep/immediate-dependents @dep-graph cell))
 
 (defprotocol IReactiveCompute
   (-set-function! [this f])
+
+  (-compute-dependents! [this])
   (-compute! [this] "Compute a new value")
   (-compute-and-listen! [this] "Compute a value, registering pattern listeners"))
 
@@ -24,13 +33,7 @@
 (defn- query-string [query]
   (-> Uri .-QueryData (.createFromMap (clj->js query)) (.toString)))
 
-
-(def patterns patterns/patterns)
-
 (deftype Cell [id ^:mutable f ^:mutable state eval-context]
-
-  patterns/IPatternListen
-  (patterns [this] (:db/patterns state))
 
   INamed
   (-name [this] id)
@@ -41,7 +44,7 @@
     (set! state (assoc state
                   :async/status value
                   :async/message message))
-    (patterns/invalidate! d/*db* :ea_ [::cells id]))
+    (-compute-dependents! this))
   (status [this]
     @this
     (:async/status state))
@@ -51,11 +54,15 @@
 
   IDeref
   (-deref [this]
+    (when-let [other-cell (first *cell-stack*)]
+      (when-not (= other-cell this)
+        (vswap! dep-graph dep/depend other-cell this)))
     (d/get ::cells id))
 
   IReset
   (-reset! [this newval]
     (d/transact! [[:db/add ::cells id newval]])
+    (-compute-dependents! this)
     newval)
 
   ISwap
@@ -74,24 +81,29 @@
     this)
 
   IReactiveCompute
+  (-compute-dependents! [this]
+    (when *compute-dependents*
+      (binding [*compute-dependents* false]
+        (doseq [cell (dep/transitive-dependents @dep-graph this)]
+          (-compute! cell)))))
+
   (-set-function! [this newf]
     (set! f newf))
+
   (-compute! [this]
     (when-not (contains? (set *cell-stack*) this)
+      (vswap! dep-graph dep/remove-node this)
       (binding [*cell-stack* (cons this *cell-stack*)
-                e/*block* eval-context]
+                e/*eval-context* eval-context]
         (try
           (-reset! this (f this))
           (catch js/Error e
             (e/dispose! this)
             (throw e))))))
   (-compute-and-listen! [this]
-    (let [{:keys [patterns]} (patterns/capture-patterns (-compute! this))
-          patterns (update patterns :ea_ disj [::cells id])]
-      (set! state (assoc state :db/patterns patterns))
-      (e/on-dispose this (d/listen patterns #(-compute! this)))
-      (e/on-dispose eval-context #(e/dispose! this))
-      this))
+    (e/on-dispose eval-context #(e/dispose! this))
+    (-compute! this)
+    this)
 
   show/IShow
   (show [this] @this))
@@ -104,14 +116,14 @@
    (make-cell (d/unique-id) f))
   ([id f]
    (if-let [cell (get @-cells id)]
-
      (do (when-not (contains? (set (map name *cell-stack*)) id)
            (e/-dispose! cell)
            (-reset! cell nil))
          (-set-function! cell f)
          (-compute-and-listen! cell))
 
-     (let [cell (->Cell id f {} e/*block*)]
+     (let [cell (->Cell id f {:dep-> #{}
+                              :->dep #{}} e/*eval-context*)]
        (-compute-and-listen! cell)
        (vswap! -cells assoc id cell)
        cell))))
@@ -138,20 +150,45 @@
   ([url {:keys [parse query]
          :or   {parse (comp #(js->clj % :keywordize-keys true) js/JSON.parse)}} f]
    (let [the-cell (first *cell-stack*)
-         the-block e/*block*
+         the-block e/*eval-context*
          url (cond-> url
                      query (str "?" (query-string query)))]
      (-set-async-state! the-cell :loading)
-     (js/setTimeout
-       #(xhr/send url (fn [event]
-                        (let [xhrio (.-target event)]
-                          (if-not (.isSuccess xhrio)
-                            (-set-async-state! the-cell :error {:message (-> xhrio .getLastErrorCode (errors/getDebugMessage))
-                                                                :xhrio   xhrio})
-                            (let [formatted-value (try (-> xhrio (.getResponseText) (parse))
-                                                       (catch js/Error error
-                                                         (e/handle-block-error (:id the-block) error)))]
-                              (do (-set-async-state! the-cell nil)
-                                  (-reset! the-cell (cond->> formatted-value
-                                                             f (f @the-cell))))))))) 0)
-     nil)))
+     (xhr/send url (cell-fn [event]
+                            (let [xhrio (.-target event)]
+                              (if-not (.isSuccess xhrio)
+                                (-set-async-state! the-cell :error {:message (-> xhrio .getLastErrorCode (errors/getDebugMessage))
+                                                                    :xhrio   xhrio})
+                                (let [formatted-value (try (-> xhrio (.getResponseText) (parse))
+                                                           (catch js/Error error
+                                                             (e/handle-block-error (:id the-block) error)))]
+                                  (do (-set-async-state! the-cell nil)
+                                      (reset! the-cell (cond->> formatted-value
+                                                                f (f @the-cell)))))))))
+     (or @the-cell nil))))
+
+(defn geo-location
+  []
+  (js/navigator.geolocation.getCurrentPosition
+    (cell-fn [location]
+             (->> {:latitude  (.. location -coords -latitude)
+                   :longitude (.. location -coords -longitude)}
+                  (reset! (first *cell-stack*))))))
+
+(comment (defcell a 1)
+         (defcell b @a)
+         @b
+         (defcell c @b)
+         @c
+         (defcell d @c)
+         @d
+         (defcell -b @b)
+         @-b
+         (defcell -c @c)
+         @-c
+
+         (doseq [cell [a b c d -b -c]]
+           (println {:name  (name cell)
+                     :dep-> (map name (dependencies cell))
+                     :->dep (map name (dependents cell))
+                     :topo  (map name (dep/transitive-dependents @dep-graph cell))})))

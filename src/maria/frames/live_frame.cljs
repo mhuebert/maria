@@ -25,8 +25,7 @@
             [maria.persistence.github :as github]
             [maria.frames.live-actions :as user-actions]
 
-            [maria.live.analyze]
-            [re-db.d :as d]))
+            [maria.live.analyze]))
 
 (enable-console-print!)
 
