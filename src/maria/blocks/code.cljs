@@ -42,6 +42,10 @@
                                                   (assoc :block-id (:id block))
                                                   (repl-values/display-result))]])
 
+(defn vec-take [coll n]
+  (cond-> coll (> (count coll) n)
+          (subvec (- (count coll) n) (count coll))))
+
 (extend-type Block/CodeBlock
 
   Block/ICursor
@@ -98,14 +102,21 @@
                  :block this
                  :id (:id this))))
 
+
+  e/IDispose
+  (on-dispose [this f]
+    (vswap! e/-dispose-callbacks update (:id this) conj f))
+  (-dispose! [this]
+    (doseq [f (get @e/-dispose-callbacks (:id this))]
+      (f))
+    (vswap! e/-dispose-callbacks dissoc (:id this)))
+
   Block/IEval
   (-eval-log! [this value]
-    (d/transact! [[:db/update-attr (:id this) :eval-log #(take 2 (conj % value))]])
+    (d/transact! [[:db/update-attr (:id this) :eval-log #(take 2 (cons value %))]])
     value)
   (eval-log [this]
     (d/get (:id this) :eval-log))
-  (prev-value [this]
-    (e/result-value (:value (first (Block/eval-log this)))))
   (eval
     ([this]
      (let [editor (Block/editor this)
@@ -117,6 +128,7 @@
                       (Block/emit this))]
        (Block/eval this :string source)))
     ([this kind value]
-     (e/teardown! (Block/prev-value this))
-     (Block/-eval-log! this ((case kind :form e/eval-form
-                                        :string e/eval-str) value)))))
+     (e/dispose! this)
+     (binding [e/*block* this]
+       (Block/-eval-log! this ((case kind :form e/eval-form
+                                          :string e/eval-str) value))))))

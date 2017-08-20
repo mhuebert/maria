@@ -57,8 +57,7 @@
 (defprotocol IEval
   (eval [this] [this kind value])
   (eval-log [this])
-  (-eval-log! [this value])
-  (prev-value [this]))
+  (-eval-log! [this value]))
 
 (defprotocol IParagraph
   (prepend-paragraph [this])
@@ -157,9 +156,9 @@
                   (= (:id (nth blocks i)) id) i
                   :else (recur (inc i))))))
 
-(defn teardown-block [block]
-  (when (satisfies? IEval block)
-    (e/teardown! (prev-value block))))
+(defn dispose-block [block]
+  (when (satisfies? e/IDispose block)
+    (e/dispose! block)))
 
 (defn splice-block
   ([blocks block values]
@@ -168,7 +167,7 @@
    (if (and (clojure.core/empty? values)
             (= 1 (count blocks)))
      (let [blocks (ensure-blocks nil)]
-       (teardown-block block)
+       (dispose-block block)
        (with-meta blocks {:before (first blocks)}))
      (let [index (cond-> (id-index blocks (:id block))
                          (neg? n) (+ n))
@@ -182,7 +181,7 @@
              replaced-blocks (subvec blocks index (+ index n))
              removed-blocks (filterv (comp (complement incoming-block-ids) :id) replaced-blocks)]
          (doseq [block removed-blocks]
-           (teardown-block block)))
+           (dispose-block block)))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))

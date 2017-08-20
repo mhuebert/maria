@@ -7,14 +7,17 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(defprotocol ITearDown
-  "Any value that implements ITearDown will be 'cleaned up' by Maria's eval commands"
-  (on-teardown [this f])
-  (-teardown! [this]))
+(def ^:dynamic *block* nil)
 
-(defn teardown! [value]
-  (when (satisfies? ITearDown value)
-    (-teardown! value)))
+(defprotocol IDispose
+  (on-dispose [context f] "Register a callback to be fired when context is disposed.")
+  (-dispose! [context]))
+
+(defonce -dispose-callbacks (volatile! {}))
+
+(defn dispose! [value]
+  (when (satisfies? IDispose value)
+    (-dispose! value)))
 
 (defn result-value [x]
   (if (var? x) @x x))
@@ -80,3 +83,13 @@
 
 (defn eval-form [form]
   (log-eval-result! (eval-form* form)))
+
+(defn handle-block-error [block-id error]
+  (.log js/console "error" error)
+  (let [eval-log (d/get block-id :eval-log)
+        result (-> (first eval-log)
+                   (assoc :error (or error (js/Error. "Unknown error"))
+                          :error/kind :eval)
+                   (e/add-error-position))]
+    (d/transact! [[:db/update-attr block-id :eval-log #(cons result (rest %))]])
+    nil))

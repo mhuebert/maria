@@ -1,10 +1,6 @@
 (ns maria.messages
   (:require [clojure.string :as string]
-            [cells.cell :as cell]
             [cljs.pprint :refer [pprint]]))
-
-(defprotocol IKind
-  (kind [this]))
 
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
@@ -28,8 +24,7 @@
    :maria.kinds/atom         {:doc "an Clojure atom, a way to manage data that can change"}
    :maria.kinds/var          {:doc "a Clojure var"}
    :maria.kinds/comment      {:doc "a comment: any text beginning with `;` is ignored by the computer, useful for explaining or annotating code."}
-   :maria.kinds/uneval       {:doc "uneval: adding `#_` in front of any expression will cause it to be completely ignored by the computer, like a comment."}
-   :maria.kinds/cell         {:doc "[experimental] a cell"}})
+   :maria.kinds/uneval       {:doc "uneval: adding `#_` in front of any expression will cause it to be completely ignored by the computer, like a comment."}})
 
 (defn kind [thing]
   (if (and (keyword? thing) (contains? kinds thing))
@@ -53,7 +48,6 @@
       (vector? thing) :maria.kinds/vector
       (object? thing) :maria.kinds/object
       (instance? Atom thing) :maria.kinds/atom
-      (instance? cell/Cell thing) :maria.kinds/cell
       :else nil)))
 
 ;; TODO possibly add references to https://clojure.org/reference/reader and/or https://clojure.org/reference/data_structures
