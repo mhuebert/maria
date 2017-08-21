@@ -4,6 +4,7 @@
             [maria.views.values :as repl-values]
             [maria.views.codemirror :as codemirror]
             [re-db.d :as d]
+            [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
             [maria.util :as util]
             [magic-tree.core :as tree]
@@ -103,13 +104,17 @@
                  :id (:id this))))
 
 
-  e/IDispose
+  cell/IDispose
   (on-dispose [this f]
-    (vswap! e/-dispose-callbacks update (:id this) conj f))
+    (vswap! cell/-dispose-callbacks update (:id this) conj f))
   (-dispose! [this]
-    (doseq [f (get @e/-dispose-callbacks (:id this))]
+    (doseq [f (get @cell/-dispose-callbacks (:id this))]
       (f))
-    (vswap! e/-dispose-callbacks dissoc (:id this)))
+    (vswap! cell/-dispose-callbacks dissoc (:id this)))
+
+  cell/IHandleError
+  (handle-error [this error]
+    (e/handle-block-error (:id this) error))
 
   Block/IEval
   (-eval-log! [this value]
@@ -128,7 +133,7 @@
                       (Block/emit this))]
        (Block/eval this :string source)))
     ([this kind value]
-     (e/dispose! this)
-     (binding [e/*eval-context* this]
+     (cell/dispose! this)
+     (binding [cell/*eval-context* this]
        (Block/-eval-log! this ((case kind :form e/eval-form
                                           :string e/eval-str) value))))))

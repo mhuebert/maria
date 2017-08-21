@@ -4,10 +4,9 @@
             [maria-commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
-            [re-view-material.icons :as icons]
+            [maria.views.icons :as icons]
             [maria.persistence.github :as github]
             [re-db.d :as d]
-            [re-view-material.core :as ui]
             [clojure.string :as string]
             [cljs.core.match :refer-macros [match]]
             [maria.util :as util]))
@@ -22,18 +21,6 @@
 (defn strip-clj-ext [s]
   (some-> s
           (string/replace #"\.clj[cs]?$" "")))
-
-(defn user-menu []
-  (ui/SimpleMenuWithTrigger
-    {:open-from         :top-left
-     :container-classes ["mdc-menu-anchor" "flex" "items-stretch"]}
-    [:.flex.items-center.b.pointer.ph2.hover-bg-near-white (d/get :auth-public :username)]
-    (ui/SimpleMenuItem {:text-primary "My gists"
-                        :href         (str "/gists/" (d/get :auth-public :username))
-                        :dense        true})
-    (ui/SimpleMenuItem {:text-primary "Sign out"
-                        :on-click     #(send [:auth/sign-out])
-                        :dense        true})))
 
 
 (defn toolbar-button [[action icon]]
@@ -196,5 +183,6 @@
      [:.flex-auto]
      (command-button command-context :doc/new icons/Add)
 
-     (if signed-in? (user-menu)
+     (if signed-in? (list [:a.flex.items-center.ph2.gold {:href (str "/gists/" (d/get :auth-public :username))} icons/Home]
+                          [:a.flex.items-center.ph2 {:on-click #(send [:auth/sign-out])} "Sign out"])
                     [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])]))

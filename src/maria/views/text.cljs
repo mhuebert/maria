@@ -1,8 +1,7 @@
 (ns maria.views.text
   (:require [re-view.core :as v :refer [view defview]]
             [goog.events :as events]
-            [re-view-routing.core :refer [closest]]
-            [re-view-material.core :as ui])
+            [re-view-routing.core :refer [closest]])
   (:import [goog.dom ViewportSizeMonitor]
            [goog.events EventType]))
 
@@ -141,14 +140,14 @@
       [:.autosize-input-fake.w-auto
        {:ref #(when % (swap! state assoc :fake-element %))}
        (str v (when (#{"\n" "\r"} (last v)) " "))]]
-     (ui/Input (-> props
-                   (update :classes into ["autosize-input-input dib"])
-                   (merge {:ref         #(when % (swap! state assoc :input-element (v/dom-node %)))
-                           :on-key-down #(do (update-size this (keydown-char %))
-                                             (when on-key-down (on-key-down %)))}
-                          (when (re-find #"iPhone|iPad|iPod" (some-> js/navigator .-userAgent))
-                            ;; remove text-indent in mobile safari
-                            {:style (assoc style :marginLeft -3 :marginRight -3)}))))]))
+     [:input (-> props
+                 (update :classes into ["autosize-input-input dib"])
+                 (merge {:ref         #(when % (swap! state assoc :input-element (v/dom-node %)))
+                         :on-key-down #(do (update-size this (keydown-char %))
+                                           (when on-key-down (on-key-down %)))}
+                        (when (re-find #"iPhone|iPad|iPod" (some-> js/navigator .-userAgent))
+                          ;; remove text-indent in mobile safari
+                          {:style (assoc style :marginLeft -3 :marginRight -3)})))]]))
 
 
 

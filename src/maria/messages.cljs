@@ -1,6 +1,5 @@
 (ns maria.messages
-  (:require [clojure.string :as string]
-            [cljs.pprint :refer [pprint]]))
+  (:require [clojure.string :as string]))
 
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
@@ -195,7 +194,7 @@
 
       {:name (str warning-type)
        :doc  (list [:div (str "Unhandled warning: " warning-type)]
-                   (with-out-str (pprint (:extra w))))})))
+                   (prn-str (:extra w)))})))
 
 (defn reformat-warning [warning]
   (when-let [{:keys [name doc] :as the-warning} (parse-warning warning)]

@@ -1,7 +1,7 @@
 (ns maria.user.loaders
   (:require [re-view.core :as v :refer [defview]]
             [re-view.hoc :as hoc]
-            [re-view-material.icons :as icons]
+            [maria.views.icons :as icons]
 
             [re-view-hiccup.core :as hiccup]
 

@@ -11,8 +11,7 @@
             [magic-tree.core :as tree]
             [goog.dom.classes :as classes]
             [re-view-routing.core :as r]
-            [cljs.pprint :refer [pprint]]
-            [re-view-material.icons :as icons]
+            [maria.views.icons :as icons]
 
             [re-db.d :as d]))
 
@@ -169,9 +168,9 @@
                           (assert (= after-value (:value (:node after))))
                           (catch js/Error e
 
-                            (pprint {:before  [(:value (:node before)) :expected before-value]
-                                     :after   [(:value (:node after)) :expected after-value]
-                                     :spliced spliced})
+                            (println {:before  [(:value (:node before)) :expected before-value]
+                                      :after   [(:value (:node after)) :expected after-value]
+                                      :spliced spliced})
                             (throw e)))))]
            (assert (= 3 (count (Block/join-blocks blocks))))
 

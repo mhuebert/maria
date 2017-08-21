@@ -1,15 +1,13 @@
 (ns maria.blocks.blocks
   (:refer-clojure :exclude [empty?])
   (:require [magic-tree.core :as tree]
-            [clojure.core.match :refer-macros [match]]
-            [re-db.d :as d]
             [re-view.core :as v]
             [clojure.string :as string]
-            [cljs.pprint :refer [pprint]]
-            [maria.eval :as e]
-            [maria.util :as util]
             [maria-commands.exec :as exec]
-            [re-view-prosemirror.core :as pm]))
+            [re-view-prosemirror.core :as pm]
+            [cells.cell :as cell]
+            [maria.util :as util]
+            [re-db.d :as d]))
 
 (def view-index (volatile! {}))
 
@@ -156,10 +154,6 @@
                   (= (:id (nth blocks i)) id) i
                   :else (recur (inc i))))))
 
-(defn dispose-block [block]
-  (when (satisfies? e/IDispose block)
-    (e/dispose! block)))
-
 (defn splice-block
   ([blocks block values]
    (splice-block blocks block 0 values))
@@ -167,7 +161,7 @@
    (if (and (clojure.core/empty? values)
             (= 1 (count blocks)))
      (let [blocks (ensure-blocks nil)]
-       (dispose-block block)
+       (cell/dispose! block)
        (with-meta blocks {:before (first blocks)}))
      (let [index (cond-> (id-index blocks (:id block))
                          (neg? n) (+ n))
@@ -181,7 +175,7 @@
              replaced-blocks (subvec blocks index (+ index n))
              removed-blocks (filterv (comp (complement incoming-block-ids) :id) replaced-blocks)]
          (doseq [block removed-blocks]
-           (dispose-block block)))
+           (cell/dispose! block)))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))

@@ -7,25 +7,8 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(defprotocol IDispose
-  (on-dispose [context f] "Register a callback to be fired when context is disposed.")
-  (-dispose! [context]))
-
-(defonce -dispose-callbacks (volatile! {}))
-
-(defn dispose! [value]
-  (when (satisfies? IDispose value)
-    (-dispose! value)))
-
 (defn result-value [x]
   (if (var? x) @x x))
-
-(def persistent-context
-  (reify IDispose
-    (on-dispose [context f])
-    (-dispose! [context])))
-
-(def ^:dynamic *eval-context* persistent-context)
 
 (def var-value e/var-value)
 

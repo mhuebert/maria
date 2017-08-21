@@ -9,7 +9,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.919"]
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [org.clojure/tools.reader "1.0.3"]
+                 [org.clojure/tools.reader "1.0.5"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [com.cognitect/transit-clj "0.8.300"]
                  [com.stuartsierra/dependency "0.2.0"]
@@ -18,14 +18,12 @@
 
                  [re-view "0.3.28-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
-                 [re-view-material "0.1.7"]
                  [re-view-prosemirror "0.1.8"]
                  [cljs-live "0.2.6-SNAPSHOT"]
-                 [magic-tree "0.0.11"]
+                 [magic-tree "0.0.12-SNAPSHOT"]
                  [org.clojure/data.json "0.2.6"]
 
                  [cljsjs/codemirror "5.19.0-0"]
-                 [cljsjs/marked "0.3.5-0"]
                  [cljsjs/react "16.0.0-beta.2-0"]
                  [cljsjs/react-dom "16.0.0-beta.2-0"]
                  [cljsjs/firebase "4.0.0-0"]
@@ -43,7 +41,6 @@
                                     "target"]
 
   :source-paths ["src"
-                 "script"
                  "checkouts/re_view/src"
                  "checkouts/re_view_hiccup/src"
                  "checkouts/re_view_routing/src"
@@ -70,8 +67,6 @@
                                                                         :output-to "resources/public/js/compiled/live.js"}
                                                         :trusted-frame {:entries   #{maria.frames.trusted-frame}
                                                                         :output-to "resources/public/js/compiled/trusted.js"}}
-                                       :npm-deps       {:react     "next"
-                                                        :react-dom "next"}
                                        :output-dir     "resources/public/js/compiled/out-modules-dev"
                                        :asset-path     "/js/compiled/out-modules-dev"
                                        :language-in    :ecmascript5
@@ -104,6 +99,8 @@
                                        :output-dir     "resources/public/js/compiled/out-live-prod"
                                        :asset-path     "/js/compiled/out-live-prod"
                                        :language-in    :ecmascript5
+
+                                       :source-map     "resources/public/js/compiled/live.js.map"
                                        :cache-analysis false
                                        :dump-core      false
                                        :parallel-build true

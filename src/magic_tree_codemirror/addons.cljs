@@ -2,7 +2,6 @@
   (:require [cljsjs.codemirror]
             [fast-zip.core :as z]
             [goog.events :as events]
-            [cljs.pprint :refer [pprint]]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]

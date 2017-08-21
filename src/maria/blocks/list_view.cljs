@@ -1,6 +1,5 @@
 (ns maria.blocks.list-view
   (:require [re-view.core :as v :refer [defview]]
-            [clojure.core.match :refer-macros [match]]
             [cljsjs.markdown-it]
             [re-db.d :as d]
             [maria.blocks.code]

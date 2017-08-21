@@ -6,7 +6,6 @@
 
             [maria-commands.exec]
 
-    ;; include to precompile for self-hosted env
             [clojure.set]
             [clojure.string]
             [clojure.walk]

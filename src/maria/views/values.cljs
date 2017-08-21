@@ -2,7 +2,7 @@
   (:require [clojure.string :as string]
             [goog.object :as gobj]
             [maria.messages :as messages]
-            [re-view-material.icons :as icons]
+            [maria.views.icons :as icons]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
             [maria.user.shapes :as shapes]
@@ -11,8 +11,7 @@
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [maria.show :as show]
-            [cljs.pprint :refer [pprint]])
+            [maria.show :as show])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -133,7 +132,7 @@
           (v/is-react-element? value) value
           (instance? cljs.core/Namespace value) (str value)
           (instance? Deferred value) (display-deferred {:deferred value})
-          :else (try (string/trim-newline (with-out-str (pprint value)))
+          :else (try (pr-str value)
                      (catch js/Error e
                        (do "error printing result"
                            (.log js/console e)

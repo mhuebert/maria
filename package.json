@@ -12,8 +12,6 @@
     "node-sass": "^4.5.3",
     "postcss": "^6.0.1",
     "postcss-loader": "^2.0.5",
-    "react": "next",
-    "react-dom": "next",
     "sass-loader": "^6.0.5",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",

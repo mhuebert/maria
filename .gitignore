@@ -15,3 +15,5 @@ checkouts
 opts.clj
 /.cljs_rhino_repl/
 /doc/ideating.clj
+test-cells/public/js
+cljs-runtime

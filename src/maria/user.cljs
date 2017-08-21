@@ -4,7 +4,8 @@
             goog.net.jsloader
             maria.user.loaders
             maria.repl-specials
-            [cells.cell :as cell]
+            [cells.cell]
+            [cells.lib :as cell]
             [maria.user.shapes :as shapes :refer [show
                                                   circle square rectangle triangle path text
                                                   position opacity rotate scale
