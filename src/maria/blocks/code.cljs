@@ -117,7 +117,7 @@
     (e/handle-block-error (:id this) error))
 
   Block/IEval
-  (-eval-log! [this value]
+  (eval-log! [this value]
     (d/transact! [[:db/update-attr (:id this) :eval-log #(take 2 (cons value %))]])
     value)
   (eval-log [this]
@@ -135,5 +135,5 @@
     ([this kind value]
      (cell/dispose! this)
      (binding [cell/*eval-context* this]
-       (Block/-eval-log! this ((case kind :form e/eval-form
-                                          :string e/eval-str) value))))))
+       (Block/eval-log! this ((case kind :form e/eval-form
+                                         :string e/eval-str) value))))))

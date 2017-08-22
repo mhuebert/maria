@@ -55,7 +55,7 @@
 (defprotocol IEval
   (eval [this] [this kind value])
   (eval-log [this])
-  (-eval-log! [this value]))
+  (eval-log! [this value]))
 
 (defprotocol IParagraph
   (prepend-paragraph [this])

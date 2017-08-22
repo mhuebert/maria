@@ -26,12 +26,13 @@
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/react "16.0.0-beta.2-0"]
                  [cljsjs/react-dom "16.0.0-beta.2-0"]
-                 [cljsjs/firebase "4.0.0-0"]
+                 ;[cljsjs/firebase "4.0.0-0"]
 
                  ;; just for bundles
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
                  [leipzig "0.10.0"]
                  [cljs-bach "0.2.0"]
+                 [thheller/shadow-cljs "1.0.20170802"]
                  ]
 
   :plugins [[lein-figwheel "0.5.12"]
@@ -41,6 +42,7 @@
                                     "target"]
 
   :source-paths ["src"
+                 "test"
                  "checkouts/re_view/src"
                  "checkouts/re_view_hiccup/src"
                  "checkouts/re_view_routing/src"
@@ -125,6 +127,7 @@
                                        :language-in    :ecmascript5
                                        :optimizations  :advanced
                                        :dump-core      false
+                                       :infer-externs  true
                                        :parallel-build true}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler

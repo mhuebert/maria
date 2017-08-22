@@ -29,15 +29,17 @@
 
 (defmacro cell
   "Returns an anonymous cell."
-  [the-name & body]
-  (let [named? (and (or (string? the-name)
-                        (keyword? the-name)
-                        (symbol? the-name)
-                        (number? the-name)) (seq body))
-        unique-segment (str "_" (util/unique-id))
-        cell-name (if named? `(keyword ~unique-segment (munge ~the-name))
-                             (keyword (str *ns*) unique-segment))
-        body (if named? body (cons the-name body))]
+  [& body]
+  (let [named? (> (count body) 1)
+        the-name (when named? (first body))
+        body (if named? (rest body) body)
+        ;; unique ID for this lexical occurrence of `cell`
+        lexical-marker (str "_" (util/unique-id))
+        namespace-segment (str *ns*)
+        ;; if name value is provided, append its hash to this cell id
+        cell-name (if the-name `(keyword ~namespace-segment (str ~lexical-marker "._" (hash ~the-name)))
+                               (keyword namespace-segment lexical-marker))
+        ]
     `(let ~(cell-bindings cell-name)
        (~'cells.cell/make-cell ~cell-name (fn [~'self] ~@body)))))
 

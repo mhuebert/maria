@@ -1,40 +1,46 @@
-(ns cells.tests
+(ns cells.cell-tests
   (:require [cells.cell :as cell
              :refer [dep-graph]
              :refer-macros [defcell cell]]
             [cells.lib :as lib]
             [com.stuartsierra.dependency :as dep]
-            [cljs.test :refer-macros [deftest testing is are run-tests]]))
+            [cljs.test :refer-macros [deftest testing is are run-tests]]
+            [clojure.string :as string]))
 
 
 (defn dep-set [coll]
   (set (map cell/cell-name coll)))
 
 (deftest dependencies-test
-  (cell/reset-namespace 'cells.tests)
+  (cell/reset-namespace 'cells.cell-tests)
 
   (defcell a 1)
   (defcell b @a)
   (defcell c @b)
   (defcell d c)
 
-  (are [cell its-dependencies]
-    (= (cell/dependencies cell) (dep-set its-dependencies))
+  (are [cell immediate-dependencies]
+    (= (cell/dependencies cell) (dep-set immediate-dependencies))
     b #{a}
     c #{b}
     d #{})
 
-  (are [cell its-dependents]
-    (= (cell/dependents cell) (dep-set its-dependents))
-    a #{b})
+  (are [cell immediate-dependents]
+    (= (cell/dependents cell) (dep-set immediate-dependents))
+    a #{b}
+    b #{c}
+    c #{}
+    d #{})
 
-  (is (= (cell/dependencies d) #{})
-      "Cells that are not dereferenced are not dependencies")
-
-  (is (= (cell/transitive-dependents a) (dep-set #{b c}))))
+  (are [cell transitive-dependents]
+    (= (cell/transitive-dependents cell) (dep-set transitive-dependents))
+    a #{b c}
+    b #{c}
+    c #{}
+    d #{}))
 
 (deftest value-propagation
-  (cell/reset-namespace 'cells.tests)
+  (cell/reset-namespace 'cells.cell-tests)
 
   (defcell e 1)
   (is (= 1 @e))
@@ -50,7 +56,11 @@
   (is (= @e @f @g 3)))
 
 (deftest contexts
-  (cell/reset-namespace 'cells.tests)
+  ;; contexts are used to facilitate the development experience.
+  ;; we keep track of the "evaluation context" of a cell in cell/*eval-context*
+  ;; so that we can dispose of all cells associated with a particular context.
+  ;; example of a context is a code editor window that the user might re-evaluate.
+  (cell/reset-namespace 'cells.cell-tests)
 
   (defcell ctx-1 1)
   (defcell ctx-2 @ctx-1)
@@ -65,12 +75,10 @@
   )
 
 (deftest anonymous-cells
-  (cell/reset-namespace 'cells.tests)
+  (cell/reset-namespace 'cells.cell-tests)
 
   (def h (cell :h 1))
   (def i (cell :i @h))
-
-  (is (= (name (name h)) (munge :h)))
 
   (= (cell/dependents h) (dep-set #{i}))
   (is (= 1 @i))
@@ -81,14 +89,22 @@
   (cell/reset-cell! h 2)
   (is (= "22" @j))
 
+
+  (doseq [item ["a" :b 1 {} []]]
+    (let [c (cell item nil)]
+      (is (string/ends-with? (str (name c))
+                             (str (hash item)))
+          "cell id ends in hash of name argument")))
+
   (testing "Anonymous cells in a loop"
     (let [multi (for [n [1 2 3 4 5]]
                   (cell n n))]
+      (prn (map name multi))
       (is (= (list 1 2 3 4 5)
              (map deref multi))))))
 
 (deftest nested-cells
-  (cell/reset-namespace 'cells.tests)
+  (cell/reset-namespace 'cells.cell-tests)
 
   (defcell k
     (defcell l 1)
@@ -129,10 +145,10 @@
 
 (deftest cell-seqs
 
-    (defcell n (inc @self))
+  (defcell n (inc @self))
 
-    (is (= (take 5 n)
-           '(1 2 3 4 5))))
+  (is (= (take 5 n)
+         '(1 2 3 4 5))))
 
 (deftest restricted-mutate
   (defcell o (inc @self))
@@ -149,7 +165,7 @@
 (comment
   (deftest timers
     ;; doesn't really work for automated testing but we can eyeball it
-    (cell/reset-namespace 'cells.tests)
+    (cell/reset-namespace 'cells.cell-tests)
 
     (let [n (cell (interval 1000 inc))
           o (cell (interval 1500 inc))
@@ -159,7 +175,7 @@
 
 
 (defn start []
-  (cell/reset-namespace 'cells.tests)
+  (cell/reset-namespace 'cells.cell-tests)
   (run-tests))
 
 (defonce _ (start))

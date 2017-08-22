@@ -263,3 +263,4 @@
                              (= (namespace id) ns)) @-cells)]
     (doseq [cell (topo-sort (map second the-cells))]
       (purge-cell! cell))))
+(vector)

@@ -202,5 +202,5 @@
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]}
   [{:keys [block editor]}]
-  (e/log-eval-result! (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
+  (Block/eval-log! block (some-> editor :magic/cursor :bracket-loc z/node tree/string e/compile-str (set/rename-keys {:compiled-js :value}))))
 
