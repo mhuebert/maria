@@ -5,7 +5,9 @@
              :include-macros true]
             [cells.eval-context :refer [on-dispose handle-error]]
             [goog.net.XhrIo :as xhr]
-            [goog.net.ErrorCode :as errors])
+            [goog.net.ErrorCode :as errors]
+            [maria.show :as show])
+  (:require-macros [cells.lib])
   (:import [goog Uri]))
 
 (def status cell/status)
@@ -15,13 +17,13 @@
 (def dependencies cell/dependencies)
 (def dependents cell/dependents)
 
-(defn restricted-swap! [specified-name cell & args]
+#_(defn restricted-swap! [specified-name cell & args]
   (if (instance? cell/Cell cell)
     (do (assert (= specified-name (name cell)))
         (apply cell/swap-cell! cell args))
     (apply swap! cell args)))
 
-(defn restricted-reset! [specified-name cell newval]
+#_(defn restricted-reset! [specified-name cell newval]
   (if (instance? cell/Cell cell)
     (do (assert (= specified-name (name cell)))
         (cell/reset-cell! cell newval))
@@ -36,7 +38,7 @@
         clear-key (volatile! nil)]
     (vreset! clear-key (js/setInterval #(binding [*cell-stack* (cons the-cell *cell-stack*)]
                                           (try
-                                            (cell/reset-cell! the-cell (f @the-cell))
+                                            (reset! the-cell (f @the-cell))
                                             (catch js/Error e
                                               (js/clearInterval @clear-key)
                                               (throw e)))) n))
@@ -46,7 +48,7 @@
 (defn timeout [n f]
   (let [the-cell (first *cell-stack*)
         clear-key (js/setTimeout #(binding [*cell-stack* (cons the-cell *cell-stack*)]
-                                     (cell/reset-cell! the-cell (f @the-cell))) n)]
+                                     (reset! the-cell (f @the-cell))) n)]
     (on-dispose the-cell #(js/clearTimeout clear-key))
     (f @the-cell)))
 
@@ -72,7 +74,7 @@
                                                            (catch js/Error error
                                                              (handle-error cell/*eval-context* error)))]
                                   (do (-set-async-state! the-cell nil)
-                                      (cell/reset-cell! the-cell (cond->> formatted-value
+                                      (reset! the-cell (cond->> formatted-value
                                                                           f (f @the-cell)))))))))
      (or @the-cell nil))))
 
@@ -82,4 +84,6 @@
     (cell-fn [location]
              (->> {:latitude  (.. location -coords -latitude)
                    :longitude (.. location -coords -longitude)}
-                  (cell/reset-cell! (first *cell-stack*))))))
+                  (reset! (first *cell-stack*))))))
+
+IMeta

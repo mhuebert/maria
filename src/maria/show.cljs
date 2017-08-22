@@ -1,9 +1,4 @@
-(ns maria.show
-  (:require [cells.cell :as cell]))
+(ns maria.show)
 
 (defprotocol IShow
   (show [this] "Return a version of `this` suitable for display."))
-
-(extend-type cell/Cell
-  IShow
-  (show [this] @this))

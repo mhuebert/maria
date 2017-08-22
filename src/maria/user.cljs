@@ -5,7 +5,7 @@
             maria.user.loaders
             maria.repl-specials
             [cells.cell]
-            [cells.lib :as cell]
+            [cells.lib :as cell :refer-macros [with-view]]
             [maria.user.shapes :as shapes :refer [show
                                                   circle square rectangle triangle path text
                                                   position opacity rotate scale

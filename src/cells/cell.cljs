@@ -2,7 +2,8 @@
   (:require [com.stuartsierra.dependency :as dep]
             [clojure.set :as set]
             [cells.util :as util]
-            [cells.eval-context :as eval-context :refer [on-dispose dispose!]])
+            [cells.eval-context :as eval-context :refer [on-dispose dispose!]]
+            [maria.show :refer [IShow] ])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
@@ -27,29 +28,37 @@
   (-put-value! [this value])
   (-get-value [this]))
 
-(defprotocol ISwap*
-  "Swap value of cell. (avoid ISwap because this should not be a public interface)"
-  (-swap-cell! [this f]
-               [this f a]
-               [this f a b]
-               [this f a b xs]))
+(defprotocol ICellView
+  "Protocol for shallow copies of cells with different views"
+  (with-view [this view-fn]))
 
-(defprotocol IReset*
-  (-set-cell! [this newval]
-              "Set cell value without notifying dependent cells.")
-  (reset-cell! [this newval]
-               "Set cell value, notifying dependent cells."))
+#_(defprotocol ISwap*
+    "Swap value of cell. (avoid ISwap because this should not be a public interface)"
+    (-swap-cell! [this f]
+                 [this f a]
+                 [this f a b]
+                 [this f a b xs]))
 
-(defn swap-cell!
-  "swap! a cell value"
-  ([a f]
-   (-swap-cell! a f))
-  ([a f x]
-   (-swap-cell! a f x))
-  ([a f x y]
-   (-swap-cell! a f x y))
-  ([a f x y & more]
-   (-swap-cell! a f x y more)))
+(defprotocol ISet!
+  (-set! [this newval]
+         "Set cell value without notifying dependent cells."))
+
+#_(defprotocol IReset*
+    (-set-cell! [this newval]
+                "Set cell value without notifying dependent cells.")
+    (reset-cell! [this newval]
+                 "Set cell value, notifying dependent cells."))
+
+#_(defn swap-cell!
+    "swap! a cell value"
+    ([a f]
+     (-swap-cell! a f))
+    ([a f x]
+     (-swap-cell! a f x))
+    ([a f x y]
+     (-swap-cell! a f x y))
+    ([a f x y & more]
+     (-swap-cell! a f x y more)))
 
 (defn cell-name
   "Accepts a cell or its name, and returns its name."
@@ -118,11 +127,10 @@
   (error? [this])
   (loading? [this]))
 
-
-
 (def ^:dynamic *read-log* nil)
 
-(def blank-cell-state {})
+
+
 (declare make-cell)
 
 (deftype Cell [id ^:mutable f ^:mutable state eval-context]
@@ -138,9 +146,18 @@
   INamed
   (-name [this] id)
 
+  IShow
+  (show [this] ((:view state) this))
+
   ICloneable
   (-clone [this]
-    (make-cell (keyword (namespace id) (util/unique-id)) f))
+    (make-cell (keyword (namespace id) (util/unique-id)) f state @this))
+
+  ICellView
+  (with-view [this view-fn]
+    (let [cell (new Cell id f (assoc state :view view-fn) eval-context)]
+      (-set! cell @this)
+      cell))
 
   IAsync
   (-set-async-state! [this value] (-set-async-state! this value nil))
@@ -175,23 +192,24 @@
       (vswap! *read-log* conj (name this)))
     (-get-value this))
 
-  IReset*
-  (-set-cell! [this newval]
+  ISet!
+  (-set! [this newval]
     (log :-set-cell! this)
     (-put-value! this newval))
-  (reset-cell! [this newval]
+  IReset
+  (-reset! [this newval]
     (log :-reset! this newval)
     (let [oldval @this]
-      (-set-cell! this newval)
+      (-set! this newval)
       (-notify-watches this oldval newval))
     (-compute-dependents! this)
     newval)
 
-  ISwap*
-  (-swap-cell! [this f] (reset-cell! this (f @this)))
-  (-swap-cell! [this f a] (reset-cell! this (f @this a)))
-  (-swap-cell! [this f a b] (reset-cell! this (f @this a b)))
-  (-swap-cell! [this f a b xs] (reset-cell! this (apply f @this a b xs)))
+  ISwap
+  (-swap! [this f] (-reset! this (f @this)))
+  (-swap! [this f a] (-reset! this (f @this a)))
+  (-swap! [this f a b] (-reset! this (f @this a b)))
+  (-swap! [this f a b xs] (-reset! this (apply f @this a b xs)))
 
   eval-context/IDispose
   (on-dispose [this f]
@@ -199,7 +217,7 @@
   (-dispose! [this]
     (doseq [f (get state :dispose-fns)]
       (f))
-    (set! state (dissoc state :dispose-fns))
+    (set! state (update state :dispose-fns empty))
     this)
 
   IReactiveCompute
@@ -225,7 +243,7 @@
           (throw e)))))
 
   (-compute! [this]
-    (reset-cell! this (-compute this)))
+    (-reset! this (-compute this)))
 
   (-compute-with-dependents! [this]
     (if (= this (first *cell-stack*))
@@ -241,7 +259,7 @@
               (depend this added))
             (doseq [removed (set/difference prev-deps next-deps)]
               (remove-edge this removed))
-            (reset-cell! this value)))))
+            (-reset! this value)))))
     this)
 
   ISeqable
@@ -256,29 +274,34 @@
 (defn purge-cell! [cell]
   (log :purge-cell! cell)
   (eval-context/-dispose! cell)
-  (-set-cell! cell nil)
+  (-set! cell nil)
   (vswap! -cells dissoc (name cell))
   (remove-node cell)
   #_(let [dependents (map name (topo-sort (dependents cell)))]
-    (js/setTimeout #(doseq [dep dependents]
-                      (when-let [other-cell (get @-cells dep)]
-                        (log :recompute-dependents-of-purged cell other-cell)
-                        (-compute! other-cell)
-                        ))))
+      (js/setTimeout #(doseq [dep dependents]
+                        (when-let [other-cell (get @-cells dep)]
+                          (log :recompute-dependents-of-purged cell other-cell)
+                          (-compute! other-cell)
+                          ))))
   (log :purged-cell-dependents (dependents cell))
   #_(-compute-dependents! cell)
   )
+
+(def empty-cell-state {:view        deref
+                       :dispose-fns []})
 
 (defn make-cell
   "Makes a new cell. Memoized by id."
   ([f]
    (make-cell (keyword "cells.temp" (util/unique-id)) f))
-  ([id f]
+  ([id f] (make-cell id f {} nil))
+  ([id f state value]
    (or (get @-cells id)
-       (let [cell (->Cell id f {} *eval-context*)]
+       (let [cell (->Cell id f (merge empty-cell-state state) *eval-context*)]
          (log :make-cell id)
          (on-dispose *eval-context* #(purge-cell! cell))
          (vswap! -cells assoc id cell)
+         (-set! cell value)
          (-compute-with-dependents! cell)))))
 
 (defn reset-namespace [ns]

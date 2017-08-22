@@ -10,7 +10,7 @@
             cells.lib/fetch
             cells.lib/geo-location]))
 
-(defn cell-bindings [cell-name]
+#_(defn cell-bindings [cell-name]
   (into lib-bindings
         `[~'reset! (partial ~'cells.lib/restricted-reset! ~cell-name)
           ~'swap! (partial ~'cells.lib/restricted-swap! ~cell-name)]))
@@ -24,7 +24,7 @@
         cell-name (keyword (str *ns*) (str the-name))]
     `(def ~the-name
        ~@(when docstring (list docstring))
-       (let ~(cell-bindings cell-name)
+       (let ~lib-bindings
          (~'cells.cell/make-cell ~cell-name (fn [~'self] ~@body))))))
 
 (defmacro cell
@@ -40,7 +40,7 @@
         cell-name (if the-name `(keyword ~namespace-segment (str ~lexical-marker "._" (hash ~the-name)))
                                (keyword namespace-segment lexical-marker))
         ]
-    `(let ~(cell-bindings cell-name)
+    `(let ~lib-bindings
        (~'cells.cell/make-cell ~cell-name (fn [~'self] ~@body)))))
 
 (defmacro cell-fn
