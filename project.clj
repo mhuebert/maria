@@ -13,6 +13,7 @@
                  [com.cognitect/transit-cljs "0.8.239"]
                  [com.cognitect/transit-clj "0.8.300"]
                  [com.stuartsierra/dependency "0.2.0"]
+                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
 
                  [fast-zip "0.7.0"]
 

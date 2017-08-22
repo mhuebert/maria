@@ -1,32 +1,47 @@
 (ns cells.cell
-  (:require [re-db.d :as d]
-            [com.stuartsierra.dependency :as dep]
-            [cells.util]
+  (:require [com.stuartsierra.dependency :as dep]
             [clojure.set :as set]
-            [cells.util :as util])
+            [cells.util :as util]
+            [cells.eval-context :as eval-context :refer [on-dispose dispose!]])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
 (def ^:dynamic *computing-dependents* false)
 (def ^:dynamic *debug* false)
 (defonce -cells (volatile! {}))
-(defonce dep-graph (volatile! (dep/graph)))
+
 
 (defn log
   [& args]
   (when *debug* (prn args)))
 
+;;;;
+;; Mutating state
+;;
+;; Cells keep internal state. From within a cell, a user can call swap! or reset!.
+;; A cell can only be mutated by its own copy of swap!/reset!, a limitation which
+;; may prove difficult to maintain/manage.
+
+(defprotocol ICellStore
+  "Protocol for getting and putting cell values."
+  (-put-value! [this value])
+  (-get-value [this]))
+
 (defprotocol ISwap*
+  "Swap value of cell. (avoid ISwap because this should not be a public interface)"
   (-swap-cell! [this f]
                [this f a]
                [this f a b]
                [this f a b xs]))
 
 (defprotocol IReset*
-  (reset-cell! [this newval]))
+  (-set-cell! [this newval]
+              "Set cell value without notifying dependent cells.")
+  (reset-cell! [this newval]
+               "Set cell value, notifying dependent cells."))
 
 (defn swap-cell!
-  "Like regular swap! but for cells. Separate protocol because we want to discourage manipulating state from the outside."
+  "swap! a cell value"
   ([a f]
    (-swap-cell! a f))
   ([a f x]
@@ -36,21 +51,33 @@
   ([a f x y & more]
    (-swap-cell! a f x y more)))
 
-
-(defn cell-name [cell]
+(defn cell-name
+  "Accepts a cell or its name, and returns its name."
+  [cell]
   (cond-> cell
           (not (keyword? cell)) (name)))
 
+;;;;
+;; Dependencies are handled with stuart sierra's dependency library.
+;;
+
+(defonce dep-graph (volatile! (dep/graph)))
+
 (defn dependencies [cell]
   (dep/immediate-dependencies @dep-graph (cell-name cell)))
+
 (defn dependents [cell]
   (dep/immediate-dependents @dep-graph (cell-name cell)))
+
 (defn remove-node [cell]
   (vswap! dep-graph dep/remove-node (cell-name cell)))
+
 (defn remove-edge [cell other-cell]
   (vswap! dep-graph dep/remove-edge (cell-name cell) (cell-name other-cell)))
+
 (defn remove-all [cell]
   (vswap! dep-graph dep/remove-all (cell-name cell)))
+
 (defn depend [cell other-cell]
   (vswap! dep-graph dep/depend (cell-name cell) (cell-name other-cell)))
 
@@ -70,40 +97,19 @@
           faster-sort (sort (dep/topo-comparator sparser-graph) cells)
           ]))
 
-(defprotocol IDispose
-  (on-dispose [context f] "Register a callback to be fired when context is disposed.")
-  (-dispose! [context]))
-
-(defprotocol IHandleError
-  (handle-error [this e]))
-
-(defonce -dispose-callbacks (volatile! {}))
-
-(defn dispose! [value]
-  (when (satisfies? IDispose value)
-    (-dispose! value)))
-
-(def -default-context-state (volatile! {:dispose-fns #{}}))
-
-(def ^:dynamic *eval-context* (reify
-                                IDispose
-                                (on-dispose [context f]
-                                  (vswap! -default-context-state update :dispose-fns conj f))
-                                (-dispose! [context]
-                                  (doseq [f (:dispose-fns @-default-context-state)]
-                                    (f))
-                                  (vswap! -default-context-state update :dispose-fns empty))
-                                IHandleError
-                                (handle-error [this e] (throw e))))
+(def ^:dynamic *eval-context* (eval-context/new-context))
 
 (defprotocol IReactiveCompute
   (-set-function! [this f])
 
-  (-compute-dependents! [this])
   (-compute [this] "evaluate cell")
-  (-compute! [this] "reset cell with a new computed value"))
+  (-compute-dependents! [this])
+  (-compute! [this] "evaluate cell and set value")
+  (-compute-with-dependents! [this] "evaluate cell and flow updates to dependent cells"))
 
 (defprotocol IAsync
+  "TO BE IMPROVED
+  Just an experiment to see what it might feel like store and read status information on cells."
   (-set-async-state! [this status] [this status message] "Set loading status")
 
   (status [this])
@@ -120,6 +126,10 @@
 (declare make-cell)
 
 (deftype Cell [id ^:mutable f ^:mutable state eval-context]
+
+  ICellStore
+  (-get-value [this] (:value state))
+  (-put-value! [this value] (set! state (assoc state :value value)))
 
   IPrintWithWriter
   (-pr-writer [this writer _]
@@ -163,13 +173,16 @@
   (-deref [this]
     (when *read-log*
       (vswap! *read-log* conj (name this)))
-    (d/get ::cells id))
+    (-get-value this))
 
   IReset*
+  (-set-cell! [this newval]
+    (log :-set-cell! this)
+    (-put-value! this newval))
   (reset-cell! [this newval]
-    (log :-reset! this)
+    (log :-reset! this newval)
     (let [oldval @this]
-      (d/transact! [[:db/add ::cells id newval]])
+      (-set-cell! this newval)
       (-notify-watches this oldval newval))
     (-compute-dependents! this)
     newval)
@@ -180,13 +193,13 @@
   (-swap-cell! [this f a b] (reset-cell! this (f @this a b)))
   (-swap-cell! [this f a b xs] (reset-cell! this (apply f @this a b xs)))
 
-  IDispose
+  eval-context/IDispose
   (on-dispose [this f]
-    (vswap! -dispose-callbacks update id conj f))
+    (set! state (update state :dispose-fns conj f)))
   (-dispose! [this]
-    (doseq [f (get @-dispose-callbacks id)]
+    (doseq [f (get state :dispose-fns)]
       (f))
-    (vswap! -dispose-callbacks dissoc id)
+    (set! state (dissoc state :dispose-fns))
     this)
 
   IReactiveCompute
@@ -194,27 +207,31 @@
     (when-not *computing-dependents*
       (binding [*computing-dependents* true]
         (let [deps (transitive-dependents-sorted this) #_(topo-sort (transitive-dependents this))]
-          (log (str "Computing dependents for " (name this)) deps)
+          (log :-compute-dependents! this deps)
           (doseq [cell-id deps]
-            (-compute! (@-cells cell-id)))))))
+            (some-> (@-cells cell-id)
+                    (-compute-with-dependents!)))))))
 
   (-set-function! [this newf]
     (set! f newf))
-
 
   (-compute [this]
     (binding [*cell-stack* (cons this *cell-stack*)
               *eval-context* eval-context]
       (try
-        (reset-cell! this (f this))
+        (f this)
         (catch js/Error e
           (dispose! this)
           (throw e)))))
+
   (-compute! [this]
+    (reset-cell! this (-compute this)))
+
+  (-compute-with-dependents! [this]
     (if (= this (first *cell-stack*))
-      (log :-compute! "Return - in current cell")
+      (log :-compute-with-dependents! this "Return - in current cell")
       (do
-        (log :-compute! this)
+        (log :-compute-with-dependents! this)
         (dispose! this)
         (binding [*read-log* (volatile! #{})]
           (let [value (-compute this)
@@ -224,7 +241,6 @@
               (depend this added))
             (doseq [removed (set/difference prev-deps next-deps)]
               (remove-edge this removed))
-
             (reset-cell! this value)))))
     this)
 
@@ -233,34 +249,43 @@
     ((fn cell-seq
        [this]
        (cons @this
-             (lazy-seq (cell-seq (-compute! this))))) (clone this))))
+             (lazy-seq (cell-seq (-compute-with-dependents! this))))) (clone this))))
 
 
 
 (defn purge-cell! [cell]
   (log :purge-cell! cell)
-  (-dispose! cell)
-  (d/transact! [[:db/retract-attr ::cells (name cell)]])
+  (eval-context/-dispose! cell)
+  (-set-cell! cell nil)
   (vswap! -cells dissoc (name cell))
+  (remove-node cell)
+  #_(let [dependents (map name (topo-sort (dependents cell)))]
+    (js/setTimeout #(doseq [dep dependents]
+                      (when-let [other-cell (get @-cells dep)]
+                        (log :recompute-dependents-of-purged cell other-cell)
+                        (-compute! other-cell)
+                        ))))
+  (log :purged-cell-dependents (dependents cell))
   #_(-compute-dependents! cell)
-  (remove-all cell))
+  )
 
 (defn make-cell
   "Makes a new cell. Memoized by id."
   ([f]
-   (make-cell (keyword "cells.temp" (d/unique-id)) f))
+   (make-cell (keyword "cells.temp" (util/unique-id)) f))
   ([id f]
    (or (get @-cells id)
        (let [cell (->Cell id f {} *eval-context*)]
          (log :make-cell id)
          (on-dispose *eval-context* #(purge-cell! cell))
          (vswap! -cells assoc id cell)
-         (-compute! cell)))))
+         (-compute-with-dependents! cell)))))
 
 (defn reset-namespace [ns]
   (let [ns (str ns)
         the-cells (filterv (fn [[id cell]]
                              (= (namespace id) ns)) @-cells)]
     (doseq [cell (topo-sort (map second the-cells))]
-      (purge-cell! cell))))
+      (purge-cell! cell)
+      (remove-all cell))))
 (vector)

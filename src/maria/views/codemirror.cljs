@@ -1,7 +1,9 @@
 (ns maria.views.codemirror
   (:require [cljsjs.codemirror]
-            [cljsjs.codemirror.mode.clojure]
-            [cljsjs.codemirror.addon.edit.closebrackets]
+
+            [codemirror.addon.edit.closebrackets]
+            [codemirror.mode.clojure]
+
             [magic-tree-codemirror.addons]
             [magic-tree-codemirror.util :as cm]
             [re-view.core :as v :refer-macros [defview]]

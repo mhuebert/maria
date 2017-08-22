@@ -1,4 +1,4 @@
-(ns magic-tree.edit-test
+(ns paredit.edit-test
   (:require [magic-tree-codemirror.addons]
             [magic-tree-codemirror.edit :as edit]
             [magic-tree.test-utils :refer [test-exec]]

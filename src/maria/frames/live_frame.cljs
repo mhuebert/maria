@@ -1,8 +1,8 @@
 (ns maria.frames.live-frame
   (:require [maria.views.pages.blocks :as repl]
             [maria.eval :as e]
-            [cljs.core.match :refer-macros [match]]
-            [cells.cell]
+
+            [cells.cell :as cell]
 
             [maria-commands.exec]
 
@@ -24,7 +24,15 @@
             [maria.persistence.github :as github]
             [maria.frames.live-actions :as user-actions]
 
-            [maria.live.analyze]))
+            [maria.live.analyze]
+            [re-db.d :as d]))
+
+(extend-type cell/Cell
+  cell/ICellStore
+  (-put-value! [this value]
+    (d/transact! [[:db/add :cells (name this) value]]))
+  (-get-value [this]
+    (d/get :cells (name this))))
 
 (enable-console-print!)
 

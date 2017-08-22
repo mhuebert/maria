@@ -7,4 +7,8 @@
                                   "cljsjs.codemirror"]
                  :global-exports {react       React
                                   react-dom   ReactDOM
-                                  markdown-it markdownit}}]}
+                                  markdown-it markdownit}}
+                {:file     "js/codemirror.mode.clojure.js"
+                 :provides ["codemirror.mode.clojure"]}
+                {:file     "js/codemirror.addon.edit.closebrackets.js"
+                 :provides ["codemirror.addon.edit.closebrackets"]}]}

@@ -1,4 +1,4 @@
-(ns magic-tree.test-utils
+(ns paredit.test-utils
   (:require [magic-tree-codemirror.addons]
             [clojure.string :as string]))
 

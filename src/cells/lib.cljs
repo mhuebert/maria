@@ -1,8 +1,9 @@
 (ns cells.lib
   (:require [cells.cell :as cell
-             :refer [*cell-stack* on-dispose -set-async-state!]
+             :refer [*cell-stack* -set-async-state!]
              :refer-macros [cell-fn]
              :include-macros true]
+            [cells.eval-context :refer [on-dispose handle-error]]
             [goog.net.XhrIo :as xhr]
             [goog.net.ErrorCode :as errors])
   (:import [goog Uri]))
@@ -44,9 +45,9 @@
 
 (defn timeout [n f]
   (let [the-cell (first *cell-stack*)
-        clear-key (js/setInterval #(binding [*cell-stack* (cons the-cell *cell-stack*)]
+        clear-key (js/setTimeout #(binding [*cell-stack* (cons the-cell *cell-stack*)]
                                      (cell/reset-cell! the-cell (f @the-cell))) n)]
-    (on-dispose the-cell #(js/clearInterval clear-key))
+    (on-dispose the-cell #(js/clearTimeout clear-key))
     (f @the-cell)))
 
 (defn fetch
@@ -69,7 +70,7 @@
                                                                     :xhrio   xhrio})
                                 (let [formatted-value (try (-> xhrio (.getResponseText) (parse))
                                                            (catch js/Error error
-                                                             (cell/handle-error cell/*eval-context* error)))]
+                                                             (handle-error cell/*eval-context* error)))]
                                   (do (-set-async-state! the-cell nil)
                                       (cell/reset-cell! the-cell (cond->> formatted-value
                                                                           f (f @the-cell)))))))))

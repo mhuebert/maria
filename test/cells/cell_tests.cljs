@@ -2,11 +2,10 @@
   (:require [cells.cell :as cell
              :refer [dep-graph]
              :refer-macros [defcell cell]]
-            [cells.lib :as lib]
-            [com.stuartsierra.dependency :as dep]
             [cljs.test :refer-macros [deftest testing is are run-tests]]
-            [clojure.string :as string]))
-
+            [cells.lib]
+            [clojure.string :as string]
+            [cells.eval-context :as eval-context]))
 
 (defn dep-set [coll]
   (set (map cell/cell-name coll)))
@@ -39,6 +38,8 @@
     c #{}
     d #{}))
 
+
+
 (deftest value-propagation
   (cell/reset-namespace 'cells.cell-tests)
 
@@ -55,24 +56,7 @@
   (cell/reset-cell! e 3)
   (is (= @e @f @g 3)))
 
-(deftest contexts
-  ;; contexts are used to facilitate the development experience.
-  ;; we keep track of the "evaluation context" of a cell in cell/*eval-context*
-  ;; so that we can dispose of all cells associated with a particular context.
-  ;; example of a context is a code editor window that the user might re-evaluate.
-  (cell/reset-namespace 'cells.cell-tests)
 
-  (defcell ctx-1 1)
-  (defcell ctx-2 @ctx-1)
-
-  (cell/dispose! cell/*eval-context*)
-
-  (is (nil? @ctx-1))
-  (is (nil? @ctx-2))
-  (cell/reset-cell! ctx-1 1)
-  (is (= 1 @ctx-1))
-  (is (nil? @ctx-2))
-  )
 
 (deftest anonymous-cells
   (cell/reset-namespace 'cells.cell-tests)
@@ -172,6 +156,51 @@
           p (cell (str @n ", " @o))]
 
       (cell (prn @p)))))
+
+(deftest contexts
+  ;; contexts are used to facilitate the development experience.
+  ;; we keep track of the "evaluation context" of a cell in cell/*eval-context*
+  ;; so that we can dispose of all cells associated with a particular context.
+  ;; example of a context is a code editor window that the user might re-evaluate.
+  (cell/reset-namespace 'cells.cell-tests)
+
+
+  (def ctx-1 (eval-context/new-context))
+  (def ctx-2 (eval-context/new-context))
+
+  (binding [cell/*eval-context* ctx-1]
+    (defcell r 1)
+    (defcell r- @r))
+
+  (binding [cell/*eval-context* ctx-2]
+    (defcell s @r)
+    (defcell s- @s))
+
+  (is (= (cell/transitive-dependents r) (dep-set [r- s s-])))
+
+  (eval-context/dispose! ctx-1)
+
+  (is (= nil @r @r-))
+  (is (= 1 @s @s-))
+  (is (= (cell/transitive-dependents r) (dep-set [r- s s-])))
+
+
+
+  (comment (binding [cell/*eval-context* ctx-1
+                     cell/*debug* true]
+             (cell/-compute-with-dependents! r)
+             (cell/-compute-with-dependents! r-))
+
+           (binding [cell/*eval-context* ctx-2
+                     cell/*debug* true]
+             (cell/-compute-with-dependents! s)
+             (cell/-compute-with-dependents! s-)
+             ))
+
+  ;(is (= (cell/transitive-dependents r) (dep-set [r- s s-])))
+  ;(cell/reset-cell! r 2)
+  ;(is (= 2 @r @r- @s @s-))
+  )
 
 
 (defn start []

@@ -1,4 +1,28 @@
-{:lein true
+{:dependencies [[com.stuartsierra/dependency "0.2.0"]
+                [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
+
+                [org.clojure/core.match "0.3.0-alpha4"]
+                [org.clojure/tools.reader "1.0.5"]
+                [com.cognitect/transit-cljs "0.8.239"]
+                [com.cognitect/transit-clj "0.8.300"]
+                [com.stuartsierra/dependency "0.2.0"]
+                [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
+
+                [fast-zip "0.7.0"]
+
+                [re-view "0.3.28-SNAPSHOT" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/markdown-it cljsjs/codemirror]]
+                [re-view-routing "0.1.3"]
+                [re-view-prosemirror "0.1.8" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/markdown-it cljsjs/codemirror]]
+                [cljs-live "0.2.6-SNAPSHOT"]
+                [magic-tree "0.0.12-SNAPSHOT" :exclusions [cljsjs/codemirror]]
+                [org.clojure/data.json "0.2.6"]
+
+                #_[cljsjs/codemirror "5.19.0-0"]
+                #_[cljsjs/react "16.0.0-beta.2-0"]
+                #_[cljsjs/react-dom "16.0.0-beta.2-0"]
+                ]
+ :exclusions [cljsjs/react cljsjs/react-dom cljsjs/markdown-it cljsjs/codemirror]
+ :source-paths ["src" "test"]
  :builds
  {:cell-tests
   {:target     :browser
@@ -8,12 +32,13 @@
    :devtools   {:after-load cells.cell-tests/start}}
   :live
   {:target     :browser
+   :compiler-options {:optimizations :simple}
    :output-dir "resources/public/js/compiled"
    :asset-path "/js/compiled"
    :modules    {:live {:entries [maria.frames.live-frame]}}
    :devtools   {:autoload true}}
-  :trusted
-  {:target     :browser
+  #_:trusted
+  #_{:target     :browser
    :output-dir "resources/public/js/compiled"
    :asset-path "/js/compiled"
    :optimizations :simple

@@ -7,7 +7,8 @@
             [re-view-prosemirror.core :as pm]
             [cells.cell :as cell]
             [maria.util :as util]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [cells.eval-context :as eval-context]))
 
 (def view-index (volatile! {}))
 
@@ -161,7 +162,7 @@
    (if (and (clojure.core/empty? values)
             (= 1 (count blocks)))
      (let [blocks (ensure-blocks nil)]
-       (cell/dispose! block)
+       (eval-context/dispose! block)
        (with-meta blocks {:before (first blocks)}))
      (let [index (cond-> (id-index blocks (:id block))
                          (neg? n) (+ n))
@@ -175,7 +176,7 @@
              replaced-blocks (subvec blocks index (+ index n))
              removed-blocks (filterv (comp (complement incoming-block-ids) :id) replaced-blocks)]
          (doseq [block removed-blocks]
-           (cell/dispose! block)))
+           (eval-context/dispose! block)))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))

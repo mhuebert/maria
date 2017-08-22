@@ -10,7 +10,8 @@
             [magic-tree.core :as tree]
             [magic-tree-codemirror.edit :as edit]
             [maria.eval :as e]
-            [magic-tree-codemirror.util :as cm]))
+            [magic-tree-codemirror.util :as cm]
+            [cells.eval-context :as eval-context]))
 
 (defview code-view
   {:key                :id
@@ -46,6 +47,8 @@
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
           (subvec (- (count coll) n) (count coll))))
+
+(def -dispose-callbacks (volatile! {}))
 
 (extend-type Block/CodeBlock
 
@@ -103,16 +106,15 @@
                  :block this
                  :id (:id this))))
 
-
-  cell/IDispose
+  eval-context/IDispose
   (on-dispose [this f]
-    (vswap! cell/-dispose-callbacks update (:id this) conj f))
+    (vswap! -dispose-callbacks update (:id this) conj f))
   (-dispose! [this]
-    (doseq [f (get @cell/-dispose-callbacks (:id this))]
+    (doseq [f (get @-dispose-callbacks (:id this))]
       (f))
-    (vswap! cell/-dispose-callbacks dissoc (:id this)))
+    (vswap! -dispose-callbacks dissoc (:id this)))
 
-  cell/IHandleError
+  eval-context/IHandleError
   (handle-error [this error]
     (e/handle-block-error (:id this) error))
 
@@ -133,7 +135,7 @@
                       (Block/emit this))]
        (Block/eval this :string source)))
     ([this kind value]
-     (cell/dispose! this)
+     (eval-context/dispose! this)
      (binding [cell/*eval-context* this]
        (Block/eval-log! this ((case kind :form e/eval-form
                                          :string e/eval-str) value))))))
