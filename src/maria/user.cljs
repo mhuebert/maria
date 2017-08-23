@@ -7,6 +7,7 @@
             [cells.cell]
             [cells.lib :as cell :refer-macros [with-view]]
             [maria.user.shapes :as shapes :refer [show
+                                                  listen
                                                   circle square rectangle triangle path text
                                                   position opacity rotate scale
                                                   colorize stroke no-stroke fill no-fill

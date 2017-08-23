@@ -32,18 +32,31 @@
 (defn- query-string [query]
   (-> Uri .-QueryData (.createFromMap (clj->js query)) (.toString)))
 
+(defn on-animation-frame [f]
+  (let [the-cell (first *cell-stack*)
+        stop? (volatile! false)
+        f (fn frame-f []
+            (binding [*cell-stack* (cons the-cell *cell-stack*)]
+              (reset! the-cell (f @the-cell))
+              (when-not @stop?
+                (.requestAnimationFrame js/window frame-f))))]
+    (on-dispose the-cell #(vreset! stop? true))
+    (f)))
 
 (defn interval [n f]
-  (let [the-cell (first *cell-stack*)
-        clear-key (volatile! nil)]
-    (vreset! clear-key (js/setInterval #(binding [*cell-stack* (cons the-cell *cell-stack*)]
-                                          (try
-                                            (reset! the-cell (f @the-cell))
-                                            (catch js/Error e
-                                              (js/clearInterval @clear-key)
-                                              (throw e)))) n))
-    (on-dispose the-cell #(js/clearInterval @clear-key))
-    (f @the-cell)))
+  (if (= n :frame)
+    (on-animation-frame f)
+    (let [the-cell (first *cell-stack*)
+          clear-key (volatile! nil)
+          f #(binding [*cell-stack* (cons the-cell *cell-stack*)]
+               (try
+                 (reset! the-cell (f @the-cell))
+                 (catch js/Error e
+                   (js/clearInterval @clear-key)
+                   (throw e))))]
+      (vreset! clear-key (js/setInterval f n))
+      (on-dispose the-cell #(js/clearInterval @clear-key))
+      (f))))
 
 (defn timeout [n f]
   (let [the-cell (first *cell-stack*)

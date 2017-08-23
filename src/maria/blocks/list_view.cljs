@@ -35,7 +35,8 @@
    :view/should-update      (fn [{:keys [view/state
                                          view/prev-state
                                          on-update]}]
-                              (let [blocks-changed? (not= (:blocks @state) (:blocks prev-state))]
+                              (let [{:keys [blocks]} @state
+                                    blocks-changed? (not= blocks (:blocks prev-state))]
                                 (when blocks-changed?
                                   (let [updated-source (Block/emit-list (:blocks @state))]
                                     (v/swap-silently! state assoc :last-update updated-source)

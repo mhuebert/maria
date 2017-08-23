@@ -1,30 +1,31 @@
 (ns maria.user.shapes
   (:require [re-view-hiccup.core :refer [element]]
-            [maria.show :as s :refer [IShow]]))
+            [maria.show :refer [IShow]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
 
-;; TODO we should have a protocol something like this:
+(defprotocol IListen
+  (-listen [this listeners]
+           "Attach event listeners to shape."))
 
-;; (defprotocol ToComponent
-;;   "Records that satisfy this protocol know how to turn themselves into React components."
-;;   (to-component [this] nil))
-
-;; TODO implemented something like this for shapes:
-
-;; (defrecord Shape []
-;;   ToComponent
-;;   (to-component [this]
-;;     (let [shapes (assure-shape-seq shapes)]
-;;       (html (into [:svg (assoc (bounds shapes) :x 0 :y 0)]
-;;                   (map shape->vector shapes))))))
-
-;; ... so we can build arbitrary defrecords that know how to format
-;; themselves for output. This can work for all sorts of things
-;; (images, mathematics, and so on) in addition to shapes.
+(defn listen
+  ([event listener shape]
+    (-listen shape [event listener]))
+  ([event-1 listener-1
+    event-2 listener-2 & args]
+    (-listen (last args)
+             (into [event-1 listener-1
+                    event-2 listener-2]
+                   (butlast args)))))
 
 (deftype Shape [attrs]
+  IListen
+  (-listen [this listeners]
+    (new Shape (reduce (fn [attrs [event listener]]
+                         (assoc attrs (keyword (str "on-" (name event))) listener))
+                       attrs
+                       (partition 2 listeners))))
   ILookup
   (-lookup [this k]
     (get attrs k))

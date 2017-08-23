@@ -46,14 +46,14 @@
   (defcell e 1)
   (is (= 1 @e))
 
-  (cell/reset-cell! e 2)
+  (reset! e 2)
   (is (= 2 @e))
 
   (defcell f @e)
   (defcell g @f)
   (is (= @e @f @g 2))
 
-  (cell/reset-cell! e 3)
+  (reset! e 3)
   (is (= @e @f @g 3)))
 
 
@@ -70,7 +70,7 @@
   (def j (cell (str @h @i)))
   (is (= "11" @j))
 
-  (cell/reset-cell! h 2)
+  (reset! h 2)
   (is (= "22" @j))
 
 
@@ -107,7 +107,7 @@
   (is (= @m-- 1))
 
 
-  (cell/reset-cell! l 2)
+  (reset! l 2)
 
   (is (= 2 @l @m @@m- @m--))
 
@@ -134,17 +134,22 @@
   (is (= (take 5 n)
          '(1 2 3 4 5))))
 
-(deftest restricted-mutate
-  (defcell o (inc @self))
-  (defcell p (swap! self inc))
-  @p
-  @o
-  (is (thrown? js/Error (reset! o 10)))
+(comment
+  ;; allowing all reset! and swap! for now.
+  ;; it is tricky to implement restrictions well, and I would like
+  ;; to see if it is necessary.
 
-  (is (thrown? js/Error (swap! o inc)))
+  (deftest restricted-mutate
+    (defcell o (inc @self))
+    (defcell p (swap! self inc))
+    @p
+    @o
+    (is (thrown? js/Error (reset! o 10)))
 
-  (defcell q
-    (is (thrown? js/Error (reset! o 11)))))
+    (is (thrown? js/Error (swap! o inc)))
+
+    (defcell q
+      (is (thrown? js/Error (reset! o 11))))))
 
 (comment
   (deftest timers
@@ -198,7 +203,7 @@
              ))
 
   ;(is (= (cell/transitive-dependents r) (dep-set [r- s s-])))
-  ;(cell/reset-cell! r 2)
+  ;(reset! r 2)
   ;(is (= 2 @r @r- @s @s-))
   )
 

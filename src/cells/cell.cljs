@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [cells.util :as util]
             [cells.eval-context :as eval-context :refer [on-dispose dispose!]]
-            [maria.show :refer [IShow] ])
+            [maria.show :refer [IShow]])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
@@ -151,7 +151,7 @@
 
   ICloneable
   (-clone [this]
-    (make-cell (keyword (namespace id) (util/unique-id)) f state @this))
+    (make-cell (keyword (namespace id) (util/unique-id)) f state))
 
   ICellView
   (with-view [this view-fn]
@@ -287,21 +287,22 @@
   #_(-compute-dependents! cell)
   )
 
-(def empty-cell-state {:view        deref
-                       :dispose-fns []})
+(def empty-cell-state {:view          deref
+                       :initial-value nil
+                       :dispose-fns   []})
 
 (defn make-cell
   "Makes a new cell. Memoized by id."
   ([f]
    (make-cell (keyword "cells.temp" (util/unique-id)) f))
-  ([id f] (make-cell id f {} nil))
-  ([id f state value]
+  ([id f] (make-cell id f {:initial-value nil}))
+  ([id f state]
    (or (get @-cells id)
        (let [cell (->Cell id f (merge empty-cell-state state) *eval-context*)]
          (log :make-cell id)
          (on-dispose *eval-context* #(purge-cell! cell))
          (vswap! -cells assoc id cell)
-         (-set! cell value)
+         (-set! cell (:initial-value state))
          (-compute-with-dependents! cell)))))
 
 (defn reset-namespace [ns]
