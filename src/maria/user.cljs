@@ -5,10 +5,12 @@
             maria.user.loaders
             maria.repl-specials
             [cells.cell]
-            [cells.lib :as cell :refer-macros [with-view]]
+            [cells.lib :as cell
+             :refer [interval timeout fetch geo-location]
+             :refer-macros [with-view]]
             [maria.user.shapes :as shapes :refer [show
                                                   listen
-                                                  circle square rectangle triangle path text
+                                                  circle square rectangle triangle path text image
                                                   position opacity rotate scale
                                                   colorize stroke no-stroke fill no-fill
                                                   color-names rgb hsl rescale

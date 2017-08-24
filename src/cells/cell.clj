@@ -8,7 +8,8 @@
           '[cells.lib/interval
             cells.lib/timeout
             cells.lib/fetch
-            cells.lib/geo-location]))
+            cells.lib/geo-location
+            cells.lib/-on-frame]))
 
 #_(defn cell-bindings [cell-name]
   (into lib-bindings
@@ -46,7 +47,10 @@
 (defmacro cell-fn
   "Returns an anonymous function which will evaluate with the current cell in the stack"
   [& body]
-  `(let [the-cell# (first ~'cells.cell/*cell-stack*)]
+  `(let [the-cell# (first ~'cells.cell/*cell-stack*)
+         context# ~'cells.cell/*eval-context*]
      (fn [& args#]
        (binding [~'cells.cell/*cell-stack* (cons the-cell# ~'cells.cell/*cell-stack*)]
-         (apply (fn ~@body) args#)))))
+         (try (apply (fn ~@body) args#)
+              (catch ~'js/Error error#
+                (~'cells.eval-context/handle-error context# error#)))))))

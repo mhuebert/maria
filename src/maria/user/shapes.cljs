@@ -11,13 +11,13 @@
 
 (defn listen
   ([event listener shape]
-    (-listen shape [event listener]))
+   (-listen shape [event listener]))
   ([event-1 listener-1
     event-2 listener-2 & args]
-    (-listen (last args)
-             (into [event-1 listener-1
-                    event-2 listener-2]
-                   (butlast args)))))
+   (-listen (last args)
+            (into [event-1 listener-1
+                   event-2 listener-2]
+                  (butlast args)))))
 
 (deftype Shape [attrs]
   IListen
@@ -85,6 +85,16 @@
                        [size size]]
               :stroke "none"
               :fill   "black"})))
+
+(defn image
+  "Add an image to the drawing"
+  ([src] (image 200 200 src))
+  ([size src] (image size size src))
+  ([width height src]
+   (->Shape {:kind   :image
+             :href   src
+             :width  width
+             :height height})))
 
 (defn text
   "Add a label containing `the-text` to a drawing."
