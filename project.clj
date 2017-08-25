@@ -21,7 +21,7 @@
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.8"]
                  [cljs-live "0.2.6-SNAPSHOT"]
-                 [magic-tree "0.0.12-SNAPSHOT"]
+                 [magic-tree "0.0.13-SNAPSHOT"]
                  [org.clojure/data.json "0.2.6"]
 
                  [cljsjs/codemirror "5.19.0-0"]
@@ -103,7 +103,7 @@
                                        :asset-path     "/js/compiled/out-live-prod"
                                        :language-in    :ecmascript5
 
-                                       :source-map     "resources/public/js/compiled/live.js.map"
+                                       ;:source-map     "resources/public/js/compiled/live.js.map"
                                        :cache-analysis false
                                        :dump-core      false
                                        :parallel-build true

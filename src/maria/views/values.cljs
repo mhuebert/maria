@@ -66,16 +66,17 @@
       [expander-outter {:on-click #(swap! state assoc :limit-depth (inc depth))} [expander-label "…"]]
       [:table.fl.relative.mh2.cb
        [:tbody
-        (->> (take limit-n value)
-             (map-indexed (fn [n [a b]]
-                            [:tr
-                             {:key n}
-                             [:td.v-top
-                              (if (= n 0) "{" " ")
-                              (format-value (inc depth) a)]
-                             [:td.v-top
-                              (format-value (inc depth) b)
-                              (when (= (inc n) last-n) "}")]])))
+        (or (some->> (seq (take limit-n value))
+                     (map-indexed (fn [n [a b]]
+                                    [:tr
+                                     {:key n}
+                                     [:td (when (= n 0) "{")]
+                                     [:td.v-top
+                                      (format-value (inc depth) a)]
+                                     [:td.v-top
+                                      (format-value (inc depth) b)]
+                                     [:td (when (= (inc n) last-n) "}")]])))
+            [:td "{}"])
         (when more? [:tr [:td {:col-span 2}
                           [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]]]])]])))
 

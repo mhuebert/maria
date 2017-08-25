@@ -64,10 +64,11 @@
         clear-which-key! #(do (clear-timeout!)
                               (d/transact! [[:db/add :commands :which-key/active? false]]))
 
-        which-key-delay 500
+        which-key-delay 1500
         handle-keydown (fn [e]
                          (let [keycode (registry/normalize-keycode (.-keyCode e))
-                               keys-down (d/get :commands :modifiers-down)
+                               {keys-down :modifiers-down
+                                which-key-active? :which-key/active?} (d/entity :commands)
                                modifier? (contains? registry/modifiers keycode)
                                command-names (seq (registry/get-keyset-commands (conj keys-down keycode)))
                                context (when command-names
@@ -76,7 +77,8 @@
                                           (mapv #(get-command context %) command-names))
                                results (when command-names
                                          (mapv #(exec-command context %) commands))]
-
+                           (when (and which-key-active? (= keycode 27))
+                             (d/transact! [[:db/add :commands :which-key/active? false]]))
                            ;; if we use Tab as a modifier,
                            ;; we'll stop its default behaviour
                            #_(when (= 9 keycode)

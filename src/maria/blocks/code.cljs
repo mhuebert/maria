@@ -26,7 +26,7 @@
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (.focus this))
-    :on-focus #(.scrollIntoView this)}
+    #_:on-focus #_(.scrollIntoView this)}
    [:.w-50.flex-none
     (codemirror/editor {:class               "pa3 bg-white"
                         :ref                 #(v/swap-silently! state assoc :editor-view %)

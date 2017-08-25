@@ -17,27 +17,10 @@
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
 
-(defcommand :copy/form
-  {:bindings ["M1-C"
-              "M1-Shift-C"]
-   :when     no-selection?}
-  [context]
-  (edit/copy-form (:editor context)))
-
 (defcommand :copy/selection
   {:bindings ["M1-C"
               "M1-Shift-C"]
    :when     selection?})
-
-(defcommand :cut/form
-  "Cuts current highlight"
-  {:bindings ["M1-X"
-              "M1-Shift-X"]
-   :when     :block/code}
-  [context]
-  (edit/cut-form (:editor context)))
-
-
 
 (defcommand :code-block/enter
   {:bindings "Enter"
@@ -82,13 +65,15 @@
                 (Block/focus! (or new-block prev-prose) :end)))))
       js/CodeMirror.Pass)))
 
-(defcommand :delete/form
-  "Deletes current highlight"
+(defcommand :delete/selection
+  "Deletes current selection"
   {:bindings ["M1-Backspace"
               "M1-Shift-Backspace"]
    :when     :block/code}
   [context]
-  (edit/delete-form (:editor context)))
+  (let [editor (:editor context)]
+    (when (.somethingSelected editor)
+      (.replaceSelections editor (to-array (repeat (count (.getSelections editor)) ""))))))
 
 (defn clear-empty-code-block [block-list blocks block]
   (let [before (Block/before blocks block)

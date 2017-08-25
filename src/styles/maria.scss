@@ -10,10 +10,10 @@
 
 /******************************************************************************/
 // short term home of maria-light theme
-
+$selection-color: #f4f4d6;
 .cm-s-maria-light.CodeMirror {background: #f9f8f4; color: #3f4245;}
-.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection { background: #fafaea; }
-.cm-s-maria-light div.CodeMirror-selected {background: #fafaea !important;}
+.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection { background: $selection-color; }
+.cm-s-maria-light div.CodeMirror-selected {background: $selection-color !important;}
 .cm-s-maria-light .CodeMirror-cursor {border-left: 1px solid #868886 !important;}
 
 .cm-s-maria-light span.cm-comment {color: #a3685a;}

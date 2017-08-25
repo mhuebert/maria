@@ -143,8 +143,7 @@
       (let [state (.-state prose-view)
             dispatch (.-dispatch prose-view)]
         (dispatch (-> (.-tr state)
-                      (.insert 0 (.createAndFill (pm/get-node state :paragraph)))
-                      (.scrollIntoView))))))
+                      (.insert 0 (.createAndFill (pm/get-node state :paragraph))))))))
   (trim-paragraph-left [this]
     (when-let [prose-view (:prose-editor-view @(:view/state (Block/view this)))]
       (let [new-value (.replace (:value this) #"^[\n\s]*" "")]

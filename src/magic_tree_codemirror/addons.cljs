@@ -6,7 +6,9 @@
             [magic-tree-codemirror.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]
             [maria-commands.registry :as registry]
-            [re-db.d :as d]))
+            [cljs.core.match :refer-macros [match]]
+            [re-db.d :as d]
+            [magic-tree-codemirror.edit :as edit]))
 
 (specify! (.-prototype js/CodeMirror)
   ILookup
@@ -32,43 +34,68 @@
 (defn modifier-down? [k]
   (contains? (d/get :commands :modifiers-down) k))
 
-(defn clear-highlight! [cm]
-  (doseq [handle (get-in cm [:magic/highlight :handles])]
-    (.clear handle))
-  (swap! cm dissoc :magic/highlight))
+(defn nearest-bracket-region
+  "Current sexp, or nearest sexp to the left, or parent."
+  [pos loc]
+  (let [bracket-loc (if-not (tree/whitespace? (z/node loc))
+                      loc
+                      (if (and (= pos (select-keys (z/node loc) [:line :column]))
+                               (z/left loc)
+                               (not (tree/whitespace? (z/node (z/left loc)))))
+                        (z/left loc)
+                        loc))
+        up-tag (some-> bracket-loc
+                       (z/up)
+                       (z/node)
+                       (:tag))]
+    (cond-> bracket-loc
+            (#{:quote :deref
+               :reader-conditional} up-tag)
+            (z/up))))
 
-(defn highlight-node! [cm node]
-  (when (and (not= node (get-in cm [:magic/highlight :node]))
-             (not (.somethingSelected cm))
-             (tree/sexp? node))
-    (clear-highlight! cm)
-    (swap! cm assoc :magic/highlight
-           {:node    node
-            :handles (cm/mark-ranges! cm [(tree/boundaries node)] #js {:className "CodeMirror-eval-highlight"})})))
+(defn top-loc [loc]
+  (first (filter #(or (= :base (get (z/node %) :tag))
+                      (= :base (get (z/node (z/up %)) :tag))) (iterate z/up loc))))
 
 (defn update-bracket-loc! [cm]
-  (let [cursor-loc (get-in cm [:magic/cursor :loc])
+  (let [{cursor-loc  :loc
+         bracket-loc :bracket-loc} (get cm :magic/cursor)
         bracket-loc (when cursor-loc
                       (case [(modifier-down? M1) (modifier-down? SHIFT)]
-                        [true false] (tree/nearest-bracket-region cursor-loc)
-                        [true true] (tree/top-loc cursor-loc)
+                        [true false] bracket-loc
+                        [true true] (top-loc bracket-loc)
                         nil))]
-    (swap! cm update :magic/cursor merge {:bracket-loc bracket-loc
+    (swap! cm update :magic/cursor merge {:bracket-loc  bracket-loc
                                           :bracket-node (some-> bracket-loc (z/node))})))
 
-(defn reset-highlight! [cm]
-  (some->> (get-in cm [:magic/cursor :bracket-loc])
-           (z/node)
-           (highlight-node! cm)))
+(defn clear-selection! [cm]
+  (some->> (:cursor/start cm)
+           (.setCursor cm))
+  (swap! cm dissoc :cursor/start))
 
-(defn update-highlights! [cm e]
-  (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))]
-    (when (and (contains? #{"keyup" "keydown"} (.-type e))
-               (contains? #{16 M1} key-code))
-      (update-bracket-loc! cm)
-      (if (modifier-down? M1)
-        (reset-highlight! cm)
-        (clear-highlight! cm)))))
+(defn select-node! [cm node]
+  (when (and (not (tree/whitespace? node))
+             (or (not (.somethingSelected cm))
+                 (:cursor/start cm)))
+    (when-not (:cursor/start cm)
+      (swap! cm assoc :cursor/start (.getCursor cm)))
+    (edit/select-range cm (tree/boundaries node))))
+
+(defn update-selection! [cm e]
+  (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
+        evt-type (.-type e)
+        m-down? (modifier-down? M1)
+        shift-down? (modifier-down? SHIFT)]
+    (match [m-down? evt-type key-code]
+           [true _ (:or 16 M1)] (let [loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
+                                                  shift-down? (top-loc))]
+                                  (some->> loc
+                                           (z/node)
+                                           (select-node! cm)))
+           [_ "keyup" M1] (clear-selection! cm)
+           [_ _ (_ :guard (complement #{16 M1}))] (swap! cm dissoc :cursor/start)
+
+           :else nil)))
 
 (defn clear-brackets! [cm]
   (doseq [handle (get-in cm [:magic/cursor :handles])]
@@ -79,7 +106,7 @@
   (let [prev-node (get-in cm [:magic/cursor :node])]
     (when (not= prev-node node)
       (clear-brackets! cm)
-      (when (tree/may-contain-children? node)
+      (when (some-> node (tree/may-contain-children?))
         (swap! cm assoc-in [:magic/cursor :handles]
                (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
@@ -116,18 +143,19 @@
 
 (defn update-cursor!
   [{:keys [zipper magic/brackets?] :as cm}]
-  (let [position (cm/cursor-pos cm)]
-    (when-let [loc (and zipper
-                        (some->> position
-                                 (tree/node-at zipper)))]
-      (let [bracket-loc (tree/nearest-bracket-region loc)
-            bracket-node (z/node bracket-loc)]
-        (when brackets? (match-brackets! cm bracket-node))
-        (swap! cm update :magic/cursor merge {:loc          loc
-                                              :node         (z/node loc)
-                                              :bracket-loc  bracket-loc
-                                              :bracket-node bracket-node
-                                              :pos          position})))))
+  (when-not (:cursor/start cm)
+    (let [position (cm/cursor-pos cm)]
+      (when-let [loc (and zipper
+                          (some->> position
+                                   (tree/node-at zipper)))]
+        (let [bracket-loc (nearest-bracket-region position loc)
+              bracket-node (z/node bracket-loc)]
+          (when brackets? (match-brackets! cm bracket-node))
+          (swap! cm update :magic/cursor merge {:loc          loc
+                                                :node         (z/node loc)
+                                                :bracket-loc  bracket-loc
+                                                :bracket-node bracket-node
+                                                :pos          position}))))))
 
 (defn require-opts [cm opts]
   (doseq [opt opts] (.setOption cm opt true)))
@@ -136,7 +164,8 @@
                (fn [cm on?]
                  (when on?
                    (require-opts cm ["cljsState"])
-                   (.on cm "change" update-ast!))))
+                   (.on cm "change" update-ast!)
+                   (update-ast! cm))))
 
 (.defineOption js/CodeMirror "magicCursor" false
                (fn [cm on?]
@@ -149,13 +178,9 @@
                  (when on?
                    (require-opts cm ["magicCursor"])
 
-                   (cm/define-extension "magicClearHighlight" clear-highlight!)
-                   (cm/define-extension "magicUpdateHighlight" update-highlights!)
-
-
-                   (.on cm "keyup" update-highlights!)
-                   (.on cm "keydown" update-highlights!)
-                   (events/listen js/window "blur" #(clear-highlight! cm))
+                   (.on cm "keyup" update-selection!)
+                   (.on cm "keydown" update-selection!)
+                   (events/listen js/window "blur" #(clear-selection! cm))
                    (events/listen js/window "blur" #(clear-brackets! cm))
 
                    (swap! cm assoc :magic/brackets? true))))

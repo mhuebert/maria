@@ -39,6 +39,7 @@
                               (let [dom-node (v/dom-node this)
                                     editor (js/CodeMirror dom-node
                                                           (clj->js (merge cm-opts
+                                                                          {:value (str (or value default-value))}
                                                                           (cond-> options
                                                                                   keymap (assoc :extraKeys (clj->js keymap))
                                                                                   read-only? (-> (select-keys [:theme :mode :lineWrapping])
@@ -51,9 +52,6 @@
                                                                          (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
-
-                                (some->> (or value default-value) (str) (.setValue editor))
-                                (js/setTimeout #(.refresh editor) 0)
 
                                 (when-not read-only?
 

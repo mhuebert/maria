@@ -184,13 +184,26 @@
           select #(when %
                     (select-range cm %)
                     (swap! cm update-in [:magic/cursor :stack] conj (tree/boundaries %)))]
+
       (cond
-        (not (.somethingSelected cm))
-        (do (swap! cm assoc-in [:magic/cursor :stack] (list (selection-boundaries cm)))
-            (.magicClearHighlight cm)
-            (select (let [node (if (tree/comment? node) node bracket-node)]
-                      (or (when (tree/inside? node cursor-pos) (tree/inner-range node))
-                          node))))
+        (or (:cursor/start cm)
+            (not (.somethingSelected cm)))
+        (let [cursor-start (:cursor/start cm)]
+          (swap! cm #(-> %
+                         (assoc-in [:magic/cursor :stack] (cond-> (list (selection-boundaries cm))
+                                                                  cursor-start (conj {:line (.-line cursor-start)
+                                                                                      :column (.-ch cursor-start)
+                                                                                      :end-line (.-line cursor-start)
+                                                                                      :end-column (.-ch cursor-start)})))
+                         (dissoc :cursor/start)))
+
+          (select (let [node (if (tree/comment? node) node bracket-node)]
+                    (or (when (tree/inside? node cursor-pos)
+                          (let [inner-range (tree/inner-range node)]
+                            (when-not (and (= (:line inner-range) (:end-line inner-range))
+                                           (= (:column inner-range) (:end-column inner-range)))
+                              inner-range)))
+                        node))))
         (= sel (tree/inner-range parent)) (select parent)
         (pos= sel (tree/boundaries node)) (select (or (tree/inner-range parent) parent))
         (= sel (tree/inner-range node)) (select node)
@@ -209,18 +222,18 @@
   (fn [{zipper :zipper :as cm}]
     (.operation cm
                 #(let [{line-n :line column-n :column} (get-in cm [:magic/cursor :pos])
-                      [spaces semicolons] (rest (re-find #"^(\s*)(;+)?" (.getLine cm line-n)))
-                      [space-n semicolon-n] (map count [spaces semicolons])]
-                  (if (> semicolon-n 0)
-                    (replace-range cm "" {:line line-n :column space-n :end-column (+ space-n semicolon-n)})
-                    (let [{:keys [end-line end-column]} (some-> (tree/node-at zipper {:line line-n :column 0})
-                                                                z/up
-                                                                z/node)]
-                      (when (= line-n end-line)
-                        (replace-range cm (str "\n" spaces) {:line line-n :column (dec end-column)}))
-                      (replace-range cm ";;" {:line line-n :column space-n})))
-                  (.setCursor cm #js {:line (inc line-n)
-                                      :ch   column-n})))))
+                       [spaces semicolons] (rest (re-find #"^(\s*)(;+)?" (.getLine cm line-n)))
+                       [space-n semicolon-n] (map count [spaces semicolons])]
+                   (if (> semicolon-n 0)
+                     (replace-range cm "" {:line line-n :column space-n :end-column (+ space-n semicolon-n)})
+                     (let [{:keys [end-line end-column]} (some-> (tree/node-at zipper {:line line-n :column 0})
+                                                                 z/up
+                                                                 z/node)]
+                       (when (= line-n end-line)
+                         (replace-range cm (str "\n" spaces) {:line line-n :column (dec end-column)}))
+                       (replace-range cm ";;" {:line line-n :column space-n})))
+                   (.setCursor cm #js {:line (inc line-n)
+                                       :ch   column-n})))))
 
 (def uneval-form
   (fn [{{:keys [bracket-loc]} :magic/cursor
