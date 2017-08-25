@@ -22,6 +22,18 @@
               "M1-Shift-C"]
    :when     selection?})
 
+(defcommand :selection/expand-left
+  {:bindings ["Command-Shift-Left"]
+   :when :block/code}
+  [context]
+  (edit/expand-selection-left (:editor context)))
+
+(defcommand :selection/expand-right
+  {:bindings ["Command-Shift-Right"]
+   :when :block/code}
+  [context]
+  (edit/expand-selection-right (:editor context)))
+
 (defcommand :code-block/enter
   {:bindings "Enter"
    :when     :block/code}

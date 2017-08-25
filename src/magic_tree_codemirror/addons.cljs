@@ -8,7 +8,11 @@
             [maria-commands.registry :as registry]
             [cljs.core.match :refer-macros [match]]
             [re-db.d :as d]
+            [goog.dom :as gdom]
             [magic-tree-codemirror.edit :as edit]))
+
+(defn cursor-bookmark []
+  (gdom/createDom "div" #js {"className" "cursor-marker"}))
 
 (specify! (.-prototype js/CodeMirror)
   ILookup
@@ -57,28 +61,32 @@
   (first (filter #(or (= :base (get (z/node %) :tag))
                       (= :base (get (z/node (z/up %)) :tag))) (iterate z/up loc))))
 
-(defn update-bracket-loc! [cm]
-  (let [{cursor-loc  :loc
-         bracket-loc :bracket-loc} (get cm :magic/cursor)
-        bracket-loc (when cursor-loc
-                      (case [(modifier-down? M1) (modifier-down? SHIFT)]
-                        [true false] bracket-loc
-                        [true true] (top-loc bracket-loc)
-                        nil))]
-    (swap! cm update :magic/cursor merge {:bracket-loc  bracket-loc
-                                          :bracket-node (some-> bracket-loc (z/node))})))
+(defn mark-cursor! [cm]
+  (let [cursor (.getCursor cm)]
+    (swap! cm assoc
+           :cursor/cursor-root cursor
+           :cursor/clear-marker (let [marker (.setBookmark cm cursor
+                                                           #js {:widget (cursor-bookmark)})]
+                                  (fn []
+                                    (.clear marker)
+                                    (swap! cm dissoc :cursor/cursor-root :cursor/clear-marker))))))
 
-(defn clear-selection! [cm]
-  (some->> (:cursor/start cm)
-           (.setCursor cm))
-  (swap! cm dissoc :cursor/start))
+(defn unset-cursor-root! [cm]
+  (when-let [clear-marker (:cursor/clear-marker cm)]
+    (clear-marker)))
+
+(defn return-cursor-to-root! [cm]
+  (when (.somethingSelected cm)
+    (some->> (:cursor/cursor-root cm)
+             (.setCursor cm)))
+  (unset-cursor-root! cm))
 
 (defn select-node! [cm node]
   (when (and (not (tree/whitespace? node))
              (or (not (.somethingSelected cm))
-                 (:cursor/start cm)))
-    (when-not (:cursor/start cm)
-      (swap! cm assoc :cursor/start (.getCursor cm)))
+                 (:cursor/cursor-root cm)))
+    (when-not (:cursor/cursor-root cm)
+      (mark-cursor! cm))
     (edit/select-range cm (tree/boundaries node))))
 
 (defn update-selection! [cm e]
@@ -87,15 +95,14 @@
         m-down? (modifier-down? M1)
         shift-down? (modifier-down? SHIFT)]
     (match [m-down? evt-type key-code]
-           [true _ (:or 16 M1)] (let [loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
+           [true _ (:or 16 91)] (let [loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
                                                   shift-down? (top-loc))]
                                   (some->> loc
                                            (z/node)
                                            (select-node! cm)))
-           [_ "keyup" M1] (clear-selection! cm)
-           [_ _ (_ :guard (complement #{16 M1}))] (swap! cm dissoc :cursor/start)
-
-           :else nil)))
+           [_ "keyup" 91] (return-cursor-to-root! cm)
+           :else (when-not (contains? #{16 M1} key-code)
+                   (unset-cursor-root! cm)))))
 
 (defn clear-brackets! [cm]
   (doseq [handle (get-in cm [:magic/cursor :handles])]
@@ -143,7 +150,7 @@
 
 (defn update-cursor!
   [{:keys [zipper magic/brackets?] :as cm}]
-  (when-not (:cursor/start cm)
+  (when-not (:cursor/cursor-root cm)
     (let [position (cm/cursor-pos cm)]
       (when-let [loc (and zipper
                           (some->> position
@@ -180,7 +187,7 @@
 
                    (.on cm "keyup" update-selection!)
                    (.on cm "keydown" update-selection!)
-                   (events/listen js/window "blur" #(clear-selection! cm))
+                   (events/listen js/window "blur" #(return-cursor-to-root! cm))
                    (events/listen js/window "blur" #(clear-brackets! cm))
 
                    (swap! cm assoc :magic/brackets? true))))

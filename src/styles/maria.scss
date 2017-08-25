@@ -263,3 +263,9 @@ div.CodeMirror {
 svg {
     cursor: default;
 }
+
+.cursor-marker {
+    border-right: 2px solid #9b7ea3; //#9ba450 #a78939
+    display: inline;
+    margin: -1px;
+}

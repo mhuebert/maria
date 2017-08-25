@@ -5,6 +5,7 @@
             [clojure.string :as string]
             [maria-commands.exec :as exec]
             [re-view-prosemirror.core :as pm]
+            [re-view-prosemirror.markdown :as markdown]
             [cells.cell :as cell]
             [maria.util :as util]
             [re-db.d :as d]
@@ -46,6 +47,9 @@
            (.focus coords))))
 
 (defprotocol ICursor
+  (get-selections [this])
+  (put-selections! [this selections])
+
   (cursor-edge [this])
   (cursor-coords [this])
   (at-end? [this])
@@ -59,14 +63,13 @@
   (eval-log! [this value]))
 
 (defprotocol IParagraph
-  (prepend-paragraph [this])
-  (trim-paragraph-left [this]))
+  (prepend-paragraph [this]))
 
 (extend-type nil IBlock
   (empty? [this] true))
 
 (defrecord CodeBlock [id node])
-(defrecord ProseBlock [id node])
+(defrecord ProseBlock [id doc])
 
 (defn from-node
   "Returns a block, given a magic-tree AST node."
@@ -74,11 +77,10 @@
   ;; GET ID FROM NODE
   ;; CAN WE GET IT FROM DEF, DEFN, etc. in a structured way?
   ;; IE IF FIRST SYMBOL STARTS WITH DEF, READ NEXT SYMBOL
-  (when-let [create* (case tag
-                       :comment ->ProseBlock
-                       (:newline :space :comma nil) nil
-                       ->CodeBlock)]
-    (create* (d/unique-id) node)))
+  (case tag
+    :comment (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
+    (:newline :space :comma nil) nil
+    (->CodeBlock (d/unique-id) node)))
 
 (defn create
   "Returns a block, given a kind (:code or :prose) and optional value."

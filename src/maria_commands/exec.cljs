@@ -5,6 +5,7 @@
             [clojure.set :as set]))
 
 (def context (volatile! {}))
+(def last-selections (volatile! (list)))
 
 (defn set-context! [values]
   (vswap! context merge values))

@@ -173,6 +173,32 @@
 (def hop-right
   (cursor-boundary-skip :right))
 
+(defn pop-stack! [cm]
+  (when-let [stack (get-in cm [:magic/cursor :stack])]
+    (let [stack (cond-> stack
+                        (or (:base (first stack))
+                            (= (selection-boundaries cm) (first stack))) rest)
+          item (first stack)]
+      (swap! cm update-in [:magic/cursor :stack] rest)
+      item)))
+
+(defn push-stack! [cm node]
+  (when (tree/empty-range? node)
+    (swap! cm update-in [:magic/cursor :stack] empty))
+  (when-not (= node (first (get-in cm [:magic/cursor :stack])))
+    (swap! cm update-in [:magic/cursor :stack] conj (tree/boundaries node))))
+
+(defn cursor->range [cursor]
+  {:line       (.-line cursor)
+   :column     (.-ch cursor)
+   :end-line   (.-line cursor)
+   :end-column (.-ch cursor)})
+
+(defn tracked-select [cm node]
+  (when node
+    (select-range cm node)
+    (push-stack! cm (tree/boundaries node))))
+
 (def expand-selection
   (fn [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
         zipper                                 :zipper
@@ -181,21 +207,15 @@
           loc (tree/node-at zipper sel)
           node (z/node loc)
           parent (some-> (z/up loc) z/node)
-          select #(when %
-                    (select-range cm %)
-                    (swap! cm update-in [:magic/cursor :stack] conj (tree/boundaries %)))]
-
+          select (partial tracked-select cm)]
       (cond
-        (or (:cursor/start cm)
+        (or (:cursor/cursor-root cm)
             (not (.somethingSelected cm)))
-        (let [cursor-start (:cursor/start cm)]
-          (swap! cm #(-> %
-                         (assoc-in [:magic/cursor :stack] (cond-> (list (selection-boundaries cm))
-                                                                  cursor-start (conj {:line (.-line cursor-start)
-                                                                                      :column (.-ch cursor-start)
-                                                                                      :end-line (.-line cursor-start)
-                                                                                      :end-column (.-ch cursor-start)})))
-                         (dissoc :cursor/start)))
+        (let [cursor-start (:cursor/cursor-root cm)]
+          (when-let [clear-marker (:cursor/clear-marker cm)]
+            (clear-marker))
+          (when cursor-start (push-stack! cm (cursor->range cursor-start)))
+          (push-stack! cm (selection-boundaries cm))
 
           (select (let [node (if (tree/comment? node) node bracket-node)]
                     (or (when (tree/inside? node cursor-pos)
@@ -206,17 +226,48 @@
                         node))))
         (= sel (tree/inner-range parent)) (select parent)
         (pos= sel (tree/boundaries node)) (select (or (tree/inner-range parent) parent))
-        (= sel (tree/inner-range node)) (select node)
-        :else nil))))
+        (or (= sel (tree/inner-range node))
+            (tree/inside? node sel)) (select node)
+        :else (some-> (z/up loc) z/node (select))))))
 
 (def shrink-selection
   (fn [cm]
-    (when-let [stack (get-in cm [:magic/cursor :stack])]
-      (let [stack (cond-> stack
-                          (or (:base (first stack))
-                              (= (selection-boundaries cm) (first stack))) rest)]
-        (some->> (first stack) (select-range cm))
-        (swap! cm update-in [:magic/cursor :stack] rest)))))
+    (some->> (pop-stack! cm)
+             (select-range cm))))
+
+(defn expand-selection-left [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
+                              zipper                                 :zipper
+                              :as                                    cm}]
+  (if (and (:cursor/cursor-root cm)
+           (not= (tree/boundaries cursor-pos :left)
+                 (tree/boundaries bracket-node :left)))
+    (do (some-> (:cursor/clear-marker cm) (apply nil))
+        (tracked-select cm (merge {:end-line   (:line cursor-pos)
+                                   :end-column (:column cursor-pos)}
+                                  (tree/boundaries bracket-node :left))))
+    (let [selection-bounds (selection-boundaries cm)
+          loc (tree/node-at zipper (tree/boundaries selection-bounds :left))]
+      (if-let [left-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/left-locs loc)))]
+        (tracked-select cm (merge (select-keys selection-bounds [:end-line :end-column])
+                                  (tree/boundaries (z/node left-loc) :left)))
+        (tracked-select cm (some-> loc z/up z/node))))))
+
+(defn expand-selection-right [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
+                               zipper                                 :zipper
+                               :as                                    cm}]
+  (if (and (:cursor/cursor-root cm)
+           (not= (tree/boundaries cursor-pos :right)
+                 (tree/boundaries bracket-node :right)))
+    (do (some-> (:cursor/clear-marker cm) (apply nil))
+        (tracked-select cm (merge (tree/boundaries cursor-pos :left)
+                                  {:end-line   (:end-line bracket-node)
+                                   :end-column (:end-column bracket-node)})))
+    (let [selection-bounds (selection-boundaries cm)
+          selection-loc (tree/node-at zipper (tree/boundaries selection-bounds :right))]
+      (if-let [right-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/right-locs selection-loc)))]
+        (tracked-select cm (merge (select-keys (z/node right-loc) [:end-line :end-column])
+                                  (tree/boundaries selection-bounds :left)))
+        (expand-selection cm)))))
 
 (def comment-line
   (fn [{zipper :zipper :as cm}]

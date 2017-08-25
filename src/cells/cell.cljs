@@ -3,14 +3,13 @@
             [clojure.set :as set]
             [cells.util :as util]
             [cells.eval-context :as eval-context :refer [on-dispose dispose!]]
-            [maria.show :refer [IShow]])
+            [re-view-hiccup.core :refer [IShow]])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
 (def ^:dynamic *computing-dependents* false)
 (def ^:dynamic *debug* false)
 (defonce -cells (volatile! {}))
-
 
 (defn log
   [& args]

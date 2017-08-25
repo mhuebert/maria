@@ -1,6 +1,5 @@
 (ns maria.user.shapes
-  (:require [re-view-hiccup.core :refer [element]]
-            [maria.show :refer [IShow]]))
+  (:require [re-view-hiccup.core :refer [IShow element]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy

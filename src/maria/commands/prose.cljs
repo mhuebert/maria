@@ -46,25 +46,19 @@
   [context]
   (apply-command (:editor context) commands/newline-in-code))
 
-(defcommand :prose/undo
-  {:bindings ["M1-z"]
-   :when     :block/prose}
-  [context]
-  (apply-command (:editor context) commands/undo))
+(comment (defcommand :prose/undo
+           {:bindings ["M1-z"]
+            :when     :block/prose}
+           [context]
+           (apply-command (:editor context) commands/undo))
 
 
-(defcommand :prose/redo
-  {:bindings ["M1-y"]
-   :when     :block/prose}
-  [context]
-  (apply-command (:editor context) commands/redo))
-
-
-(defcommand :prose/redo
-  {:bindings ["Shift-M1-z"]
-   :when     :block/prose}
-  [context]
-  (apply-command (:editor context) commands/redo))
+         (defcommand :prose/redo
+           {:bindings ["M1-y"
+                       "Shift-M1-z"]
+            :when     :block/prose}
+           [context]
+           (apply-command (:editor context) commands/redo)))
 
 
 (defcommand :prose/inline-bold

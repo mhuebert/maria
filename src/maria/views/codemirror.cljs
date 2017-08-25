@@ -86,12 +86,12 @@
    :view/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props
-                                  state                       :view/state
                                   :as                         this}]
-                              (cond (not= source-id prev-source-id)
-                                    (.resetValue this)
-                                    :else nil))
-   :life/should-update      (fn [_] false)}
+                              (if (or (not= source-id prev-source-id)
+                                      (not= value (.getValue (.getEditor this))))
+                                (.resetValue this)
+                                nil))
+   :view/should-update      (fn [_] false)}
   [{:keys [view/state on-focus on-blur view/props] :as this}]
   [:.cursor-text
    (-> (select-keys props [:style :class :classes])

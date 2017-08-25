@@ -11,7 +11,7 @@
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [maria.show :as show])
+            [re-view-hiccup.core :refer [show IShow]])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -107,43 +107,44 @@
 (defn format-value
   ([value] (format-value 1 value))
   ([depth value]
-   (cond (satisfies? show/IShow value)
+   (let [kind (messages/kind value)]
+     (cond
+       (= kind :maria.kinds/vector) (format-collection nil depth value)
+       (satisfies? IShow value) (format-value depth (show value))
 
-         (format-value depth (show/show value))
+           (and (satisfies? IMeta value)
+                (contains? (meta value) :IView/view))
+           (:IView/view (meta value))
 
-         (and (satisfies? IMeta value)
-              (contains? (meta value) :IView/view))
-         (:IView/view (meta value))
+           :else (case (messages/kind value)
 
-         :else (case (messages/kind value)
+                   (:maria.kinds/vector
+                     :maria.kinds/sequence
+                     :maria.kinds/set) (format-collection nil depth value)
 
-                 (:maria.kinds/vector
-                   :maria.kinds/sequence
-                   :maria.kinds/set) (format-collection nil depth value)
+                   :maria.kinds/map (format-map nil depth value)
 
-                 :maria.kinds/map (format-map nil depth value)
+                   (:maria.kinds/var
+                     :maria.kinds/cell) (format-value depth @value)
 
-                 (:maria.kinds/var
-                   :maria.kinds/cell) (format-value depth @value)
+                   :maria.kinds/nil "nil"
 
-                 :maria.kinds/nil "nil"
+                   :maria.kinds/function (format-function value)
 
-                 :maria.kinds/function (format-function value)
+                   :maria.kinds/atom (format-value depth (gobj/get value "state"))
 
-                 :maria.kinds/atom (format-value depth (gobj/get value "state"))
-
-                 (cond
-                   (v/is-react-element? value) value
-                   (instance? cljs.core/Namespace value) (str value)
-                   (instance? Deferred value) (display-deferred {:deferred value})
-                   :else (try (pr-str value)
-                              (catch js/Error e
-                                (do "error printing result"
-                                    (.log js/console e)
-                                    (prn (type value))
-                                    (prn :kind (messages/kind value))
-                                    (.log js/console value)
-                                    (prn value)))))))))
+                   (cond
+                     (v/is-react-element? value) value
+                     (instance? cljs.core/Namespace value) (str value)
+                     (instance? Deferred value) (display-deferred {:deferred value})
+                     :else (try (pr-str value)
+                                (catch js/Error e
+                                  (do "error printing result"
+                                      (.log js/console e)
+                                      (prn (type value))
+                                      (prn :kind (messages/kind value))
+                                      (.log js/console value)
+                                      (prn value))))))))))
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3

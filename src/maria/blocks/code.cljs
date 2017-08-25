@@ -15,7 +15,7 @@
 
 (defview code-view
   {:key                :id
-   :view/should-update #(do false)
+   :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount     #(Block/mount (:block %) %)
    :view/will-unmount  #(Block/unmount (:block %))
    :get-editor         #(.getEditor (:editor-view @(:view/state %)))
@@ -25,16 +25,13 @@
   [{:keys [view/state block-list block] :as this}]
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
-                 (.focus this))
-    #_:on-focus #_(.scrollIntoView this)}
+                 (.focus this))}
    [:.w-50.flex-none
     (codemirror/editor {:class               "pa3 bg-white"
                         :ref                 #(v/swap-silently! state assoc :editor-view %)
-                        :default-value       (Block/emit (:block this))
+                        :value               (Block/emit (:block this))
                         :on-ast              (fn [node]
-                                               (when (not= (tree/string node)
-                                                           (tree/string (:node (:block this))))
-                                                 (.splice block-list block [(assoc block :node node)])))
+                                               (.splice block-list block [(assoc block :node node)]))
                         :capture-event/focus #(exec/set-context! {:block/code true
                                                                   :block-view this})
                         :capture-event/blur  #(exec/set-context! {:block/code nil
@@ -53,6 +50,11 @@
 (extend-type Block/CodeBlock
 
   Block/ICursor
+  (get-selections [this]
+    (.listSelections (Block/editor this)))
+  (put-selections! [this selections]
+    (.setSelections (Block/editor this) selections))
+
   (cursor-edge [this]
     (let [editor (Block/editor this)
           last-line (.lastLine editor)
@@ -73,13 +75,16 @@
   (at-end? [this]
     (let [cm (Block/editor this)
           cursor (.getCursor cm)]
-      (= [(.lastLine cm)
-          (count (.getLine cm (.lastLine cm)))]
-         [(.-line cursor) (.-ch cursor)])))
+      (and (not (.somethingSelected cm))
+           (= [(.lastLine cm)
+               (count (.getLine cm (.lastLine cm)))]
+              [(.-line cursor) (.-ch cursor)]))))
 
   (at-start? [this]
-    (let [cursor (.getCursor (Block/editor this))]
-      (= [0 0] [(.-line cursor) (.-ch cursor)])))
+    (let [cm (Block/editor this)
+          cursor (.getCursor cm)]
+      (and (not (.somethingSelected cm))
+           (= [0 0] [(.-line cursor) (.-ch cursor)]))))
 
   (selection-expand [this]
     (edit/expand-selection (Block/editor this)))
@@ -99,7 +104,6 @@
                                                           [node]))))))
 
   (emit [this] (tree/string (:node this)))
-
 
   (render [this props]
     (code-view (assoc props

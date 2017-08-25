@@ -7,7 +7,7 @@
   :min-lein-version "2.7.1"
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
-                 [org.clojure/clojurescript "1.9.919"]
+                 [org.clojure/clojurescript "1.9.854"]
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [org.clojure/tools.reader "1.0.5"]
                  [com.cognitect/transit-cljs "0.8.239"]
@@ -19,7 +19,7 @@
 
                  [re-view "0.3.28-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
-                 [re-view-prosemirror "0.1.8"]
+                 [re-view-prosemirror "0.1.9-SNAPSHOT"]
                  [cljs-live "0.2.6-SNAPSHOT"]
                  [magic-tree "0.0.13-SNAPSHOT"]
                  [org.clojure/data.json "0.2.6"]
