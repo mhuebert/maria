@@ -106,7 +106,6 @@
                                                       (object? position)
                                                       (pm/coords-selection pm-view position)
                                                       :else nil)]
-                             (prn :focus-prose-view)
                              (.dispatch pm-view (.setSelection (.-tr state) selection)))
                            (.focus pm-view)
                            (js/setTimeout (.-scrollIntoView this) 0)))

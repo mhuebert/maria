@@ -2,7 +2,8 @@
   (:require [re-db.d :as d]
             [goog.events :as events]
             [maria-commands.registry :as registry]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [maria.util :as util]))
 
 (def context (volatile! {}))
 (def last-selections (volatile! (list)))
@@ -10,13 +11,16 @@
 (defn set-context! [values]
   (vswap! context merge values))
 
-(defn get-context []
-  (let [{:keys [block-view] :as context} @context]
-    (-> context
-        (assoc :signed-in? (d/get :auth-public :signed-in?))
-        (cond-> block-view
-                (merge {:editor (.getEditor block-view)}
-                       (select-keys block-view [:block :blocks]))))))
+(defn get-context
+  ([] (get-context nil))
+  ([event-attrs]
+   (let [{:keys [block-view] :as context} @context]
+     (-> context
+         (assoc :signed-in? (d/get :auth-public :signed-in?))
+         (merge event-attrs)
+         (cond-> block-view
+                 (merge {:editor (.getEditor block-view)}
+                        (select-keys block-view [:block :blocks])))))))
 
 (defn get-command
   "Returns command associated with name, if it exists.
@@ -36,8 +40,9 @@
 
 (defn exec-command
   "Execute a command (returned by `get-command`)"
-  [context {:keys [command exec? intercept?]}]
+  [context {:keys [command exec? intercept? name]}]
   (let [result (when exec? (command context))]
+    (when exec? (util/log-ret "Executed command:" name))
     {:intercept! (and intercept? (not (or (false? result)
                                           (= result (.-Pass js/CodeMirror)))))}))
 
@@ -68,12 +73,13 @@
         which-key-delay 1500
         handle-keydown (fn [e]
                          (let [keycode (registry/normalize-keycode (.-keyCode e))
-                               {keys-down :modifiers-down
+                               {keys-down         :modifiers-down
                                 which-key-active? :which-key/active?} (d/entity :commands)
                                modifier? (contains? registry/modifiers keycode)
                                command-names (seq (registry/get-keyset-commands (conj keys-down keycode)))
                                context (when command-names
-                                         (get-context))
+                                         (get-context {:keycode keycode
+                                                       :key     (.-key e)}))
                                commands (when command-names
                                           (mapv #(get-command context %) command-names))
                                results (when command-names
@@ -83,8 +89,8 @@
                            ;; if we use Tab as a modifier,
                            ;; we'll stop its default behaviour
                            #_(when (= 9 keycode)
-                             (.preventDefault e)
-                             (.stopPropagation e))
+                               (.preventDefault e)
+                               (.stopPropagation e))
 
                            (when (seq (filter :intercept! results))
                              (stop-event e)
@@ -101,6 +107,7 @@
                                                             (not= keys-down #{(registry/endkey->keycode "shift")}))
                                                    (d/transact! [[:db/add :commands :which-key/active? true]])))
                                               which-key-delay)]]))))]
+
     (clear-keys)
     (events/listen js/window "keydown" handle-keydown true)
 

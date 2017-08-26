@@ -17,8 +17,10 @@
 
 (defn cursor-pos
   "Return map with :line and :column of cursor"
-  [editor]
-  (let [cm-pos (.getCursor editor)]
+  [editor-or-position]
+  (let [cm-pos (if (instance? js/CodeMirror editor-or-position)
+                 (.getCursor editor-or-position)
+                 editor-or-position)]
     {:line   (.-line cm-pos)
      :column (.-ch cm-pos)}))
 

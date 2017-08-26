@@ -15,7 +15,7 @@
 
 
 (defn endkey->keycode [k]
-  (let [k (string/upper-case k)
+  (let [k-upper (string/upper-case k)
         k (get {"1"            "ONE"
                 "2"            "TWO"
                 "3"            "THREE"
@@ -29,7 +29,6 @@
                 "]"            "CLOSE_SQUARE_BRACKET"
                 \\             "BACKSLASH"
                 "/"            "SLASH"
-                "'"            "APOSTROPHE"
                 ","            "COMMA"
                 "."            "PERIOD"
                 "="            "EQUALS"
@@ -37,9 +36,10 @@
                 "-"            "DASH"
                 ";"            "SEMICOLON"
                 "`"            "TILDE"
+                "'"            "SINGLE_QUOTE"
                 "CLICK"        0
                 "CLICK_MIDDLE" 1
-                "CLICK_RIGHT"  2} k k)]
+                "CLICK_RIGHT"  2} k-upper k-upper)]
     (gobj/get KeyCodes k k)))
 
 
@@ -127,6 +127,10 @@
         (.-DASH KeyCodes)                 "-"
         (.-SEMICOLON KeyCodes)            ";"
         (.-TILDE KeyCodes)                "`"
+        57                                "("
+        48                                ")"
+        219                               "{"
+        221                               "}"
         0                                 mouse-icon
         1                                 mouse-icon
         2                                 mouse-icon}))

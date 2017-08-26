@@ -134,7 +134,7 @@
            source (or (cm/selection-text editor)
                       (->> editor
                            :magic/cursor
-                           :bracket-loc
+                           :bracket-node
                            (tree/string (:ns @e/c-env)))
                       (Block/emit this))]
        (Block/eval this :string source)))

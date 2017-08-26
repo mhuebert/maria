@@ -1,21 +1,24 @@
 (ns magic-tree-codemirror.edit
+  (:refer-clojure :exclude [range char])
   (:require [cljsjs.codemirror]
             [goog.dom.Range :as Range]
             [magic-tree.core :as tree]
             [magic-tree-codemirror.util :as cm-util]
             [fast-zip.core :as z]
             [goog.dom :as dom]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:require-macros [magic-tree-codemirror.edit :refer [operation]]))
 
-(def paste-element nil)
-(aset js/window "onload"
-      #(set! paste-element (let [textarea (doto (dom/createElement "div")
-                                            (dom/setProperties #js {:id              "magic-tree.pasteHelper"
-                                                                    :contentEditable true
-                                                                    :className       "fixed pre o-0 z-0 bottom-0 right-0"}))]
-                             (dom/appendChild js/document.body textarea)
-                             textarea)))
+(def other-bracket {\( \) \[ \] \{ \} \" \"})
 
+(def paste-element
+  (memoize (fn []
+             (let [textarea (doto (dom/createElement "div")
+                              (dom/setProperties #js {:id              "magic-tree.pasteHelper"
+                                                      :contentEditable true
+                                                      :className       "fixed pre o-0 z-0 bottom-0 right-0"}))]
+               (dom/appendChild js/document.body textarea)
+               textarea))))
 (def pass (.-Pass js/CodeMirror))
 
 (defn copy
@@ -23,8 +26,8 @@
   [text]
   (let [hadFocus (.-activeElement js/document)
         text (string/replace text #"[\n\r]" "<br/>")
-        _ (aset paste-element "innerHTML" text)]
-    (doto (Range/createFromNodeContents paste-element)
+        _ (aset (paste-element) "innerHTML" text)]
+    (doto (Range/createFromNodeContents (paste-element))
       (.select))
     (try (.execCommand js/document "copy")
          (catch js/Error e (.error js/console "Copy command didn't work. Maybe a browser incompatibility?")))
@@ -43,6 +46,10 @@
    (.replaceRange cm s
                   #js {:line line :ch column}
                   #js {:line (or end-line line) :ch (or end-column column)})))
+
+(defn get-range [cm range]
+  (let [[from to] (cm-util/parse-range range)]
+    (.getRange cm from to)))
 
 (defn cut-range
   "Cut a {:line .. :column ..} range from a CodeMirror instance."
@@ -102,6 +109,8 @@
               (next-loc loc) (recur (next-loc loc))
               :else (some->> (z/up loc) recur))))))
 
+
+
 (defn pos= [p1 p2]
   (= (tree/boundaries p1)
      (tree/boundaries p2)))
@@ -111,6 +120,43 @@
 
 (defn char-at [cm pos]
   (.getRange cm pos (move-char cm pos 1)))
+
+(defn cursor [cm]
+  (.getCursor cm))
+
+(defprotocol IPointer
+  (range [this i])
+  (char [this])
+  (move [this amount])
+  (insert! [this s] [this replace-i s])
+  (set-cursor! [this]))
+
+(defrecord Pointer [editor pos]
+
+  IPointer
+  (range [this i] (if (neg? i)
+                    (.getRange editor (:pos (move this i)) pos)
+                    (.getRange editor pos (:pos (move this i)))))
+  (char [this] (range this 1))
+  (move [this amount]
+    (assoc this :pos (move-char editor pos amount)))
+  (insert! [this text]
+    #_(operation editor
+                 (.getRange editor (:pos (move this i)) pos)
+                 (.setCursor editor pos))
+    (.replaceRange editor text pos pos)
+    this)
+  (insert! [this amount text]
+    (.replaceRange editor text pos (move-char editor pos amount))
+    this)
+  (set-cursor! [this]
+    (.setCursor editor pos)
+    this)
+  )
+
+(defn pointer
+  ([editor] (pointer editor (.getCursor editor)))
+  ([editor pos] (->Pointer editor pos)))
 
 (defn uneval [cm bracket-loc]
   (let [add-uneval (fn [pos] (replace-range cm "#_" (select-keys pos [:line :column])))
@@ -137,20 +183,20 @@
       (->> (get-kill-range pos loc)
            (cut-range cm)))))
 
-#_:delete
-;;(def arly, awkward attempt at handling brackets
-#_(fn [cm]
-    (if (.somethingSelected cm)
-      pass
-      (doseq [selection (reverse (.listSelections cm))]
-        (let [pos (move-char cm (.-head selection) -1)
-              char (char-at cm pos)]
-          (do (when-not (#{\) \] \}} char)
-                (.replaceRange cm "" (.-head selection) pos))
-              #js {"anchor" (.-head selection)
-                   "head"   (.-head selection)})
+(defn splice [{{:keys [pos bracket-loc bracket-node]} :magic/cursor :as cm}]
+  (when (and bracket-loc (not (.somethingSelected cm)))
+    (when-let [closest-edges-node (loop [loc (cond-> bracket-loc
+                                                     (not (tree/inside? bracket-node pos)) (z/up))]
+                                    (cond (not loc) nil
+                                          (tree/has-edges? (z/node loc)) (z/node loc)
+                                          :else (recur (z/up loc))))]
+      (let [pos (.getCursor cm)
+            goal (move-char cm pos -1)]
+        (operation cm
+                   (replace-range cm (get-range cm (tree/inner-range closest-edges-node)) closest-edges-node)
+                   (.setCursor cm goal goal)))
 
-          ))))
+      true)))
 
 (def copy-form
   (fn [cm] (if (.somethingSelected cm)
@@ -199,6 +245,11 @@
     (select-range cm node)
     (push-stack! cm (tree/boundaries node))))
 
+(defn push-cursor! [cm]
+  (push-stack! cm (cursor->range (:cursor/cursor-root cm)))
+  (some-> (:cursor/clear-marker cm)
+          (apply nil)))
+
 (def expand-selection
   (fn [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
         zipper                                 :zipper
@@ -206,64 +257,69 @@
     (let [sel (selection-boundaries cm)
           loc (tree/node-at zipper sel)
           node (z/node loc)
-          parent (some-> (z/up loc) z/node)
-          select (partial tracked-select cm)]
-      (cond
-        (or (:cursor/cursor-root cm)
-            (not (.somethingSelected cm)))
-        (let [cursor-start (:cursor/cursor-root cm)]
-          (when-let [clear-marker (:cursor/clear-marker cm)]
-            (clear-marker))
-          (when cursor-start (push-stack! cm (cursor->range cursor-start)))
+          select! (partial tracked-select cm)
+          cursor (:cursor/cursor-root cm)]
+      (when cursor (push-cursor! cm))
+      (if
+        (or cursor (not (.somethingSelected cm)))
+        (do
           (push-stack! cm (selection-boundaries cm))
+          (select! (let [node (if (tree/comment? node) node bracket-node)]
+                     (or (when (tree/inside? node cursor-pos)
+                           (let [inner-range (tree/inner-range node)]
+                             (when-not (and (= (:line inner-range) (:end-line inner-range))
+                                            (= (:column inner-range) (:end-column inner-range)))
+                               inner-range)))
+                         node))))
 
-          (select (let [node (if (tree/comment? node) node bracket-node)]
-                    (or (when (tree/inside? node cursor-pos)
-                          (let [inner-range (tree/inner-range node)]
-                            (when-not (and (= (:line inner-range) (:end-line inner-range))
-                                           (= (:column inner-range) (:end-column inner-range)))
-                              inner-range)))
-                        node))))
-        (= sel (tree/inner-range parent)) (select parent)
-        (pos= sel (tree/boundaries node)) (select (or (tree/inner-range parent) parent))
-        (or (= sel (tree/inner-range node))
-            (tree/inside? node sel)) (select node)
-        :else (some-> (z/up loc) z/node (select))))))
+        (loop [loc loc]
+          (if-not loc
+            sel
+            (let [node (z/node loc)
+                  inner-range (tree/inner-range node)]
+              (cond (pos= sel (tree/inner-range node)) (select! node)
+                    (tree/within? inner-range sel) (select! inner-range)
+                    (pos= sel node) (recur (z/up loc))
+                    (tree/within? node sel) (select! node)
+                    :else (recur (z/up loc))))))))))
 
 (def shrink-selection
   (fn [cm]
     (some->> (pop-stack! cm)
              (select-range cm))))
 
-(defn expand-selection-left [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
-                              zipper                                 :zipper
-                              :as                                    cm}]
-  (if (and (:cursor/cursor-root cm)
-           (not= (tree/boundaries cursor-pos :left)
-                 (tree/boundaries bracket-node :left)))
-    (do (some-> (:cursor/clear-marker cm) (apply nil))
-        (tracked-select cm (merge {:end-line   (:line cursor-pos)
-                                   :end-column (:column cursor-pos)}
-                                  (tree/boundaries bracket-node :left))))
-    (let [selection-bounds (selection-boundaries cm)
-          loc (tree/node-at zipper (tree/boundaries selection-bounds :left))]
-      (if-let [left-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/left-locs loc)))]
-        (tracked-select cm (merge (select-keys selection-bounds [:end-line :end-column])
-                                  (tree/boundaries (z/node left-loc) :left)))
-        (tracked-select cm (some-> loc z/up z/node))))))
+(defn expand-selection-left [{{:keys [bracket-node] pos :pos} :magic/cursor
+                              zipper                          :zipper
+                              :as                             cm}]
+  (let [selection-bounds (selection-boundaries cm)
+        selection-loc (tree/node-at zipper (tree/boundaries selection-bounds :left))
+        cursor (:cursor/cursor-root cm)]
+    (when cursor (push-cursor! cm))
+    (if (and cursor
+             (not= (tree/boundaries pos :left)
+                   (tree/boundaries bracket-node :left)))
+      (tracked-select cm (merge {:end-line   (:line pos)
+                                 :end-column (:column pos)}
+                                (tree/boundaries bracket-node :left)))
+      (if-let [left-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/left-locs selection-loc)))]
+        (tracked-select cm (merge (tree/boundaries (z/node left-loc) :left)
+                                  (select-keys selection-bounds [:end-line :end-column])))
+        (expand-selection cm)))))
 
-(defn expand-selection-right [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
-                               zipper                                 :zipper
-                               :as                                    cm}]
-  (if (and (:cursor/cursor-root cm)
-           (not= (tree/boundaries cursor-pos :right)
-                 (tree/boundaries bracket-node :right)))
-    (do (some-> (:cursor/clear-marker cm) (apply nil))
-        (tracked-select cm (merge (tree/boundaries cursor-pos :left)
-                                  {:end-line   (:end-line bracket-node)
-                                   :end-column (:end-column bracket-node)})))
-    (let [selection-bounds (selection-boundaries cm)
-          selection-loc (tree/node-at zipper (tree/boundaries selection-bounds :right))]
+(defn expand-selection-right [{{:keys [bracket-node] pos :pos} :magic/cursor
+                               zipper                          :zipper
+                               :as                             cm}]
+  (let [selection-bounds (selection-boundaries cm)
+        selection-loc (tree/node-at zipper (tree/boundaries selection-bounds :right))
+        cursor (:cursor/cursor-root cm)]
+    (when cursor
+      (push-cursor! cm))
+
+    (if (and cursor (not= (tree/boundaries pos :right)
+                          (tree/boundaries bracket-node :right)))
+      (tracked-select cm (merge (tree/boundaries pos :left)
+                                {:end-line   (:end-line bracket-node)
+                                 :end-column (:end-column bracket-node)}))
       (if-let [right-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/right-locs selection-loc)))]
         (tracked-select cm (merge (select-keys (z/node right-loc) [:end-line :end-column])
                                   (tree/boundaries selection-bounds :left)))
@@ -295,9 +351,11 @@
 (def slurp
   (fn [{{:keys [loc pos]} :magic/cursor
         :as               cm}]
-    (let [loc (cond-> loc
-                      (and (or (not (tree/may-contain-children? (z/node loc)))
-                               (not (tree/inside? (z/node loc) pos)))) z/up)
+    (let [node (z/node loc)
+          loc (cond-> loc
+                      (and (not (= :string (:tag node)))
+                           (or (not (tree/may-contain-children? node))
+                               (not (tree/inside? node pos)))) z/up)
           {:keys [tag] :as node} (z/node loc)]
       (when-not (= :base tag)
         (when-let [next-form (some->> (z/rights loc)

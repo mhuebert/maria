@@ -69,6 +69,9 @@
       (.-top)
       (scroll-into-view)))
 
+(def *debug* true)
 (defn log-ret [label x]
-  (prn label x)
-  x)
+  (if *debug* (do
+                (prn label x)
+                x)
+              x))

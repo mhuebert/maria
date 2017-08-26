@@ -9,7 +9,8 @@
             [cells.cell :as cell]
             [maria.util :as util]
             [re-db.d :as d]
-            [cells.eval-context :as eval-context]))
+            [cells.eval-context :as eval-context]
+            [maria.eval :as e]))
 
 (def view-index (volatile! {}))
 
@@ -106,7 +107,7 @@
 (defn from-source
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
-  (->> (tree/ast source)
+  (->> (tree/ast (:ns @e/c-env) source)
        :value
        (reduce (fn [blocks node]
                  (if-let [block (from-node node)]

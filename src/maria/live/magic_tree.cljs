@@ -1,12 +1,13 @@
 (ns maria.live.magic-tree
   (:require [magic-tree.core :as tree]
             [magic-tree.range :as range]
-            [fast-zip.core :as z]))
+            [fast-zip.core :as z]
+            [maria.eval :as e]))
 
 (defn highlights-for-position
   "Return ranges for appropriate highlights for a position within given Clojure source."
   [source position]
-  (when-let [highlights (some-> (tree/ast source)
+  (when-let [highlights (some-> (tree/ast (:ns @e/c-env) source)
                                 (tree/ast-zip)
                                 (tree/node-at position)
                                 (z/node)

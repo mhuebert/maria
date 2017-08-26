@@ -1,7 +1,8 @@
 (ns maria.views.codemirror
   (:require [cljsjs.codemirror]
 
-            [codemirror.addon.edit.closebrackets]
+            #_[codemirror.addon.edit.closebrackets]
+            [codemirror.addon.markselection]
             [codemirror.mode.clojure]
 
             [magic-tree-codemirror.addons]
@@ -48,7 +49,7 @@
                                                                                                    :tabindex -1))))))]
                                 (set! (.-view editor) this)
                                 (swap! editor assoc :view this)
-                                (set! (.-setValueAndRefresh editor) #(do (.setValue editor %)
+                                (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor editor %)
                                                                          (.refresh editor)))
 
                                 (swap! state assoc :editor editor)

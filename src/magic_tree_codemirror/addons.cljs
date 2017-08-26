@@ -9,7 +9,8 @@
             [cljs.core.match :refer-macros [match]]
             [re-db.d :as d]
             [goog.dom :as gdom]
-            [magic-tree-codemirror.edit :as edit]))
+            [magic-tree-codemirror.edit :as edit]
+            [maria.eval :as e]))
 
 (defn cursor-bookmark []
   (gdom/createDom "div" #js {"className" "cursor-marker"}))
@@ -132,12 +133,11 @@
 
 (defn update-ast!
   [{:keys [ast] :as cm}]
-  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (.getValue cm))
+  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (:ns @e/c-env) (.getValue cm))
                                                 (catch js/Error e (.debug js/console e)))]
     (when (not= next-ast ast)
       (when-let [on-ast (-> cm :view :on-ast)]
         (on-ast next-ast))
-
       (let [next-zip (tree/ast-zip next-ast)]
         (clear-parse-errors! cm)
         (when-let [error (first errors)]
@@ -148,21 +148,20 @@
                  :ast next-ast
                  :zipper next-zip))))))
 
-(defn update-cursor!
+(defn cursor-activity!
   [{:keys [zipper magic/brackets?] :as cm}]
-  (when-not (:cursor/cursor-root cm)
-    (let [position (cm/cursor-pos cm)]
-      (when-let [loc (and zipper
-                          (some->> position
-                                   (tree/node-at zipper)))]
-        (let [bracket-loc (nearest-bracket-region position loc)
-              bracket-node (z/node bracket-loc)]
-          (when brackets? (match-brackets! cm bracket-node))
-          (swap! cm update :magic/cursor merge {:loc          loc
-                                                :node         (z/node loc)
-                                                :bracket-loc  bracket-loc
-                                                :bracket-node bracket-node
-                                                :pos          position}))))))
+  (let [position (cm/cursor-pos (or (:cursor/cursor-root cm) cm))]
+    (when-let [loc (and zipper
+                        (some->> position
+                                 (tree/node-at zipper)))]
+      (let [bracket-loc (nearest-bracket-region position loc)
+            bracket-node (z/node bracket-loc)]
+        (when brackets? (match-brackets! cm bracket-node))
+        (swap! cm update :magic/cursor merge {:loc          loc
+                                              :node         (z/node loc)
+                                              :bracket-loc  bracket-loc
+                                              :bracket-node bracket-node
+                                              :pos          position})))))
 
 (defn require-opts [cm opts]
   (doseq [opt opts] (.setOption cm opt true)))
@@ -178,7 +177,7 @@
                (fn [cm on?]
                  (when on?
                    (require-opts cm ["magicTree"])
-                   (.on cm "cursorActivity" update-cursor!))))
+                   (.on cm "cursorActivity" cursor-activity!))))
 
 (.defineOption js/CodeMirror "magicBrackets" false
                (fn [cm on?]

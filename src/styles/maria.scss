@@ -10,262 +10,328 @@
 
 /******************************************************************************/
 // short term home of maria-light theme
+
 $selection-color: #f4f4d6;
-.cm-s-maria-light.CodeMirror {background: #f9f8f4; color: #3f4245;}
-.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection { background: $selection-color; }
-.cm-s-maria-light div.CodeMirror-selected {background: $selection-color !important;}
-.cm-s-maria-light .CodeMirror-cursor {border-left: 1px solid #868886 !important;}
 
-.cm-s-maria-light span.cm-comment {color: #a3685a;}
-.cm-s-maria-light span.cm-atom {color: #987aa0;}
-.cm-s-maria-light span.cm-number {color: #987aa0;}
+.cm-s-maria-light.CodeMirror {
+  background: #f9f8f4;
+  color: #3f4245;
+}
 
-.cm-s-maria-light span.cm-property, .cm-s-maria-light span.cm-attribute {color: #98a14b;}
-.cm-s-maria-light span.cm-keyword, .cm-s-maria-light span.cm-builtin {color: #cc6666;}
-.cm-s-maria-light span.cm-string {color: #a78938;}
+.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection {
+  background: $selection-color;
+}
 
-.cm-s-maria-light span.cm-variable {color: #98a14b;}
-.cm-s-maria-light span.cm-variable-2 {color: #7192ae;}
-.cm-s-maria-light span.cm-def {color: #cb804c;}
-.cm-s-maria-light span.cm-error {background: #cc6666; color: #969896;}
-.cm-s-maria-light span.cm-bracket {color: #c9c9c9;}
-.cm-s-maria-light span.cm-tag {color: #cc6666;}
-.cm-s-maria-light span.cm-link {color: #987aa0;}
+.cm-s-maria-light div.CodeMirror-selected {
+  background: $selection-color !important;
+}
+.cm-s-maria-light div.CodeMirror-selectedtext {
+  cursor: move;
+}
+.cm-s-maria-light .CodeMirror-cursor {
+  border-left: 1px solid #868886 !important;
+}
+
+.cm-s-maria-light span.cm-comment {
+  color: #a3685a;
+}
+
+.cm-s-maria-light span.cm-atom {
+  color: #987aa0;
+}
+
+.cm-s-maria-light span.cm-number {
+  color: #987aa0;
+}
+
+.cm-s-maria-light span.cm-property, .cm-s-maria-light span.cm-attribute {
+  color: #98a14b;
+}
+
+.cm-s-maria-light span.cm-keyword, .cm-s-maria-light span.cm-builtin {
+  color: #cc6666;
+}
+
+.cm-s-maria-light span.cm-string {
+  color: #a78938;
+}
+
+.cm-s-maria-light span.cm-variable {
+  color: #98a14b;
+}
+
+.cm-s-maria-light span.cm-variable-2 {
+  color: #7192ae;
+}
+
+.cm-s-maria-light span.cm-def {
+  color: #cb804c;
+}
+
+.cm-s-maria-light span.cm-error {
+  background: #cc6666;
+  color: #969896;
+}
+
+.cm-s-maria-light span.cm-bracket {
+  color: #c9c9c9;
+}
+
+.cm-s-maria-light span.cm-tag {
+  color: #cc6666;
+}
+
+.cm-s-maria-light span.cm-link {
+  color: #987aa0;
+}
 
 /* I don't think we're using these */
-.cm-s-maria-light .CodeMirror-gutters {background: #ffffff; border-right: 0px;}
-.cm-s-maria-light .CodeMirror-linenumber {color: #b4b7b4;}
+.cm-s-maria-light .CodeMirror-gutters {
+  background: #ffffff;
+  border-right: 0px;
+}
+
+.cm-s-maria-light .CodeMirror-linenumber {
+  color: #b4b7b4;
+}
 
 /******************************************************************************/
 
-
 html, body, #maria-main {
-    height: 100%;
+  height: 100%;
 }
 
 .serif {
-    font-family: "et-book", Georgia, Times New Roman, serif;
+  font-family: "et-book", Georgia, Times New Roman, serif;
 }
 
 div.CodeMirror pre {
-    padding: 0;
+  padding: 0;
 }
 
 div.CodeMirror {
-    span.CodeMirror-matchingbracket {
-        //font-weight: bold;
-        color: #777;
-        //cursor: pointer;
-    }
-    span.CodeMirror-unmatchedBracket {
-        background-color: #c00000;
-        color: white;
-    }
+  span.CodeMirror-matchingbracket {
+    //font-weight: bold;
+    color: #777;
+    //cursor: pointer;
+  }
+  span.CodeMirror-unmatchedBracket {
+    background-color: #c00000;
+    color: white;
+  }
 
-    .CodeMirror-evalRegion {
-        background: rgba(0, 0, 0, 0.1);
-    }
+  .CodeMirror-evalRegion {
+    background: rgba(0, 0, 0, 0.1);
+  }
 
-    .cm-comment {
-        font-family: 'et book', Georgia, Times New Roman, serif;
-        font-size: 15px;
-    }
-}
-.pre-wrap {
-    white-space: pre-wrap;
-}
-.CodeMirror, .code, code, pre {
-    font-family: 'Fira Code', monospace;
+  .cm-comment {
+    font-family: 'et book', Georgia, Times New Roman, serif;
     font-size: 15px;
-    line-height: 155%;
+  }
+}
+
+.pre-wrap {
+  white-space: pre-wrap;
+}
+
+.CodeMirror, .code, code, pre {
+  font-family: 'Fira Code', monospace;
+  font-size: 15px;
+  line-height: 155%;
 }
 
 .CodeMirror {
-    background: transparent !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    height: auto;
+  background: transparent !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  height: auto;
 }
 
 .cm-ph3 .CodeMirror {
-    padding: 0 1rem;
+  padding: 0 1rem;
 }
 
 .cm-h-100 div.CodeMirror {
-    height: 100%;
+  height: 100%;
 }
 
 .bg-maria-light {
-//    background: #f5f5f5;
-    box-shadow: inset 0px 0 2px 0px rgba(172, 126, 0, 0.36);
+  //    background: #f5f5f5;
+  box-shadow: inset 0px 0 2px 0px rgba(172, 126, 0, 0.36);
 }
 
 .CodeMirror-eval-highlight {
-    background: rgba(0, 0, 0, 0.07);
-    cursor: pointer;
+  background: rgba(0, 0, 0, 0.07);
+  cursor: pointer;
 }
 
 .ws-prewrap {
-    white-space: pre-wrap;
+  white-space: pre-wrap;
 }
 
 .f7 {
-    font-size: 0.75rem;
+  font-size: 0.75rem;
 }
+
 .b--darken {
-    border-color: rgba(0,0,0,0.05);
+  border-color: rgba(0, 0, 0, 0.05);
 }
 
 .bg-darken {
-    background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .error-text {
-    //background: rgba(255,0,0,0.1);
-    border-bottom: 2px solid black;
-}
-.bg-darken-red {
-    background-color: rgba(255, 79, 79, 0.1);
+  //background: rgba(255,0,0,0.1);
+  border-bottom: 2px solid black;
 }
 
+.bg-darken-red {
+  background-color: rgba(255, 79, 79, 0.1);
+}
 
 .progress-indeterminate, .progress-indeterminate:before {
-    height: 3px;
-    width: 100%;
-    margin: 0;
+  height: 3px;
+  width: 100%;
+  margin: 0;
 }
 
 .progress-indeterminate {
-    background-color: #b3d4fc;
-    display: -webkit-flex;
-    display: flex;
-    &:before {
-        background-color: #3f51b5;
-        content: '';
-        -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    }
+  background-color: #b3d4fc;
+  display: -webkit-flex;
+  display: flex;
+  &:before {
+    background-color: #3f51b5;
+    content: '';
+    -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
 }
 
 @-webkit-keyframes running-progress {
-    0% {
-        margin-left: 0px;
-        margin-right: 100%;
-    }
-    50% {
-        margin-left: 25%;
-        margin-right: 0%;
-    }
-    100% {
-        margin-left: 100%;
-        margin-right: 0;
-    }
+  0% {
+    margin-left: 0px;
+    margin-right: 100%;
+  }
+  50% {
+    margin-left: 25%;
+    margin-right: 0%;
+  }
+  100% {
+    margin-left: 100%;
+    margin-right: 0;
+  }
 }
 
 @keyframes running-progress {
-    0% {
-        margin-left: 0px;
-        margin-right: 100%;
-    }
-    50% {
-        margin-left: 25%;
-        margin-right: 0%;
-    }
-    100% {
-        margin-left: 100%;
-        margin-right: 0;
-    }
+  0% {
+    margin-left: 0px;
+    margin-right: 100%;
+  }
+  50% {
+    margin-left: 25%;
+    margin-right: 0%;
+  }
+  100% {
+    margin-left: 100%;
+    margin-right: 0;
+  }
 }
+
 .hover-underline:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
+
 .mdc-simple-menu .mdc-list {
-    padding: 0 16px;
+  padding: 0 16px;
 }
 
 .autosize-input {
-    position: relative;
+  position: relative;
 }
 
 .autosize-input-input,
 .autosize-input-fake {
-    padding: 0;
-    margin: 0;
-    outline: 0;
-    border: none;
-    letter-spacing: normal;
-    word-spacing: normal;
-    box-sizing: border-box;
-    font-size: inherit;
-    font-weight: inherit;
-    resize: none;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    display: inline-block;
-    border-radius: 0;
+  padding: 0;
+  margin: 0;
+  outline: 0;
+  border: none;
+  letter-spacing: normal;
+  word-spacing: normal;
+  box-sizing: border-box;
+  font-size: inherit;
+  font-weight: inherit;
+  resize: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  display: inline-block;
+  border-radius: 0;
 
 }
 
 .autosize-input-fake {
-    max-width: 100%;
-    opacity: 0;
-    position: absolute;
-    z-index: 0;
+  max-width: 100%;
+  opacity: 0;
+  position: absolute;
+  z-index: 0;
 }
 
 .autosize-input-input {
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-    background: transparent;
-    -webkit-appearance: caret;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  background: transparent;
+  -webkit-appearance: caret;
 }
+
 .pv05 {
-    padding-top: 0.125rem;
-    padding-bottom: 0.125rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
 }
 
 .hint-columns {
-    column-width: 14rem;
-    overflow: hidden;
+  column-width: 14rem;
+  overflow: hidden;
 }
+
 .avoid-break {
-    break-inside: avoid;
+  break-inside: avoid;
 }
 
 .cursor-text {
-    cursor: text;
+  cursor: text;
 }
 
 .prosemirror-content {
-    blockquote {
-        border-left: 4px solid rgba(0,0,0,0.05);
-        padding-left: 0.5rem;
-        margin-left: 0.5rem;
-    }
-    pre {
-        white-space: pre-wrap;
-        background-color: rgba(0,0,0,.05);
-        padding: 0.5rem;
-        code {
-            background-color: transparent;
-            text-indent: 0;
-        }
-    }
+  blockquote {
+    border-left: 4px solid rgba(0, 0, 0, 0.05);
+    padding-left: 0.5rem;
+    margin-left: 0.5rem;
+  }
+  pre {
+    white-space: pre-wrap;
+    background-color: rgba(0, 0, 0, .05);
+    padding: 0.5rem;
     code {
-        padding: 2px 3px;
-        background-color: rgba(0,0,0,0.05);
+      background-color: transparent;
+      text-indent: 0;
     }
-    .ProseMirror > * {
-        max-width: 50%;
-    }
+  }
+  code {
+    padding: 2px 3px;
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  .ProseMirror > * {
+    max-width: 50%;
+  }
 }
+
 svg {
-    cursor: default;
+  cursor: default;
 }
 
 .cursor-marker {
-    border-right: 2px solid #9b7ea3; //#9ba450 #a78939
-    display: inline;
-    margin: -1px;
+  border-right: 2px solid #9b7ea3; //#9ba450 #a78939
+  display: inline;
+  margin: -1px;
 }

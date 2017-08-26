@@ -1,6 +1,9 @@
 (ns maria.messages
   (:require [clojure.string :as string]))
 
+(defprotocol IDoc
+  (doc [this] "Return a docstring for type"))
+
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}
    :maria.kinds/false        {:doc "false: the Boolean value 'false'"}
@@ -8,7 +11,6 @@
    :maria.kinds/macro        {:doc "a macro: a function that transforms source code before it is evaluated."}
    :maria.kinds/keyword      {:doc "a keyword: a special symbolic identifier"}
    :maria.kinds/list         {:doc "a list: a sequence, possibly 'lazy'"}
-   :maria.kinds/shape        {:doc "a shape: some geometry that Maria can draw"}
    :maria.kinds/map          {:doc "a map: a collection of key/value pairs, where each key 'maps' to its corresponding value"}
    :maria.kinds/nil          {:doc "nil: a special value meaning nothing"}
    :maria.kinds/number       {:doc "a number: it can be whole, a decimal, or even a ratio"}
@@ -34,7 +36,6 @@
       (keyword? thing) :maria.kinds/keyword
       (seq? thing) :maria.kinds/sequence
       (list? thing) :maria.kinds/list
-      (and (map? thing) (= :shape (:is-a thing))) :maria.kinds/shape
       (map? thing) :maria.kinds/map
       (var? thing) :maria.kinds/var
       (fn? thing) :maria.kinds/function
@@ -53,7 +54,9 @@
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."
   [thing]
-  (get-in kinds [(kind thing) :doc] (type thing)))
+  (if (satisfies? IDoc thing)
+    (doc thing)
+    (get-in kinds [(kind thing) :doc] (type thing))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier

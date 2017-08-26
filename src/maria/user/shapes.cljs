@@ -1,12 +1,14 @@
 (ns maria.user.shapes
-  (:require [re-view-hiccup.core :refer [IShow element]]))
+  (:require [re-view-hiccup.core :refer [IShow element]]
+            [maria.messages :refer [IDoc]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
 
 (defprotocol IListen
   (-listen [this listeners]
-           "Attach event listeners to shape."))
+           "Attach event listeners to shape.")
+  (doc [this] "a shape: some geometry that Maria can draw"))
 
 (defn listen
   ([event listener shape]

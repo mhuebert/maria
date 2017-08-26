@@ -1,5 +1,6 @@
 (ns maria.commands.prose
   (:require [maria-commands.registry :refer-macros [defcommand]]
+            [magic-tree-codemirror.edit :as edit]
             [re-view-prosemirror.commands :as commands :refer [apply-command]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
@@ -203,11 +204,10 @@
      #"^\($"
      (fn [state [bracket] & _]
        (when (empty-root-paragraph? state)
-         (let [other-bracket ({\( \) \[ \] \{ \}} bracket)]
-           (js/setTimeout
-             #(split-with-code-block (:block-list block-view)
-                                     (:block block-view)
-                                     state {:content       (str bracket other-bracket)
-                                            :cursor-coords #js {:line 0
-                                                                :ch   1}}) 0))
+         (js/setTimeout
+           #(split-with-code-block (:block-list block-view)
+                                   (:block block-view)
+                                   state {:content       (str bracket (edit/other-bracket bracket))
+                                          :cursor-coords #js {:line 0
+                                                              :ch   1}}) 0)
          (.-tr state))))])

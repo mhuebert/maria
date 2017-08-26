@@ -206,10 +206,3 @@
   ;(reset! r 2)
   ;(is (= 2 @r @r- @s @s-))
   )
-
-
-(defn start []
-  (cell/reset-namespace 'cells.cell-tests)
-  (run-tests))
-
-(defonce _ (start))

@@ -12,6 +12,7 @@ checkouts
 .lein-repl-history
 .nrepl-port
 .planck_cache
+test-target/public/js
 opts.clj
 /.cljs_rhino_repl/
 /doc/ideating.clj

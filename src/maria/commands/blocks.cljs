@@ -32,18 +32,16 @@
 
 (defcommand :selection/expand
   "Expand current selection"
-  {:bindings ["M1-]"
-              "M1-1"
-              "M1-SHIFT-UP"]
+  {:bindings ["M1-1"
+              "M1-Up"]
    :when     :block}
   [{:keys [block] :as context}]
   (Block/selection-expand block))
 
 (defcommand :selection/shrink
   "Contract selection (reverse of expand-selection)"
-  {:bindings ["M1-["
-              "M1-2"
-              "M1-SHIFT-DOWN"]
+  {:bindings ["M1-2"
+              "M1-Down"]
    :when     :block}
   [{:keys [block] :as context}]
   (Block/selection-contract block))

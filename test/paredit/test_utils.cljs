@@ -1,30 +1,51 @@
 (ns paredit.test-utils
   (:require [magic-tree-codemirror.addons]
+            [cljsjs.codemirror]
+            [codemirror.addon.search.searchcursor]
             [clojure.string :as string]))
-
 
 (def editor
   (memoize (fn []
-             (js/CodeMirror (.appendChild js/document.body (.createElement js/document "div"))
-                            (clj->js {:mode          "clojure"
-                                      :magicBrackets true})))))
+             (js/CodeMirror (doto (.createElement js/document "div")
+                              (->> (.appendChild js/document.body))) (clj->js {:mode          "clojure"
+                                                                               :magicBrackets true})))))
 
-(defn replace-selections
-  [cm s]
-  (let [sels (.listSelections cm)]
-    (.replaceSelections cm (clj->js (take (count sels) (repeat s))))
-    cm))
+(defn regex-replace [cm pattern replace-f]
+  (let [search-cursor (.getSearchCursor cm pattern #js {:line 0 :ch 0} true)]
+    (loop [results []]
+      (if (not (.findNext search-cursor))
+        (do
+          (.setSelections cm (clj->js results))
+          (.replaceSelections cm (clj->js (mapv replace-f results)) "around")
+          results)
+        (recur (conj results (let [anchor (.from search-cursor)
+                                   head (.to search-cursor)]
+                               {:anchor anchor
+                                :head   head
+                                :text   (.getRange cm anchor head)})))))))
 
-(defn select-all
-  "Select occurrences of `s`, replace with `r`, leave cursors in post-deletion position"
-  [cm s]
-  (let [cur (.getSearchCursor cm s #js {:line 0 :ch 0} (= s (.toLowerCase s)))
-        ranges (loop [ranges []]
-                 (if-not (.findNext cur)
-                   ranges
-                   (recur (conj ranges #js {:anchor (.from cur) :head (.to cur)}))))]
-    (.setSelections cm (clj->js ranges))
-    cm))
+(defn replace-selections [cm f]
+  (.replaceSelections cm (clj->js (mapv (fn [sel]
+                                          (f {:anchor (.-anchor sel)
+                                              :head (.-head sel)
+                                              :text (.getRange cm (.-anchor sel) (.-head sel))})) (.listSelections cm))) "around"))
+
+(defn deserialize-selections
+  "Turn <ranges> into selected ranges."
+  [cm]
+  (regex-replace cm #"(<[^>]*>)|\|" (fn [{:keys [text]}]
+                                      (if (= text "|")
+                                        ""
+                                        (subs text 1 (dec (count text))))))
+  cm)
+
+(defn serialize-selections
+  [cm]
+  (replace-selections cm (fn [{:keys [text]}]
+                           (if (= text "")
+                             "|"
+                             (str "<" text ">"))))
+  cm)
 
 (defn exec [cm command]
   (command cm)
@@ -33,9 +54,8 @@
 (defn test-exec [command pre-source]
   (.setValue (editor) (string/replace pre-source "'" \"))
   (-> (editor)
-      (select-all "|")
-      (replace-selections "")
+      (deserialize-selections)
       (exec command)
-      (replace-selections "|")
+      (serialize-selections)
       (.getValue)
       (string/replace \" "'")))

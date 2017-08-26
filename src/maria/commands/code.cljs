@@ -1,10 +1,9 @@
 (ns maria.commands.code
-  (:require [maria-commands.registry :refer-macros [defcommand]]
+  (:require [maria-commands.registry :as registry :refer-macros [defcommand]]
             [maria.repl-specials :as repl-specials]
             [maria.eval :as e]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.util :as cm]
-            [magic-tree-codemirror.edit :as edit]
+            [magic-tree-codemirror.edit :as edit :include-macros true]
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
@@ -22,15 +21,23 @@
               "M1-Shift-C"]
    :when     selection?})
 
+(defcommand :selection/paste
+  {:bindings       ["M1-v"]
+   :intercept-when false}
+  [{:keys [editor]}]
+  (when (:cursor/cursor-root editor)
+    (.setCursor editor (:cursor/cursor-root editor))
+    false))
+
 (defcommand :selection/expand-left
-  {:bindings ["Command-Shift-Left"]
-   :when :block/code}
+  {:bindings ["M1-Left"]
+   :when     :block/code}
   [context]
   (edit/expand-selection-left (:editor context)))
 
 (defcommand :selection/expand-right
-  {:bindings ["Command-Shift-Right"]
-   :when :block/code}
+  {:bindings ["M1-Right"]
+   :when     :block/code}
   [context]
   (edit/expand-selection-right (:editor context)))
 
@@ -93,12 +100,36 @@
     (.splice block-list block (if replacement [replacement] []))
     (Block/focus! (or before replacement) :end)))
 
+(defcommand :edit/auto-close
+  {:bindings ["["
+              "Shift-["
+              "Shift-9"
+              "Shift-'"]
+   :when     :block/code}
+  [{:keys [editor key]}]
+  (edit/operation editor
+                  (when-let [other-bracket (edit/other-bracket key)]
+                    (let [in-string? (some-> (:magic/cursor editor)
+                                             (:node)
+                                             (:tag)
+                                             (= :string))
+                          ;; if in a string, escape quotes and do not autoclose
+                          [insertion-text forward] (if in-string?
+                                                     (if (= key \") ["\\\"" 2] [key 1])
+                                                     [(str key other-bracket) 1])]
+                      (-> (edit/pointer editor)
+                          (edit/insert! insertion-text)
+                          (edit/move forward)
+                          (edit/set-cursor!))))))
+
 (defcommand :delete/code
   "Delete"
   {:bindings ["Backspace"]
    :when     :block/code}
-  [{:keys [block-list block blocks]}]
-  (let [before (Block/before blocks block)]
+  [{:keys [block-list block blocks editor]}]
+  (let [before (Block/before blocks block)
+        pointer (edit/pointer editor)
+        prev-char (edit/range pointer -1)]
     (cond
       (and (Block/at-start? block) (and before (Block/empty? before)))
       (.splice block-list block -1 [block])
@@ -106,7 +137,16 @@
       (Block/empty? block)
       (clear-empty-code-block block-list blocks block)
 
-      :else false)))
+      (.somethingSelected editor) false
+
+      (#{")" "]" "}"} prev-char) (-> pointer
+                                     (edit/move -1)
+                                     (edit/set-cursor!))
+      (#{\( \[ \{ \"} prev-char) (edit/operation editor
+                                                 (edit/splice editor)
+                                                 (edit/set-cursor! (edit/move pointer -1)))
+
+      :else (util/log-ret ":delete/code return value" false))))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
@@ -122,15 +162,16 @@
   [context]
   (edit/hop-right (:editor context)))
 
-(defcommand :navigate/jump-to-top
-  "Move cursor to top of current doc"
-  {:bindings "M1-Up"
-   :when     :block/code})
+#_(do
+    (defcommand :navigate/jump-to-top
+      "Move cursor to top of current doc"
+      {:bindings "M1-Up"
+       :when     :block/code})
 
-(defcommand :navigate/jump-to-bottom
-  "Move cursor to bottom of current doc"
-  {:bindings "M1-Down"
-   :when     :block/code})
+    (defcommand :navigate/jump-to-bottom
+      "Move cursor to bottom of current doc"
+      {:bindings "M1-Down"
+       :when     :block/code}))
 
 (defcommand :comment/line
   "Comment the current line"
@@ -158,6 +199,13 @@
    :when     :block/code}
   [context]
   (edit/kill (:editor context)))
+
+(defcommand :edit/splice
+  "Splice form"
+  {:bindings ["M2-S"]
+   :when     :block/code}
+  [context]
+  (edit/splice (:editor context)))
 
 (defcommand :eval/form
   "Evaluate the current form"

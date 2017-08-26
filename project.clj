@@ -14,6 +14,7 @@
                  [com.cognitect/transit-clj "0.8.300"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
+                 [org.clojure/data.json "0.2.6"]
 
                  [fast-zip "0.7.0"]
 
@@ -22,7 +23,7 @@
                  [re-view-prosemirror "0.1.9-SNAPSHOT"]
                  [cljs-live "0.2.6-SNAPSHOT"]
                  [magic-tree "0.0.13-SNAPSHOT"]
-                 [org.clojure/data.json "0.2.6"]
+
 
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/react "16.0.0-beta.2-0"]
@@ -36,7 +37,7 @@
                  [thheller/shadow-cljs "1.0.20170802"]
                  ]
 
-  :plugins [[lein-figwheel "0.5.12"]
+  :plugins [[lein-figwheel "0.5.13"]
             [lein-cljsbuild "1.1.7"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
@@ -63,37 +64,36 @@
                                        :source-map     true
                                        :optimizations  :none
                                        :parallel-build true}}
-                       {:id           "modules"
-                        :source-paths ["src"]
-                        :figwheel     true
-                        :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
-                                                                        :output-to "resources/public/js/compiled/live.js"}
-                                                        :trusted-frame {:entries   #{maria.frames.trusted-frame}
-                                                                        :output-to "resources/public/js/compiled/trusted.js"}}
-                                       :output-dir     "resources/public/js/compiled/out-modules-dev"
-                                       :asset-path     "/js/compiled/out-modules-dev"
-                                       :language-in    :ecmascript5
-                                       :source-map     true
-                                       :optimizations  :none
-                                       :install-deps   true
-                                       :parallel-build true}}
+                       #_{:id           "modules"
+                          :source-paths ["src"]
+                          :figwheel     true
+                          :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
+                                                                          :output-to "resources/public/js/compiled/live.js"}
+                                                          :trusted-frame {:entries   #{maria.frames.trusted-frame}
+                                                                          :output-to "resources/public/js/compiled/trusted.js"}}
+                                         :output-dir     "resources/public/js/compiled/out-modules-dev"
+                                         :asset-path     "/js/compiled/out-modules-dev"
+                                         :language-in    :ecmascript5
+                                         :source-map     true
+                                         :optimizations  :none
+                                         :install-deps   true
+                                         :parallel-build true}}
 
-                       {:id           "modules-prod"
-                        :source-paths ["src"]
-                        :figwheel     true
-                        :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
-                                                                        :output-to "resources/public/js/compiled/live.js"}
-                                                        :trusted-frame {:entries   #{maria.frames.trusted-frame}
-                                                                        :output-to "resources/public/js/compiled/trusted.js"}}
-                                       :npm-deps       {:react     "next"
-                                                        :react-dom "next"}
-                                       :output-dir     "resources/public/js/compiled/out-modules-prod"
-                                       :asset-path     "/js/compiled/out-modules-prod"
-                                       :language-in    :ecmascript5
-                                       :source-map     true
-                                       :optimizations  :simple
-                                       :install-deps   true
-                                       :parallel-build true}}
+                       #_{:id           "modules-prod"
+                          :source-paths ["src"]
+                          :compiler     {:modules        {:live-frame    {:entries   #{maria.frames.live-frame}
+                                                                          :output-to "resources/public/js/compiled/live.js"}
+                                                          :trusted-frame {:entries   #{maria.frames.trusted-frame}
+                                                                          :output-to "resources/public/js/compiled/trusted.js"}}
+                                         :npm-deps       {:react     "next"
+                                                          :react-dom "next"}
+                                         :output-dir     "resources/public/js/compiled/out-modules-prod"
+                                         :asset-path     "/js/compiled/out-modules-prod"
+                                         :language-in    :ecmascript5
+                                         :source-map     true
+                                         :optimizations  :simple
+                                         :install-deps   true
+                                         :parallel-build true}}
 
                        {:id           "live-prod"
                         :source-paths ["src"]
@@ -129,7 +129,16 @@
                                        :optimizations  :advanced
                                        :dump-core      false
                                        :infer-externs  true
-                                       :parallel-build true}}]}
+                                       :parallel-build true}}
+                       {:id           "tests"
+                        :source-paths ["src"
+                                       "test"]
+                        :figwheel     {:on-jsload "maria-tests.runner/run-tests"}
+                        :compiler     {:main           maria-tests.runner
+                                       :output-to      "test-target/public/js/tests.js"
+                                       :output-dir     "test-target/public/js/out"
+                                       :asset-path     "js/out"
+                                       :optimizations  :none}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
              :css-dirs     ["resources/public/css"]

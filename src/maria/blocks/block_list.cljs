@@ -1,8 +1,8 @@
-(ns maria.blocks.list-view
+(ns maria.blocks.block-list
   (:require [re-view.core :as v :refer [defview]]
             [cljsjs.markdown-it]
             [re-db.d :as d]
-            [maria.blocks.code :as code]
+            [maria.blocks.code]
             [maria.blocks.prose]
             [maria.blocks.blocks :as Block]
             [maria-commands.exec :as exec]
@@ -14,15 +14,23 @@
 
 (defn apply-selections [blocks]
   (when-let [{:keys [selections selections/block]} (meta blocks)]
-    (Block/put-selections! block selections)
-    #_(try
-      (Block/put-selections! block selections)
-      (catch js/Error e nil))))
+    (Block/focus! block)
+    (Block/put-selections! block selections)))
 
-(defn current-selections []
+(defn version-meta []
   (let [block (get-in @exec/context [:block-view :block])]
     {:selections/block block
-     :selections       (Block/get-selections block)}))
+     :selections       (Block/get-selections block)
+     :timestamp        (.now js/Date)}))
+
+(defn merge-version? [prev-blocks blocks]
+  (let [{block :block
+         timestamp :timestamp} (meta prev-blocks)
+        {next-block :block
+         next-timestamp :timestamp} (meta blocks)]
+    (and (= (:id block) (:id next-block))
+         (< (- next-timestamp timestamp)
+            300 ))))
 
 (def ^:dynamic *undo-op* false)
 
@@ -37,30 +45,16 @@
                               (when (= (str (d/get-in :router/location [:query :eval])) "true")
                                 (e/on-load #(exec/exec-command-name :eval/doc))))
 
-
-   ;; TODO
-   ;; with each `undo` step, also save the current selection(s),
-   ;; ie. [{:start [block data] :end [block data]}],
-   ;; so that we can reset the selections during undo/redo.
-   ;;
-   ;; this is also not a bad thing to work through because we want
-   ;; to be able to select across blocks, which means tracking this
-   ;; info anyway.
-   ;;
-   ;; in fact we ultimately want to be able to click and drag to
-   ;; select any range of any blocks.
-   ;;
-
-
-
    :undo                    (fn [{:keys [view/state]}]
-                              (when-let [blocks (some-> (seq (:history @state)) (first))]
-                                (binding [*undo-op* true]
-                                  (reset! state (-> @state
-                                                    (update :history rest)
-                                                    (update :history/redo-stack conj blocks)))
-                                  (v/flush!)
-                                  (apply-selections (first (:history @state))))))
+                              (let [history (:history @state)]
+                                (when (second history)
+                                  (let [blocks (first history)]
+                                    (binding [*undo-op* true]
+                                      (reset! state (-> @state
+                                                        (update :history rest)
+                                                        (update :history/redo-stack conj blocks)))
+                                      (v/flush!)
+                                      (apply-selections (first (:history @state))))))))
    :redo                    (fn [{:keys [view/state]}]
                               (when-let [blocks (first (:history/redo-stack @state))]
                                 (binding [*undo-op* true]
@@ -69,21 +63,30 @@
                                                     (update :history conj blocks)))
                                   (v/flush!)
                                   (apply-selections blocks))))
+   :clear-history           (fn [{:keys [view/state]}]
+                              (v/swap-silently! state dissoc :history/redo-stack :history))
    :add-to-history          (fn [{:keys [view/state]} blocks]
                               (when-not *undo-op*
                                 (binding [*undo-op* true]
-                                  (reset! state (-> @state
-                                                    (update :history conj (with-meta blocks (current-selections)))
-                                                    (update :history/redo-stack empty)))
+                                  (let [next-blocks (with-meta blocks (version-meta))]
+                                    (reset! state (-> @state
+                                                      (cond-> (merge-version? (first (:history @state)) next-blocks)
+                                                              (update :history rest))
+                                                      (update :history conj next-blocks)
+                                                      (update :history/redo-stack empty))))
                                   (v/flush!))))
    :view/will-unmount       #(exec/set-context! {:block-list nil})
-   :view/will-receive-props (fn [{value :value
-                                  state :view/state
-                                  :as   this}]
+   :view/will-receive-props (fn [{value                       :value
+                                  source-id                   :source-id
+                                  {prev-source-id :source-id} :view/prev-props
+                                  state                       :view/state
+                                  :as                         this}]
                               ;; normally, the source we are passed from above during editing
                               ;; is the source we last passed upwards in :will-receive-state.
                               ;; if these are different, the document has changed and we
                               ;; should re-parse from scratch.
+                              (when (not= source-id prev-source-id)
+                                (.clearHistory this))
                               (when (not= value (:last-update @state))
                                 (.addToHistory this (Block/ensure-blocks (Block/from-source value)))))
    :view/should-update      (fn [{:keys                   [view/state
