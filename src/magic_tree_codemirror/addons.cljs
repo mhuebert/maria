@@ -59,8 +59,12 @@
             (z/up))))
 
 (defn top-loc [loc]
-  (first (filter #(or (= :base (get (z/node %) :tag))
-                      (= :base (get (z/node (z/up %)) :tag))) (iterate z/up loc))))
+  (loop [loc loc]
+    (if-not loc
+      loc
+      (if (= :base (:tag (z/node loc)))
+        loc
+        (recur (z/up loc))))))
 
 (defn mark-cursor! [cm]
   (let [cursor (.getCursor cm)]
@@ -177,7 +181,8 @@
                (fn [cm on?]
                  (when on?
                    (require-opts cm ["magicTree"])
-                   (.on cm "cursorActivity" cursor-activity!))))
+                   (.on cm "cursorActivity" cursor-activity!)
+                   (cursor-activity! cm))))
 
 (.defineOption js/CodeMirror "magicBrackets" false
                (fn [cm on?]

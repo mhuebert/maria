@@ -1,7 +1,7 @@
 (ns maria.views.codemirror
   (:require [cljsjs.codemirror]
 
-            #_[codemirror.addon.edit.closebrackets]
+    #_[codemirror.addon.edit.closebrackets]
             [codemirror.addon.markselection]
             [codemirror.mode.clojure]
 
@@ -17,6 +17,7 @@
    :lineWrapping      true
    :mode              "clojure"
    :keyMap            "default"
+   :styleSelectedText true
    :magicBrackets     true
    :magicEdit         true})
 
@@ -35,6 +36,7 @@
                                          view/state
                                          view/props
                                          error-ranges
+
                                          keymap]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
@@ -60,6 +62,10 @@
                                   (util/handle-captured-events this)
 
                                   (when on-mount (on-mount editor this))
+
+                                  (.on editor "cursorActivity"
+                                       #(some-> (:on-selection-activity this)
+                                                (apply nil)))
 
                                   (when on-update
                                     (.on editor "change" #(on-update (.getValue %1)))))

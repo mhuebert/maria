@@ -122,7 +122,7 @@
                          (when (= (:block-view @exec/context) this)
                            (exec/set-context! {:block/prose nil
                                                :block-view  nil})))}
-  [{:keys [view/state block-list block doc] :as this}]
+  [{:keys [view/state block-list block doc on-selection-activity] :as this}]
   (Editor {:doc         doc
            :class       " serif f4 ph3 cb"
            :input-rules (prose-commands/input-rules this)
@@ -140,11 +140,15 @@
                                                                                             :editor (.getEditor this)}}]])))))
            :ref         #(v/swap-silently! state assoc :prose-editor-view %)
            :on-dispatch (fn [pm-view prev-state]
-                          (when (not= (.-doc (.-state pm-view))
+                          (cond (not= (.-doc (.-state pm-view))
                                       (.-doc prev-state))
-                            (let [updated-block (assoc block :doc (.-doc (.-state pm-view)))]
-                              (v/swap-silently! state assoc :last-update updated-block)
-                              (.splice block-list block [updated-block]))))}))
+                                (let [updated-block (assoc block :doc (.-doc (.-state pm-view)))]
+                                  (v/swap-silently! state assoc :last-update updated-block)
+                                  (.splice block-list block [updated-block]))
+                                (not= (.-selection (.-state pm-view))
+                                      (.-selection prev-state))
+                                (on-selection-activity block (.-selection (.-state pm-view)))
+                                :else nil))}))
 
 (defn serialize-block [this]
   (.serialize markdown/serializer (:doc this)))

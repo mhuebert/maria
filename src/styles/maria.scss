@@ -25,8 +25,8 @@ $selection-color: #f4f4d6;
 .cm-s-maria-light div.CodeMirror-selected {
   background: $selection-color !important;
 }
-.cm-s-maria-light div.CodeMirror-selectedtext {
-  cursor: move;
+.cm-s-maria-light .CodeMirror-selectedtext {
+  cursor: grab;
 }
 .cm-s-maria-light .CodeMirror-cursor {
   border-left: 1px solid #868886 !important;

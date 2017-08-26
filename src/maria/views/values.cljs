@@ -50,7 +50,7 @@
     (if (= depth limit-depth)
       [:div [expander-outter {:on-click #(swap! state update :limit-depth inc)} [expander-label "…"]]]
       [:div
-       [:span.output-bracket lb]
+       [:span.output-bracket.v-top lb]
        (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))
        (when more? [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]])
        [:span.output-bracket rb]])))
@@ -109,9 +109,7 @@
   ([depth value]
    (let [kind (messages/kind value)]
      (cond
-       (= kind :maria.kinds/vector) (format-collection nil depth value)
-       (satisfies? IShow value) (show value)
-
+       (satisfies? IShow value) (format-value depth (show value))
        :else (case kind
 
                (:maria.kinds/vector
@@ -121,7 +119,9 @@
                :maria.kinds/map (format-map nil depth value)
 
                (:maria.kinds/var
-                 :maria.kinds/cell) (format-value depth @value)
+                 :maria.kinds/cell) [:div
+                                     [:.o-50.mb2 (str value)]
+                                     (format-value depth @value)]
 
                :maria.kinds/nil "nil"
 

@@ -22,20 +22,21 @@
    :scroll-into-view   #(util/scroll-to-cursor (.getEditor %))
    :focus              (fn [this coords]
                          (.focus (:editor-view @(:view/state this)) coords))}
-  [{:keys [view/state block-list block] :as this}]
+  [{:keys [view/state block-list block on-selection-activity] :as this}]
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (.focus this))}
    [:.w-50.flex-none
-    (codemirror/editor {:class               "pa3 bg-white"
-                        :ref                 #(v/swap-silently! state assoc :editor-view %)
-                        :value               (Block/emit (:block this))
-                        :on-ast              (fn [node]
-                                               (.splice block-list block [(assoc block :node node)]))
-                        :capture-event/focus #(exec/set-context! {:block/code true
-                                                                  :block-view this})
-                        :capture-event/blur  #(exec/set-context! {:block/code nil
-                                                                  :block-view nil})})]
+    (codemirror/editor {:class                 "pa3 bg-white"
+                        :ref                   #(v/swap-silently! state assoc :editor-view %)
+                        :value                 (Block/emit (:block this))
+                        :on-ast                (fn [node]
+                                                 (.splice block-list block [(assoc block :node node)]))
+                        :on-selection-activity on-selection-activity
+                        :capture-event/focus   #(exec/set-context! {:block/code true
+                                                                    :block-view this})
+                        :capture-event/blur    #(exec/set-context! {:block/code nil
+                                                                    :block-view nil})})]
 
    [:.w-50.flex-none.code.overflow-hidden (some-> (first (Block/eval-log block))
                                                   (assoc :block-id (:id block))
