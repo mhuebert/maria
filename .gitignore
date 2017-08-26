@@ -18,3 +18,4 @@ opts.clj
 /doc/ideating.clj
 test-cells/public/js
 cljs-runtime
+*.DS_Store
