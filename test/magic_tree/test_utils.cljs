@@ -1,6 +1,6 @@
-(ns paredit.test-utils
-  (:require [magic-tree-codemirror.addons]
-            [cljsjs.codemirror]
+(ns magic-tree.test-utils
+  (:require [magic-tree-editor.codemirror]
+            [cljsjs.codemirror :as CM]
             [codemirror.addon.search.searchcursor]
             [clojure.string :as string]))
 
@@ -11,7 +11,7 @@
                                                                                :magicBrackets true})))))
 
 (defn regex-replace [cm pattern replace-f]
-  (let [search-cursor (.getSearchCursor cm pattern #js {:line 0 :ch 0} true)]
+  (let [search-cursor (.getSearchCursor cm pattern (CM/Pos 0 0) true)]
     (loop [results []]
       (if (not (.findNext search-cursor))
         (do

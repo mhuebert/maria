@@ -5,6 +5,7 @@
             [cells.cell :as cell]
 
             [maria-commands.exec]
+            [maria.show :as show]
 
             [clojure.set]
             [clojure.string]
@@ -32,7 +33,9 @@
   (-put-value! [this value]
     (d/transact! [[:db/add :cells (name this) value]]))
   (-get-value [this]
-    (d/get :cells (name this))))
+    (d/get :cells (name this)))
+  show/IShow
+  (show [this] (cell/view this)))
 
 (enable-console-print!)
 

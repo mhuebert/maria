@@ -3,7 +3,7 @@
             [clojure.set :as set]
             [cells.util :as util]
             [cells.eval-context :as eval-context :refer [on-dispose dispose!]]
-            [re-view-hiccup.core :refer [IShow]])
+            [re-view-hiccup.core :as hiccup])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
@@ -29,6 +29,7 @@
 
 (defprotocol ICellView
   "Protocol for shallow copies of cells with different views"
+  (view [this])
   (with-view [this view-fn]))
 
 #_(defprotocol ISwap*
@@ -145,14 +146,12 @@
   INamed
   (-name [this] id)
 
-  IShow
-  (show [this] ((:view state) this))
-
   ICloneable
   (-clone [this]
     (make-cell (keyword (namespace id) (util/unique-id)) f state))
 
   ICellView
+  (view [this] ((:view state) this))
   (with-view [this view-fn]
     (let [cell (new Cell id f (assoc state :view view-fn) eval-context)]
       (-set! cell @this)
@@ -261,8 +260,8 @@
             (-reset! this value)))))
     this)
 
-  ISeqable
-  (-seq [this]
+  #_ISeqable
+  #_(-seq [this]
     ((fn cell-seq
        [this]
        (cons @this

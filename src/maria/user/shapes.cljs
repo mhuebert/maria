@@ -1,5 +1,6 @@
 (ns maria.user.shapes
-  (:require [re-view-hiccup.core :refer [IShow element]]
+  (:require [re-view-hiccup.core :as hiccup :refer [IElement
+                                                    IHiccup]]
             [maria.messages :refer [IDoc]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,6 +28,8 @@
                          (assoc attrs (keyword (str "on-" (name event))) listener))
                        attrs
                        (partition 2 listeners))))
+  IDeref
+  (-deref [this] attrs)
   ILookup
   (-lookup [this k]
     (get attrs k))
@@ -195,17 +198,18 @@
 ;; probably be better for each thing to rotate around itself
 ;; TODO SVG translation/rotation causes slipping, may need to re-calc bounds
 ;; TODO re-implement this mess using a transform matrix
-(defn shape->vector [{:keys [kind children] :as shape}]
-  (let [unkinded (dissoc shape :is-a :kind)]
+(defn shape->vector [shape]
+  (let [{:keys [kind children d text] :as attrs} @shape
+        unkinded (dissoc attrs :is-a :kind)]
     (into [kind (reduce                                     ;; clean up/preprocess the string-y bits of the SVG element
                   (fn [m [k v]]
                     (case k
                       :d (update m :d path-points->string)
                       :points (update m :points points->string)
                       :rotate (case kind
-                                :path (let [[x-min y-min x-max y-max] (points-bounds (:d shape))]
+                                :path (let [[x-min y-min x-max y-max] (points-bounds d)]
                                         (update m :transform #(str (or % "") " rotate(" (:rotate m) "," (- x-max x-min) "," (- y-max y-min) ")")))
-                                #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x shape) "," (:y shape) ")"))
+                                #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x attrs) "," (:y attrs) ")"))
                                 (let [[x y] (center-point m)]
                                   (update m :transform #(str (or % "") " rotate(" (:rotate m) "," x "," y ")"))))
                       :translate (update m :transform #(str (or % "") " translate(" (apply str (interpose "," (:translate m))) ")"))
@@ -213,22 +217,25 @@
                       m))
                   unkinded
                   (select-keys unkinded [:d :points :rotate :translate :scale]))
-           (:text shape)]
+           text]
           (mapv shape->vector children))))
 
 ;; TODO becomes a method of the shape protocol
 (extend-type Shape
-  IShow
-  (show [this]
-    (element [:svg (assoc (bounds this) :x 0 :y 0)
-              (shape->vector this)])))
+  IHiccup
+  (to-hiccup [this]
+    [:svg (assoc (bounds this) :x 0 :y 0)
+     (shape->vector this)]))
 
 (defn show
   "Returns a component from this collection of shapes."
   [shapes]
-  (let [shapes (assure-shape-seq shapes)]
-    (element (-> [:svg (assoc (bounds shapes) :x 0 :y 0)]
-                 (into (mapv shape->vector shapes))))))
+  (reify
+    IHiccup
+    (to-hiccup [this]
+      (let [shapes (assure-shape-seq shapes)]
+        (-> [:svg (assoc (bounds shapes) :x 0 :y 0)]
+            (into (mapv shape->vector shapes)))))))
 
 (defn stroke
   "Return `shape` with its stroke set to `color`."

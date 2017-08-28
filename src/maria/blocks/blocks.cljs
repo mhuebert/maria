@@ -47,6 +47,11 @@
    (some-> (view block)
            (.focus coords))))
 
+(defn update-view
+  [block]
+  (some-> (view block)
+          (v/force-update)))
+
 (defprotocol ICursor
   (get-selections [this])
   (put-selections! [this selections])
@@ -59,7 +64,7 @@
   (selection-contract [this]))
 
 (defprotocol IEval
-  (eval [this] [this kind value])
+  (eval! [this] [this kind value])
   (eval-log [this])
   (eval-log! [this value]))
 

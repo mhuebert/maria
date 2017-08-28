@@ -1,17 +1,16 @@
 (ns maria.views.values
-  (:require [clojure.string :as string]
+  (:require [maria.show :as show]
             [goog.object :as gobj]
             [maria.messages :as messages]
             [maria.views.icons :as icons]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
-            [maria.user.shapes :as shapes]
             [maria.live.magic-tree :as magic]
             [maria.views.codemirror :as codemirror]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [re-view-hiccup.core :refer [show IShow]])
+            [re-view-hiccup.core :as hiccup])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -26,9 +25,7 @@
   {:view/will-mount (fn [{:keys [deferred view/state]}]
                       (-> deferred
                           (.addCallback #(swap! state assoc :value %1))
-                          (.addErrback #(swap! state assoc :error %)))
-
-                      )}
+                          (.addErrback #(swap! state assoc :error %))))}
   [{:keys [view/state]}]
   (let [{:keys [value error] :as s} @state]
     [:div
@@ -37,48 +34,72 @@
                   error (str error)
                   :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
 
-(def expander-outter :.dib.bg-darken.ph2.pv1.ma1.br2.pointer)
-(def expander-label :.inline-flex.items-center)
+(def expander-outter :.dib.bg-darken.ph2.pv1.mh1.br2)
+(def inline-centered :.inline-flex.items-center)
+
+(def ^:dynamic *format-depth-limit* 3)
+
+(defn expanded? [{:keys [view/state]} depth]
+  (if (boolean? (:collection-expanded? @state))
+    (:collection-expanded? @state)
+    (and depth (< depth *format-depth-limit*))))
+
+(defn toggle-depth [{:keys [view/state] :as this} depth label]
+  (let [is-expanded? (expanded? this depth)
+        class (if is-expanded?
+                "cursor-zoom-out"
+                "cursor-zoom-in gray hover-black")]
+    [:span {:class    class
+            :on-click #(swap! state assoc :collection-expanded? (not is-expanded?))} label]))
 
 (defview format-collection
-  {:view/initial-state {:limit-n     20
-                        :limit-depth 5}}
-  [{state :view/state} depth value]
-  (let [{:keys [limit-n limit-depth]} @state
+  {:view/initial-state {:limit-n              20
+                        :collection-expanded? nil}}
+  [{state :view/state :as this} depth value]
+  (let [{:keys [limit-n]} @state
         [lb rb] (bracket-type value)
-        more? (= (count (take (inc limit-n) value)) (inc limit-n))]
-    (if (= depth limit-depth)
-      [:div [expander-outter {:on-click #(swap! state update :limit-depth inc)} [expander-label "…"]]]
-      [:div
-       [:span.output-bracket.v-top lb]
-       (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))
-       (when more? [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]])
-       [:span.output-bracket rb]])))
+        more? (= (count (take (inc limit-n) value)) (inc limit-n))
+        hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
+    (if-not (expanded? this depth)
+      [:.inline-flex.items-center.gray
+       {:class hover-class} (toggle-depth this depth (str " " lb "…" rb " "))]
+      [:.inline-flex.items-stretch
+       {:class hover-class}
+       [:.flex.items-start.nowrap (toggle-depth this depth (str " " lb " "))]
+       [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
+       (when more? [:.flex.items-end [expander-outter {:class    "pointer"
+                                                       :on-click #(swap! state update :limit-n + 20)} "…"]])
+       [:.flex.items-end.nowrap  (str " " rb " ")]])))
 
 (defview format-map
-  {:view/initial-state {:limit-n     20
-                        :limit-depth 1}}
-  [{state :view/state} depth value]
-  (let [{:keys [limit-n limit-depth]} @state
+  {:view/initial-state {:limit-n              20
+                        :collection-expanded? nil}}
+  [{state :view/state :as this} depth value]
+  (let [{:keys [limit-n]} @state
+        [lb rb] (bracket-type value)
         more? (= (count (take (inc limit-n) value)) (inc limit-n))
-        last-n (if more? limit-n (count value))]
-    (if (> depth limit-depth)
-      [expander-outter {:on-click #(swap! state assoc :limit-depth (inc depth))} [expander-label "…"]]
-      [:table.fl.relative.mh2.cb
+        last-n (if more? limit-n (count value))
+        hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
+    (if-not (expanded? this depth)
+      [:.inline-flex.items-center.gray
+       {:class hover-class} (toggle-depth this depth (str " " lb "…" rb " "))]
+      [:table.relative.inline-flex.v-mid
+       {:class hover-class}
        [:tbody
         (or (some->> (seq (take limit-n value))
                      (map-indexed (fn [n [a b]]
                                     [:tr
                                      {:key n}
-                                     [:td (when (= n 0) "{")]
+                                     [:td.v-top.nowrap
+                                      (when (= n 0) (toggle-depth this depth (str " " lb " ")))]
                                      [:td.v-top
                                       (format-value (inc depth) a)]
                                      [:td.v-top
                                       (format-value (inc depth) b)]
-                                     [:td (when (= (inc n) last-n) "}")]])))
-            [:td "{}"])
+                                     [:td.v-top.nowrap (when (= (inc n) last-n) (str " " rb " "))]])))
+            [:tr [:td.hover-bg-darken (str " " lb rb " ")]])
         (when more? [:tr [:td {:col-span 2}
-                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [expander-label "…"]]]])]])))
+                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [inline-centered "…"]]]])]])))
 
 (defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
@@ -88,7 +109,7 @@
 
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)}
-      [expander-label
+      [inline-centered
        (if (and fn-name (not= "" fn-name))
          (some-> (source-lookups/fn-name value) (symbol) (name))
          [:span.o-50.mr1 "ƒ"])
@@ -102,21 +123,29 @@
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
-(def ^:dynamic *format-depth* 0)
-
 (defn format-value
   ([value] (format-value 1 value))
   ([depth value]
-   (let [kind (messages/kind value)]
-     (cond
-       (satisfies? IShow value) (format-value depth (show value))
-       :else (case kind
+
+   (when (> depth 200)
+     (prn value)
+     (throw (js/Error. "Format depth too deep!")))
+   (cond (satisfies? show/IShow value) (format-value depth (show/show value))
+
+         (or (satisfies? hiccup/IElement value)
+             (satisfies? hiccup/IHiccup value)) value
+
+         :else
+         (let [kind (messages/kind value)]
+           (if (v/is-react-element? value)
+             value
+             (case kind
 
                (:maria.kinds/vector
                  :maria.kinds/sequence
-                 :maria.kinds/set) (format-collection nil depth value)
+                 :maria.kinds/set) (format-collection depth value)
 
-               :maria.kinds/map (format-map nil depth value)
+               :maria.kinds/map (format-map depth value)
 
                (:maria.kinds/var
                  :maria.kinds/cell) [:div
@@ -140,7 +169,7 @@
                                   (prn (type value))
                                   (prn :kind (messages/kind value))
                                   (.log js/console value)
-                                  (prn value))))))))))
+                                  (prn value)))))))))))
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3

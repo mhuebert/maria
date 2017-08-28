@@ -8,9 +8,9 @@
             [maria.blocks.blocks :as Block]
             [maria.util :as util]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.edit :as edit]
+            [magic-tree-editor.edit :as edit]
             [maria.eval :as e]
-            [magic-tree-codemirror.util :as cm]
+            [magic-tree-editor.util :as cm]
             [cells.eval-context :as eval-context]))
 
 (defview code-view
@@ -125,11 +125,11 @@
 
   Block/IEval
   (eval-log! [this value]
-    (d/transact! [[:db/update-attr (:id this) :eval-log #(take 2 (cons value %))]])
+    (vswap! e/-eval-logs update (:id this) #(take 2 (cons value %)))
     value)
   (eval-log [this]
-    (d/get (:id this) :eval-log))
-  (eval
+    (get @e/-eval-logs (:id this)))
+  (eval!
     ([this]
      (let [editor (Block/editor this)
            source (or (cm/selection-text editor)
@@ -138,9 +138,10 @@
                            :bracket-node
                            (tree/string (:ns @e/c-env)))
                       (Block/emit this))]
-       (Block/eval this :string source)))
+       (Block/eval! this :string source)))
     ([this kind value]
      (eval-context/dispose! this)
      (binding [cell/*eval-context* this]
        (Block/eval-log! this ((case kind :form e/eval-form
-                                         :string e/eval-str) value))))))
+                                         :string e/eval-str) value))
+       (Block/update-view this)))))

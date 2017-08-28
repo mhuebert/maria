@@ -7,6 +7,20 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
+(def -eval-logs (volatile! {}))
+
+(def add-error-position e/add-error-position)
+
+(defn handle-block-error [block-id error]
+  (.log js/console "error" error)
+  (let [eval-log (d/get block-id :eval-log)
+        result (-> (first eval-log)
+                   (assoc :error (or error (js/Error. "Unknown error"))
+                          :error/kind :eval)
+                   (e/add-error-position))]
+    (vswap! -eval-logs update block-id #(cons result (rest %)))
+    nil))
+
 (defn result-value [x]
   (if (var? x) @x x))
 
@@ -71,13 +85,3 @@
 
 (defn eval-form [form]
   (log-eval-result! (eval-form* form)))
-
-(defn handle-block-error [block-id error]
-  (.log js/console "error" error)
-  (let [eval-log (d/get block-id :eval-log)
-        result (-> (first eval-log)
-                   (assoc :error (or error (js/Error. "Unknown error"))
-                          :error/kind :eval)
-                   (e/add-error-position))]
-    (d/transact! [[:db/update-attr block-id :eval-log #(cons result (rest %))]])
-    nil))

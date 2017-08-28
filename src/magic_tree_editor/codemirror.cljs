@@ -1,21 +1,31 @@
-(ns magic-tree-codemirror.addons
-  (:require [cljsjs.codemirror]
+(ns magic-tree-editor.codemirror
+  (:require [cljsjs.codemirror :as CM]
             [fast-zip.core :as z]
             [goog.events :as events]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.util :as cm]
+            [magic-tree-editor.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]
             [maria-commands.registry :as registry]
             [cljs.core.match :refer-macros [match]]
             [re-db.d :as d]
             [goog.dom :as gdom]
-            [magic-tree-codemirror.edit :as edit]
-            [maria.eval :as e]))
+            [maria.eval :as e]
+            [magic-tree-editor.util :as cm-util]))
+
+(def Pos CM/Pos)
+(def changeEnd CM/changeEnd)
+
+(defn cm-pos
+  "Return a CodeMirror position."
+  [pos]
+  (if (map? pos)
+    (CM/Pos (:line pos) (:column pos))
+    pos))
 
 (defn cursor-bookmark []
   (gdom/createDom "div" #js {"className" "cursor-marker"}))
 
-(specify! (.-prototype js/CodeMirror)
+(extend-type js/CodeMirror
   ILookup
   (-lookup
     ([this k] (get (aget this "cljs$state") k))
@@ -28,6 +38,11 @@
     ([this f a b xs]
      (aset this "cljs$state" (apply f (concat (list (aget this "cljs$state") a b) xs))))))
 
+(extend-type js/CodeMirror.Pos
+  IComparable
+  (-compare [x y]
+    (CM/cmpPos x y)))
+
 (.defineOption js/CodeMirror "cljsState" false
                (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {}))))
 
@@ -39,34 +54,26 @@
 (defn modifier-down? [k]
   (contains? (d/get :commands :modifiers-down) k))
 
-(defn nearest-bracket-region
+(defn cursor-loc
   "Current sexp, or nearest sexp to the left, or parent."
   [pos loc]
-  (let [bracket-loc (if-not (tree/whitespace? (z/node loc))
-                      loc
-                      (if (and (= pos (select-keys (z/node loc) [:line :column]))
-                               (z/left loc)
-                               (not (tree/whitespace? (z/node (z/left loc)))))
-                        (z/left loc)
-                        loc))
-        up-tag (some-> bracket-loc
+  (let [cursor-loc (if-not (tree/whitespace? (z/node loc))
+                     loc
+                     (if (and (= pos (select-keys (z/node loc) [:line :column]))
+                              (z/left loc)
+                              (not (tree/whitespace? (z/node (z/left loc)))))
+                       (z/left loc)
+                       loc))
+        up-tag (some-> cursor-loc
                        (z/up)
                        (z/node)
                        (:tag))]
-    (cond-> bracket-loc
+    (cond-> cursor-loc
             (#{:quote :deref
                :reader-conditional} up-tag)
             (z/up))))
 
-(defn top-loc [loc]
-  (loop [loc loc]
-    (if-not loc
-      loc
-      (if (= :base (:tag (z/node loc)))
-        loc
-        (recur (z/up loc))))))
-
-(defn mark-cursor! [cm]
+(defn set-cursor-root! [cm]
   (let [cursor (.getCursor cm)]
     (swap! cm assoc
            :cursor/cursor-root cursor
@@ -86,13 +93,59 @@
              (.setCursor cm)))
   (unset-cursor-root! cm))
 
+(defn get-cursor [cm]
+  (or (:cursor/cursor-root cm)
+      (.getCursor cm)))
+
+(defn selection? [cm]
+  (.somethingSelected cm))
+
+(defn set-cursor! [cm pos]
+  (unset-cursor-root! cm)
+  (let [pos (cm-pos pos)]
+    (.setCursor cm pos pos)))
+
+(defn get-range [cm range]
+  (let [[from to] (cm-util/parse-range range)]
+    (.getRange cm from to)))
+
+(defn select-range
+  "Copy a {:line .. :column ..} range from a CodeMirror instance."
+  [cm range]
+  (let [[from to] (cm-util/parse-range range)]
+    (.setSelection cm from to #js {:scroll false})))
+
+(defn replace-range!
+  ([cm s from {:keys [line column]}]
+   (replace-range! cm s (merge from {:end-line line :end-column column})))
+  ([cm s {:keys [line column end-line end-column]}]
+   (.replaceRange cm s
+                  (Pos line column)
+                  (Pos (or end-line line) (or end-column column)))))
+
 (defn select-node! [cm node]
   (when (and (not (tree/whitespace? node))
              (or (not (.somethingSelected cm))
                  (:cursor/cursor-root cm)))
     (when-not (:cursor/cursor-root cm)
-      (mark-cursor! cm))
-    (edit/select-range cm (tree/boundaries node))))
+      (set-cursor-root! cm))
+    (select-range cm (tree/bounds node))))
+
+(defn selection-bounds
+  [cm]
+  (if (.somethingSelected cm)
+    (let [sel (first (.listSelections cm))
+          from (.from sel)
+          to (.to sel)]
+      {:line       (.-line from)
+       :column     (.-ch from)
+       :end-line   (.-line to)
+       :end-column (.-ch to)})
+    (let [cur (get-cursor cm)]
+      {:line       (.-line cur)
+       :column     (.-ch cur)
+       :end-line   (.-line cur)
+       :end-column (.-ch cur)})))
 
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
@@ -101,7 +154,7 @@
         shift-down? (modifier-down? SHIFT)]
     (match [m-down? evt-type key-code]
            [true _ (:or 16 91)] (let [loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
-                                                  shift-down? (top-loc))]
+                                                  shift-down? (tree/top-loc))]
                                   (some->> loc
                                            (z/node)
                                            (select-node! cm)))
@@ -158,7 +211,7 @@
     (when-let [loc (and zipper
                         (some->> position
                                  (tree/node-at zipper)))]
-      (let [bracket-loc (nearest-bracket-region position loc)
+      (let [bracket-loc (cursor-loc position loc)
             bracket-node (z/node bracket-loc)]
         (when brackets? (match-brackets! cm bracket-node))
         (swap! cm update :magic/cursor merge {:loc          loc

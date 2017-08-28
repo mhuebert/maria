@@ -1,7 +1,7 @@
 (ns ^:figwheel-always maria-tests.runner
   (:require [cells.cell-tests]
             [magic-tree.bracket-tests]
-            [paredit.edit-tests]
+            [magic-tree.edit-tests]
             [goog.events :as events]
             [cljs.test :refer-macros [run-all-tests]]))
 

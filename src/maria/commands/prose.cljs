@@ -1,6 +1,7 @@
 (ns maria.commands.prose
   (:require [maria-commands.registry :refer-macros [defcommand]]
-            [magic-tree-codemirror.edit :as edit]
+            [cljsjs.codemirror :as CM]
+            [magic-tree-editor.edit :as edit]
             [re-view-prosemirror.commands :as commands :refer [apply-command]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
@@ -208,6 +209,5 @@
            #(split-with-code-block (:block-list block-view)
                                    (:block block-view)
                                    state {:content       (str bracket (edit/other-bracket bracket))
-                                          :cursor-coords #js {:line 0
-                                                              :ch   1}}) 0)
+                                          :cursor-coords (CM/Pos 0 1)}) 0)
          (.-tr state))))])

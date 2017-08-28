@@ -1,8 +1,8 @@
-(ns paredit.edit-tests
+(ns magic-tree.edit-tests
   (:require [maria.views.codemirror]
-            [magic-tree-codemirror.addons]
-            [magic-tree-codemirror.edit :as edit]
-            [paredit.test-utils :as utils :refer [test-exec]]
+            [magic-tree-editor.codemirror]
+            [magic-tree-editor.edit :as edit]
+            [magic-tree.test-utils :as utils :refer [test-exec]]
             [cljs.test :refer-macros [deftest is are testing]]))
 
 (defn prn-ret-cm [cm]
@@ -48,7 +48,9 @@
     edit/comment-line "abc\n|def" "abc\n;;def|"
     edit/comment-line "abc|" ";;abc|"
 
-    edit/uneval-form "|[]" "#_|[]"
+    edit/uneval "|[]" "|#_[]"
+    edit/uneval "[]|" "#_[]|"
+    edit/uneval "a|bcd" "#_abcd|"
 
     edit/splice "[|]" "|"
     edit/splice "[| ]" "| "

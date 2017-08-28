@@ -16,4 +16,4 @@
       0 nil
       1 (first highlights)
       2 (merge (second highlights)
-               (range/boundaries (first highlights) :left)))))
+               (range/bounds (first highlights) :left)))))

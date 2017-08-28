@@ -1,18 +1,16 @@
 (ns maria.views.codemirror
-  (:require [cljsjs.codemirror]
+  (:require [cljsjs.codemirror :as CM]
 
-    #_[codemirror.addon.edit.closebrackets]
             [codemirror.addon.markselection]
             [codemirror.mode.clojure]
 
-            [magic-tree-codemirror.addons]
-            [magic-tree-codemirror.util :as cm]
+            [magic-tree-editor.codemirror]
+            [magic-tree-editor.util :as cm]
             [re-view.core :as v :refer-macros [defview]]
             [maria.util :as util]))
 
 (def options
   {:theme             "maria-light"
-   :autoCloseBrackets "()[]{}\"\""
    :lineNumbers       false
    :lineWrapping      true
    :mode              "clojure"
@@ -82,10 +80,8 @@
    :focus                   (fn [this coords]
                               (let [cm (:editor @(:view/state this))
                                     coords (if (keyword? coords)
-                                             (case coords :end #js {:line (.lineCount cm)
-                                                                    :ch   (count (.getLine cm (.lineCount cm)))}
-                                                          :start #js {:line 0
-                                                                      :ch   0})
+                                             (case coords :end (CM/Pos (.lineCount cm) (count (.getLine cm (.lineCount cm))))
+                                                          :start (CM/Pos 0 0))
                                              coords)]
                                 (doto cm
                                   (.focus)

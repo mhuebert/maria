@@ -1,7 +1,7 @@
 @import "vendor/et-book";
 @import "vendor/fira-code";
 @import '../../node_modules/tachyons/css/tachyons.min.css';
-@import '../../node_modules/codemirror/lib/codemirror';
+@import 'vendor/codemirror';
 //@import '../../node_modules/codemirror/theme/maria-light';
 @import '../../node_modules/@material/list/mdc-list';
 @import '../../node_modules/@material/menu/mdc-menu';
@@ -172,13 +172,26 @@ div.CodeMirror {
 .f7 {
   font-size: 0.75rem;
 }
-
+$darken: rgba(0, 0, 0, 0.05);
+$lighten: rgba(255, 255, 255, 0.25);
 .b--darken {
-  border-color: rgba(0, 0, 0, 0.05);
+  border-color: $darken;
 }
 
 .bg-darken {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: $darken;
+}
+
+.bg-lighten {
+  background-color: $lighten;
+}
+
+.hover-bg-darken:hover {
+  background-color: $darken;
+}
+
+.hover-bg-lighten:hover {
+  background-color: $lighten;
 }
 
 .error-text {
@@ -301,7 +314,19 @@ div.CodeMirror {
 .cursor-text {
   cursor: text;
 }
-
+.cursor-zoom-in {
+  cursor: zoom-in;
+}
+.cursor-zoom-out {
+  cursor: zoom-out;
+}
+.hover-b:hover {
+  font-weight: bold;
+}
+.hover-invert:hover {
+  background: black;
+  color:white;
+}
 .prosemirror-content {
   blockquote {
     border-left: 4px solid rgba(0, 0, 0, 0.05);
@@ -334,4 +359,15 @@ svg {
   border-right: 2px solid #9b7ea3; //#9ba450 #a78939
   display: inline;
   margin: -1px;
+}
+
+.code {
+  table {
+    td {
+      padding: 0;
+    }
+    tr, tbody, td {
+      border-spacing: 0;
+    }
+  }
 }

@@ -3,7 +3,7 @@
             [maria.repl-specials :as repl-specials]
             [maria.eval :as e]
             [magic-tree.core :as tree]
-            [magic-tree-codemirror.edit :as edit :include-macros true]
+            [magic-tree-editor.edit :as edit :include-macros true]
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
@@ -120,7 +120,7 @@
                       (-> (edit/pointer editor)
                           (edit/insert! insertion-text)
                           (edit/move forward)
-                          (edit/set-cursor!))))))
+                          (edit/set-editor-cursor!))))))
 
 (defcommand :delete/code
   "Delete"
@@ -129,7 +129,7 @@
   [{:keys [block-list block blocks editor]}]
   (let [before (Block/before blocks block)
         pointer (edit/pointer editor)
-        prev-char (edit/range pointer -1)]
+        prev-char (edit/get-range pointer -1)]
     (cond
       (and (Block/at-start? block) (and before (Block/empty? before)))
       (.splice block-list block -1 [block])
@@ -141,10 +141,10 @@
 
       (#{")" "]" "}"} prev-char) (-> pointer
                                      (edit/move -1)
-                                     (edit/set-cursor!))
+                                     (edit/set-editor-cursor!))
       (#{\( \[ \{ \"} prev-char) (edit/operation editor
                                                  (edit/splice editor)
-                                                 (edit/set-cursor! (edit/move pointer -1)))
+                                                 (edit/set-editor-cursor! (edit/move pointer -1)))
 
       :else (util/log-ret ":delete/code return value" false))))
 
@@ -185,7 +185,7 @@
               "M1-Shift-;"]
    :when     :block/code}
   [context]
-  (edit/uneval-form (:editor context)))
+  (edit/uneval (:editor context)))
 
 (defcommand :edit/slurp
   {:bindings ["M1-Shift-K"]
@@ -213,7 +213,7 @@
               "M1-Shift-Enter"]
    :when     :block/code}
   [{:keys [editor block-view block]}]
-  (Block/eval block))
+  (Block/eval! block))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"
@@ -231,8 +231,8 @@
   [{:keys [block-view editor block]}]
   (let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
     (if (and (symbol? form) (repl-specials/resolve-var-or-special e/c-state e/c-env form))
-      (Block/eval block :form (list 'doc form))
-      (Block/eval block :form (list 'maria.messages/what-is (list 'quote form))))))
+      (Block/eval! block :form (list 'doc form))
+      (Block/eval! block :form (list 'maria.messages/what-is (list 'quote form))))))
 
 (defcommand :meta/source
   "Show source code for the current var"
@@ -240,8 +240,8 @@
    :when     #(and (:block/code %)
                    (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
   [{:keys [block editor]}]
-  (Block/eval block :form (list 'source
-                                (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+  (Block/eval! block :form (list 'source
+                                 (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
 (defcommand :meta/javascript-source
   "Show compiled javascript for current form"
