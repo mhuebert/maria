@@ -102,8 +102,8 @@
   (selection-contract [this]
     (edit/shrink-selection (Block/editor this)))
 
-  Block/IJoin
-  (join-forward? [this other-block] false)
+  Block/IAppend
+  (append? [this other-block] false)
 
 
   Block/IBlock

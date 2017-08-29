@@ -21,6 +21,9 @@
   (some-> (view this)
           (.getEditor)))
 
+(defn focused-block []
+  (get-in @exec/context [:block-view :block]))
+
 (defn mount [this view]
   (vswap! view-index assoc (:id this) view))
 
@@ -36,9 +39,9 @@
 
   (render [this props]))
 
-(defprotocol IJoin
-  (join-forward? [this other-block])
-  (join-forward [this other-block]))
+(defprotocol IAppend
+  (append? [this other-block] "Return true if other block can be joined to next block")
+  (append [this other-block] "Append other-block to this block."))
 
 (defn focus!
   ([block]
@@ -132,39 +135,37 @@
        (reduce (fn [blocks node]
                  (if-let [block (from-node node)]
                    (if (some-> (peek blocks)
-                               (join-forward? block))
-                     (update blocks (dec (count blocks)) join-forward block)
+                               (append? block))
+                     (update blocks (dec (count blocks)) append block)
                      (conj blocks block))
                    blocks)) [])))
 
 
 (defn join-blocks [blocks]
-  (let [focused-block (:block (:block-view @exec/context))
+  (let [focused-block (focused-block)
         focused-view (some-> focused-block (editor))
         focused-coords (when (and focused-view (= :prose (kind focused-block)))
                          (some-> focused-view (pm/cursor-coords)))]
     (loop [blocks blocks
-           dropped #{}
-           focused-block focused-block
+           dropped-indexes []
+           block-to-focus nil
            i 0]
       (cond (> i (- (count blocks) 2))
-            (do
-              (when (and (dropped focused-block) focused-coords)
-                (js/setTimeout
-                  #(focus! focused-block focused-coords) 0))
-              (with-meta blocks {:dropped dropped}))
-            (join-forward? (nth blocks i) (nth blocks (inc i)))
+            (do (when (and block-to-focus focused-coords)
+                  (js/setTimeout
+                    #(focus! block-to-focus focused-coords) 0))
+                (with-meta blocks {:dropped dropped-indexes}))
+            (append? (nth blocks i) (nth blocks (inc i)))
             (let [block (nth blocks i)
-                  other-block (nth blocks (inc i))
-                  next-focused-block (when (or (= block focused-block)
-                                               (= other-block focused-block))
+                  next-block (nth blocks (inc i))
+                  next-focused-block (when (or (= (:id block) (:id focused-block))
+                                               (= (:id next-block) (:id focused-block)))
                                        block)]
-
-              (recur (util/vector-splice blocks i 2 [(join-forward (nth blocks i) (nth blocks (inc i)))])
-                     (conj dropped (+ (inc i) (count dropped)))
-                     (or next-focused-block focused-block)
+              (recur (util/vector-splice blocks i 2 [(append block next-block)])
+                     (conj dropped-indexes (+ (inc i) (count dropped-indexes)))
+                     (or next-focused-block block-to-focus)
                      i))
-            :else (recur blocks dropped focused-block (inc i))))))
+            :else (recur blocks dropped-indexes block-to-focus (inc i))))))
 
 (defn ensure-blocks [blocks]
   (if-not (seq blocks)
@@ -197,9 +198,17 @@
        (assert index)
        (let [incoming-block-ids (into #{} (mapv :id values))
              replaced-blocks (subvec blocks index (+ index n))
-             removed-blocks (filterv (comp (complement incoming-block-ids) :id) replaced-blocks)]
+             removed-blocks (set (filterv (comp (complement incoming-block-ids) :id) replaced-blocks))
+             the-focused-block (focused-block)]
          (doseq [block removed-blocks]
-           (eval-context/dispose! block)))
+           (eval-context/dispose! block))
+         (when (removed-blocks the-focused-block)
+           (let [focused-n (id-index blocks (:id the-focused-block))]
+             (when-let [prev-block (->> (subvec blocks 0 focused-n)
+                                        (reverse)
+                                        (filter (complement removed-blocks))
+                                        (first))]
+               (focus! prev-block :end)))))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))
@@ -210,35 +219,3 @@
 
 (defn after [blocks block]
   (second (drop-while (comp (partial not= (:id block)) :id) blocks)))
-
-#_(defn delete-block [{:keys [view/state] :as block-list-view} block]
-    (let [next-blocks (splice-block (:blocks @state) (:id block) [])]
-      (swap! state assoc :blocks next-blocks)
-      (let [{:keys [before after]} (meta next-blocks)]
-        (if before (focus! before :end)
-                   (focus! after :start)))))
-
-#_(defn splice-by-id-with-join
-    ([blocks id values]
-     (splice-by-id-with-join blocks id 0 values))
-    ([blocks id n values]
-     (if (and (clojure.core/empty? values)
-              (= 1 (count blocks)))
-       (let [blocks (ensure-blocks nil)]
-         (with-meta blocks {:before (first blocks)}))
-       (let [index (cond-> (id-index blocks id)
-                           (neg? n) (+ n))
-             _ (assert index)
-             n (inc (.abs js/Math n))
-             result (util/vector-splice blocks index n values)
-             joined-result (join-blocks result)
-             {:keys [dropped]} (meta joined-result)
-             start (dec index)
-             end (-> index
-                     (+ (count values)))
-             adjusted-start (- start (count (take-while #(<= % start) dropped)))
-             adjusted-end (- end (count (take-while #(< % end) dropped)))]
-         (with-meta joined-result
-                    {:before (when-not (neg? adjusted-start) (nth joined-result adjusted-start))
-                     :after  (when-not (> adjusted-end (dec (count joined-result)))
-                               (nth joined-result adjusted-end))})))))

@@ -62,17 +62,18 @@
         [lb rb] (bracket-type value)
         more? (= (count (take (inc limit-n) value)) (inc limit-n))
         hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
-    (if (or (empty? value) (expanded? this depth))
-      [:.inline-flex.items-stretch
-       {:class hover-class}
-       [:.flex.items-start.nowrap (toggle-depth this depth (str space lb space))]
-       [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
-       (when more? [:.flex.items-end [expander-outter {:class    "pointer"
-                                                       :on-click #(swap! state update :limit-n + 20)} "…"]])
-       [:.flex.items-end.nowrap (str space rb space)]]
-      [:.inline-flex.items-center.gray.nowrap
-       {:class hover-class} (toggle-depth this depth (str space lb "…" rb space
-                                                          ))])))
+    (cond (empty? value)
+          (str space lb rb space)
+          (expanded? this depth) [:.inline-flex.items-stretch
+                                  {:class hover-class}
+                                  [:.flex.items-start.nowrap (if (empty? value) (str space lb)
+                                                                                (toggle-depth this depth (str space lb space)))]
+                                  [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
+                                  (when more? [:.flex.items-end [expander-outter {:class    "pointer"
+                                                                                  :on-click #(swap! state update :limit-n + 20)} "…"]])
+                                  [:.flex.items-end.nowrap (str space rb space)]]
+          :else [:.inline-flex.items-center.gray.nowrap
+                 {:class hover-class} (toggle-depth this depth (str space lb "…" rb space))])))
 
 (defview format-map
   {:view/initial-state {:limit-n              20
@@ -135,8 +136,7 @@
      (throw (js/Error. "Format depth too deep!")))
    (cond (satisfies? show/IShow value) (format-value depth (show/show value))
 
-         (or (satisfies? hiccup/IElement value)
-             (satisfies? hiccup/IHiccup value)) value
+         (satisfies? hiccup/IHiccup value) value
 
          :else
          (let [kind (messages/kind value)]

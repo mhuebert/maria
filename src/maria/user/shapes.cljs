@@ -1,6 +1,5 @@
 (ns maria.user.shapes
-  (:require [re-view-hiccup.core :as hiccup :refer [IElement
-                                                    IHiccup]]
+  (:require [re-view-hiccup.core :as hiccup :refer [IHiccup]]
             [maria.messages :refer [IDoc]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

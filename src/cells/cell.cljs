@@ -260,8 +260,8 @@
             (-reset! this value)))))
     this)
 
-  #_ISeqable
-  #_(-seq [this]
+  ISeqable
+  (-seq [this]
     ((fn cell-seq
        [this]
        (cons @this

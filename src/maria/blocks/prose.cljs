@@ -184,12 +184,12 @@
     (commands/apply-command (Block/editor this) commands/contract-selection))
 
 
-  Block/IJoin
-  (join-forward? [this other-block]
+  Block/IAppend
+  (append? [this other-block]
     (= :prose (Block/kind other-block)))
 
-  (join-forward [this other-block]
-    (when (Block/join-forward? this other-block)
+  (append [this other-block]
+    (when (Block/append? this other-block)
       ;; TODO
       ;; insert (.-doc (:state other-block)) into doc
       (assoc this :doc (.parse markdown/parser
