@@ -18,8 +18,8 @@
    :when     #(some-> (:block %) Block/at-end?)}
   [{:keys [block blocks]}]
   (when (Block/at-end? block)
-    (some-> (Block/after blocks block)
-            (Block/focus! :start))))
+    (when-let [after (Block/after blocks block)]
+      (Block/focus! :block/next-block after :start))))
 
 (defcommand :block/previous-block
   {:bindings ["Up"
@@ -27,8 +27,8 @@
    :when     #(some-> (:block %) Block/at-start?)}
   [{:keys [block blocks]}]
   (when (Block/at-start? block)
-    (some-> (Block/before blocks block)
-            (Block/focus! :end))))
+    (when-let [before (Block/before blocks block)]
+      (Block/focus! :block/previous-block before :end))))
 
 (defcommand :selection/expand
   "Expand current selection"

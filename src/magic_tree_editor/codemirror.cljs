@@ -169,6 +169,11 @@
        :end-line   (.-line cur)
        :end-column (.-ch cur)})))
 
+(defn highlight-range [node]
+  (if (= :string (:tag node))
+    (tree/inner-range node)
+    node))
+
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
         evt-type (.-type e)
@@ -179,6 +184,7 @@
                                                   shift-down? (tree/top-loc))]
                                   (some->> loc
                                            (z/node)
+                                           (highlight-range)
                                            (select-node! cm)))
            [_ "keyup" 91] (return-cursor-to-root! cm)
            :else (when-not (contains? #{16 M1} key-code)

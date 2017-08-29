@@ -102,18 +102,21 @@
                                                        (dispatch (.scrollIntoView (.-tr state)))))
    :focus             (fn [this position]
                         (v/flush!)
+
                         (let [pm-view (.getEditor this)
-                              state (.-state pm-view)]
+                              state (.-state pm-view)
+                              doc (.-doc state)]
+                          (.focus pm-view)
                           (when-let [selection (cond (keyword? position)
-                                                     (case position :start (.atStart pm/Selection (.-doc state))
-                                                                    :end (.atEnd pm/Selection (.-doc state)))
+                                                     (case position :start (.atStart pm/Selection doc)
+                                                                    :end (.atEnd pm/Selection doc))
 
                                                      (object? position)
                                                      (pm/coords-selection pm-view position)
                                                      :else nil)]
                             (.dispatch pm-view (.setSelection (.-tr state) selection)))
-                          (.focus pm-view)
-                          (js/setTimeout (.-scrollIntoView this) 0)))
+
+                          #_(js/setTimeout (.-scrollIntoView this) 0)))
    :view/did-mount    #(Block/mount (:block %) %)
    :view/will-unmount (fn [this]
                         (Block/unmount (:block this))

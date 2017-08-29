@@ -45,12 +45,17 @@
 
 (defn focus!
   ([block]
-   (focus! block nil))
-  ([block coords]
+   (focus! :unknown block nil))
+  ([label block] (focus! label block nil))
+  ([label block coords]
+   #_(prn :focus! label coords (:id block) (let [out (emit block)]
+                                           (subs out 0 (min 30 (count out)))))
    (when-not (view block)
      (v/flush!))
-   (some-> (view block)
-           (.focus coords))))
+   (when-let [the-view (view block)]
+     (exec/set-context! {(keyword "block" (kind block)) true
+                         :block-view                    the-view})
+     (.focus the-view coords))))
 
 (defn update-view
   [block]
@@ -142,7 +147,10 @@
 
 
 (defn join-blocks [blocks]
-  (let [focused-block (focused-block)
+  ;; PROBLEM
+  ;; unable to handle cursor properly when joining blocks.
+  blocks
+  #_(let [focused-block (focused-block)
         focused-view (some-> focused-block (editor))
         focused-coords (when (and focused-view (= :prose (kind focused-block)))
                          (some-> focused-view (pm/cursor-coords)))]
@@ -152,8 +160,7 @@
            i 0]
       (cond (> i (- (count blocks) 2))
             (do (when (and block-to-focus focused-coords)
-                  (js/setTimeout
-                    #(focus! block-to-focus focused-coords) 0))
+                                                  (focus! :join-blocks block-to-focus focused-coords))
                 (with-meta blocks {:dropped dropped-indexes}))
             (append? (nth blocks i) (nth blocks (inc i)))
             (let [block (nth blocks i)
@@ -206,9 +213,9 @@
            (let [focused-n (id-index blocks (:id the-focused-block))]
              (when-let [prev-block (->> (subvec blocks 0 focused-n)
                                         (reverse)
-                                        (filter (complement removed-blocks))
+                                        (remove removed-blocks)
                                         (first))]
-               (focus! prev-block :end)))))
+               (focus! :splice prev-block :end)))))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))

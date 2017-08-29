@@ -27,7 +27,7 @@
                                         true (into new-blocks)
                                         (not (util/whitespace-string? markdown-after))
                                         (conj (Block/create :prose markdown-after))))
-      (Block/focus! (first new-blocks) cursor-coords)
+      (Block/focus! :split-with-code-block (first new-blocks) cursor-coords)
       true)))
 
 (defcommand :prose-block/enter
@@ -125,8 +125,8 @@
     (when (and (Block/empty? block) (Block/before blocks block))
       (let [result (.splice block-list block [])
             {:keys [before after]} (meta result)]
-        (if before (Block/focus! before :end)
-                   (Block/focus! after :start))
+        (if before (Block/focus! :remove-empty-block before :end)
+                   (Block/focus! :remove-empty-block after :start))
         true))))
 
 (defn clear-previous-empty [{:keys [blocks block-list block]}]

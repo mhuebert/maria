@@ -35,6 +35,18 @@
   [context]
   (edit/expand-selection-left (:editor context)))
 
+(defcommand :selection/cursor-left-edge
+  {:bindings ["M1-Shift-Left"]
+   :when :block/code}
+  [{:keys [editor]}]
+  (edit/cursor-selection-edge editor :left))
+
+(defcommand :selection/cursor-right-edge
+  {:bindings ["M1-Shift-Right"]
+   :when :block/code}
+  [{:keys [editor]}]
+  (edit/cursor-selection-edge editor :right))
+
 (defcommand :selection/expand-right
   {:bindings ["M1-Right"]
    :when     :block/code}
@@ -74,14 +86,14 @@
 
                  (when (satisfies? Block/IParagraph prev-prose)
                    (Block/prepend-paragraph prev-prose))
-                 (Block/focus! (or new-block prev-prose) :start))
+                 (Block/focus! :code-block/enter (or new-block prev-prose) :start))
 
           (:empty :start)
           (do (.splice block-list block (cond-> []
                                                 new-block (conj new-block)
                                                 (not empty-block) (conj block)))
               (when empty-block
-                (Block/focus! (or new-block prev-prose) :end)))))
+                (Block/focus! :code-block/enter (or new-block prev-prose) :end)))))
       js/CodeMirror.Pass)))
 
 (defcommand :delete/selection
@@ -98,7 +110,8 @@
   (let [before (Block/before blocks block)
         replacement (when-not before (Block/create :prose))]
     (.splice block-list block (if replacement [replacement] []))
-    (Block/focus! (or before replacement) :end)))
+    (when replacement
+      (Block/focus! :clear-empty-code-block-replacement replacement :end))))
 
 (defcommand :edit/auto-close
   {:bindings ["["

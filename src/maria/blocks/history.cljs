@@ -42,7 +42,7 @@
   Focuses doc, and sets correct selections for initial state."
   [state]
   (let [selections (get-selections)]
-    (Block/focus! (first (first (:history @state))) :start)
+    (Block/focus! :after-mount (first (first (:history @state))) :start)
     (v/swap-silently! state update :history update-first-meta merge
                       {:selections-before selections
                        :selections-after  selections
@@ -54,7 +54,7 @@
   [key version]
   (when-let [[block selections] (get (meta version) key)]
     (when block
-      (Block/focus! block)
+      (Block/focus! :apply-selections block)
       (when selections
         (Block/put-selections! block selections)))))
 
