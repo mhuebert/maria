@@ -38,7 +38,7 @@
                                                                    (into input-rules)
                                                                    (to-array))})])}))
 
-(defn make-editor-view [{:keys [editor-view-props on-dispatch view/state] :as component}
+(defn make-editor-view [{:keys [editor-view-props before-change after-change on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
   (-> (v/dom-node component)
       (pm/EditorView. (->> {:state      editor-state
@@ -48,9 +48,17 @@
                                         (fn [tr]
                                           (let [^js/pm.EditorView pm-view (get @state :pm-view)
                                                 prev-state (.-state pm-view)]
+                                            (when before-change (before-change))
                                             (pm/transact! pm-view tr)
                                             (when-not (nil? on-dispatch)
-                                              (on-dispatch pm-view prev-state))))}
+                                              (on-dispatch pm-view prev-state))
+                                            (when (and after-change (not= (.-doc prev-state)
+                                                                          (.-doc (.-state pm-view))))
+                                              (after-change))
+                                            (when (and on-selection-activity
+                                                       (not= (.-selection (.-state pm-view))
+                                                             (.-selection prev-state)))
+                                              (on-selection-activity pm-view (.-selection (.-state pm-view))))))}
                            (merge editor-view-props)
                            (clj->js)))))
 
@@ -58,9 +66,7 @@
   {:spec/props              {:on-dispatch :Function
                              :input-rules :Object
                              :doc         :Object}
-   :view/did-mount          (fn [{:keys [on-dispatch
-                                         view/state
-                                         editor-view-props
+   :view/did-mount          (fn [{:keys [view/state
                                          input-rules
                                          doc] :as this}]
                               (let [editor-view (make-editor-view this (make-editor-state doc input-rules))]
@@ -75,10 +81,9 @@
                                                                            "schema"  markdown/schema
                                                                            "plugins" (aget view "state" "plugins")}))))
 
-   :view/will-receive-props (fn [{doc             :doc
-                                  {prev-doc :doc} :view/prev-props
-                                  :as             this}]
-                              (when (not= doc prev-doc)
+   :view/will-receive-props (fn [{:keys [doc block view/state]
+                                  :as   this}]
+                              (when (not= doc (.-doc (.-state (:pm-view @state))))
                                 (.resetDoc this doc)))
 
    :pm-view                 #(:pm-view @(:view/state %))
@@ -91,79 +96,72 @@
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
 
 (defview prose-view
-  {:key                :id
-   :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
-   :scroll-into-view   #(apply-command (.getEditor %) (fn [state dispatch]
-                                                        (dispatch (.scrollIntoView (.-tr state)))))
-   :focus              (fn [this position]
-                         (v/flush!)
-                         (let [pm-view (.getEditor this)
-                               state (.-state pm-view)]
-                           (when-let [selection (cond (keyword? position)
-                                                      (case position :start (.atStart pm/Selection (.-doc state))
-                                                                     :end (.atEnd pm/Selection (.-doc state)))
+  {:key               :id
+   :get-editor        #(.pmView (:prose-editor-view @(:view/state %)))
+   :scroll-into-view  #(apply-command (.getEditor %) (fn [state dispatch]
+                                                       (dispatch (.scrollIntoView (.-tr state)))))
+   :focus             (fn [this position]
+                        (v/flush!)
+                        (let [pm-view (.getEditor this)
+                              state (.-state pm-view)]
+                          (when-let [selection (cond (keyword? position)
+                                                     (case position :start (.atStart pm/Selection (.-doc state))
+                                                                    :end (.atEnd pm/Selection (.-doc state)))
 
-                                                      (object? position)
-                                                      (pm/coords-selection pm-view position)
-                                                      :else nil)]
-                             (.dispatch pm-view (.setSelection (.-tr state) selection)))
-                           (.focus pm-view)
-                           (js/setTimeout (.-scrollIntoView this) 0)))
-   :view/initial-state (fn [this]
-                         {:last-update (:block this)})
-   :view/should-update (fn [{:keys [view/state view/prev-state block]}]
-                         (or (not= (:dropdown @state)
-                                   (:dropdown prev-state))
-                             (not= block (:last-update @state))))
-   :view/did-mount     #(Block/mount (:block %) %)
-   :view/will-unmount  (fn [this]
-                         (Block/unmount (:block this))
-                         ;; prosemirror doesn't fire `blur` command when unmounted
-                         (when (= (:block-view @exec/context) this)
-                           (exec/set-context! {:block/prose nil
-                                               :block-view  nil})))}
-  [{:keys [view/state block-list block doc on-selection-activity] :as this}]
-  (Editor {:doc         doc
-           :class       " serif f4 ph3 cb"
-           :input-rules (prose-commands/input-rules this)
-           :on-focus    #(exec/set-context! {:block/prose true
-                                             :block-view  this})
-           :on-blur     #(exec/set-context! {:block/prose nil
-                                             :block-view  nil})
-           :on-click    (fn [e]
-                          (when-let [a (r/closest (.-target e) r/link?)]
-                            (when-not (classes/has a "pm-link")
-                              (do (.stopPropagation e)
-                                  (d/transact! [[:db/add :ui/globals :dropdown {:rect      (.getBoundingClientRect a)
-                                                                                :component link-dropdown
-                                                                                :props     {:href   (.-href a)
-                                                                                            :editor (.getEditor this)}}]])))))
-           :ref         #(v/swap-silently! state assoc :prose-editor-view %)
-           :on-dispatch (fn [pm-view prev-state]
-                          (cond (not= (.-doc (.-state pm-view))
-                                      (.-doc prev-state))
-                                (let [updated-block (assoc block :doc (.-doc (.-state pm-view)))]
-                                  (v/swap-silently! state assoc :last-update updated-block)
-                                  (.splice block-list block [updated-block]))
-                                (not= (.-selection (.-state pm-view))
-                                      (.-selection prev-state))
-                                (on-selection-activity block (.-selection (.-state pm-view)))
-                                :else nil))}))
+                                                     (object? position)
+                                                     (pm/coords-selection pm-view position)
+                                                     :else nil)]
+                            (.dispatch pm-view (.setSelection (.-tr state) selection)))
+                          (.focus pm-view)
+                          (js/setTimeout (.-scrollIntoView this) 0)))
+   :view/did-mount    #(Block/mount (:block %) %)
+   :view/will-unmount (fn [this]
+                        (Block/unmount (:block this))
+                        ;; prosemirror doesn't fire `blur` command when unmounted
+                        (when (= (:block-view @exec/context) this)
+                          (exec/set-context! {:block/prose nil
+                                              :block-view  nil})))}
+  [{:keys [view/state block-list block before-change after-change] :as this}]
+
+  (Editor {:doc           (Block/state block)
+           :block         block
+           :class         " serif f4 ph3 cb"
+           :input-rules   (prose-commands/input-rules this)
+           :on-focus      #(exec/set-context! {:block/prose true
+                                               :block-view  this})
+           :on-blur       #(exec/set-context! {:block/prose nil
+                                               :block-view  nil})
+           :on-click      (fn [e]
+                            (when-let [a (r/closest (.-target e) r/link?)]
+                              (when-not (classes/has a "pm-link")
+                                (do (.stopPropagation e)
+                                    (d/transact! [[:db/add :ui/globals :dropdown {:rect      (.getBoundingClientRect a)
+                                                                                  :component link-dropdown
+                                                                                  :props     {:href   (.-href a)
+                                                                                              :editor (.getEditor this)}}]])))))
+           :ref           #(v/swap-silently! state assoc :prose-editor-view %)
+           :before-change before-change
+           :after-change  after-change
+           :on-dispatch   (fn [pm-view prev-state]
+                            (when (not= (.-doc (.-state pm-view))
+                                        (.-doc prev-state))
+                              (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))}))
 
 (defn serialize-block [this]
-  (.serialize markdown/serializer (:doc this)))
+  (.serialize markdown/serializer (Block/state this)))
 
 (extend-type Block/ProseBlock
 
   Block/ICursor
-  (get-selections [this]
+  (get-history-selections [this]
     (.. (Block/editor this)
         -state
         -selection))
   (put-selections! [this selections]
-    (commands/apply-command (Block/editor this)
-                            (fn [state dispatch]
-                              (dispatch (.setSelection (.-tr state) selections)))))
+    (some-> (Block/editor this)
+            (commands/apply-command
+              (fn [state dispatch]
+                (dispatch (.setSelection (.-tr state) selections))))))
 
   (cursor-coords [this]
     (pm/cursor-coords (Block/editor this)))
@@ -213,7 +211,6 @@
 
   (render [this props]
     (prose-view (assoc props
-                  :doc (:doc this)
                   :block this
                   :id (:id this))))
 

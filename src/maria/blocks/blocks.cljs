@@ -18,7 +18,8 @@
   (@view-index (:id this)))
 
 (defn editor [this]
-  (.getEditor (view this)))
+  (some-> (view this)
+          (.getEditor)))
 
 (defn mount [this view]
   (vswap! view-index assoc (:id this) view))
@@ -31,6 +32,7 @@
   (empty? [this])
   (emit [this])
   (kind [this])
+  (state [this])
 
   (render [this props]))
 
@@ -53,7 +55,7 @@
           (v/force-update)))
 
 (defprotocol ICursor
-  (get-selections [this])
+  (get-history-selections [this])
   (put-selections! [this selections])
 
   (cursor-edge [this])
@@ -74,8 +76,21 @@
 (extend-type nil IBlock
   (empty? [this] true))
 
-(defrecord CodeBlock [id node])
-(defrecord ProseBlock [id doc])
+(defrecord CodeBlock [id node]
+  IBlock
+  (state [this] node))
+
+(defrecord ProseBlock [id doc]
+  IBlock
+  (state [this] doc))
+
+(extend-protocol IEquiv
+  CodeBlock
+  (-equiv [this other] (and (= (:id this) (:id other))
+                            (= (state this) (state other))))
+  ProseBlock
+  (-equiv [this other] (and (= (:id this) (:id other))
+                            (= (state this) (state other)))))
 
 (defn from-node
   "Returns a block, given a magic-tree AST node."
@@ -129,12 +144,12 @@
         focused-coords (when (and focused-view (= :prose (kind focused-block)))
                          (some-> focused-view (pm/cursor-coords)))]
     (loop [blocks blocks
-           dropped []
+           dropped #{}
            focused-block focused-block
            i 0]
       (cond (> i (- (count blocks) 2))
             (do
-              (when focused-coords
+              (when (and (dropped focused-block) focused-coords)
                 (js/setTimeout
                   #(focus! focused-block focused-coords) 0))
               (with-meta blocks {:dropped dropped}))

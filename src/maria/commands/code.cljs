@@ -146,7 +146,7 @@
                                                  (edit/splice editor)
                                                  (edit/set-editor-cursor! (edit/move pointer -1)))
 
-      :else (util/log-ret ":delete/code return value" false))))
+      :else false)))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"

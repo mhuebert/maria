@@ -4,8 +4,7 @@
             [codemirror.addon.markselection]
             [codemirror.mode.clojure]
 
-            [magic-tree-editor.codemirror]
-            [magic-tree-editor.util :as cm]
+            [magic-tree-editor.codemirror :as cm]
             [re-view.core :as v :refer-macros [defview]]
             [maria.util :as util]))
 
@@ -34,7 +33,9 @@
                                          view/state
                                          view/props
                                          error-ranges
-
+                                         before-change
+                                         after-change
+                                         on-selection-activity
                                          keymap]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
@@ -49,7 +50,7 @@
                                                                                                    :tabindex -1))))))]
                                 (set! (.-view editor) this)
                                 (swap! editor assoc :view this)
-                                (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor editor %)
+                                (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor! editor %)
                                                                          (.refresh editor)))
 
                                 (swap! state assoc :editor editor)
@@ -61,12 +62,17 @@
 
                                   (when on-mount (on-mount editor this))
 
-                                  (.on editor "cursorActivity"
-                                       #(some-> (:on-selection-activity this)
-                                                (apply nil)))
-
                                   (when on-update
-                                    (.on editor "change" #(on-update (.getValue %1)))))
+                                    (.on editor "change" #(on-update (.getValue %1))))
+
+                                  (when before-change
+                                    (.on editor "beforeChange" before-change))
+
+                                  (when after-change
+                                    (.on editor "changes" after-change))
+
+                                  (when on-selection-activity
+                                    (.on editor "cursorActivity" on-selection-activity)))
 
                                 (when auto-focus (.focus editor))
 
@@ -74,7 +80,7 @@
    :get-editor              #(:editor @(:view/state %))
    :set-value               (fn [{:keys [view/state value]}]
                               (when-let [editor (:editor @state)]
-                                (cm/set-preserve-cursor editor value)))
+                                (cm/set-preserve-cursor! editor value)))
    :reset-value             (fn [{:keys [default-value value view/state]}]
                               (.setValueAndRefresh (:editor @state) (or value default-value)))
    :focus                   (fn [this coords]

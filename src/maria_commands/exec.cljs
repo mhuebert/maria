@@ -11,6 +11,11 @@
 (defn set-context! [values]
   (vswap! context merge values))
 
+(def -before-exec (volatile! {}))
+(defn before-exec [key cb]
+  (vswap! -before-exec assoc key cb))
+
+
 (defn get-context
   ([] (get-context nil))
   ([event-attrs]
@@ -82,6 +87,9 @@
                                                        :key     (.-key e)}))
                                commands (when command-names
                                           (mapv #(get-command context %) command-names))
+                               _ (when (seq commands)
+                                   (doseq [f (vals @-before-exec)]
+                                     (f)))
                                results (when command-names
                                          (mapv #(exec-command context %) commands))]
                            (when (and which-key-active? (= keycode 27))

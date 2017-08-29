@@ -41,12 +41,13 @@
 (extend-type js/CodeMirror.Pos
   IComparable
   (-compare [x y]
-    (CM/cmpPos x y)))
+    (CM/cmpPos x y))
+  IPrintWithWriter
+  (-pr-writer [pos writer _]
+    (-write writer (str "#Pos[" (.-line pos) ", " (.-ch pos) "]"))))
 
 (.defineOption js/CodeMirror "cljsState" false
                (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {}))))
-
-
 
 (def M1 (registry/modifier-keycode "M1"))
 (def SHIFT (registry/modifier-keycode "SHIFT"))
@@ -105,14 +106,35 @@
   (let [pos (cm-pos pos)]
     (.setCursor cm pos pos)))
 
+(defn set-preserve-cursor!
+  "If value is different from editor's current value, set value, retain cursor position"
+  [editor value]
+  (when-not (identical? value (.getValue editor))
+    (let [cursor-pos (get-cursor editor)]
+      (.setValue editor (str value))
+      (if (-> editor (aget "state" "focused"))
+        (.setCursor editor cursor-pos)))))
+
+(defn parse-range
+  "Given a Clojure-style column and line range, return Codemirror-compatible `from` and `to` positions"
+  [{:keys [line column end-line end-column]}]
+  [(CM/Pos line column)
+   (CM/Pos end-line end-column)])
+
+(defn mark-ranges!
+  "Add marks to a collection of Clojure-style ranges"
+  [cm ranges payload]
+  (doall (for [[from to] (map parse-range ranges)]
+           (.markText cm from to payload))))
+
 (defn get-range [cm range]
-  (let [[from to] (cm-util/parse-range range)]
+  (let [[from to] (parse-range range)]
     (.getRange cm from to)))
 
 (defn select-range
   "Copy a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (let [[from to] (cm-util/parse-range range)]
+  (let [[from to] (parse-range range)]
     (.setSelection cm from to #js {:scroll false})))
 
 (defn replace-range!
@@ -173,7 +195,7 @@
       (clear-brackets! cm)
       (when (some-> node (tree/may-contain-children?))
         (swap! cm assoc-in [:magic/cursor :handles]
-               (cm/mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
+               (mark-ranges! cm (tree/node-highlights node) #js {:className "CodeMirror-matchingbracket"}))))))
 
 (defn clear-parse-errors! [cm]
   (doseq [handle (get-in cm [:magic/errors :handles])]
@@ -185,7 +207,7 @@
         ;; TODO
         ;; derive className from error name, not all errors are unmatched brackets.
         ;; (somehow) add a tooltip or other attribute to the marker (for explanation).
-        handles (cm/mark-ranges! cm error-ranges #js {:className "CodeMirror-unmatchedBracket"})]
+        handles (mark-ranges! cm error-ranges #js {:className "CodeMirror-unmatchedBracket"})]
     (swap! cm assoc-in [:magic/errors :handles] handles)))
 
 (defn update-ast!
@@ -205,9 +227,18 @@
                  :ast next-ast
                  :zipper next-zip))))))
 
+(defn cursor-pos
+  "Return map with :line and :column of cursor"
+  [editor-or-position]
+  (let [cm-pos (if (instance? js/CodeMirror editor-or-position)
+                 (.getCursor editor-or-position)
+                 editor-or-position)]
+    {:line   (.-line cm-pos)
+     :column (.-ch cm-pos)}))
+
 (defn cursor-activity!
   [{:keys [zipper magic/brackets?] :as cm}]
-  (let [position (cm/cursor-pos (or (:cursor/cursor-root cm) cm))]
+  (let [position (cursor-pos (or (:cursor/cursor-root cm) cm))]
     (when-let [loc (and zipper
                         (some->> position
                                  (tree/node-at zipper)))]

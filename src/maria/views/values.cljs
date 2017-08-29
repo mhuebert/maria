@@ -65,11 +65,11 @@
        {:class hover-class} (toggle-depth this depth (str " " lb "…" rb " "))]
       [:.inline-flex.items-stretch
        {:class hover-class}
-       [:.flex.items-start.nowrap (toggle-depth this depth (str " " lb " "))]
+       [:.flex.items-start.pre (toggle-depth this depth (str " " lb " "))]
        [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
        (when more? [:.flex.items-end [expander-outter {:class    "pointer"
                                                        :on-click #(swap! state update :limit-n + 20)} "…"]])
-       [:.flex.items-end.nowrap  (str " " rb " ")]])))
+       [:.flex.items-end.pre  (str " " rb " ")]])))
 
 (defview format-map
   {:view/initial-state {:limit-n              20
@@ -90,13 +90,13 @@
                      (map-indexed (fn [n [a b]]
                                     [:tr
                                      {:key n}
-                                     [:td.v-top.nowrap
+                                     [:td.v-top.pre
                                       (when (= n 0) (toggle-depth this depth (str " " lb " ")))]
                                      [:td.v-top
                                       (format-value (inc depth) a)]
                                      [:td.v-top
                                       (format-value (inc depth) b)]
-                                     [:td.v-top.nowrap (when (= (inc n) last-n) (str " " rb " "))]])))
+                                     [:td.v-top.pre (when (= (inc n) last-n) (str " " rb " "))]])))
             [:tr [:td.hover-bg-darken (str " " lb rb " ")]])
         (when more? [:tr [:td {:col-span 2}
                           [expander-outter {:on-click #(swap! state update :limit-n + 20)} [inline-centered "…"]]]])]])))

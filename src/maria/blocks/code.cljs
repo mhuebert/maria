@@ -22,7 +22,7 @@
    :scroll-into-view   #(util/scroll-to-cursor (.getEditor %))
    :focus              (fn [this coords]
                          (.focus (:editor-view @(:view/state this)) coords))}
-  [{:keys [view/state block-list block on-selection-activity] :as this}]
+  [{:keys [view/state block-list block before-change after-change on-selection-activity] :as this}]
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (.focus this))}
@@ -32,6 +32,8 @@
                         :value                 (Block/emit (:block this))
                         :on-ast                (fn [node]
                                                  (.splice block-list block [(assoc block :node node)]))
+                        :before-change         before-change
+                        :after-change          after-change
                         :on-selection-activity on-selection-activity
                         :capture-event/focus   #(exec/set-context! {:block/code true
                                                                     :block-view this})
@@ -51,10 +53,16 @@
 (extend-type Block/CodeBlock
 
   Block/ICursor
-  (get-selections [this]
-    (.listSelections (Block/editor this)))
+  (get-history-selections [this]
+    (let [editor (Block/editor this)]
+      (if-let [root-cursor (:cursor/cursor-root editor)]
+        #js [#js {:anchor root-cursor
+                  :head   root-cursor}]
+        (.listSelections editor))))
   (put-selections! [this selections]
-    (.setSelections (Block/editor this) selections))
+    (v/flush!)
+    (some-> (Block/editor this)
+            (.setSelections selections)))
 
   (cursor-edge [this]
     (let [editor (Block/editor this)
@@ -96,7 +104,9 @@
   Block/IJoin
   (join-forward? [this other-block] false)
 
+
   Block/IBlock
+  (state [this] (:node this))
   (kind [this] :code)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]

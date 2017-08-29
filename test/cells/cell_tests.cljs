@@ -127,14 +127,19 @@
 
 
 
-(deftest cell-seqs
 
-  (defcell n (inc @self))
-
-  (is (= (take 5 n)
-         '(1 2 3 4 5))))
 
 (comment
+
+  ;; disabled cell-seqs.. unclear use case, unclear 'clone' behaviour
+
+  (deftest cell-seqs
+
+    (defcell n (inc @self))
+
+    (is (= (take 5 n)
+           '(1 2 3 4 5))))
+
   ;; allowing all reset! and swap! for now.
   ;; it is tricky to implement restrictions well, and I would like
   ;; to see if it is necessary.
