@@ -351,6 +351,22 @@ $lighten: rgba(255, 255, 255, 0.25);
   }
 }
 
+.hover-cursor-triangle:hover {
+  position: relative;
+  color: transparent;
+  &:after {
+    content: "◀";
+    width: 100%;
+    background-color: inherit;
+    text-align: center;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    color: black;
+  }
+}
 svg {
   cursor: default;
 }

@@ -19,6 +19,8 @@
         (map? value) ["{" "}"]
         :else ["(" ")"]))
 
+(def space \u00A0)
+
 (declare format-value)
 
 (defview display-deferred
@@ -47,9 +49,9 @@
 (defn toggle-depth [{:keys [view/state] :as this} depth label]
   (let [is-expanded? (expanded? this depth)
         class (if is-expanded?
-                "cursor-zoom-out"
+                "cursor-zoom-out hover-bg-darken "
                 "cursor-zoom-in gray hover-black")]
-    [:span {:class    class
+    [:.dib {:class    class
             :on-click #(swap! state assoc :collection-expanded? (not is-expanded?))} label]))
 
 (defview format-collection
@@ -60,16 +62,17 @@
         [lb rb] (bracket-type value)
         more? (= (count (take (inc limit-n) value)) (inc limit-n))
         hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
-    (if-not (expanded? this depth)
-      [:.inline-flex.items-center.gray
-       {:class hover-class} (toggle-depth this depth (str " " lb "…" rb " "))]
+    (if (or (empty? value) (expanded? this depth))
       [:.inline-flex.items-stretch
        {:class hover-class}
-       [:.flex.items-start.pre (toggle-depth this depth (str " " lb " "))]
+       [:.flex.items-start.nowrap (toggle-depth this depth (str space lb space))]
        [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
        (when more? [:.flex.items-end [expander-outter {:class    "pointer"
                                                        :on-click #(swap! state update :limit-n + 20)} "…"]])
-       [:.flex.items-end.pre  (str " " rb " ")]])))
+       [:.flex.items-end.nowrap (str space rb space)]]
+      [:.inline-flex.items-center.gray.nowrap
+       {:class hover-class} (toggle-depth this depth (str space lb "…" rb space
+                                                          ))])))
 
 (defview format-map
   {:view/initial-state {:limit-n              20
@@ -80,9 +83,7 @@
         more? (= (count (take (inc limit-n) value)) (inc limit-n))
         last-n (if more? limit-n (count value))
         hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
-    (if-not (expanded? this depth)
-      [:.inline-flex.items-center.gray
-       {:class hover-class} (toggle-depth this depth (str " " lb "…" rb " "))]
+    (if (or (empty? value) (expanded? this depth))
       [:table.relative.inline-flex.v-mid
        {:class hover-class}
        [:tbody
@@ -90,16 +91,18 @@
                      (map-indexed (fn [n [a b]]
                                     [:tr
                                      {:key n}
-                                     [:td.v-top.pre
-                                      (when (= n 0) (toggle-depth this depth (str " " lb " ")))]
+                                     [:td.v-top.nowrap
+                                      (when (= n 0) (toggle-depth this depth (str space lb space)))]
                                      [:td.v-top
-                                      (format-value (inc depth) a)]
+                                      (format-value (inc depth) a) space]
                                      [:td.v-top
                                       (format-value (inc depth) b)]
-                                     [:td.v-top.pre (when (= (inc n) last-n) (str " " rb " "))]])))
-            [:tr [:td.hover-bg-darken (str " " lb rb " ")]])
+                                     [:td.v-top.nowrap (when (= (inc n) last-n) (str space rb space))]])))
+            [:tr [:td.hover-bg-darken.nowrap (str space lb rb space)]])
         (when more? [:tr [:td {:col-span 2}
-                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [inline-centered "…"]]]])]])))
+                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [inline-centered "…"]]]])]]
+      [:.inline-flex.items-center.gray
+       {:class hover-class} (toggle-depth this depth (str space lb "…" rb space))])))
 
 (defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}

@@ -40,9 +40,10 @@
                         :capture-event/blur    #(exec/set-context! {:block/code nil
                                                                     :block-view nil})})]
 
-   [:.w-50.flex-none.code.overflow-hidden (some-> (first (Block/eval-log block))
-                                                  (assoc :block-id (:id block))
-                                                  (repl-values/display-result))]])
+   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto
+    (some-> (first (Block/eval-log block))
+            (assoc :block-id (:id block))
+            (repl-values/display-result))]])
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
