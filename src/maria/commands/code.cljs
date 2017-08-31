@@ -110,8 +110,8 @@
   (let [before (Block/before blocks block)
         replacement (when-not before (Block/create :prose))]
     (.splice block-list block (if replacement [replacement] []))
-    (when replacement
-      (Block/focus! :clear-empty-code-block-replacement replacement :end))))
+
+    (Block/focus! :clear-empty-code-block-replacement (or before replacement) :end)))
 
 (defcommand :edit/auto-close
   {:bindings ["["

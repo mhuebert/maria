@@ -4,11 +4,7 @@
             [re-view.core :as v]
             [maria.blocks.blocks :as Block]))
 
-;;
-;;
-
-
-(def ^:dynamic *undo-op* false)
+(def ^:dynamic *ignored-op* false)
 
 (def -prior-selection (volatile! nil))
 
@@ -79,7 +75,7 @@
       (let [prev-version (first history)
             next-version (second history)]
         (dispose-removed prev-version next-version)
-        (binding [*undo-op* true]
+        (binding [*ignored-op* true]
           (reset! state (-> @state
                             (update :history rest)
                             (update :history/redo-stack conj prev-version)))
@@ -88,7 +84,7 @@
 
 (defn redo [state]
   (when-let [next-blocks (first (:history/redo-stack @state))]
-    (binding [*undo-op* true]
+    (binding [*ignored-op* true]
       (dispose-removed (first (:history @state)) next-blocks)
       (reset! state (-> @state
                         (update :history/redo-stack rest)
@@ -98,8 +94,8 @@
 
 
 (defn add! [state version]
-  (when-not *undo-op*
-    (binding [*undo-op* true]
+  (when-not *ignored-op*
+    (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
             prev-version (first history)
             merge? (merge-version? prev-version)
@@ -113,12 +109,17 @@
                           (update :history conj next-version)
                           (cond-> (seq redo-stack) (update :history/redo-stack empty))))))))
 
+(defn current-version [state]
+  (first (:history @state)))
+
+(defn update! [state f & args]
+  (add! state (apply f (current-version state) args)))
+
 (defn splice
   ([state block value] (splice state block 0 value))
   ([state block n value]
-   (let [next-version (-> (first (:history @state))
+   (let [next-version (-> (current-version state)
                           (Block/splice-block block n value)
-                          (Block/join-blocks)
                           (Block/ensure-blocks))]
      (add! state next-version)
      next-version)))

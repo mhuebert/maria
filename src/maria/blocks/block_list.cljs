@@ -18,9 +18,6 @@
                               (exec/set-context! {:block-list this})
                               (when (= (str (d/get-in :router/location [:query :eval])) "true")
                                 (e/on-load #(exec/exec-command-name :eval/doc))))
-   :undo                    (fn [{:keys [view/state]}] (history/undo state))
-   :redo                    (fn [{:keys [view/state]}] (history/redo state))
-   :clear-history           (fn [{:keys [view/state]}] (history/clear! state))
    :view/will-unmount       #(exec/set-context! {:block-list nil})
    :view/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id

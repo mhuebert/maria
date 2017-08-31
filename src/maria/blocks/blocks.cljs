@@ -48,8 +48,8 @@
    (focus! :unknown block nil))
   ([label block] (focus! label block nil))
   ([label block coords]
-   #_(prn :focus! label coords (:id block) (let [out (emit block)]
-                                           (subs out 0 (min 30 (count out)))))
+    #_(prn :focus! label coords (:id block) (let [out (emit block)]
+                                              (subs out 0 (min 30 (count out)))))
    (when-not (view block)
      (v/flush!))
    (when-let [the-view (view block)]
@@ -146,34 +146,6 @@
                    blocks)) [])))
 
 
-(defn join-blocks [blocks]
-  ;; PROBLEM
-  ;; unable to handle cursor properly when joining blocks.
-  blocks
-  #_(let [focused-block (focused-block)
-        focused-view (some-> focused-block (editor))
-        focused-coords (when (and focused-view (= :prose (kind focused-block)))
-                         (some-> focused-view (pm/cursor-coords)))]
-    (loop [blocks blocks
-           dropped-indexes []
-           block-to-focus nil
-           i 0]
-      (cond (> i (- (count blocks) 2))
-            (do (when (and block-to-focus focused-coords)
-                                                  (focus! :join-blocks block-to-focus focused-coords))
-                (with-meta blocks {:dropped dropped-indexes}))
-            (append? (nth blocks i) (nth blocks (inc i)))
-            (let [block (nth blocks i)
-                  next-block (nth blocks (inc i))
-                  next-focused-block (when (or (= (:id block) (:id focused-block))
-                                               (= (:id next-block) (:id focused-block)))
-                                       block)]
-              (recur (util/vector-splice blocks i 2 [(append block next-block)])
-                     (conj dropped-indexes (+ (inc i) (count dropped-indexes)))
-                     (or next-focused-block block-to-focus)
-                     i))
-            :else (recur blocks dropped-indexes block-to-focus (inc i))))))
-
 (defn ensure-blocks [blocks]
   (if-not (seq blocks)
     [(create :prose)]
@@ -205,17 +177,9 @@
        (assert index)
        (let [incoming-block-ids (into #{} (mapv :id values))
              replaced-blocks (subvec blocks index (+ index n))
-             removed-blocks (set (filterv (comp (complement incoming-block-ids) :id) replaced-blocks))
-             the-focused-block (focused-block)]
+             removed-blocks (set (filterv (comp (complement incoming-block-ids) :id) replaced-blocks))]
          (doseq [block removed-blocks]
-           (eval-context/dispose! block))
-         (when (removed-blocks the-focused-block)
-           (let [focused-n (id-index blocks (:id the-focused-block))]
-             (when-let [prev-block (->> (subvec blocks 0 focused-n)
-                                        (reverse)
-                                        (remove removed-blocks)
-                                        (first))]
-               (focus! :splice prev-block :end)))))
+           (eval-context/dispose! block)))
        (with-meta result
                   {:before (when-not (neg? start) (nth result start))
                    :after  (when-not (> end (dec (count result)))
@@ -226,3 +190,41 @@
 
 (defn after [blocks block]
   (second (drop-while (comp (partial not= (:id block)) :id) blocks)))
+
+#_(defn join-blocks [blocks]
+    ;; PROBLEM
+    ;; unable to handle cursor properly when joining blocks.
+    ;; unable to 'thread' cursor movements through splice-blocks and
+    ;; join-blocks.
+
+    (let [the-focused-block (focused-block)]
+      (loop [blocks blocks
+             dropped-indexes []
+             block-to-focus nil
+             i 0]
+        (cond (> i (- (count blocks) 2))
+              (do (when (and the-focused-block block-to-focus)
+                    (let [[block selection] block-to-focus]
+                      (.log js/console " :set-selection" selection)
+                      (prn :focused the-focused-block)
+                      (.log js/console (get-history-selections the-focused-block))
+                      (put-selections! block selection)
+                      (focus! :join-blocks block)))
+                  (with-meta blocks {:dropped dropped-indexes}))
+              (append? (nth blocks i) (nth blocks (inc i)))
+              (let [block (nth blocks i)
+                    next-block (nth blocks (inc i))
+                    joined-block (append block next-block)
+                    next-focused-block (cond (= (:id block) (:id the-focused-block))
+                                             [block (get-history-selections block)]
+                                             (= (:id next-block) (:id the-focused-block))
+                                             [block (let [sel (get-history-selections next-block)]
+                                                      (.create pm/TextSelection (state joined-block)
+                                                               (+ (.. (state block) -content -size) (.-anchor sel))))]
+                                             :else nil)]
+                (recur (util/vector-splice blocks i 2 [joined-block])
+                       (conj dropped-indexes (+ (inc i) (count dropped-indexes)))
+                       (or block-to-focus
+                           next-focused-block)
+                       i))
+              :else (recur blocks dropped-indexes block-to-focus (inc i))))))

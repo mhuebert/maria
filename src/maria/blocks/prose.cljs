@@ -11,6 +11,7 @@
             [goog.dom.classes :as classes]
             [re-view-routing.core :as r]
             [maria.views.icons :as icons]
+            [goog.object :as gobj]
             [re-db.d :as d]
             [re-view-prosemirror.markdown :as markdown]))
 
@@ -31,36 +32,34 @@
   (.create pm/EditorState
            #js {"doc"     doc
                 "schema"  markdown/schema
-                "plugins" (to-array [(.history pm/history)
+                "plugins" (to-array [#_(.history pm/history)
                                      #_(pm/keymap pm/keymap-base)
                                      (.inputRules pm/pm
                                                   #js {:rules (->> (.-allInputRules pm/pm)
                                                                    (into input-rules)
                                                                    (to-array))})])}))
 
-(defn make-editor-view [{:keys [editor-view-props before-change after-change on-dispatch on-selection-activity view/state] :as component}
+(defn make-editor-view [{:keys [before-change after-change on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
-  (-> (v/dom-node component)
-      (pm/EditorView. (->> {:state      editor-state
-                            :spellcheck false
-                            :attributes {:class "outline-0"}
-                            :dispatchTransaction
-                                        (fn [tr]
-                                          (let [^js/pm.EditorView pm-view (get @state :pm-view)
-                                                prev-state (.-state pm-view)]
-                                            (when before-change (before-change))
-                                            (pm/transact! pm-view tr)
-                                            (when-not (nil? on-dispatch)
-                                              (on-dispatch pm-view prev-state))
-                                            (when (and after-change (not= (.-doc prev-state)
-                                                                          (.-doc (.-state pm-view))))
-                                              (after-change))
-                                            (when (and on-selection-activity
-                                                       (not= (.-selection (.-state pm-view))
-                                                             (.-selection prev-state)))
-                                              (on-selection-activity pm-view (.-selection (.-state pm-view))))))}
-                           (merge editor-view-props)
-                           (clj->js)))))
+  (pm/EditorView. (v/dom-node component) (->> {:state                   editor-state
+                                               :spellcheck              false
+                                               :attributes              {:class "outline-0"}
+                                               :handleScrollToSelection (fn [view] true )
+                                               :dispatchTransaction     (fn [tr]
+                                                                          (let [^js/pm.EditorView pm-view (get @state :pm-view)
+                                                                                prev-state (.-state pm-view)]
+                                                                            (when before-change (before-change))
+                                                                            (pm/transact! pm-view tr)
+                                                                            (when-not (nil? on-dispatch)
+                                                                              (on-dispatch pm-view prev-state))
+                                                                            (when (and after-change (not= (.-doc prev-state)
+                                                                                                          (.-doc (.-state pm-view))))
+                                                                              (after-change))
+                                                                            (when (and on-selection-activity
+                                                                                       (not= (.-selection (.-state pm-view))
+                                                                                             (.-selection prev-state)))
+                                                                              (on-selection-activity pm-view (.-selection (.-state pm-view))))))}
+                                              (clj->js))))
 
 (defview Editor
   {:spec/props              {:on-dispatch :Function
@@ -73,13 +72,12 @@
                                 (set! (.-reView editor-view) this)
                                 (reset! state {:pm-view editor-view})))
 
-   :reset-doc               (fn [{:keys [view/state parse]} new-value]
+   :reset-doc               (fn [{:keys [view/state parse]} doc]
                               (let [view (:pm-view @state)]
                                 (.updateState view
-                                              (.create pm/EditorState #js {"doc"     (cond-> new-value
-                                                                                             (string? new-value) (parse))
+                                              (.create pm/EditorState #js {"doc"     doc
                                                                            "schema"  markdown/schema
-                                                                           "plugins" (aget view "state" "plugins")}))))
+                                                                           "plugins" (gobj/getValueByKeys view "state" "plugins")}))))
 
    :view/will-receive-props (fn [{:keys [doc block view/state]
                                   :as   this}]
@@ -102,7 +100,6 @@
                                                        (dispatch (.scrollIntoView (.-tr state)))))
    :focus             (fn [this position]
                         (v/flush!)
-
                         (let [pm-view (.getEditor this)
                               state (.-state pm-view)
                               doc (.-doc state)]
@@ -114,9 +111,9 @@
                                                      (object? position)
                                                      (pm/coords-selection pm-view position)
                                                      :else nil)]
-                            (.dispatch pm-view (.setSelection (.-tr state) selection)))
-
-                          #_(js/setTimeout (.-scrollIntoView this) 0)))
+                            (.dispatch pm-view (.setSelection (.-tr state)
+                                                              selection)))
+                          (js/setTimeout (.-scrollIntoView this) 0)))
    :view/did-mount    #(Block/mount (:block %) %)
    :view/will-unmount (fn [this]
                         (Block/unmount (:block this))
@@ -157,9 +154,9 @@
 
   Block/ICursor
   (get-history-selections [this]
-    (.. (Block/editor this)
-        -state
-        -selection))
+    (some-> (Block/editor this)
+            .-state
+            .-selection))
   (put-selections! [this selections]
     (some-> (Block/editor this)
             (commands/apply-command
@@ -189,24 +186,31 @@
 
   Block/IAppend
   (append? [this other-block]
-    (= :prose (Block/kind other-block)))
+    (or (Block/empty? this)
+        (= :prose (Block/kind other-block))))
 
   (append [this other-block]
-    (when (Block/append? this other-block)
-      ;; TODO
-      ;; insert (.-doc (:state other-block)) into doc
-      (assoc this :doc (.parse markdown/parser
-                               (str (serialize-block this)
-                                    "\n\n"
-                                    (or (util/some-str (serialize-block other-block))
-                                        "\n"))))))
+    (if (Block/empty? this)
+      other-block
+      (when (= :prose (Block/kind other-block))
+        (let [doc (.replace (:doc this)
+                            (.. (:doc this) -content -size)
+                            (.. (:doc this) -content -size)
+                            (pm/Slice. (.-content (:doc other-block)) 0 0))]
+          (assoc this :doc doc))
+        #_(assoc this :doc (.parse markdown/parser
+                                   (str (serialize-block this)
+
+                                        (or (util/some-str (serialize-block other-block))
+                                            "\n")))))))
 
   Block/IBlock
 
   (kind [this] :prose)
 
   (empty? [this]
-    (util/whitespace-string? (serialize-block this)))
+    (and (< (.. (:doc this) -content -size) 10)
+         (util/whitespace-string? (serialize-block this))))
 
   (emit [this]
     (tree/string {:tag   :comment
@@ -246,7 +250,7 @@
                                       :after   [(:value (:node after)) :expected after-value]
                                       :spliced spliced})
                             (throw e)))))]
-           (assert (= 3 (count (Block/join-blocks blocks))))
+           #_(assert (= 3 (count (Block/join-blocks blocks))))
 
            ;;
            ;; Removals

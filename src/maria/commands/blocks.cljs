@@ -1,6 +1,7 @@
 (ns maria.commands.blocks
   (:require [maria-commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
+            [maria.blocks.history :as history]
             [re-db.d :as d]))
 
 (defcommand :eval/doc
@@ -49,9 +50,9 @@
 (defcommand :block/undo
   {:bindings ["M1-z"]}
   [{:keys [block-list]}]
-  (.undo block-list))
+  (history/undo (:view/state block-list)))
 
 (defcommand :block/redo
   {:bindings ["M1-Shift-z"]}
   [{:keys [block-list]}]
-  (.redo block-list))
+  (history/redo (:view/state block-list)))

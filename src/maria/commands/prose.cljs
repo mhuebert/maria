@@ -6,7 +6,9 @@
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.blocks.history :as history]
+            [re-view.core :as v]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
@@ -136,6 +138,27 @@
       (.splice block-list block -1 [block])
       true)))
 
+(defn join-with-prev [{:keys [blocks block-list block]}]
+  (fn [_ _]
+    (when (Block/at-start? block)
+      (let [before (Block/before blocks block)]
+        (when (= :prose (Block/kind before))
+          (when-let [editor (Block/editor before)]
+            (let [sel (.atEnd pm/Selection (Block/state before))
+                  anchor (.-anchor sel)
+                  state (:view/state block-list)
+                  _ (binding [history/*ignored-op* true]
+                      (.dispatch editor (-> (.. editor -state -tr)
+                                            (.insert anchor (.-content (Block/state block)))
+                                            (.join (inc anchor) (.-depth sel))
+                                            (.setSelection sel))))
+                  next-before (assoc before :doc (.. editor -state -doc))]
+
+              (Block/focus! next-before)
+              (history/add! state (Block/splice-block blocks before 1 [next-before]))
+
+              true)))))))
+
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
    :when     :block/prose}
@@ -144,6 +167,7 @@
                  (commands/chain
                    commands/open-link
                    commands/open-image
+                   (join-with-prev context)
                    (remove-empty-block context)
                    (clear-previous-empty context)
                    commands/backspace)))
