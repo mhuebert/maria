@@ -197,7 +197,7 @@
                                (when error
                                  (.error js/console error))
                                [:div
-                                {:class (when error? "bg-darken-red")}
+                                {:class (when error? "bg-darken-red cf")}
                                 (when (and source (or show-source? error (seq warnings)))
                                   (display-source result))
                                 [:.ws-prewrap.relative      ;.mv3.pv1

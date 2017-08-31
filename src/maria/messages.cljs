@@ -1,5 +1,7 @@
 (ns maria.messages
-  (:require [clojure.string :as string]))
+  (:require [clojure.string :as string]
+            [cljs.analyzer :as ana]
+            [maria.util :as util]))
 
 (defprotocol IDoc
   (doc [this] "Return a docstring for type"))
@@ -167,53 +169,51 @@
 ;;(humanize-sequence (map what-is [1 2 'a :b "c"]))
 ;;=> "a number, a number, a symbol, a keyword, or a string"
 
-(defn parse-warning [{warning-type :type :as w}]
-  (let [bad-types (map type-to-name
-                       (remove (partial = 'number)
-                               (:types (:extra w))))]
-    (case warning-type
-      :fn-arity {:name "Incorrect function arity"
-                 :doc  (str "The function `"
-                            (name (-> w :extra :name))
-                            "` in the expression above needs "
-                            (if (= 0 (-> w :extra :argc))   ;; TODO get arity from meta
-                              "more"
-                              "a different number of")
-                            " arguments.")}
-      :invalid-arithmetic {:name "Invalid arithmetic"
-                           :doc  (str "In the above expression, the arithmetic operator `"
-                                      (name (-> w :extra :js-op))
-                                      "` can't be used on non-numbers, like "
-                                      (humanize-sequence bad-types) ".")}
-      :undeclared-var {:name "Undeclared var"
-                       :doc  (str "The above expression contains a reference to `"
-                                  (-> w :extra :suffix)
-                                  "`, but that hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")}
-      :overload-arity {:name "Arity overload"
-                       :doc  "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments."}
 
-      ;; ignore infer warnings for now
-      :infer-warning nil
 
-      {:name (str warning-type)
-       :doc  (list [:div (str "Unhandled warning: " warning-type)]
-                   (prn-str (:extra w)))})))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Warning messages can be set by overriding default values in the
+;; cljs.analyzer/error-message multimethod.
+
+(defn bad-types [info]
+  (map type-to-name (remove (partial = 'number) (:types info))))
+
+(defmethod ana/error-message :fn-arity
+  [type info]
+  (str "The function `"
+       (or (:ctor info)
+           (:name info))
+       "` needs "
+       (if (= 0 (-> info :argc))   ;; TODO get arity from meta
+         "more"
+         "a different number of")
+       " arguments."))
+
+(defmethod ana/error-message :invalid-arithmetic
+  [type info]
+  (str "The arithmetic operator `"
+       (name (:js-op info))
+       "` can't be used on non-numbers, like "
+       (humanize-sequence (bad-types info)) "."))
+
+(defmethod ana/error-message :undeclared-var
+  [type info]
+  (str "`" (:suffix info) "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))
+
+(defmethod ana/error-message :overload-arity
+  [type info]
+  "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")
+
+(def ignored-warning-types #{:infer-warning})
 
 (defn reformat-warning [warning]
-  (when-let [{:keys [name doc] :as the-warning} (parse-warning warning)]
-    (if (string? the-warning)
-      the-warning
-      [:div
-       doc
-       [:.o-50.i "(" name ")"]])))
-
-;; NB took this out because we're already
-;; printing the expression in a nicer way
-;; above the messages. -jar
-;;
-;; (:form w) "` contains `"
-
-;;{:type :undeclared-var, :extra {:prefix maria.user, :suffix what-is, :macro-present? false}, :form (what-is "foo")}
+  (if (ignored-warning-types (:type warning))
+    nil
+    [:div
+     (ana/error-message (:type warning) (:extra warning))
+     [:.o-50.i "(" (str (:type warning)) ")"]]))
 
 (comment
 

@@ -1,11 +1,15 @@
 (ns maria.util
   (:require [goog.events :as events]
             [goog.object :as gobj]
-            [re-view.core :as v]))
+            [re-view.core :as v]
+            [clojure.string :as string]))
 
 (defn some-str [s]
   (when (and (string? s) (not (identical? s "")))
     s))
+
+(defn spaced-string [the-name]
+  (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
 
 (defn handle-captured-events [{:keys [view/props] :as this}]
   (let [dom-node (v/dom-node this)]
