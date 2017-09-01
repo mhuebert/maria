@@ -1,7 +1,8 @@
-;; Hi! This environment is called Maria, and we're going to show you
-;; some things you can do with it. Don't worry if anything's new and a
-;; little confusing at first, we're going to explain everything as we
-;; go.
+;; # Hi!
+;; This environment is called Maria, and we're going to show you
+;; some things you can do with it. 😃 Don't worry if anything's new
+;; and a little confusing at first, we're going to explain everything
+;; as we go.
 
 ;; First, let's ask the computer some questions...
 
@@ -22,11 +23,10 @@
 
 (what-is "puppy")
 
-;; Ok! It's a _string_, which is a funny way of saying "some
-;; text". You can tell it's a string because it's wrapped in
-;; double-quotes. There are several other kinds of things in Clojure
-;; that we'll get to know later, but in the meantime let's talk about
-;; those parentheses.
+;; It's a _string_, which is a funny way of saying "some text". You
+;; can tell it's a string because it's wrapped in double-quotes. There
+;; are several other kinds of things in Clojure that we'll get to know
+;; later, but in the meantime let's talk about those parentheses.
 
 ;; Whenever you see an expression in parentheses, it's kind of like a
 ;; sentence where the first thing after the `(` is treated as the
@@ -41,20 +41,22 @@
 
 (circle 50)
 
-;; Look! Now we have a circle with a 50-pixel radius (because we gave
-;; it `50` as an argument).
-
-;; Try giving `circle` two arguments, just to see what happens:
+;; We get a circle with a 50-pixel radius. I wonder what giving
+;; `circle` two arguments would do.
 
 (circle 20 10)
 
-;; We got an error! Don't worry if you create errors. It happens to
-;; everyone. When we write code that Clojure can't understand, it will
-;; tell us. It will even try to tell us how to fix our code. 💪✌️
+;; 😱 We got an error. Don't worry, this happens to every
+;; programmer. Stay positive ✌️ and track down the misunderstanding
+;; between you and the computer.
 
-;; What if we hadn't already known that `circle` needed to be given a
-;; radius? How would we find out the arguments to a function? Why, we
-;; can ask our friend the computer!
+;; When we write code that Clojure can't understand, Maria will tell
+;; us. It will even try to tell us how to fix our code. In this case,
+;; we gave `circle` one too many arguments.
+
+;; What if we hadn't already known that `circle` needed to be given
+;; just one radius argument? How would we find out the arguments to a
+;; function?  Why, we can ask our friend the computer!
 
 (doc circle)
 
@@ -73,11 +75,12 @@
 (what-is (circle 50))
 
 ;; We can even apply the `what-is` function to the `what-is` function
-;; itself to find out what `what-is` is! 😹
+;; to find out what `what-is` is! 😹
 
 (what-is what-is)
 
-;;;; Asking the computer to do things
+
+;; ## Asking the computer to do things
 
 ;; Try creating your own expression to use some other numbers with
 ;; `circle`.
@@ -91,7 +94,7 @@
 ;; This is *your* playground.
 
 
-;;;; Shapes and Colors
+;; ## Shapes and Colors
 
 ;; As you might guess, there's a `rectangle` function much like
 ;; `circle`. Let's find out how it works:
@@ -157,14 +160,15 @@ color-names
 
 ;; If you have some time, take a minute and play around a little. Make
 ;; your own shape combinations, evaluating inner expressions to make
-;; sure you know how they fit into the expression containing them.
+;; sure you know how they fit into the expression containing them. 🕸️
 
-;;;; Powers of fun
+
+;; ## Powers of fun
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
-;; over and over again is a chore. We don't have time for that! Our
+;; over and over again is a 😴 chore. We don't have time for that! Our
 ;; friend the computer wants to help, and it is REALLY GOOD at
-;; repetitive chores.
+;; repetitive chores. 🤖
 
 ;; Let's start by evaluating this:
 
@@ -194,7 +198,7 @@ color-names
 ;; Have a look at both of those expressions. As far as the computer is
 ;; concerned, it's the same, but with the magic of 'map', you can
 ;; repeat a function without extra typing. Map is a great way to do
-;; avoid repeating yourself.
+;; avoid repeating yourself. 📢
 
 ;; What if we wanted purple circles? It would be nice if there was a
 ;; function to turn a number into a purple circle. Let's make a new
@@ -377,7 +381,7 @@ color-names
 (colorize "yellow" (rectangle 100 100))
 
 
-;;;; The power of names
+;; ## The power of names
 
 ;; Often when programming we need to name something we've created. For instance, we can let the name "palette" be a vector of colors:;; FIXME
 
