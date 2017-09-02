@@ -50,11 +50,11 @@
 (circle 20 10)
 
 ;; 😱 Don't worry, errors happens to every programmer. Stay positive ✌️
-;; and track down the misunderstanding between you and the computer.
-
-;; When we write code that Clojure can't understand, Maria will tell
-;; us. It will even try to tell us how to fix our code. In this case,
-;; we gave `circle` one too many arguments.
+;; and track down the misunderstanding between you and the
+;; computer. In this case, we gave `circle` one too many
+;; arguments. Notice that when we write code that Clojure can't
+;; understand, Maria told us. Maria will even try to tell us how to
+;; fix our code. Thanks, invisible robot helper.
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
@@ -63,12 +63,12 @@
 (doc circle)
 
 ;; The `doc` function is short for "documentation". It tells us what a
-;; function does and what parameters it needs. We gave `doc` the
-;; parameter `circle`, so it gives us documentation for the `circle`
+;; function does and what arguments it needs. We gave `doc` the
+;; argument `circle`, so it gives us documentation for the `circle`
 ;; function. The computer wants to help us.
 
-;; Also, we can examine the different pieces of that expression with
-;; `what-is`:
+;; Remember, we can also examine the different pieces of that
+;; expression with `what-is`:
 
 (what-is 50)
 
@@ -82,7 +82,12 @@
 (what-is what-is)
 
 
-;; ## Asking the computer to do things
+;; ## Shapes and Colors
+
+;; Now that you've seen the basics of evaluating expressions, calling
+;; functions, and asking the computer clarifying questions with
+;; `what-is` and `doc`, let's learn some more through toying with some
+;; shapes and colors.
 
 ;; Try creating your own expression to use some other numbers with
 ;; `circle`.
@@ -95,15 +100,12 @@
 ;; at any time. Try absurd numbers! Move things around!
 ;; This is *your* playground.
 
-
-;; ## Shapes and Colors
-
 ;; As you might guess, there's a `rectangle` function much like
 ;; `circle`. Let's find out how it works:
 
 (doc rectangle)
 
-;; OK, so it takes two parameters: width and height. Let's take it for
+;; OK, so it takes two arguments: width and height. Let's take it for
 ;; a spin.
 
 (rectangle 200 50)
@@ -425,7 +427,7 @@ palette
 
 ;; All the functions we've used so far have had names, but this one doesn't, because we're just using it once.
 
-;; Our anonymous function has square brackets to declare its parameters, of which it has none. Now we can call this anonymous function `repeatedly`:
+;; Our anonymous function has square brackets to declare its arguments, of which it has none. Now we can call this anonymous function `repeatedly`:
 (apply above
        (map colorize
             (repeatedly (fn [] (rand-nth palette)))
