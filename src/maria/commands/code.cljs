@@ -4,10 +4,13 @@
             [maria.eval :as e]
             [magic-tree.core :as tree]
             [magic-tree-editor.edit :as edit :include-macros true]
+            [magic-tree-editor.codemirror :as cm]
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.live.ns-utils :as ns-utils]
+            [maria.views.floating-hint :as hint]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -37,13 +40,13 @@
 
 (defcommand :selection/cursor-left-edge
   {:bindings ["M1-Shift-Left"]
-   :when :block/code}
+   :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :left))
 
 (defcommand :selection/cursor-right-edge
   {:bindings ["M1-Shift-Right"]
-   :when :block/code}
+   :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :right))
 
@@ -156,10 +159,22 @@
                                      (edit/move -1)
                                      (edit/set-editor-cursor!))
       (#{\( \[ \{ \"} prev-char) (edit/operation editor
-                                                 (edit/splice editor)
+                                                 (edit/unwrap editor)
                                                  (edit/set-editor-cursor! (edit/move pointer -1)))
 
       :else false)))
+
+(defcommand :hint/completions
+  {:bindings ["M1-J"]
+   :when     :block/code}
+  [{:keys [editor block]}]
+  (let [node (get-in editor [:magic/cursor :bracket-node])]
+    (when (and (#{:symbol :token} (:tag node))
+               (= (tree/bounds node :right)
+                  (cm/pos->cm (cm/get-cursor editor) :left)))
+      (hint/floating-hint! {:element (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
+                                       [:.flex.items-center (str completion) [:.flex-auto] [:.gray (str namespace)]])
+                            :rect    (Block/cursor-coords block)}))))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
@@ -213,12 +228,19 @@
   [context]
   (edit/kill (:editor context)))
 
-(defcommand :edit/splice
+(defcommand :edit/unwrap
   "Splice form"
   {:bindings ["M2-S"]
    :when     :block/code}
   [context]
-  (edit/splice (:editor context)))
+  (edit/unwrap (:editor context)))
+
+(defcommand :edit/raise
+  "Splice form"
+  {:bindings ["M2-Shift-S"]
+   :when     :block/code}
+  [context]
+  (edit/raise (:editor context)))
 
 (defcommand :eval/form
   "Evaluate the current form"

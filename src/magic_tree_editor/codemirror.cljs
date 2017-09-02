@@ -9,6 +9,7 @@
             [cljs.core.match :refer-macros [match]]
             [re-db.d :as d]
             [goog.dom :as gdom]
+            [goog.object :as gobj]
             [maria.eval :as e]
             [magic-tree-editor.util :as cm-util]))
 
@@ -21,6 +22,12 @@
   (if (map? pos)
     (CM/Pos (:line pos) (:column pos))
     pos))
+
+(defn cursor->range [cursor]
+  {:line       (.-line cursor)
+   :column     (.-ch cursor)
+   :end-line   (.-line cursor)
+   :end-column (.-ch cursor)})
 
 (defn cursor-bookmark []
   (gdom/createDom "div" #js {"className" "cursor-marker"}))
@@ -42,9 +49,18 @@
   IComparable
   (-compare [x y]
     (CM/cmpPos x y))
+  IEquiv
+  (-equiv [x y]
+    (and y
+         (= (.-line x) (.-line y))
+         (= (.-ch x) (.-ch y))))
   IPrintWithWriter
   (-pr-writer [pos writer _]
-    (-write writer (str "#Pos[" (.-line pos) ", " (.-ch pos) "]"))))
+    (-write writer (str "#Pos[" (.-line pos) ", " (.-ch pos) "]")))
+  ILookup
+  (-lookup
+    ([o k] (gobj/get o k))
+    ([o k not-found] (gobj/get o k not-found))))
 
 (.defineOption js/CodeMirror "cljsState" false
                (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {}))))
@@ -101,6 +117,12 @@
 (defn selection? [cm]
   (.somethingSelected cm))
 
+(defn selection-text
+  "Return selected text, or nil"
+  [cm]
+  (when (.somethingSelected cm)
+    (.getSelection cm)))
+
 (defn set-cursor! [cm pos]
   (unset-cursor-root! cm)
   (let [pos (cm-pos pos)]
@@ -115,7 +137,7 @@
       (if (-> editor (aget "state" "focused"))
         (.setCursor editor cursor-pos)))))
 
-(defn parse-range
+(defn range->positions
   "Given a Clojure-style column and line range, return Codemirror-compatible `from` and `to` positions"
   [{:keys [line column end-line end-column]}]
   [(CM/Pos line column)
@@ -124,17 +146,17 @@
 (defn mark-ranges!
   "Add marks to a collection of Clojure-style ranges"
   [cm ranges payload]
-  (doall (for [[from to] (map parse-range ranges)]
+  (doall (for [[from to] (map range->positions ranges)]
            (.markText cm from to payload))))
 
-(defn get-range [cm range]
-  (let [[from to] (parse-range range)]
+(defn range-text [cm range]
+  (let [[from to] (range->positions range)]
     (.getRange cm from to)))
 
 (defn select-range
   "Copy a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (let [[from to] (parse-range range)]
+  (let [[from to] (range->positions range)]
     (.setSelection cm from to #js {:scroll false})))
 
 (defn replace-range!
@@ -153,24 +175,29 @@
       (set-cursor-root! cm))
     (select-range cm (tree/bounds node))))
 
+(defn pos->cm
+  ([pos]
+   {:line   (.-line pos)
+    :column (.-ch pos)})
+  ([pos side]
+   (case side :left {:line   (.-line pos)
+                     :column (.-ch pos)}
+              :right {:end-line   (.-line pos)
+                      :end-column (.-ch pos)})))
+
 (defn selection-bounds
   [cm]
   (if (.somethingSelected cm)
-    (let [sel (first (.listSelections cm))
-          from (.from sel)
-          to (.to sel)]
-      {:line       (.-line from)
-       :column     (.-ch from)
-       :end-line   (.-line to)
-       :end-column (.-ch to)})
+    (let [sel (first (.listSelections cm))]
+      (pos->cm (.from sel))
+      (merge (pos->cm (.from sel) :left)
+             (pos->cm (.to sel) :right)))
     (let [cur (get-cursor cm)]
-      {:line       (.-line cur)
-       :column     (.-ch cur)
-       :end-line   (.-line cur)
-       :end-column (.-ch cur)})))
+      (pos->cm cur))))
 
-(defn highlight-range [node]
-  (if (= :string (:tag node))
+(defn highlight-range [pos node]
+  (if (and (tree/has-edges? node)
+           (tree/within? (tree/inner-range node) pos))
     (tree/inner-range node)
     node))
 
@@ -180,11 +207,12 @@
         m-down? (modifier-down? M1)
         shift-down? (modifier-down? SHIFT)]
     (match [m-down? evt-type key-code]
-           [true _ (:or 16 91)] (let [loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
+           [true _ (:or 16 91)] (let [pos (cursor->range (get-cursor cm))
+                                      loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
                                                   shift-down? (tree/top-loc))]
                                   (some->> loc
                                            (z/node)
-                                           (highlight-range)
+                                           (highlight-range pos)
                                            (select-node! cm)))
            [_ "keyup" 91] (return-cursor-to-root! cm)
            :else (when-not (contains? #{16 M1} key-code)

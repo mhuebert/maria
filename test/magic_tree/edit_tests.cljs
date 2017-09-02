@@ -52,11 +52,11 @@
     edit/uneval "[]|" "#_[]|"
     edit/uneval "a|bcd" "#_abcd|"
 
-    edit/splice "[|]" "|"
-    edit/splice "[| ]" "| "
-    edit/splice " [|]" " |"
-    edit/splice "[ |]" " |"
-    edit/splice "[ \"abc|\" ]" "[ abc| ]"
+    edit/unwrap "[|]" "|"
+    edit/unwrap "[| ]" "| "
+    edit/unwrap " [|]" " |"
+    edit/unwrap "[ |]" " |"
+    edit/unwrap "[ \"abc|\" ]" "[ abc| ]"
 
     edit/expand-selection "(|a)" "(<a>)"
     edit/expand-selection "(a|b)" "(<ab>)"

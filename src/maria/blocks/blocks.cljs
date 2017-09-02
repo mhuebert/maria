@@ -64,14 +64,24 @@
 
 (defprotocol ICursor
   (get-history-selections [this])
+  (get-cursor [this])
   (put-selections! [this selections])
 
-  (cursor-edge [this])
   (cursor-coords [this])
-  (at-end? [this])
-  (at-start? [this])
+
+  (start [this])
+  (end [this])
+
   (selection-expand [this])
   (selection-contract [this]))
+
+(defn at-start? [block]
+  (some-> (get-cursor block)
+          (= (start block))))
+
+(defn at-end? [block]
+  (= (get-cursor block)
+     (end block)))
 
 (defprotocol IEval
   (eval! [this] [this kind value])

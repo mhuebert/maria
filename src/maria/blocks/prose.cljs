@@ -13,16 +13,17 @@
             [maria.views.icons :as icons]
             [goog.object :as gobj]
             [re-db.d :as d]
-            [re-view-prosemirror.markdown :as markdown]))
+            [re-view-prosemirror.markdown :as markdown]
+            [maria.views.floating-hint :as hint]))
 
-(defview link-dropdown [{:keys [href editor close!]}]
+(defview link-dropdown [{:keys [href editor]}]
   [:.flex.items-center
    [:.dib.pointer
     {:on-click (fn [e]
                  (.preventDefault e)
                  (.stopPropagation e)
                  (commands/apply-command editor (partial commands/open-link true))
-                 (close!))}
+                 (hint/hide-hint!))}
     (-> icons/ModeEdit
         (icons/size 16)
         (icons/class "mr1 o-50"))]
@@ -44,7 +45,7 @@
   (pm/EditorView. (v/dom-node component) (->> {:state                   editor-state
                                                :spellcheck              false
                                                :attributes              {:class "outline-0"}
-                                               :handleScrollToSelection (fn [view] true )
+                                               :handleScrollToSelection (fn [view] true)
                                                :dispatchTransaction     (fn [tr]
                                                                           (let [^js/pm.EditorView pm-view (get @state :pm-view)
                                                                                 prev-state (.-state pm-view)]
@@ -135,10 +136,9 @@
                             (when-let [a (r/closest (.-target e) r/link?)]
                               (when-not (classes/has a "pm-link")
                                 (do (.stopPropagation e)
-                                    (d/transact! [[:db/add :ui/globals :dropdown {:rect      (.getBoundingClientRect a)
-                                                                                  :component link-dropdown
-                                                                                  :props     {:href   (.-href a)
-                                                                                              :editor (.getEditor this)}}]])))))
+                                    (hint/floating-hint! {:rect    (.getBoundingClientRect a)
+                                                          :element (link-dropdown {:href   (.-href a)
+                                                                                   :editor (.getEditor this)})})))))
            :ref           #(v/swap-silently! state assoc :prose-editor-view %)
            :before-change before-change
            :after-change  after-change
@@ -166,16 +166,9 @@
   (cursor-coords [this]
     (pm/cursor-coords (Block/editor this)))
 
-  (at-start? [this]
-    (let [state (.-state (Block/editor this))]
-      (= (.-pos (pm/cursor-$pos state))
-         (.-pos (pm/start-$pos state)))))
-
-
-  (at-end? [this]
-    (let [state (.-state (Block/editor this))]
-      (= (.-pos (pm/cursor-$pos state))
-         (.-pos (pm/end-$pos state)))))
+  (start [this] (pm/start-$pos (.-state (Block/editor this))))
+  (end [this] (pm/end-$pos (.-state (Block/editor this))))
+  (get-cursor [this] (pm/cursor-$pos (.-state (Block/editor this))))
 
   (selection-expand [this]
     (commands/apply-command (Block/editor this) commands/expand-selection))

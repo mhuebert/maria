@@ -3,14 +3,13 @@
             [maria-commands.exec :as exec]
             [maria.views.values :as repl-values]
             [maria.views.codemirror :as codemirror]
-            [re-db.d :as d]
+            [magic-tree-editor.codemirror :as cm]
             [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
             [maria.util :as util]
             [magic-tree.core :as tree]
             [magic-tree-editor.edit :as edit]
             [maria.eval :as e]
-            [magic-tree-editor.util :as cm]
             [cells.eval-context :as eval-context]))
 
 (defview code-view
@@ -54,6 +53,10 @@
 (extend-type Block/CodeBlock
 
   Block/ICursor
+  (get-cursor [this]
+    (when-let [cm (Block/editor this)]
+      (when-not (.somethingSelected cm)
+        (cm/get-cursor cm))))
   (get-history-selections [this]
     (let [editor (Block/editor this)]
       (if-let [root-cursor (:cursor/cursor-root editor)]
@@ -65,36 +68,12 @@
     (some-> (Block/editor this)
             (.setSelections selections)))
 
-  (cursor-edge [this]
-    (let [editor (Block/editor this)
-          last-line (.lastLine editor)
-          {cursor-line :line
-           cursor-ch   :ch} (util/js-lookup (.getCursor editor))]
-      (cond (Block/empty? this) :empty
-            (and (= cursor-line last-line)
-                 (= cursor-ch (count (.getLine editor last-line))))
-            :end
-            (and (= cursor-line 0)
-                 (= cursor-ch 0))
-            :start
-            :else nil)))
-
   (cursor-coords [this]
     (.cursorCoords (Block/editor this)))
 
-  (at-end? [this]
-    (let [cm (Block/editor this)
-          cursor (.getCursor cm)]
-      (and (not (.somethingSelected cm))
-           (= [(.lastLine cm)
-               (count (.getLine cm (.lastLine cm)))]
-              [(.-line cursor) (.-ch cursor)]))))
-
-  (at-start? [this]
-    (let [cm (Block/editor this)
-          cursor (.getCursor cm)]
-      (and (not (.somethingSelected cm))
-           (= [0 0] [(.-line cursor) (.-ch cursor)]))))
+  (start [this] (cm/Pos 0 0))
+  (end [this] (let [cm (Block/editor this)]
+                (cm/Pos (.lastLine cm) (count (.getLine cm (.lastLine cm))))))
 
   (selection-expand [this]
     (edit/expand-selection (Block/editor this)))
@@ -104,7 +83,6 @@
 
   Block/IAppend
   (append? [this other-block] false)
-
 
   Block/IBlock
   (state [this] (:node this))

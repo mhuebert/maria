@@ -12,18 +12,17 @@
 
 (def other-bracket {\( \) \[ \] \{ \} \" \"})
 
-
 (def pass (.-Pass js/CodeMirror))
 
 (defn copy-range
   "Copy a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (cm-util/copy (cm/get-range cm range)))
+  (cm-util/copy (cm/range-text cm range)))
 
 (defn cut-range
   "Cut a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (cm-util/copy (cm/get-range cm range))
+  (cm-util/copy (cm/range-text cm range))
   (cm/replace-range! cm "" range))
 
 (defn get-kill-range
@@ -149,7 +148,7 @@
       (->> (get-kill-range pos loc)
            (cut-range cm)))))
 
-(defn splice [{{:keys [pos bracket-loc bracket-node]} :magic/cursor :as cm}]
+(defn unwrap [{{:keys [pos bracket-loc bracket-node]} :magic/cursor :as cm}]
   (when (and bracket-loc (not (cm/selection? cm)))
     (when-let [closest-edges-node (loop [loc (cond-> bracket-loc
                                                      (not (tree/inside? bracket-node pos)) (z/up))]
@@ -159,10 +158,19 @@
       (let [pos (cm/get-cursor cm)
             goal (move-char cm pos -1)]
         (operation cm
-                   (cm/replace-range! cm (cm/get-range cm (tree/inner-range closest-edges-node)) closest-edges-node)
+                   (cm/replace-range! cm (cm/range-text cm (tree/inner-range closest-edges-node)) closest-edges-node)
                    (cm/set-cursor! cm goal)))
 
       true)))
+
+(defn raise [{{:keys [pos bracket-loc bracket-node]} :magic/cursor :as cm}]
+  ;; TODO
+  ;; highlight bracket node for raise
+  (when (and bracket-loc (z/up bracket-loc))
+    (let [up (z/node (z/up bracket-loc))]
+      (operation cm
+                 (cm/replace-range! cm (tree/string bracket-node) up)
+                 (cm/set-cursor! cm (tree/bounds up :left))))))
 
 (def copy-form
   (fn [cm] (if (cm/selection? cm)
@@ -200,19 +208,13 @@
   (when-not (= node (first (get-in cm [:magic/cursor :stack])))
     (swap! cm update-in [:magic/cursor :stack] conj (tree/bounds node))))
 
-(defn cursor->range [cursor]
-  {:line       (.-line cursor)
-   :column     (.-ch cursor)
-   :end-line   (.-line cursor)
-   :end-column (.-ch cursor)})
-
 (defn tracked-select [cm node]
   (when node
     (cm/select-range cm node)
     (push-stack! cm (tree/bounds node))))
 
 (defn push-cursor! [cm]
-  (push-stack! cm (cursor->range (:cursor/cursor-root cm)))
+  (push-stack! cm (cm/cursor->range (:cursor/cursor-root cm)))
   (some-> (:cursor/clear-marker cm)
           (apply nil)))
 

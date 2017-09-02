@@ -251,11 +251,11 @@
         (dispose! this)
         (binding [*read-log* (volatile! #{})]
           (let [value (-compute this)
-                next-deps (disj @*read-log* (name this))
-                prev-deps (dependencies this)]
-            (doseq [added (set/difference next-deps prev-deps)]
+                next-dependencies (disj @*read-log* (name this))
+                prev-dependencies (dependencies this)]
+            (doseq [added (set/difference next-dependencies prev-dependencies)]
               (depend this added))
-            (doseq [removed (set/difference prev-deps next-deps)]
+            (doseq [removed (set/difference prev-dependencies next-dependencies)]
               (remove-edge this removed))
             (-reset! this value)))))
     this)

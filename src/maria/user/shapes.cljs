@@ -7,8 +7,7 @@
 
 (defprotocol IListen
   (-listen [this listeners]
-           "Attach event listeners to shape.")
-  (doc [this] "a shape: some geometry that Maria can draw"))
+           "Attach event listeners to shape."))
 
 (defn listen
   ([event listener shape]
@@ -43,7 +42,9 @@
   (-dissoc [this key]
     (new Shape (dissoc attrs key)))
   ISeqable
-  (-seq [this] (seq attrs)))
+  (-seq [this] (seq attrs))
+  IDoc
+  (doc [this] "a shape: some geometry that Maria can draw"))
 
 (defn circle
   "Returns a circle of `radius`."

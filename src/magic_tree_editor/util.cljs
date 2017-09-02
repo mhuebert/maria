@@ -4,12 +4,6 @@
             [goog.dom :as dom]
             [clojure.string :as string]))
 
-(defn selection-text
-  "Return selected text, or nil"
-  [cm]
-  (when (.somethingSelected cm)
-    (.getSelection cm)))
-
 (defn mouse-pos
   "Given mouse event, return position of character under cursor"
   [editor e]
