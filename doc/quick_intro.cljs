@@ -18,9 +18,8 @@
 
 ;; Clojure is a language full of things called expressions, and
 ;; "puppy" is one of them. All expressions can be evaluated, as you
-;; just did. What kind of expression is "puppy"?
-
-;; Evaluate this expression to find out:
+;; just did. What kind of expression is "puppy"? Evaluate this
+;; expression to find out:
 
 (what-is "puppy")
 
@@ -37,19 +36,21 @@
 ;; have anything to do with arguing, it's just a word from maths for
 ;; what's given to a function).
 
-;; What do you think a `circle` function with an argument of `50`
-;; might do? Try evaluating it to find out:
+;; What do you think evaluating this next function might do? Say your
+;; guess out loud before trying it--it's fun and helpful to try to
+;; predict what the computer will do.
 
 (circle 50)
 
-;; We get a circle with a 50-pixel radius. I wonder what giving
-;; `circle` two arguments would do.
+;; We get a circle with a 50-pixel radius. Ask yourself: what's the
+;; name of the function we're calling here? What are its arguments?
+
+;; I wonder what giving `circle` two arguments would do.
 
 (circle 20 10)
 
-;; 😱 We got an error. Don't worry, this happens to every
-;; programmer. Stay positive ✌️ and track down the misunderstanding
-;; between you and the computer.
+;; 😱 Don't worry, errors happens to every programmer. Stay positive ✌️
+;; and track down the misunderstanding between you and the computer.
 
 ;; When we write code that Clojure can't understand, Maria will tell
 ;; us. It will even try to tell us how to fix our code. In this case,
@@ -57,7 +58,7 @@
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
-;; function?  Why, we can ask our friend the computer!
+;; function? Why, we can ask our friend the computer!
 
 (doc circle)
 
@@ -212,15 +213,14 @@ color-names
 ;; giant expression, which will draw a small diagram to help explain
 ;; how functions work:
 
-
 (layer
-  (position 50 60 (text "(fn [radius] (circle radius))"))
-  (colorize "grey" (position 60 70 (triangle 10)))
-  (position 0 102 (text "function"))
-  (position 95 25 (rotate 60 (colorize "grey" (triangle 10))))
-  (position 90 20 (text "argument(s)"))
-  (colorize "grey" (position 170 70 (triangle 10)))
-  (position 170 102 (text "expression")))
+ (position 50 60 (text "(fn [radius] (circle radius))"))
+ (colorize "grey" (position 60 70 (triangle 10)))
+ (position 0 102 (text "function"))
+ (position 95 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 90 20 (text "argument(s)"))
+ (colorize "grey" (position 170 70 (triangle 10)))
+ (position 170 102 (text "expression")))
 
 ;; Take a look at the diagram Maria just drew for us.
 
