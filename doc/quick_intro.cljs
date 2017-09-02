@@ -207,11 +207,20 @@
 ;; function right now! To start with, here's a really simple example
 ;; of a function:
 
-(what-is (fn [radius] (circle radius)))
+(fn [radius] (circle radius))
 
-;; ... it's a function! But what does it mean? First, evaluate this
-;; giant expression, which will draw a small diagram to help explain
-;; how functions work:
+;; If that doesn't make any sense, try wrapping it in a `what-is`
+;; call. Go ahead.
+
+;; ... it's a function! But what does it mean?
+
+;; `fn` is a special kind of function that returns a brand new
+;; function. Whenever you see an expression that starts with `fn`,
+;; that's what it's doing: creating a function.
+
+;; To go a bit deeper in how `fn` works, evaluate this giant
+;; expression. It will draw a small diagram to help explain how
+;; functions work.
 
 (layer
  (position 50 60 (text "(fn [radius] (circle radius))"))
@@ -224,9 +233,8 @@
 
 ;; Take a look at the diagram Maria just drew for us.
 
-;; `fn` is a special kind of function that returns a brand new
-;; function. Whenever you see an expression that starts with `fn`,
-;; that's what it's doing: creating a function.
+;; First, there's the `fn`, which means this expression will evaluate
+;; to a function.
 
 ;; The part in square brackets `[]` shows the arguments that this
 ;; function will accept, and the order in which it will expect
@@ -239,7 +247,7 @@
 ;; arguments used to call this function will be available by the names
 ;; they were given in the square bracket part before.
 
-;; Try to guess what this expression will return, then evaluate it!
+;; Try to guess what this expression will return 🤔, then evaluate it.
 
 (map (fn [radius] (circle radius))
      [16 32 64 128])
@@ -247,14 +255,101 @@
 ;; This function just wraps the `circle` function in another function,
 ;; so it doesn't do anything different than calling circle
 ;; directly. But we can change it to also call `colorize` on each
-;; circle like this:
+;; circle, like this:
 
 (map (fn [radius] (colorize "purple" (circle radius)))
      [16 32 64 128])
 
-;; 💜 💜 💜 💜
+;; 💜 💜 💜 💜 Instead of a "circle" function, we wrote a "purple
+;; circle" function. The power to create our own functions is the
+;; heart of the power of programming.
 
-;; Great! Now we have the power to map colors!
+
+;; ## Names
+
+;; So far, none of the functions we've created have had names. We've
+;; created these "anonymous" functions, used them briefly, and that
+;; was it. The same goes for the values we've been using, like strings
+;; and vectors--none of them have had names, either.
+
+;; It's often easier to think about values and functions if we name
+;; them. For instance, if we're going to use a specific set of colors
+;; for some shapes, we might want to name them so we don't have to
+;; repeat ourselves. For this, we can use `let`, like this palette of
+;; blues:
+
+(let [palette ["blue" "turquoise" "midnightblue"]]
+  palette)
+
+;; `let` is a function that takes two arguments. The first argument is
+;; a vector with pairs: first a name, and then an expression that gets
+;; that name. The second argument is an expression that uses the names
+;; from the first vector. Here, we didn't do anything to the name
+;; `palette`, so we just get its value. Notice that our name doesn't
+;; do anything outside the `let`:
+
+palette
+
+;; That's actually a good thing. It's helpful to name things, but most
+;; of the time we only want our names for a short time. One thing
+;; programmers have found out is that having a lot of names that work
+;; everywhere gets hard to work with.
+
+;; Now let's do something with a name we create. This time, we'll make
+;; a new palette of colors, and show them off instead of just
+;; returning the names:
+
+(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
+  (map (fn [color] (colorize color (rectangle 20 20))) palette))
+
+;; Super. Let's try another palette, but this time we just want to
+;; sample from it one at a time:
+
+(let [palette ["grey" "black" "white" "darkgrey" "lightgrey" "slate"]]
+  (colorize (rand-nth palette) (circle 25)))
+
+;; Evaluate this one more than once. We snuck in a new function there, `rand-nth`, that grabs a random color from our palette to colorize the circle. (The "rand" in `rand-nth` comes from random; the "nth" comes from maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3, n". So instead of getting "1st" or "2nd" one from our vector, it's a random "nth". 🤓)
+
+;; TODO build this fn to check if "slate" is really a color
+(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
+  (color-name? "slate"))
+
+;; TODO def
+
+(def color-name?
+  (fn [color] (contains? (set (map first color-names)) color)))
+
+(color-name? "darkgrey")
+
+;; repeat earlier example using def
+(def rainbow-colors ["red" "orange" "yellow" "green" "blue" "purple"])
+
+(map colorize
+     rainbow-colors
+	 (repeat (rectangle 20 20)))
+
+;; TODO defn
+
+(defn color-name? [color]
+  (contains? (set (map first color-names)) color))
+
+(color-name? "blue")
+
+(color-name? "blau")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ;; But what if we wanted two sets of purple circles in different
 ;; sizes? One idea: we could use the 'map' function on two different
