@@ -308,27 +308,108 @@ palette
 (let [palette ["grey" "black" "white" "darkgrey" "lightgrey" "slate"]]
   (colorize (rand-nth palette) (circle 25)))
 
-;; Evaluate this one more than once. We snuck in a new function there, `rand-nth`, that grabs a random color from our palette to colorize the circle. (The "rand" in `rand-nth` comes from random; the "nth" comes from maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3, n". So instead of getting "1st" or "2nd" one from our vector, it's a random "nth". 🤓)
+;; Evaluate this one more than once. We snuck in a new function there,
+;; `rand-nth`, that grabs a random color from our palette to colorize
+;; the circle. (The "rand" in `rand-nth` comes from random; the "nth"
+;; comes from maths, where it's common to write "1, 2, 3, and so on"
+;; as "1, 2, 3, n". So instead of getting "1st" or "2nd" one from our
+;; vector, it's a random "nth". 🤓)
 
-;; TODO build this fn to check if "slate" is really a color
+;; But...is "slate" really a color? I think I saw it before when we
+;; played with `color-names`, but I just can't remember. And that list
+;; of colors is so long, it's a pain to look through it to
+;; check. Maybe...maybe the computer could help?
+
+;; ...
+
+;; The computer says yes, it would love to help, and that it is really
+;; really super good at looking at long lists of things.
+
+;; First let's take a look at our data. There are a lot of colors, so
+;; let's grab just a few:
+
+(take 5 color-names)
+
+;; Hmm. We've got square brackets, some text in double-quotes, and a
+;; colored square. Let's ask this data some questions. (Feel free to
+;; `what-is` any of these if you're not sure.)
+
+(first (first color-names))
+
+(first (first color-names))
+
+(second (first color-names))
+
+;; So each entry in color-names seems to be a vector with two values:
+;; first a string for the color name, and second a shape using that
+;; color. We don't really need the shapes, so let's work with only all
+;; the names:
+
+(map first color-names)
+
+;; To ask whether a color name is contained in those names, we turn it
+;; into a `set` and use `contains`:
+
+(contains? (set (map first color-names)) "slate")
+
+;; And let's double-check that it's not `false` for *every* name:
+
+(contains? (set (map first color-names)) "gray")
+
+;; OK. Maybe I was thinking of IKEA couch colors when I thought of
+;; "slate"? Regardless, we've solved our question. But our code isn't
+;; super clear, is it? If we saved this somewhere, without a name,
+;; would we know what it does? Would it be easy to figure out why we
+;; wrote it? Not really. We can make our life easier by making it a
+;; function and giving that function a name. Here's that same code as
+;; a function:
+
+((fn [color] (contains? (set (map first color-names)) color)) "orange")
+
+((fn [color] (contains? (set (map first color-names)) color)) "moonblue")
+
+;; ...and now let's name it:
+
 (let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
   (color-name? "slate"))
 
-;; TODO def
+;; We should be suspicious of this code. Do we really have to say all
+;; that every time we want to check if something is a valid color
+;; name?
+
+(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
+  (color-name? "purple"))
+
+;; 😩
+
+(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
+  (color-name? "reallydarkgrey"))
+
+;; Ugh! 😫 Let's not repeat ourselves. `let` is good when we'll use a
+;; name only in one spot, but this is a function we want to be able to
+;; call from anywhere. And for that, we have `def`.
+
+;; You can _define_ names that work all across your program using `def`:
+
+(def rainbow-colors ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
+
+rainbow-colors
+
+;; Nice! 🏳️‍🌈 Now you fill in this `def` to do the same for our
+;; color-name-checking function:
 
 (def color-name?
-  (fn [color] (contains? (set (map first color-names)) color)))
+  ;; ⬇ your code goes here
 
-(color-name? "darkgrey")
+  ;; ⬆ your code goes here
+  )
 
-;; repeat earlier example using def
-(def rainbow-colors ["red" "orange" "yellow" "green" "blue" "purple"])
+(color-name? "burntochre")
 
-(map colorize
-     rainbow-colors
-	 (repeat (rectangle 20 20)))
+(color-name? "charredogre")
 
-;; TODO defn
+;; Pretty cool, right? There's even `defn`, a special shorthand for
+;; defining functions:
 
 (defn color-name? [color]
   (contains? (set (map first color-names)) color))
@@ -337,227 +418,39 @@ palette
 
 (color-name? "blau")
 
+;; Unfortunately Maria doesn't understand German color names 🇩🇪 🙁
 
 
 
 
 
+;; Programming like this is like building a LEGO spaceship, except we
+;; can invent whatever blocks we need, and use them as many times as
+;; we like. For instance, `rainbow-colors` is in our toolbox, ready
+;; whenever we need it. Here's another way to show off our rainbow,
+;; using the power of `map` over more than one vector at a time:
 
-
-
-
-
-
-
-
-
-;; But what if we wanted two sets of purple circles in different
-;; sizes? One idea: we could use the 'map' function on two different
-;; vectors like this:
-
-[(map (fn [radius] (colorize "purple" (circle radius)))
-      [16 32 64 128])
- (map (fn [radius] (colorize "purple" (circle radius)))
-      [16 8 4 2])]
-
-;; It works, but it's kind of a shame that we have to type out our
-;; function twice just because we want two sequences of purple
-;; circles. There's a better way! We can use `let` to give our
-;; function a name.  Then we can call our function by that name as
-;; many times as we need:
-
-(let [make-purple-circle (fn [radius] (colorize "purple" (circle radius)))]
-  [(map make-purple-circle [16 32 64 128])
-   (map make-purple-circle [16 8 4 2])])
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; XXX dragons
-
-;; That's great, but there's a catch. Names we give with `let` only
-;; apply within the `let` expression. That's useful, so that names we
-;; create while we're drawing cartoons don't mess up the names we
-;; create while we're drawing landscapes. Names are surprisingly
-;; tricky, so often it's better to keep them contained.
-
-;; Then again, sometimes we'll need a name for everything we
-;; do--cartoons, landscapes, portraits, all our work. Then things get
-;; serious. That's when we need to start defining things for
-;; certain. We define names that we need all over with `def`.
-
-;; Say we're going to draw a bunch of shapes, and we want to use just
-;; a few colors over and over. Picasso might choose five different
-;; blues...a fan of old movies might choose ten shades of black and
-;; white. Yours is up to you. Put a few color names into a vector,
-;; like this:
-
-["blue" "turquoise" "midnightblue"]
-
-;; (Remember you can use anything in `color-names`.)
-
-;; ⬇ your colors go here 😀
-
-;; ⬆ your colors go here
-
-;; Now, we'll define that as our color palette so we can use it over
-;; and over just by calling its name. All we need to do is use `def`,
-;; giving it a name and our vector:
-
-;; your vector of colors goes here ⬇
-(def palette                      )
-
-;; Once we evaluate that, our `palette` is in our toolbox, ready
-;; whenever we need it! Let's take a look at your palette:
-
-(map (fn [color] (colorize color (rectangle 20 20))) palette)
-
-;; Awesome.
-
-;; FIXME this transition is weak
-
-;; Now that we have our palette, we want to go wild with some
-;; shapes. Maybe we want to draw the same shape a bunch of different
-;; times, a bunch of different ways. For instance, hearts. So many, in
-;; fact, that we want a heart-drawing function. First, let's sketch
-;; out how to draw that.
-
-;; TODO heart shape function, which we then colorize with their palette for great justice
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; XXX dragons
-
-(doc map)
-
-;; Oof. Maybe that's a bit technical. Let's break it down for what
-;; we're doing right now: `map` applies a function to every value in a
-;; collection. That means `(map circle [10 20 30])` returns the result
-;; of evaluating the function `circle` on the value 10, then on the
-;; value 20, then on the value 30: once for each element in the
-;; vector.
-
-;; So let's look again at our code from above:
-
-(map circle [2 4 8 16 32 64 128])
-
-;; This returns the result of evaluating `circle` with radius 2, then radius 4, then radius 8, and so on for each number in our vector.
-
-
-;; XXX NEW
-;; Let's try something similar with `rectangle`.
-
-(map rectangle [10 20 5 50 100])
-
-;; Hmm...all squares is fine, but what if we want to draw a city skyline, or a bar chart? We can just give `map` a vector of widths AND a vector of heights, and it will stitch them together for us:
-
-(map rectangle
-     [5 5 5 5 5 5 5 5 5 5 5 5]
-     [10 20 5 50 100 70 76 33 20 90])
-
-;; Does it annoy you that we had to type out `5` a bunch of times? It annoys me. It's so tedious. Did I even get the number of `5`s right? Thankfully, our friend the computer LOVES doing things over and over, and we can just ask it to `repeat` as many `5`s as we need:
-
-(map rectangle
-     (repeat 5)
-     [10 20 5 50 100 70 76 33 20 90])
-
-;; How does `repeat` do that?
-
-(doc repeat)
-
-;; Wow. Infinity.😲😯😵
-
-;; We can do the same thing with colors: `colorize` takes a color and a shape. That means that if we want to `map` with the `colorize` function, we can give it a vector of colors and then a vector of shapes. Then `map` will execute `colorize` using the first element of each vector, then the second element of each vector, then the third, and so on. So:
 (map colorize
-     ["red" "blue" "yellow"]
-     [(rectangle 20 20) (rectangle 50 50) (rectangle 100 100)])
+     rainbow-colors
+	 (repeat (rectangle 20 20)))
 
-;; The first element of the first vector and the first element of the second vector get used to call the function. So that expression with `map` is like evaluating each of these individual expressions:
+;; How it works is that we're mapping over `colorize`, which takes two
+;; arguments. For each step it takes the first argument from the first
+;; collection and the second argument from the second collection--and
+;; so on if there are more.
 
-(colorize "red" (rectangle 20 20))
-(colorize "blue" (rectangle 50 50))
-(colorize "yellow" (rectangle 100 100))
+;; Evaluate sub-expressions to see what that means. Each step
+;; colorizes one color from `rainbow-colors`, and one shape to get
+;; colorized, which comes from the output of `repeat`. What comes out
+;; of `repeat`?
 
+;; ...???
 
-;; ## The power of names
+;; Congratulations! Now that we've created a function, you are a True
+;; Programmer. Give yourself a high-five. I am right now giving you a
+;; high-five. Maria is giving you a high-five.
 
-;; Often when programming we need to name something we've created. For instance, we can let the name "palette" be a vector of colors:;; FIXME
-
-(let [palette ["red" "orange" "yellow" "green" "blue" "purple"]]
-  (map colorize
-       palette
-       (repeat (circle 50))))
-
-;; And there's our color palette. Lovely. We can read this as saying, "Let 'palette' be the name for this vector, ['red' 'orange' blah blah blah] while we evaluate the next expression."
-
-;; Names can be helpful, but too many names scattered across our code gets hard to keep track of. That's why we use `let` to create names we only need for right now. Watch--try to use `palette` outside the `let`:
-
-palette
-
-;; The name `palette` only means something *inside the `let`*. That way we know it won't cause trouble somewhere else.
-
-;; If we need a name that we'll use over and over, we need to define it with `def`:
-(def palette ["red" "orange" "yellow" "green" "blue" "purple"])
-
-;; Now we can use `palette` anywhere. We can blindly grab a color from our palette with `rand-nth`, which is a random-picker function:
-(colorize (rand-nth palette) (circle 50))
-
-;; Let's make a more complex shape with our new color palette.
-(apply above
-       (map colorize
-            [(rand-nth palette) (rand-nth palette) (rand-nth palette)]
-            ;; FIXME requires creating triangle function
-            [(circle 50) (triangle 100) (rectangle 100 100)]))
-
-;; It's kind of annoying that we must repeat ourselves for those random colors. And we don't have to! Just like `repeat` will give us as many "nouns" we need, `repeatedly` will give us as many "verby" function calls we need.
-
-(doc repeatedly)
-
-;; So to use `repeatedly`, we need a function. But `(rand-nth palette)` isn't a function, it's a function *call*--it evaluates to some random color name, not the function itself:
-
-(what-is (rand-nth palette))
-
-;; What we need to do is create a function, which we can do `fn`:
-(what-is (fn [] (rand-nth palette)))
-
-;; All the functions we've used so far have had names, but this one doesn't, because we're just using it once.
-
-;; Our anonymous function has square brackets to declare its arguments, of which it has none. Now we can call this anonymous function `repeatedly`:
-(apply above
-       (map colorize
-            (repeatedly (fn [] (rand-nth palette)))
-            ;; FIXME requires creating triangle function
-            [(circle 50) (triangle 100 100 100) (rectangle 100 100)]))
-
-;; `repeatedly` will go on forever just like `repeat` if we let it, but it knows we only need to call that function as many times as there are shapes. (Clojure is crafty like that.)
-
-;; We can use an infinite number of circles alongside our infinite random color choices, as long as we say how many we want to `take` from the infinite bucket:
-(apply line-up
-       (map colorize
-            (take 10 (repeatedly (fn [] (rand-nth palette))))
-            (repeat (circle 50))))
-
-;; You know, we keep using that anonymous function. That's a good sign that maybe we should name it. Just like we named `palette`, we use `def` to name our function:
-(def rand-color (fn [] (rand-nth palette)))
-
-;; Now `rand-color` stands shoulder-to-shoulder with `circle` and `map`:
-(what-is rand-color)
-
-;; And now it's much more concise to get a random color in our expression:
-(apply line-up
-       (map colorize
-            (take 10 (rand-color))
-            (repeat (rectangle 50))))
-
-;; Because we define functions so often, there's a special shorthand for giving them names:
-(defn rand-color []
-  (rand-nth palette))
-
-;; We use the result of `defn` exactly the same way as the result of `def fn...`:
-;; FIXME insert operatic amazing concluding shape here
-(apply line-up
-       (map colorize
-            (take 10 (rand-color))
-            (repeat (rectangle 50))))
-
-;; Congratulations! Now that we've created a function, you are a True Programmer. Give yourself a high-five. I am right now giving you a high-five.
-
-;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Where to go with that power is up to you: the next step is finding interesting ways to put functions together to create cool stuff.
+;; You've been introduced to the essence of code: writing expressions,
+;; asking the computer questions, and creating functions. Where to go
+;; with that power is up to you: the next step is finding interesting
+;; ways to put functions together to create cool stuff.

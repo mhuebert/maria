@@ -117,6 +117,12 @@ color-names ;; XXX consider rand-nth, count, first, second here
 ;; build this fn to check if "slate" is really a color
 (let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
   (color-name? "slate"))
+;; XXX some potential copy for this:
+;; How best to approach this problem? Well, first let's state what
+;; data we have, and what we'd like to do with it.
+;; Data we have: `color-names`
+;; What we'd like to do with it:
+;; TODO continue in this vein with building from small explorations into def'ing a fn
 
 ;; def
 
