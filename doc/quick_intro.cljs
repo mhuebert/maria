@@ -4,7 +4,8 @@
 ;; and a little confusing at first, we're going to explain everything
 ;; as we go.
 
-;; First, let's ask the computer some questions...
+;; First, let's ask the computer some questions. We'll ask our
+;; questions in a programming language called Clojure. Here we go!
 
 ;; Put your cursor at the end of the line with "puppy" and press
 ;; `control-enter` (`command-enter` on Mac):
