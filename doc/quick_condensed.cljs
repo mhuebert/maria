@@ -6,7 +6,7 @@
 
 ;; evaluation, expression, Clojure
 
-(what-is "puppy") ;; FIXME maybe `circle` should come first?
+(what-is "puppy") ;; XXX maybe `circle` should come first?
 
 ;; string, parentheses, functions, arguments
 
@@ -18,13 +18,14 @@
 
 (what-is 50)
 (what-is circle)
-(what-is (circle 50)) ;; FIXME just says "a map", not "a shape"
+(what-is (circle 50)) ;; FIXME in dev, this just says "a map", not "a shape" (see #89)
 (what-is what-is)
-
-;; play break
 
 
 ;; ## Colors and Shapes
+
+;; <exercise>
+
 (doc rectangle)
 
 (rectangle 200 50)
