@@ -106,11 +106,9 @@
 (doc rectangle)
 
 ;; OK, so it takes two arguments: width and height. Let's take it for
-;; a spin.
+;; a spin. You fill in the arguments:
 
-(rectangle 200 50)
-
-;; Well, that's not too surprising.
+(rectangle )
 
 ;; You can also nest expressions inside other expressions to create
 ;; bigger ones. For example, these black shapes are a little
