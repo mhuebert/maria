@@ -124,9 +124,8 @@
 ;; Do you now know what `*` does?
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another
-;; color. For a list of colors that Maria understands, try evaluating:
-
-color-names
+;; color. (For a list of colors that Maria understands, try evaluating
+;; `color-names`.)
 
 ;; We can also combine expressions to create a layer of shapes, by
 ;; using the `layer` function:
@@ -165,7 +164,7 @@ color-names
 ;; sure you know how they fit into the expression containing them. 🕸️
 
 
-;; ## Powers of fun
+;; ## Computing Superpowers
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
 ;; over and over again is a 😴 chore. We don't have time for that! Our
@@ -176,34 +175,35 @@ color-names
 
 (what-is [1 2 3 4])
 
-;; Vectors are written using square braces `[]`, and they're a great
-;; way to write down some things in order. Vectors evaluate to
-;; themselves, like strings and numbers do. Try evaluating this one:
+;; "Vectors" are how we store sequences of things. They're written
+;; using square braces `[]` and they evaluate to themselves like
+;; strings and numbers. This vector describes the order of prehistoric
+;; eras:
 
-[1 2 3 4]
+["Stone Age" "Bronze Age" "Iron Age"]
 
-;; Now suppose we wanted a vector of circles in increasing sizes. We
-;; could do something like this:
+;; This comes in handy when we want to do something like draw a bunch
+;; of related shapes. For instance, we could make a vector of circles
+;; like so:
 
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
 ;; But there's a better, shorter way! When we have a bunch of things,
-;; and we want to call a function on each thing, we can use `map`,
-;; which is a special function. `map` gives us a new collection that
-;; is the result of calling our function on each thing.
+;; and we want to call a function on each thing, we can use
+;; `map`. `map` is a great function that gives us a new collection
+;; that is the result of calling our function on each thing.
 
-;; That means we can make a vector of all the sizes we want our
-;; circles to be, and then map the function `circle` over that vector:
+;; That means we can map the function `circle` over a vector of all
+;; the sizes we want our circles to be:
 
 (map circle [16 32 64 128])
 
-;; Have a look at both of those expressions. As far as the computer is
-;; concerned, it's the same, but with the magic of 'map', you can
-;; repeat a function without extra typing. Map is a great way to do
-;; avoid repeating yourself. 📢
+;; Have a look at both of those two expressions. As far as the
+;; computer is concerned, they do the same thing, but the magic
+;; of `map` saves typing and improves clarity. Map is a
+;; great way to do avoid repeating yourself.
 
-;; What if we wanted purple circles? It would be nice if there was a
-;; function to turn a number into a purple circle. Let's make a new
+;; FIXME Let's make a new
 ;; function right now! To start with, here's a really simple example
 ;; of a function:
 

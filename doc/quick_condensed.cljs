@@ -64,10 +64,13 @@ color-names ;; XXX consider rand-nth, count, first, second here
 ;; vectors
 
 ["Ada Lovelace" "Gracie Hopper" "Margaret Hamilton"]
+["Stone Age" "Bronze Age" "Iron Age"] ;; we want to convey *sequential* nature here
 
 ;; introduce map using repetition use case
 
 [(circle 16) (circle 32) (circle 64) (circle 128)]
+
+;; map TODO reword the explanation of this fn
 
 (map circle [16 32 64 128])
 
