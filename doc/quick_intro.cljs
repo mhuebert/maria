@@ -293,7 +293,7 @@ palette
 ;; That's actually a good thing. It's helpful to name things, but most
 ;; of the time we only want our names for a short time. One thing
 ;; programmers have found out is that having a lot of names that work
-;; everywhere gets hard to work with.
+;; everywhere gets confusing.
 
 ;; Now let's do something with a name we create. This time, we'll make
 ;; a new palette of colors, and show them off instead of just
@@ -334,7 +334,7 @@ palette
 ;; colored square. Let's ask this data some questions. (Feel free to
 ;; `what-is` any of these if you're not sure.)
 
-(first (first color-names))
+(first color-names)
 
 (first (first color-names))
 
