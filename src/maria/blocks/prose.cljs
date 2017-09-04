@@ -1,183 +1,38 @@
 (ns maria.blocks.prose
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.core :as pm]
-            [re-view-prosemirror.commands :refer [apply-command]]
-            [maria.commands.prose :as prose-commands]
-            [maria-commands.exec :as exec]
-            [re-view-prosemirror.commands :as commands]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
-            [goog.dom.classes :as classes]
-            [re-view-routing.core :as r]
-            [maria.views.icons :as icons]
-            [goog.object :as gobj]
-            [re-db.d :as d]
             [re-view-prosemirror.markdown :as markdown]
-            [maria.views.floating-hint :as hint]))
-
-(defview link-dropdown [{:keys [href editor]}]
-  [:.flex.items-center
-   [:.dib.pointer
-    {:on-click (fn [e]
-                 (.preventDefault e)
-                 (.stopPropagation e)
-                 (commands/apply-command editor (partial commands/open-link true))
-                 (hint/hide-hint!))}
-    (-> icons/ModeEdit
-        (icons/size 16)
-        (icons/class "mr1 o-50"))]
-   [:a.pm-link {:href href} href]])
-
-(defn make-editor-state [doc input-rules]
-  (.create pm/EditorState
-           #js {"doc"     doc
-                "schema"  markdown/schema
-                "plugins" (to-array [#_(.history pm/history)
-                                     #_(pm/keymap pm/keymap-base)
-                                     (.inputRules pm/pm
-                                                  #js {:rules (->> (.-allInputRules pm/pm)
-                                                                   (into input-rules)
-                                                                   (to-array))})])}))
-
-(defn make-editor-view [{:keys [before-change after-change on-dispatch on-selection-activity view/state] :as component}
-                        editor-state]
-  (pm/EditorView. (v/dom-node component) (->> {:state                   editor-state
-                                               :spellcheck              false
-                                               :attributes              {:class "outline-0"}
-                                               :handleScrollToSelection (fn [view] true)
-                                               :dispatchTransaction     (fn [tr]
-                                                                          (let [^js/pm.EditorView pm-view (get @state :pm-view)
-                                                                                prev-state (.-state pm-view)]
-                                                                            (when before-change (before-change))
-                                                                            (pm/transact! pm-view tr)
-                                                                            (when-not (nil? on-dispatch)
-                                                                              (on-dispatch pm-view prev-state))
-                                                                            (when (and after-change (not= (.-doc prev-state)
-                                                                                                          (.-doc (.-state pm-view))))
-                                                                              (after-change))
-                                                                            (when (and on-selection-activity
-                                                                                       (not= (.-selection (.-state pm-view))
-                                                                                             (.-selection prev-state)))
-                                                                              (on-selection-activity pm-view (.-selection (.-state pm-view))))))}
-                                              (clj->js))))
-
-(defview Editor
-  {:spec/props              {:on-dispatch :Function
-                             :input-rules :Object
-                             :doc         :Object}
-   :view/did-mount          (fn [{:keys [view/state
-                                         input-rules
-                                         doc] :as this}]
-                              (let [editor-view (make-editor-view this (make-editor-state doc input-rules))]
-                                (set! (.-reView editor-view) this)
-                                (reset! state {:pm-view editor-view})))
-
-   :reset-doc               (fn [{:keys [view/state parse]} doc]
-                              (let [view (:pm-view @state)]
-                                (.updateState view
-                                              (.create pm/EditorState #js {"doc"     doc
-                                                                           "schema"  markdown/schema
-                                                                           "plugins" (gobj/getValueByKeys view "state" "plugins")}))))
-
-   :view/will-receive-props (fn [{:keys [doc block view/state]
-                                  :as   this}]
-                              (when (not= doc (.-doc (.-state (:pm-view @state))))
-                                (.resetDoc this doc)))
-
-   :pm-view                 #(:pm-view @(:view/state %))
-
-   :view/will-unmount       (fn [{:keys [view/state]}]
-                              (pm/destroy! (:pm-view @state)))}
-  [this]
-  [:.prosemirror-content
-   (-> (v/pass-props this)
-       (assoc :dangerouslySetInnerHTML {:__html ""}))])
-
-(defview prose-view
-  {:key               :id
-   :get-editor        #(.pmView (:prose-editor-view @(:view/state %)))
-   :scroll-into-view  #(apply-command (.getEditor %) (fn [state dispatch]
-                                                       (dispatch (.scrollIntoView (.-tr state)))))
-   :focus             (fn [this position]
-                        (v/flush!)
-                        (let [pm-view (.getEditor this)
-                              state (.-state pm-view)
-                              doc (.-doc state)]
-                          (.focus pm-view)
-                          (when-let [selection (cond (keyword? position)
-                                                     (case position :start (.atStart pm/Selection doc)
-                                                                    :end (.atEnd pm/Selection doc))
-
-                                                     (object? position)
-                                                     (pm/coords-selection pm-view position)
-                                                     :else nil)]
-                            (.dispatch pm-view (.setSelection (.-tr state)
-                                                              selection)))
-                          (js/setTimeout (.-scrollIntoView this) 0)))
-   :view/did-mount    #(Block/mount (:block %) %)
-   :view/will-unmount (fn [this]
-                        (Block/unmount (:block this))
-                        ;; prosemirror doesn't fire `blur` command when unmounted
-                        (when (= (:block-view @exec/context) this)
-                          (exec/set-context! {:block/prose nil
-                                              :block-view  nil})))}
-  [{:keys [view/state block-list block before-change after-change] :as this}]
-
-  (Editor {:doc           (Block/state block)
-           :block         block
-           :class         " serif f4 ph3 cb"
-           :input-rules   (prose-commands/input-rules this)
-           :on-focus      #(exec/set-context! {:block/prose true
-                                               :block-view  this})
-           :on-blur       #(exec/set-context! {:block/prose nil
-                                               :block-view  nil})
-           :on-click      (fn [e]
-                            (when-let [a (r/closest (.-target e) r/link?)]
-                              (when-not (classes/has a "pm-link")
-                                (do (.stopPropagation e)
-                                    (hint/floating-hint! {:rect    (.getBoundingClientRect a)
-                                                          :element (link-dropdown {:href   (.-href a)
-                                                                                   :editor (.getEditor this)})})))))
-           :ref           #(v/swap-silently! state assoc :prose-editor-view %)
-           :before-change before-change
-           :after-change  after-change
-           :on-dispatch   (fn [pm-view prev-state]
-                            (when (not= (.-doc (.-state pm-view))
-                                        (.-doc prev-state))
-                              (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))}))
+            [maria.editors.prose :refer [ProseView]]
+            [maria.editors.editors :as Editor]))
 
 (defn serialize-block [this]
   (.serialize markdown/serializer (Block/state this)))
 
+
+
 (extend-type Block/ProseBlock
 
-  Block/ICursor
-  (get-history-selections [this]
-    (some-> (Block/editor this)
-            .-state
-            .-selection))
-  (put-selections! [this selections]
-    (some-> (Block/editor this)
-            (commands/apply-command
-              (fn [state dispatch]
-                (dispatch (.setSelection (.-tr state) selections))))))
+  IFn
+  (-invoke
+    ([this props]
+     (ProseView (assoc props
+                  :block this
+                  :id (:id this)))))
 
-  (cursor-coords [this]
-    (pm/cursor-coords (Block/editor this)))
+  Block/IBlock
+  (kind [this] :prose)
 
-  (start [this] (pm/start-$pos (.-state (Block/editor this))))
-  (end [this] (pm/end-$pos (.-state (Block/editor this))))
-  (get-cursor [this] (pm/cursor-$pos (.-state (Block/editor this))))
+  (empty? [this]
+    (and (< (.. (:doc this) -content -size) 10)
+         (util/whitespace-string? (serialize-block this))))
 
-  (selection-expand [this]
-    (commands/apply-command (Block/editor this) commands/expand-selection))
+  (emit [this]
+    (tree/string {:tag   :comment
+                  :value (serialize-block this)}))
 
-  (selection-contract [this]
-    (commands/apply-command (Block/editor this) commands/contract-selection))
-
-
-  Block/IAppend
   (append? [this other-block]
     (or (Block/empty? this)
         (= :prose (Block/kind other-block))))
@@ -195,33 +50,14 @@
                                    (str (serialize-block this)
 
                                         (or (util/some-str (serialize-block other-block))
-                                            "\n")))))))
+                                            "\n"))))))))
 
-  Block/IBlock
-
-  (kind [this] :prose)
-
-  (empty? [this]
-    (and (< (.. (:doc this) -content -size) 10)
-         (util/whitespace-string? (serialize-block this))))
-
-  (emit [this]
-    (tree/string {:tag   :comment
-                  :value (serialize-block this)}))
-
-  (render [this props]
-    (prose-view (assoc props
-                  :block this
-                  :id (:id this))))
-
-  Block/IParagraph
-  (prepend-paragraph [this]
-    (when-let [prose-view (Block/editor this)]
-      (let [state (.-state prose-view)
-            dispatch (.-dispatch prose-view)]
-        (dispatch (-> (.-tr state)
-                      (.insert 0 (.createAndFill (pm/get-node state :paragraph)))))))))
-
+(defn prepend-paragraph [this]
+  (when-let [prose-view (Editor/of-block this)]
+    (let [state (.-state prose-view)
+          dispatch (.-dispatch prose-view)]
+      (dispatch (-> (.-tr state)
+                    (.insert 0 (.createAndFill (pm/get-node state :paragraph))))))))
 (comment
   (js/setTimeout
     #(do (let [[A B C Code_ D E :as blocks] [(Block/create :prose "A")
@@ -248,46 +84,46 @@
            ;;
            ;; Removals
 
-           (test (Block/splice-block blocks A [])
+           (test (Block/splice-blocks blocks A [])
                  nil "B\n\nC" "B\n\nC" 3)
 
-           (test (Block/splice-block blocks B [])
+           (test (Block/splice-blocks blocks B [])
                  "A\n\nC" [] "A\n\nC" 3)
 
-           (test (Block/splice-block blocks C [])
+           (test (Block/splice-blocks blocks C [])
                  "A\n\nB" [] "A\n\nB" 3)
 
            ;; NOTE
            ;; if 'before' block was merged with 'after' block,
            ;;    'after' is nil.
-           (test (Block/splice-block blocks Code_ [])
+           (test (Block/splice-blocks blocks Code_ [])
                  "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
 
-           (test (Block/splice-block blocks D [])
+           (test (Block/splice-blocks blocks D [])
                  [] "E" "A\n\nB\n\nC" 3)
 
            ;;
            ;; Insertions
 
-           (test (Block/splice-block blocks A [(Block/create :prose "X")])
+           (test (Block/splice-blocks blocks A [(Block/create :prose "X")])
                  nil [] "X\n\nB\n\nC" 3)
            ;; replacing 'A' has side-effect of joining with B and C.
            ;; in the real world, prose blocks will always be joined.
 
 
-           (test (Block/splice-block blocks B 1 [])
+           (test (Block/splice-blocks blocks B 1 [])
                  "A" [] "A" 3)
 
-           (test (Block/splice-block blocks B -1 [])
+           (test (Block/splice-blocks blocks B -1 [])
                  nil "C" "C" 3)
 
-           (test (Block/splice-block blocks B 2 [])
+           (test (Block/splice-blocks blocks B 2 [])
                  "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
 
-           (test (Block/splice-block blocks A 5 [])
+           (test (Block/splice-blocks blocks A 5 [])
                  nil nil nil 0)
 
-           (test (Block/splice-block blocks E -5 [])
+           (test (Block/splice-blocks blocks E -5 [])
                  nil nil nil 0))) 0))
 
 ;; TODO

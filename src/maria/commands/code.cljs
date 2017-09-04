@@ -8,6 +8,8 @@
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
+            [maria.blocks.prose :as Prose]
+            [maria.editors.editors :as Editor]
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
             [maria.views.floating-hint :as hint]))
@@ -73,30 +75,33 @@
                                  :start
                                  :else nil)]
       (let [adjacent-block ((case edge-position
-                              :end Block/after
-                              (:empty :start) Block/before) blocks block)
-            prev-prose (when (satisfies? Block/IParagraph adjacent-block)
-                         adjacent-block)
-            new-block (when-not prev-prose
+                              :end Block/right
+                              (:empty :start) Block/left) blocks block)
+            adjacent-prose (when (= :prose (some-> adjacent-block (Block/kind)))
+                             adjacent-block)
+            new-block (when-not adjacent-prose
                         (Block/create :prose))]
         (case edge-position
           :end (do
-                 (.splice block-list block (if prev-prose 1 0)
+                 (.splice block-list block adjacent-prose
                           (cond-> []
                                   (not (Block/empty? block)) (conj block)
                                   true (conj (or new-block
-                                                 prev-prose))))
+                                                 adjacent-prose))))
 
-                 (when (satisfies? Block/IParagraph prev-prose)
-                   (Block/prepend-paragraph prev-prose))
-                 (Block/focus! :code-block/enter (or new-block prev-prose) :start))
+                 (some-> adjacent-prose (Prose/prepend-paragraph))
+                 (-> (or new-block adjacent-prose)
+                     (Editor/of-block)
+                     (Editor/focus! :start)))
 
           (:empty :start)
           (do (.splice block-list block (cond-> []
                                                 new-block (conj new-block)
                                                 (not empty-block) (conj block)))
               (when empty-block
-                (Block/focus! :code-block/enter (or new-block prev-prose) :end)))))
+                (some-> (or new-block adjacent-prose)
+                        (Editor/of-block)
+                        (Editor/focus! :end))))))
       js/CodeMirror.Pass)))
 
 (defcommand :delete/selection
@@ -110,11 +115,12 @@
       (.replaceSelections editor (to-array (repeat (count (.getSelections editor)) ""))))))
 
 (defn clear-empty-code-block [block-list blocks block]
-  (let [before (Block/before blocks block)
+  (let [before (Block/left blocks block)
         replacement (when-not before (Block/create :prose))]
     (.splice block-list block (if replacement [replacement] []))
-
-    (Block/focus! :clear-empty-code-block-replacement (or before replacement) :end)))
+    (-> (or before replacement)
+        (Editor/of-block)
+        (Editor/focus! :end))))
 
 (defcommand :edit/auto-close
   {:bindings ["["
@@ -125,10 +131,9 @@
   [{:keys [editor key]}]
   (edit/operation editor
                   (when-let [other-bracket (edit/other-bracket key)]
-                    (let [in-string? (some-> (:magic/cursor editor)
-                                             (:node)
-                                             (:tag)
-                                             (= :string))
+                    (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
+                                       (and (= :string (:tag node))
+                                            (tree/inside? node pos)))
                           ;; if in a string, escape quotes and do not autoclose
                           [insertion-text forward] (if in-string?
                                                      (if (= key \") ["\\\"" 2] [key 1])
@@ -143,12 +148,12 @@
   {:bindings ["Backspace"]
    :when     :block/code}
   [{:keys [block-list block blocks editor]}]
-  (let [before (Block/before blocks block)
+  (let [before (Block/left blocks block)
         pointer (edit/pointer editor)
         prev-char (edit/get-range pointer -1)]
     (cond
-      (and (Block/at-start? block) (and before (Block/empty? before)))
-      (.splice block-list block -1 [block])
+      (and (Editor/at-start? editor) (and before (Block/empty? before)))
+      (.splice block-list before block [block])
 
       (Block/empty? block)
       (clear-empty-code-block block-list blocks block)
@@ -174,7 +179,7 @@
                   (cm/pos->boundary (cm/get-cursor editor) :left)))
       (hint/floating-hint! {:element (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
                                        [:.flex.items-center (str completion) [:.flex-auto] [:.gray (str namespace)]])
-                            :rect    (Block/cursor-coords block)}))))
+                            :rect    (Editor/cursor-coords editor)}))))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"

@@ -1,6 +1,7 @@
 (ns maria.commands.blocks
   (:require [maria-commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
+            [maria.editors.editors :as Editor]
             [maria.blocks.history :as history]
             [re-db.d :as d]))
 
@@ -16,36 +17,39 @@
 (defcommand :block/next-block
   {:bindings ["Down"
               "Right"]
-   :when     #(some-> (:block %) Block/at-end?)}
-  [{:keys [block blocks]}]
-  (when (Block/at-end? block)
-    (when-let [after (Block/after blocks block)]
-      (Block/focus! :block/next-block after :start))))
+   :when     #(some-> % :editor Editor/at-end?)}
+  [{:keys [block blocks block-view editor]}]
+  (when (Editor/at-end? editor)
+    (some-> (Block/right blocks block)
+            (Editor/of-block)
+            (Editor/focus! :start))))
 
 (defcommand :block/previous-block
   {:bindings ["Up"
               "Left"]
-   :when     #(some-> (:block %) Block/at-start?)}
-  [{:keys [block blocks]}]
-  (when (Block/at-start? block)
-    (when-let [before (Block/before blocks block)]
-      (Block/focus! :block/previous-block before :end))))
+   :when     #(some-> % :editor Editor/at-start?)}
+  [{:keys [block blocks editor]}]
+
+  (when (Editor/at-start? editor)
+    (some-> (Block/left blocks block)
+            (Editor/of-block)
+            (Editor/focus! :end))))
 
 (defcommand :selection/expand
   "Expand current selection"
   {:bindings ["M1-1"
               "M1-Up"]
    :when     :block}
-  [{:keys [block] :as context}]
-  (Block/selection-expand block))
+  [{:keys [editor] :as context}]
+  (Editor/selection-expand editor))
 
 (defcommand :selection/shrink
   "Contract selection (reverse of expand-selection)"
   {:bindings ["M1-2"
               "M1-Down"]
    :when     :block}
-  [{:keys [block] :as context}]
-  (Block/selection-contract block))
+  [{:keys [editor] :as context}]
+  (Editor/selection-contract editor))
 
 (defcommand :block/undo
   {:bindings ["M1-z"]}

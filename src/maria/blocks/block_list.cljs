@@ -49,7 +49,7 @@
         blocks (first history)]
     (into [:.w-100.flex-none.pv3]
           (mapv (fn [block]
-                  (Block/render block {:blocks        blocks
-                                       :block-list    this
-                                       :before-change history/before-change})) blocks))))
+                  (block {:blocks        blocks
+                          :block-list    this
+                          :before-change history/before-change})) blocks))))
 

@@ -83,15 +83,6 @@
                                 (cm/set-preserve-cursor! editor value)))
    :reset-value             (fn [{:keys [default-value value view/state]}]
                               (.setValueAndRefresh (:editor @state) (or value default-value)))
-   :focus                   (fn [this coords]
-                              (let [cm (:editor @(:view/state this))
-                                    coords (if (keyword? coords)
-                                             (case coords :end (CM/Pos (.lineCount cm) (count (.getLine cm (.lineCount cm))))
-                                                          :start (CM/Pos 0 0))
-                                             coords)]
-                                (doto cm
-                                  (.focus)
-                                  (cond-> coords (.setCursor coords)))))
    :view/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props

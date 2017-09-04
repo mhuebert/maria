@@ -4,31 +4,13 @@
             [re-view.core :as v]
             [clojure.string :as string]
             [maria-commands.exec :as exec]
-            [re-view-prosemirror.core :as pm]
+            [re-db.d :as d]
             [re-view-prosemirror.markdown :as markdown]
             [cells.cell :as cell]
             [maria.util :as util]
-            [re-db.d :as d]
             [cells.eval-context :as eval-context]
-            [maria.eval :as e]))
-
-(def view-index (volatile! {}))
-
-(defn view [this]
-  (@view-index (:id this)))
-
-(defn editor [this]
-  (some-> (view this)
-          (.getEditor)))
-
-(defn focused-block []
-  (get-in @exec/context [:block-view :block]))
-
-(defn mount [this view]
-  (vswap! view-index assoc (:id this) view))
-
-(defn unmount [this]
-  (vswap! view-index dissoc (:id this)))
+            [maria.eval :as e]
+            [maria.editors.editors :as Editor]))
 
 (defprotocol IBlock
 
@@ -36,60 +18,20 @@
   (emit [this])
   (kind [this])
   (state [this])
+  (tag [this])
 
-  (render [this props]))
-
-(defprotocol IAppend
   (append? [this other-block] "Return true if other block can be joined to next block")
   (append [this other-block] "Append other-block to this block."))
 
-(defn focus!
-  ([block]
-   (focus! :unknown block nil))
-  ([label block] (focus! label block nil))
-  ([label block coords]
-    #_(prn :focus! label coords (:id block) (let [out (emit block)]
-                                              (subs out 0 (min 30 (count out)))))
-   (when-not (view block)
-     (v/flush!))
-   (when-let [the-view (view block)]
-     (exec/set-context! {(keyword "block" (kind block)) true
-                         :block-view                    the-view})
-     (.focus the-view coords))))
-
 (defn update-view
   [block]
-  (some-> (view block)
+  (some-> (Editor/view block)
           (v/force-update)))
-
-(defprotocol ICursor
-  (get-history-selections [this])
-  (get-cursor [this])
-  (put-selections! [this selections])
-
-  (cursor-coords [this])
-
-  (start [this])
-  (end [this])
-
-  (selection-expand [this])
-  (selection-contract [this]))
-
-(defn at-start? [block]
-  (some-> (get-cursor block)
-          (= (start block))))
-
-(defn at-end? [block]
-  (= (get-cursor block)
-     (end block)))
 
 (defprotocol IEval
   (eval! [this] [this kind value])
   (eval-log [this])
   (eval-log! [this value]))
-
-(defprotocol IParagraph
-  (prepend-paragraph [this]))
 
 (extend-type nil IBlock
   (empty? [this] true))
@@ -101,6 +43,17 @@
 (defrecord ProseBlock [id doc]
   IBlock
   (state [this] doc))
+
+(defrecord WhitespaceBlock [id content]
+  IBlock
+  (kind [this] :whitespace)
+  (emit [this] content)
+
+  IFn
+  (-invoke [this props] [:div]))
+
+(defn whitespace? [block]
+  (= :whitespace (kind block)))
 
 (extend-protocol IEquiv
   CodeBlock
@@ -118,7 +71,7 @@
   ;; IE IF FIRST SYMBOL STARTS WITH DEF, READ NEXT SYMBOL
   (case tag
     :comment (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
-    (:newline :space :comma nil) nil
+    (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) (:value node))
     (->CodeBlock (d/unique-id) node)))
 
 (defn create
@@ -136,24 +89,24 @@
   "Returns the concatenated source for a list of blocks."
   (fn [blocks]
     (reduce (fn [out block]
-              (let [source (-> (emit block)
-                               (string/trim-newline))]
-                (if-not (clojure.core/empty? source)
-                  (str out source "\n\n")
-                  out))) "\n" blocks)))
+              (if (whitespace? block)
+                out
+                (let [source (-> (emit block)
+                                 (string/trim-newline))]
+                  (if-not (clojure.core/empty? source)
+                    (str out source "\n\n")
+                    out)))) "\n" blocks)))
 
 (defn from-source
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
   (->> (tree/ast (:ns @e/c-env) source)
-       :value
-       (reduce (fn [blocks node]
-                 (if-let [block (from-node node)]
-                   (if (some-> (peek blocks)
-                               (append? block))
-                     (update blocks (dec (count blocks)) append block)
-                     (conj blocks block))
-                   blocks)) [])))
+       (:value)
+       (mapv from-node)
+       #_(reduce (fn [out node]
+                   (cond-> out
+                           (not (tree/whitespace? node))
+                           (conj (from-node node)))) [])))
 
 
 (defn ensure-blocks [blocks]
@@ -161,45 +114,60 @@
     [(create :prose)]
     blocks))
 
-(defn id-index [blocks id]
-  (let [end-i (count blocks)]
-    (loop [i 0] (cond
-                  (= i end-i) nil
-                  (= (:id (nth blocks i)) id) i
-                  :else (recur (inc i))))))
+(defn id-index
+  ([blocks id] (id-index blocks id 0))
+  ([blocks id start]
+   (let [end-i (count blocks)]
+     (loop [i start]
+       (cond
+         (= i end-i) nil
+         (= (:id (nth blocks i)) id) i
+         :else (recur (inc i)))))))
 
-(defn splice-block
+(defn lefts
+  ([blocks block]
+   (lefts blocks block (dec (id-index blocks (:id block)))))
+  ([blocks block n]
+   (if (neg? n)
+     nil
+     (cons (nth blocks n) (lazy-seq (lefts blocks block (dec n)))))))
+
+(defn rights
+  ([blocks block]
+   (rights blocks block (inc (id-index blocks (:id block)))))
+  ([blocks block n]
+   (if (>= n (count blocks))
+     nil
+     (cons (nth blocks n) (lazy-seq (rights blocks block (inc n)))))))
+
+(defn left [blocks block]
+  (first (filter (complement whitespace?) (lefts blocks block))))
+
+(defn right [blocks block]
+  (first (filter (complement whitespace?) (rights blocks block))))
+
+(defn splice-blocks
   ([blocks block values]
-   (splice-block blocks block 0 values))
-  ([blocks block n values]
-   (if (and (clojure.core/empty? values)
-            (= 1 (count blocks)))
-     (let [blocks (ensure-blocks nil)]
-       (eval-context/dispose! block)
-       (with-meta blocks {:before (first blocks)}))
-     (let [index (cond-> (id-index blocks (:id block))
-                         (neg? n) (+ n))
-           n (inc (.abs js/Math n))
-           result (util/vector-splice blocks index n values)
-           start (dec index)
-           end (-> index
-                   (+ (count values)))]
-       (assert index)
-       (let [incoming-block-ids (into #{} (mapv :id values))
-             replaced-blocks (subvec blocks index (+ index n))
-             removed-blocks (set (filterv (comp (complement incoming-block-ids) :id) replaced-blocks))]
-         (doseq [block removed-blocks]
-           (eval-context/dispose! block)))
-       (with-meta result
-                  {:before (when-not (neg? start) (nth result start))
-                   :after  (when-not (> end (dec (count result)))
-                             (nth result end))})))))
-
-(defn before [blocks block]
-  (last (take-while (comp (partial not= (:id block)) :id) blocks)))
-
-(defn after [blocks block]
-  (second (drop-while (comp (partial not= (:id block)) :id) blocks)))
+   (splice-blocks blocks block nil values))
+  ([blocks from-block to-block values]
+   (let [[before-blocks the-rest] (split-with #(not= (:id %) (:id from-block)) blocks)
+         [replaced-blocks* after-blocks] (if (nil? to-block)
+                                           [(take 1 the-rest)
+                                            (rest the-rest)]
+                                           [(util/take-until #(= (:id %) (:id to-block)) the-rest)
+                                            (rest (drop-while #(not= (:id %) (:id to-block)) the-rest))])
+         result (with-meta
+                  (-> (vec before-blocks)
+                      (into values)
+                      (into after-blocks))
+                  {:before (last before-blocks)
+                   :after  (first after-blocks)})]
+     (let [removed-blocks (->> replaced-blocks*
+                               (filterv (comp (complement (set (mapv :id values))) :id)))]
+       (doseq [block removed-blocks]
+         (when (satisfies? eval-context/IDispose block)
+           (eval-context/dispose! block))))
+     result)))
 
 #_(defn join-blocks [blocks]
     ;; PROBLEM

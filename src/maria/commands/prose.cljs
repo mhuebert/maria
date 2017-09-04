@@ -6,6 +6,7 @@
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
+            [maria.editors.editors :as Editor]
             [maria.util :as util]
             [maria.blocks.history :as history]
             [re-view.core :as v]))
@@ -29,7 +30,9 @@
                                         true (into new-blocks)
                                         (not (util/whitespace-string? markdown-after))
                                         (conj (Block/create :prose markdown-after))))
-      (Block/focus! :split-with-code-block (first new-blocks) cursor-coords)
+      (-> (first new-blocks)
+          (Editor/of-block)
+          (Editor/focus! cursor-coords))
       true)))
 
 (defcommand :prose-block/enter
@@ -124,26 +127,26 @@
 
 (defn remove-empty-block [{:keys [blocks block-list block]}]
   (fn [_ _]
-    (when (and (Block/empty? block) (Block/before blocks block))
+    (when (and (Block/empty? block) (Block/left blocks block))
       (let [result (.splice block-list block [])
             {:keys [before after]} (meta result)]
-        (if before (Block/focus! :remove-empty-block before :end)
-                   (Block/focus! :remove-empty-block after :start))
+        (if before (Editor/focus! (Editor/of-block before) :end)
+                   (Editor/focus! (Editor/of-block after) :start))
         true))))
 
-(defn clear-previous-empty [{:keys [blocks block-list block]}]
+(defn clear-previous-empty [{:keys [blocks block-list block editor]}]
   (fn [_ _]
-    (when (and (Block/at-start? block)
-               (some-> (Block/before blocks block) (Block/empty?)))
-      (.splice block-list block -1 [block])
+    (when (and (Editor/at-start? editor)
+               (some-> (Block/left blocks block) (Block/empty?)))
+      (.splice block-list (Block/left blocks block) block [block])
       true)))
 
-(defn join-with-prev [{:keys [blocks block-list block]}]
+(defn join-with-prev [{:keys [blocks block-list block editor]}]
   (fn [_ _]
-    (when (Block/at-start? block)
-      (let [before (Block/before blocks block)]
-        (when (= :prose (Block/kind before))
-          (when-let [editor (Block/editor before)]
+    (when (Editor/at-start? editor)
+      (let [before (Block/left blocks block)]
+        (when (= :prose (some-> before (Block/kind)))
+          (when-let [editor (Editor/of-block before)]
             (let [sel (.atEnd pm/Selection (Block/state before))
                   anchor (.-anchor sel)
                   state (:view/state block-list)
@@ -154,8 +157,9 @@
                                             (.setSelection sel))))
                   next-before (assoc before :doc (.. editor -state -doc))]
 
-              (Block/focus! next-before)
-              (history/add! state (Block/splice-block blocks before 1 [next-before]))
+              (-> (Editor/of-block next-before)
+                  (Editor/focus!))
+              (history/add! state (Block/splice-blocks blocks before block [next-before]))
 
               true)))))))
 

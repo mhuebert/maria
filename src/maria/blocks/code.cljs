@@ -1,48 +1,13 @@
 (ns maria.blocks.code
   (:require [re-view.core :as v :refer [defview]]
-            [maria-commands.exec :as exec]
-            [maria.views.values :as repl-values]
-            [maria.views.codemirror :as codemirror]
             [magic-tree-editor.codemirror :as cm]
             [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
-            [maria.util :as util]
             [magic-tree.core :as tree]
-            [magic-tree-editor.edit :as edit]
             [maria.eval :as e]
-            [cells.eval-context :as eval-context]))
-
-(defview code-view
-  {:key                :id
-   :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
-   :view/did-mount     #(Block/mount (:block %) %)
-   :view/will-unmount  #(Block/unmount (:block %))
-   :get-editor         #(.getEditor (:editor-view @(:view/state %)))
-   :scroll-into-view   #(util/scroll-to-cursor (.getEditor %))
-   :focus              (fn [this coords]
-                         (.focus (:editor-view @(:view/state this)) coords))}
-  [{:keys [view/state block-list block before-change after-change on-selection-activity] :as this}]
-  [:.flex.pv3.cursor-text
-   {:on-click #(when (= (.-target %) (.-currentTarget %))
-                 (.focus this))}
-   [:.w-50.flex-none
-    (codemirror/editor {:class                 "pa3 bg-white"
-                        :ref                   #(v/swap-silently! state assoc :editor-view %)
-                        :value                 (Block/emit (:block this))
-                        :on-ast                (fn [node]
-                                                 (.splice block-list block [(assoc block :node node)]))
-                        :before-change         before-change
-                        :after-change          after-change
-                        :on-selection-activity on-selection-activity
-                        :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                    :block-view this})
-                        :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                    :block-view nil})})]
-
-   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto
-    (some-> (first (Block/eval-log block))
-            (assoc :block-id (:id block))
-            (repl-values/display-result))]])
+            [cells.eval-context :as eval-context]
+            [maria.editors.code :refer [CodeView]]
+            [maria.editors.editors :as Editor]))
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
@@ -52,40 +17,13 @@
 
 (extend-type Block/CodeBlock
 
-  Block/ICursor
-  (get-cursor [this]
-    (when-let [cm (Block/editor this)]
-      (when-not (.somethingSelected cm)
-        (cm/get-cursor cm))))
-  (get-history-selections [this]
-    (let [editor (Block/editor this)]
-      (if-let [root-cursor (cm/cursor-root editor)]
-        #js [#js {:anchor root-cursor
-                  :head   root-cursor}]
-        (.listSelections editor))))
-  (put-selections! [this selections]
-    (v/flush!)
-    (some-> (Block/editor this)
-            (.setSelections selections)))
-
-  (cursor-coords [this]
-    (.cursorCoords (Block/editor this)))
-
-  (start [this] (cm/Pos 0 0))
-  (end [this] (let [cm (Block/editor this)]
-                (cm/Pos (.lastLine cm) (count (.getLine cm (.lastLine cm))))))
-
-  (selection-expand [this]
-    (edit/expand-selection (Block/editor this)))
-
-  (selection-contract [this]
-    (edit/shrink-selection (Block/editor this)))
-
-  Block/IAppend
-  (append? [this other-block] false)
+  IFn
+  (-invoke
+    ([this props] (CodeView (assoc props :block this
+                                         :id (:id this)))))
 
   Block/IBlock
-  (state [this] (:node this))
+  (append? [this other-block] false)
   (kind [this] :code)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]
@@ -94,11 +32,6 @@
                                                           [node]))))))
 
   (emit [this] (tree/string (:node this)))
-
-  (render [this props]
-    (code-view (assoc props
-                 :block this
-                 :id (:id this))))
 
   eval-context/IDispose
   (on-dispose [this f]
@@ -120,7 +53,7 @@
     (get @e/-eval-logs (:id this)))
   (eval!
     ([this]
-     (let [editor (Block/editor this)
+     (let [editor (Editor/of-block this)
            source (or (cm/selection-text editor)
                       (->> editor
                            :magic/cursor

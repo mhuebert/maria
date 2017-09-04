@@ -2,7 +2,8 @@
   (:require [clojure.set :as set]
             [cells.eval-context :as eval-context]
             [re-view.core :as v]
-            [maria.blocks.blocks :as Block]))
+            [maria.blocks.blocks :as Block]
+            [maria.editors.editors :as Editor]))
 
 (def ^:dynamic *ignored-op* false)
 
@@ -17,11 +18,11 @@
          timestamp :timestamp} (meta prev-blocks)]
     (and (< (- (.now js/Date) timestamp)
             300)
-         (= (:id block) (:id (Block/focused-block))))))
+         (= (:id block) (:id (Editor/focused-block))))))
 
 (defn get-selections []
-  (when-let [block (Block/focused-block)]
-    [block (Block/get-history-selections block)]))
+  (when-let [block-view (Editor/focused-block-view)]
+    [(:block block-view) (Editor/get-selections (.getEditor block-view))]))
 
 (defn before-change
   "Should be called before any change is applied to document.
@@ -38,7 +39,9 @@
   Focuses doc, and sets correct selections for initial state."
   [state]
   (let [selections (get-selections)]
-    (Block/focus! :after-mount (first (first (:history @state))) :start)
+    (some-> (first (first (:history @state)))
+            (Editor/of-block)
+            (Editor/focus! :start))
     (v/swap-silently! state update :history update-first-meta merge
                       {:selections-before selections
                        :selections-after  selections
@@ -50,9 +53,10 @@
   [key version]
   (when-let [[block selections] (get (meta version) key)]
     (when block
-      (Block/focus! :apply-selections block)
+      (some-> (Editor/of-block block)
+              (Editor/focus!))
       (when selections
-        (Block/put-selections! block selections)))))
+        (Editor/put-selections! (Editor/of-block block) selections)))))
 
 (defn dispose-removed
   "Compares prev- and next- block lists and 'disposes' of blocks which have been removed."
@@ -116,10 +120,10 @@
   (add! state (apply f (current-version state) args)))
 
 (defn splice
-  ([state block value] (splice state block 0 value))
-  ([state block n value]
+  ([state block value] (splice state block nil value))
+  ([state from-block to-block value]
    (let [next-version (-> (current-version state)
-                          (Block/splice-block block n value)
+                          (Block/splice-blocks from-block to-block value)
                           (Block/ensure-blocks))]
      (add! state next-version)
      next-version)))

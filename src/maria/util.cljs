@@ -23,10 +23,10 @@
 
 (defn vector-splice
   "Splice items into vector at index, replacing n items"
-  [the-vector index n items]
-  (-> (subvec the-vector 0 index)
+  [the-vector from-i to-i items]
+  (-> (subvec the-vector 0 from-i)
       (into items)
-      (into (subvec the-vector (+ index n) (count the-vector)))))
+      (into (subvec the-vector (inc to-i) (count the-vector)))))
 
 (defn whitespace-string? [s]
   (re-find #"^[\s\n]*$" s))
@@ -83,3 +83,15 @@
                 (prn label x)
                 x)
               x))
+
+;; from https://groups.google.com/forum/#!topic/clojure-dev/NaAuBz6SpkY
+(defn take-until
+  "Returns a lazy sequence of successive items from coll until
+   (pred item) returns true, including that item. pred must be
+   free of side-effects."
+  [pred coll]
+  (lazy-seq
+    (when-let [s (seq coll)]
+      (if (pred (first s))
+        (cons (first s) nil)
+        (cons (first s) (take-until pred (rest s)))))))
