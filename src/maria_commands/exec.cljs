@@ -39,10 +39,6 @@
         :exec? exec?
         :intercept? intercept?))))
 
-(defn stop-event [e]
-  (.stopPropagation e)
-  (.preventDefault e))
-
 (defn exec-command
   "Execute a command (returned by `get-command`)"
   [context {:keys [command exec? intercept? name]}]
@@ -101,7 +97,7 @@
                                (.stopPropagation e))
 
                            (when (seq (filter :intercept! results))
-                             (stop-event e)
+                             (util/stop! e)
                              (clear-which-key!))
 
                            (clear-timeout!)

@@ -18,16 +18,17 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.28-SNAPSHOT"]
+                 [re-view "0.3.28"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.9-SNAPSHOT"]
-                 [cljs-live "0.2.6-SNAPSHOT"]
-                 [magic-tree "0.0.13-SNAPSHOT"]
+                 [cljs-live "0.2.6"]
+                 [magic-tree "0.0.13"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/react "16.0.0-beta.2-0"]
                  [cljsjs/react-dom "16.0.0-beta.2-0"]
+                 [cljsjs/tinycolor "1.3.0-0"]
                  ;[cljsjs/firebase "4.0.0-0"]
 
                  ;; just for bundles

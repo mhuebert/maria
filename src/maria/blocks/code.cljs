@@ -59,7 +59,7 @@
         (cm/get-cursor cm))))
   (get-history-selections [this]
     (let [editor (Block/editor this)]
-      (if-let [root-cursor (:cursor/cursor-root editor)]
+      (if-let [root-cursor (cm/cursor-root editor)]
         #js [#js {:anchor root-cursor
                   :head   root-cursor}]
         (.listSelections editor))))

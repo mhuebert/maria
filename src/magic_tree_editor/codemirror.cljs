@@ -90,28 +90,29 @@
                :reader-conditional} up-tag)
             (z/up))))
 
+
 (defn set-cursor-root! [cm]
-  (let [cursor (.getCursor cm)]
-    (swap! cm assoc
-           :cursor/cursor-root cursor
-           :cursor/clear-marker (let [marker (.setBookmark cm cursor
-                                                           #js {:widget (cursor-bookmark)})]
-                                  (fn []
-                                    (.clear marker)
-                                    (swap! cm dissoc :cursor/cursor-root :cursor/clear-marker))))))
+  (swap! cm assoc :cursor-root/marker (.setBookmark cm
+                                                    (.getCursor cm)
+                                                    #js {:widget (cursor-bookmark)})))
 
 (defn unset-cursor-root! [cm]
-  (when-let [clear-marker (:cursor/clear-marker cm)]
-    (clear-marker)))
+  (when-let [marker (:cursor-root/marker cm)]
+    (.clear marker)
+    (swap! cm dissoc :cursor-root/marker)))
+
+(defn cursor-root [cm]
+  (when-let [marker (:cursor-root/marker cm)]
+    (.find marker)))
 
 (defn return-cursor-to-root! [cm]
   (when (.somethingSelected cm)
-    (some->> (:cursor/cursor-root cm)
+    (some->> (cursor-root cm)
              (.setCursor cm)))
   (unset-cursor-root! cm))
 
 (defn get-cursor [cm]
-  (or (:cursor/cursor-root cm)
+  (or (cursor-root cm)
       (.getCursor cm)))
 
 (defn selection? [cm]
@@ -170,30 +171,30 @@
 (defn select-node! [cm node]
   (when (and (not (tree/whitespace? node))
              (or (not (.somethingSelected cm))
-                 (:cursor/cursor-root cm)))
-    (when-not (:cursor/cursor-root cm)
+                 (cursor-root cm)))
+    (when-not (cursor-root cm)
       (set-cursor-root! cm))
     (select-range cm (tree/bounds node))))
 
-(defn pos->cm
+(defn pos->boundary
   ([pos]
-   {:line   (.-line pos)
+   {:line   (or (.-line pos) 0)
     :column (.-ch pos)})
   ([pos side]
-   (case side :left {:line   (.-line pos)
+   (case side :left {:line   (or (.-line pos) 0)
                      :column (.-ch pos)}
-              :right {:end-line   (.-line pos)
+              :right {:end-line   (or (.-line pos) 0)
                       :end-column (.-ch pos)})))
 
 (defn selection-bounds
   [cm]
   (if (.somethingSelected cm)
     (let [sel (first (.listSelections cm))]
-      (pos->cm (.from sel))
-      (merge (pos->cm (.from sel) :left)
-             (pos->cm (.to sel) :right)))
+      (pos->boundary (.from sel))
+      (merge (pos->boundary (.from sel) :left)
+             (pos->boundary (.to sel) :right)))
     (let [cur (get-cursor cm)]
-      (pos->cm cur))))
+      (pos->boundary cur))))
 
 (defn highlight-range [pos node]
   (if (and (tree/has-edges? node)
@@ -261,21 +262,10 @@
                  :ast next-ast
                  :zipper next-zip))))))
 
-(defn cursor-pos
-  "Return map with :line and :column of cursor"
-  [editor-or-position]
-  (let [cm-pos (if (instance? js/CodeMirror editor-or-position)
-                 (.getCursor editor-or-position)
-                 editor-or-position)]
-    {:line   (.-line cm-pos)
-     :column (.-ch cm-pos)}))
-
-(defn cursor-activity!
+(defn update-cursor!
   [{:keys [zipper magic/brackets?] :as cm}]
-  (let [position (cursor-pos (or (:cursor/cursor-root cm) cm))]
-    (when-let [loc (and zipper
-                        (some->> position
-                                 (tree/node-at zipper)))]
+  (when-let [position (pos->boundary (get-cursor cm))]
+    (when-let [loc (some-> zipper (tree/node-at position))]
       (let [bracket-loc (cursor-loc position loc)
             bracket-node (z/node bracket-loc)]
         (when brackets? (match-brackets! cm bracket-node))
@@ -299,8 +289,8 @@
                (fn [cm on?]
                  (when on?
                    (require-opts cm ["magicTree"])
-                   (.on cm "cursorActivity" cursor-activity!)
-                   (cursor-activity! cm))))
+                   (.on cm "cursorActivity" update-cursor!)
+                   (update-cursor! cm))))
 
 (.defineOption js/CodeMirror "magicBrackets" false
                (fn [cm on?]

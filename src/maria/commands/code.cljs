@@ -28,8 +28,8 @@
   {:bindings       ["M1-v"]
    :intercept-when false}
   [{:keys [editor]}]
-  (when (:cursor/cursor-root editor)
-    (.setCursor editor (:cursor/cursor-root editor))
+  (when-let [pos (cm/cursor-root editor)]
+    (.setCursor editor pos)
     false))
 
 (defcommand :selection/expand-left
@@ -171,7 +171,7 @@
   (let [node (get-in editor [:magic/cursor :bracket-node])]
     (when (and (#{:symbol :token} (:tag node))
                (= (tree/bounds node :right)
-                  (cm/pos->cm (cm/get-cursor editor) :left)))
+                  (cm/pos->boundary (cm/get-cursor editor) :left)))
       (hint/floating-hint! {:element (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
                                        [:.flex.items-center (str completion) [:.flex-auto] [:.gray (str namespace)]])
                             :rect    (Block/cursor-coords block)}))))
@@ -223,7 +223,7 @@
 
 (defcommand :edit/kill
   "Cuts to end of line"
-  {:bindings ["M1-K"]
+  {:bindings ["M3-K"]
    :when     :block/code}
   [context]
   (edit/kill (:editor context)))

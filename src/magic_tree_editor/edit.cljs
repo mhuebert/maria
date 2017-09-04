@@ -1,14 +1,11 @@
 (ns magic-tree-editor.edit
   (:refer-clojure :exclude [char])
   (:require [magic-tree.core :as tree]
+            [magic-tree.range :as range]
             [magic-tree-editor.codemirror :as cm]
             [magic-tree-editor.util :as cm-util]
             [fast-zip.core :as z])
   (:require-macros [magic-tree-editor.edit :refer [operation]]))
-
-(defn pos= [p1 p2]
-  (= (tree/bounds p1)
-     (tree/bounds p2)))
 
 (def other-bracket {\( \) \[ \] \{ \} \" \"})
 
@@ -24,19 +21,6 @@
   [cm range]
   (cm-util/copy (cm/range-text cm range))
   (cm/replace-range! cm "" range))
-
-(defn get-kill-range
-  "Returns range beginning at cursor, ending at newline or inner boundary of current node."
-  [pos loc]
-  (let [start-pos (select-keys pos [:line :column])]
-    (merge start-pos
-           (if (and (= :string (get (z/node loc) :tag))
-                    (not= start-pos (tree/bounds (z/node loc) :left)))
-             (-> (select-keys (z/node loc) [:end-line :end-column])
-                 (update :end-column dec))
-             (let [locs-to-delete (->> (cons loc (tree/right-locs loc))
-                                       (take-while (comp not tree/newline? z/node)))]
-               (select-keys (some-> (or (last locs-to-delete) loc) z/node) [:end-line :end-column]))))))
 
 (defn cursor-skip-bounds
   [{{:keys [pos loc]} :magic/cursor :as cm} side]
@@ -142,11 +126,33 @@
 
 
 (def kill
-  (fn [{{pos :pos loc :loc} :magic/cursor :as cm}]
-    (if (cm/selection? cm)
-      pass
-      (->> (get-kill-range pos loc)
-           (cut-range cm)))))
+  (fn [{{pos :pos} :magic/cursor
+        zipper     :zipper :as cm}]
+    (let [loc (tree/node-at zipper pos)
+          node (z/node loc)
+          loc (cond-> loc
+                      (or (not (tree/inside? node pos))
+                          (tree/whitespace? node)) (z/up))
+          node (z/node loc)
+          in-edge? (when-let [inner (tree/inner-range node)]
+                     (not (tree/within? inner pos)))
+          end-node (cond in-edge? nil                       ;; ignore kill when cursor is inside an edge structure, eg. #|""
+                         (not (tree/may-contain-children? node)) (tree/inner-range node)
+
+                         :else (let [next-nodes (->> (z/children loc)
+                                                     (drop-while #(range/lt % pos)))
+                                     next-newline (->> (take-while tree/whitespace? next-nodes)
+                                                       (filter tree/newline?)
+                                                       (first))]
+                                 (or (when next-newline
+                                       (->> (take-while tree/whitespace? next-nodes)
+                                            (last)))
+                                     (->> next-nodes
+                                          (take-while (complement tree/newline?))
+                                          (last)))))]
+      (when end-node
+        (->> (merge pos (select-keys end-node [:end-line :end-column]))
+             (cut-range cm))))))
 
 (defn unwrap [{{:keys [pos bracket-loc bracket-node]} :magic/cursor :as cm}]
   (when (and bracket-loc (not (cm/selection? cm)))
@@ -214,9 +220,8 @@
     (push-stack! cm (tree/bounds node))))
 
 (defn push-cursor! [cm]
-  (push-stack! cm (cm/cursor->range (:cursor/cursor-root cm)))
-  (some-> (:cursor/clear-marker cm)
-          (apply nil)))
+  (push-stack! cm (cm/cursor->range (cm/get-cursor cm)))
+  (cm/unset-cursor-root! cm))
 
 (def expand-selection
   (fn [{{:keys [bracket-node] cursor-pos :pos} :magic/cursor
@@ -226,11 +231,11 @@
           loc (tree/node-at zipper sel)
           node (z/node loc)
           select! (partial tracked-select cm)
-          cursor (:cursor/cursor-root cm)]
-      (when cursor (push-cursor! cm))
-      (if
-        (or cursor (not (cm/selection? cm)))
+          cursor-root (cm/cursor-root cm)
+          selection? (cm/selection? cm)]
+      (if (or cursor-root (not selection?))
         (do
+          (push-cursor! cm)
           (push-stack! cm (cm/selection-bounds cm))
           (select! (let [node (if (tree/comment? node) node bracket-node)]
                      (or (when (tree/inside? node cursor-pos)
@@ -245,9 +250,9 @@
             sel
             (let [node (z/node loc)
                   inner-range (tree/inner-range node)]
-              (cond (pos= sel (tree/inner-range node)) (select! node)
+              (cond (range/pos= sel (tree/inner-range node)) (select! node)
                     (tree/within? inner-range sel) (select! inner-range)
-                    (pos= sel node) (recur (z/up loc))
+                    (range/pos= sel node) (recur (z/up loc))
                     (tree/within? node sel) (select! node)
                     :else (recur (z/up loc))))))))))
 
@@ -261,9 +266,9 @@
                               :as                             cm}]
   (let [selection-bounds (cm/selection-bounds cm)
         selection-loc (tree/node-at zipper (tree/bounds selection-bounds :left))
-        cursor (:cursor/cursor-root cm)]
-    (when cursor (push-cursor! cm))
-    (if (and cursor
+        cursor-root (cm/cursor-root cm)]
+    (when cursor-root (push-cursor! cm))
+    (if (and cursor-root
              (not= (tree/bounds pos :left)
                    (tree/bounds bracket-node :left)))
       (tracked-select cm (merge {:end-line   (:line pos)
@@ -279,11 +284,10 @@
                                :as                             cm}]
   (let [selection-bounds (cm/selection-bounds cm)
         selection-loc (tree/node-at zipper (tree/bounds selection-bounds :right))
-        cursor (:cursor/cursor-root cm)]
-    (when cursor
+        cursor-root (cm/cursor-root cm)]
+    (when cursor-root
       (push-cursor! cm))
-
-    (if (and cursor (not= (tree/bounds pos :right)
+    (if (and cursor-root (not= (tree/bounds pos :right)
                           (tree/bounds bracket-node :right)))
       (tracked-select cm (merge (tree/bounds pos :left)
                                 {:end-line   (:end-line bracket-node)

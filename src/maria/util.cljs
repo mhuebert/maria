@@ -4,6 +4,10 @@
             [re-view.core :as v]
             [clojure.string :as string]))
 
+(defn stop! [e]
+  (.stopPropagation e)
+  (.preventDefault e))
+
 (defn some-str [s]
   (when (and (string? s) (not (identical? s "")))
     s))
