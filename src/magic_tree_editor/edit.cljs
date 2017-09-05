@@ -289,7 +289,7 @@
     (when cursor-root
       (push-cursor! cm))
     (if (and cursor-root (not= (tree/bounds pos :right)
-                          (tree/bounds bracket-node :right)))
+                               (tree/bounds bracket-node :right)))
       (tracked-select cm (merge (tree/bounds pos :left)
                                 {:end-line   (:end-line bracket-node)
                                  :end-column (:end-column bracket-node)}))
@@ -336,4 +336,13 @@
 (defn cursor-selection-edge [editor side]
   (cm/set-cursor! editor (-> (cm/selection-bounds editor)
                              (tree/bounds side))))
+
+(defn cursor-line-edge [editor side]
+  (let [cursor (cm/get-cursor editor)
+        line-i (.-line cursor)
+        line (.getLine editor line-i)
+        padding (count (second (re-find (case side :left #"^(\s+).*"
+                                                   :right #".*?(\s+)$") line)))]
+    (cm/set-cursor! editor (cm/Pos line-i (case side :left padding
+                                                     :right (- (count line) padding))))))
 

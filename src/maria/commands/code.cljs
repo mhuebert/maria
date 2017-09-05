@@ -42,16 +42,28 @@
   (edit/expand-selection-left (:editor context)))
 
 (defcommand :selection/cursor-left-edge
-  {:bindings ["M1-Shift-Left"]
+  {:bindings ["M1-Shift-Up"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :left))
 
 (defcommand :selection/cursor-right-edge
-  {:bindings ["M1-Shift-Right"]
+  {:bindings ["M1-Shift-Down"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :right))
+
+(defcommand :selection/cursor-left-line
+  {:bindings ["M1-Shift-Left"]
+   :when     :block/code}
+  [{:keys [editor]}]
+  (edit/cursor-line-edge editor :left))
+
+(defcommand :selection/cursor-right-line
+  {:bindings ["M1-Shift-Right"]
+   :when     :block/code}
+  [{:keys [editor]}]
+  (edit/cursor-line-edge editor :right))
 
 (defcommand :selection/expand-right
   {:bindings ["M1-Right"]

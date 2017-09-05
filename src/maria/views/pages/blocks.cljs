@@ -104,9 +104,3 @@
              ["gists" username] (gists-list {:username username})))]
    (when (d/get :commands :which-key/active?)
      (which-key/show-hints))])
-
-(defcommand :repl/clear
-  "Clear the repl output"
-  {:bindings ["M1-Shift-B"]}
-  []
-  (d/transact! [[:db/add :repl/state :cleared-index (count (d/get :repl/state :eval-log))]]))
