@@ -3,14 +3,14 @@
   (:require [magic-tree.core :as tree]
             [re-view.core :as v]
             [clojure.string :as string]
-            [maria-commands.exec :as exec]
             [re-db.d :as d]
             [re-view-prosemirror.markdown :as markdown]
             [cells.cell :as cell]
             [maria.util :as util]
             [cells.eval-context :as eval-context]
             [maria.eval :as e]
-            [maria.editors.editors :as Editor]))
+            [maria.editors.editors :as Editor]
+            [fast-zip.core :as z]))
 
 (defprotocol IBlock
 
@@ -44,10 +44,10 @@
   IBlock
   (state [this] doc))
 
-(defrecord WhitespaceBlock [id content]
+(defrecord WhitespaceBlock [id node]
   IBlock
   (kind [this] :whitespace)
-  (emit [this] content)
+  (emit [this] (:value node))
 
   IFn
   (-invoke [this props] [:div]))
@@ -63,15 +63,12 @@
   (-equiv [this other] (and (= (:id this) (:id other))
                             (= (state this) (state other)))))
 
-(defn from-node
+(defn from-ast
   "Returns a block, given a magic-tree AST node."
   [{:keys [tag] :as node}]
-  ;; GET ID FROM NODE
-  ;; CAN WE GET IT FROM DEF, DEFN, etc. in a structured way?
-  ;; IE IF FIRST SYMBOL STARTS WITH DEF, READ NEXT SYMBOL
   (case tag
     :comment (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
-    (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) (:value node))
+    (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
     (->CodeBlock (d/unique-id) node)))
 
 (defn create
@@ -81,9 +78,9 @@
                   :prose ""
                   :code [])))
   ([kind value]
-   (from-node {:tag   (case kind :prose :comment
-                                 :code :base)
-               :value value})))
+   (from-ast {:tag   (case kind :prose :comment
+                                :code :base)
+              :value value})))
 
 (def emit-list
   "Returns the concatenated source for a list of blocks."
@@ -102,11 +99,11 @@
   [source]
   (->> (tree/ast (:ns @e/c-env) source)
        (:value)
-       (mapv from-node)
+       (mapv from-ast)
        #_(reduce (fn [out node]
                    (cond-> out
                            (not (tree/whitespace? node))
-                           (conj (from-node node)))) [])))
+                           (conj (from-ast node)))) [])))
 
 
 (defn ensure-blocks [blocks]

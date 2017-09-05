@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria-commands.which-key :as which-key]
-            [maria.blocks.block-list :as block-list]
+            [maria.blocks.tree-view :as block-list]
             [maria.eval :as e]
             [maria.repl-specials]
             [maria.views.cards :as repl-ui]

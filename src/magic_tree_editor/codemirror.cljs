@@ -142,7 +142,7 @@
   "Given a Clojure-style column and line range, return Codemirror-compatible `from` and `to` positions"
   [{:keys [line column end-line end-column]}]
   [(CM/Pos line column)
-   (CM/Pos end-line end-column)])
+   (CM/Pos (or end-line line) (or end-column column))])
 
 (defn mark-ranges!
   "Add marks to a collection of Clojure-style ranges"

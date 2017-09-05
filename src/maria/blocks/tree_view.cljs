@@ -1,4 +1,4 @@
-(ns maria.blocks.block-list
+(ns maria.blocks.tree-view
   (:require [re-view.core :as v :refer [defview]]
             [maria.blocks.history :as history]
             [cljsjs.markdown-it]

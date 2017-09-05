@@ -205,7 +205,8 @@
                         (or (:base (first stack))
                             (= (cm/selection-bounds cm) (first stack))) rest)
           item (first stack)]
-      (swap! cm update-in [:magic/cursor :stack] rest)
+      (swap! cm update-in [:magic/cursor :stack] (if (tree/empty-range? item)
+                                                   empty rest))
       item)))
 
 (defn push-stack! [cm node]
