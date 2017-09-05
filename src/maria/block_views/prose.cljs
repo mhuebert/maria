@@ -1,4 +1,4 @@
-(ns maria.editors.prose
+(ns maria.block-views.prose
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.commands :as commands]
             [re-view-prosemirror.commands :refer [apply-command]]
@@ -12,7 +12,7 @@
             [maria-commands.exec :as exec]
             [maria.commands.prose :as prose-commands]
             [re-view-routing.core :as r]
-            [maria.editors.editors :as Editor]))
+            [maria.block-views.editor :as Editor]))
 
 
 (defview link-dropdown [{:keys [href editor]}]
@@ -39,7 +39,7 @@
                                                                    (into input-rules)
                                                                    (to-array))})])}))
 
-(defn make-editor-view [{:keys [before-change after-change on-dispatch on-selection-activity view/state] :as component}
+(defn make-editor-view [{:keys [before-change on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
   (pm/EditorView. (v/dom-node component) (->> {:state                   editor-state
                                                :spellcheck              false
@@ -52,9 +52,6 @@
                                                                             (pm/transact! pm-view tr)
                                                                             (when-not (nil? on-dispatch)
                                                                               (on-dispatch pm-view prev-state))
-                                                                            (when (and after-change (not= (.-doc prev-state)
-                                                                                                          (.-doc (.-state pm-view))))
-                                                                              (after-change))
                                                                             (when (and on-selection-activity
                                                                                        (not= (.-selection (.-state pm-view))
                                                                                              (.-selection prev-state)))
@@ -103,7 +100,7 @@
                         (when (= (:block-view @exec/context) this)
                           (exec/set-context! {:block/prose nil
                                               :block-view  nil})))}
-  [{:keys [view/state block-list block before-change after-change] :as this}]
+  [{:keys [view/state block-list block before-change] :as this}]
 
   (Editor {:doc           (Block/state block)
            :block         block
@@ -122,7 +119,6 @@
                                                                                    :editor (.getEditor this)})})))))
            :ref           #(v/swap-silently! state assoc :prose-editor-view %)
            :before-change before-change
-           :after-change  after-change
            :on-dispatch   (fn [pm-view prev-state]
                             (when (not= (.-doc (.-state pm-view))
                                         (.-doc prev-state))

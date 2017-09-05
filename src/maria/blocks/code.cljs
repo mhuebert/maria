@@ -6,8 +6,8 @@
             [magic-tree.core :as tree]
             [maria.eval :as e]
             [cells.eval-context :as eval-context]
-            [maria.editors.code :refer [CodeView]]
-            [maria.editors.editors :as Editor]))
+            [maria.block-views.code :refer [CodeView]]
+            [maria.block-views.editor :as Editor]))
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
@@ -23,7 +23,6 @@
                                          :id (:id this)))))
 
   Block/IBlock
-  (append? [this other-block] false)
   (kind [this] :code)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]

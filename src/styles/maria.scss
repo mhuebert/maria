@@ -25,9 +25,11 @@ $selection-color: #f4f4d6;
 .cm-s-maria-light div.CodeMirror-selected {
   background: $selection-color !important;
 }
+
 .cm-s-maria-light .CodeMirror-selectedtext {
   cursor: grab;
 }
+
 .cm-s-maria-light .CodeMirror-cursor {
   border-left: 1px solid #868886 !important;
 }
@@ -172,6 +174,7 @@ div.CodeMirror {
 .f7 {
   font-size: 0.75rem;
 }
+
 $darken: rgba(0, 0, 0, 0.05);
 $lighten: rgba(255, 255, 255, 0.25);
 .b--darken {
@@ -314,19 +317,24 @@ $lighten: rgba(255, 255, 255, 0.25);
 .cursor-text {
   cursor: text;
 }
+
 .cursor-zoom-in {
   cursor: zoom-in;
 }
+
 .cursor-zoom-out {
   cursor: zoom-out;
 }
+
 .hover-b:hover {
   font-weight: bold;
 }
+
 .hover-invert:hover {
   background: black;
-  color:white;
+  color: white;
 }
+
 .prosemirror-content {
   blockquote {
     border-left: 4px solid rgba(0, 0, 0, 0.05);
@@ -367,6 +375,7 @@ $lighten: rgba(255, 255, 255, 0.25);
     color: black;
   }
 }
+
 svg {
   cursor: default;
 }
@@ -388,3 +397,69 @@ svg {
   }
 }
 
+$cell-status-size: 24px;
+
+.cell-status {
+  display: inline-block;
+  border-radius: 4px;
+  width: $cell-status-size;
+  height: $cell-status-size;
+  margin: 1px;
+  padding: 4px;
+  background-color: $darken;
+}
+
+.circle-loading, .circle-error {
+  width: $cell-status-size - 8;
+  height: $cell-status-size - 8;
+  position: relative;
+  display: inline-block;
+  > div {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+}
+
+.circle-loading > div {
+  opacity: 0.6;
+  -webkit-animation: sk-bounce 2.0s infinite ease-in-out;
+  animation: sk-bounce 2.0s infinite ease-in-out;
+  background-color: #357edd;
+}
+
+.circle-loading > div:nth-child(2) {
+  -webkit-animation-delay: -1.0s;
+  animation-delay: -1.0s;
+}
+
+@-webkit-keyframes sk-bounce {
+  0%, 100% {
+    -webkit-transform: scale(0.0)
+  }
+  50% {
+    -webkit-transform: scale(1.0)
+  }
+}
+
+@keyframes sk-bounce {
+  0%, 100% {
+    transform: scale(0.0);
+    -webkit-transform: scale(0.0);
+  }
+  50% {
+    transform: scale(1.0);
+    -webkit-transform: scale(1.0);
+  }
+}
+
+.circle-error {
+  > div {
+    background-color: darkred;
+    border-radius: 0;
+    transform: rotate(45deg) scale(0.75);
+  }
+}

@@ -1,6 +1,6 @@
 (ns maria.views.codemirror
   (:require [cljsjs.codemirror :as CM]
-
+            [maria.block-views.editor :as Editor]
             [codemirror.addon.markselection]
             [codemirror.mode.clojure]
 
@@ -34,7 +34,6 @@
                                          view/props
                                          error-ranges
                                          before-change
-                                         after-change
                                          on-selection-activity
                                          keymap]
                                   :as   this}]
@@ -67,9 +66,6 @@
 
                                   (when before-change
                                     (.on editor "beforeChange" before-change))
-
-                                  (when after-change
-                                    (.on editor "changes" after-change))
 
                                   (when on-selection-activity
                                     (.on editor "cursorActivity" on-selection-activity)))

@@ -6,7 +6,7 @@
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
-            [maria.editors.editors :as Editor]
+            [maria.block-views.editor :as Editor]
             [maria.util :as util]
             [maria.blocks.history :as history]
             [re-view.core :as v]))

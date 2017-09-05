@@ -1,11 +1,12 @@
 (ns cells.lib
   (:require [cells.cell :as cell
-             :refer [*cell-stack* -set-async-state!]
+             :refer [*cell-stack*]
              :refer-macros [cell-fn cell]
              :include-macros true]
             [cells.eval-context :refer [on-dispose handle-error]]
             [goog.net.XhrIo :as xhr]
-            [goog.net.ErrorCode :as errors])
+            [goog.net.ErrorCode :as errors]
+            [cells.util :as util])
   (:require-macros [cells.lib])
   (:import [goog Uri]))
 
@@ -15,12 +16,14 @@
          fetch
          geo-location)
 
+(def status! cell/status!)
 (def status cell/status)
 (def message cell/message)
 (def error? cell/error?)
 (def loading? cell/loading?)
 (def dependencies cell/dependencies)
 (def dependents cell/dependents)
+(def unique-id util/unique-id)
 
 #_(defn restricted-swap! [specified-name cell & args]
     (if (instance? cell/Cell cell)
@@ -88,21 +91,26 @@
          url (cond-> url
                      query (str "?" (query-string query)))
          parse (get parse-fns format)]
-     (cell/-set-async-state! self :loading)
+     (cell/status! self :loading)
      (xhr/send url (cell-fn [event]
                             (let [xhrio (.-target event)]
                               (if-not (.isSuccess xhrio)
-                                (-set-async-state! self :error {:message (-> xhrio .getLastErrorCode (errors/getDebugMessage))
-                                                                :xhrio   xhrio})
+                                (status! self :error {:message         (-> xhrio .getLastErrorCode (errors/getDebugMessage))
+                                                                :xhrio xhrio})
                                 (let [formatted-value (-> xhrio (.getResponseText) (parse))]
-                                  (-set-async-state! self nil)
+                                  (status! self nil)
                                   (reset! self formatted-value))))))
      @self)))
 
 (defn geo-location
   []
-  (js/navigator.geolocation.getCurrentPosition
-    (cell-fn [location]
-             (->> {:latitude  (.. location -coords -latitude)
-                   :longitude (.. location -coords -longitude)}
-                  (reset! (first *cell-stack*))))))
+  (let [self (first *cell-stack*)]
+    (cell/status! self :loading)
+    (js/navigator.geolocation.getCurrentPosition
+      (cell-fn [location]
+               (cell/status! self nil)
+               (->> {:latitude  (.. location -coords -latitude)
+                     :longitude (.. location -coords -longitude)}
+                    (reset! self)))
+      (cell-fn [error]
+               (cell/status! self :error (str error))))))

@@ -1,7 +1,7 @@
 (ns maria.commands.blocks
   (:require [maria-commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
-            [maria.editors.editors :as Editor]
+            [maria.block-views.editor :as Editor]
             [maria.blocks.history :as history]
             [re-db.d :as d]))
 

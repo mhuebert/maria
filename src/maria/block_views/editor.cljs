@@ -1,4 +1,4 @@
-(ns maria.editors.editors
+(ns maria.block-views.editor
   (:require [maria-commands.exec :as exec]
             [re-view.core :as v]))
 

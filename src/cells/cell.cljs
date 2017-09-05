@@ -24,8 +24,9 @@
 
 (defprotocol ICellStore
   "Protocol for getting and putting cell values."
-  (-put-value! [this value])
-  (-get-value [this]))
+  (put-value! [this value])
+  (get-value [this])
+  (invalidate! [this]))
 
 (defprotocol ICellView
   "Protocol for shallow copies of cells with different views"
@@ -98,6 +99,7 @@
 
 (defn transitive-dependents-sorted [cell]
   (topo-sort (transitive-dependents cell))
+  ;; maybe make this faster by pruning the graph?
   #_(let [cells (transitive-dependents cell)
           include (conj cells (cell-name cell))
           sparser-graph (dep/->MapDependencyGraph
@@ -116,10 +118,12 @@
   (-compute! [this] "evaluate cell and set value")
   (-compute-with-dependents! [this] "evaluate cell and flow updates to dependent cells"))
 
-(defprotocol IAsync
-  "TO BE IMPROVED
+(defprotocol IStatus
+  "NOT EVEN ALPHA
   Just an experiment to see what it might feel like store and read status information on cells."
-  (-set-async-state! [this status] [this status message] "Set loading status")
+  (status! [this]
+           [this status]
+           [this status message] "Set loading status")
 
   (status [this])
   (message [this] "Read message associated with async state")
@@ -136,8 +140,9 @@
 (deftype Cell [id ^:mutable f ^:mutable state eval-context]
 
   ICellStore
-  (-get-value [this] (:value state))
-  (-put-value! [this value] (set! state (assoc state :value value)))
+  (get-value [this] (:value state))
+  (put-value! [this value] (set! state (assoc state :value value)))
+  (invalidate! [this])
 
   IPrintWithWriter
   (-pr-writer [this writer _]
@@ -157,23 +162,25 @@
       (-set! cell @this)
       cell))
 
-  IAsync
-  (-set-async-state! [this value] (-set-async-state! this value nil))
-  (-set-async-state! [this value message]
+  IStatus
+  (status! [this]
+    (status! this nil nil))
+  (status! [this value]
+    (status! this value nil))
+  (status! [this value message]
     (set! state (assoc state
-                  :async/status value
-                  :async/message message))
+                  :cell.status/status value
+                  :cell.status/message message))
+    (invalidate! this)
     (-compute-dependents! this))
   (status [this]
     @this
-    (:async/status state))
+    (:cell.status/status state))
   (message [this]
     @this
-    (:async/message state))
-  (loading? [this]
-    (= :loading (status this)))
-  (error? [this]
-    (= :error (status this)))
+    (:cell.status/message state))
+  (loading? [this] (= :loading (status this)))
+  (error? [this] (= :error (status this)))
 
   IWatchable
   (-notify-watches [this oldval newval]
@@ -188,12 +195,12 @@
   (-deref [this]
     (when *read-log*
       (vswap! *read-log* conj (name this)))
-    (-get-value this))
+    (get-value this))
 
   ISet!
   (-set! [this newval]
     (log :-set-cell! this)
-    (-put-value! this newval))
+    (put-value! this newval))
   IReset
   (-reset! [this newval]
     (log :-reset! this newval)
@@ -285,7 +292,18 @@
   #_(-compute-dependents! cell)
   )
 
-(def empty-cell-state {:view          deref
+(defn cell-status [cell]
+  (hiccup/element [:.cell-status
+                   [(case (status cell) :loading :.circle-loading :error :.circle-error)
+                    [:div]
+                    [:div]]]))
+
+(defn default-view [self]
+  (if (status self)
+    (cell-status self)
+    @self))
+
+(def empty-cell-state {:view          default-view
                        :initial-value nil
                        :dispose-fns   []})
 

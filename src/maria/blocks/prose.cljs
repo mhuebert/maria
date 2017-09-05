@@ -5,8 +5,8 @@
             [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
             [re-view-prosemirror.markdown :as markdown]
-            [maria.editors.prose :refer [ProseView]]
-            [maria.editors.editors :as Editor]))
+            [maria.block-views.prose :refer [ProseView]]
+            [maria.block-views.editor :as Editor]))
 
 (defn serialize-block [this]
   (.serialize markdown/serializer (Block/state this)))
@@ -31,26 +31,7 @@
 
   (emit [this]
     (tree/string {:tag   :comment
-                  :value (serialize-block this)}))
-
-  (append? [this other-block]
-    (or (Block/empty? this)
-        (= :prose (Block/kind other-block))))
-
-  (append [this other-block]
-    (if (Block/empty? this)
-      other-block
-      (when (= :prose (Block/kind other-block))
-        (let [doc (.replace (:doc this)
-                            (.. (:doc this) -content -size)
-                            (.. (:doc this) -content -size)
-                            (pm/Slice. (.-content (:doc other-block)) 0 0))]
-          (assoc this :doc doc))
-        #_(assoc this :doc (.parse markdown/parser
-                                   (str (serialize-block this)
-
-                                        (or (util/some-str (serialize-block other-block))
-                                            "\n"))))))))
+                  :value (serialize-block this)})))
 
 (defn prepend-paragraph [this]
   (when-let [prose-view (Editor/of-block this)]

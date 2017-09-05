@@ -26,14 +26,17 @@
             [maria.frames.live-actions :as user-actions]
 
             [maria.live.analyze]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [re-db.patterns :as patterns]))
 
 (extend-type cell/Cell
   cell/ICellStore
-  (-put-value! [this value]
+  (put-value! [this value]
     (d/transact! [[:db/add :cells (name this) value]]))
-  (-get-value [this]
+  (get-value [this]
     (d/get :cells (name this)))
+  (invalidate! [this]
+    (patterns/invalidate! d/*db* :ea_ [:cells (name this)]))
   show/IShow
   (show [this] (cell/view this)))
 

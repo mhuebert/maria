@@ -9,7 +9,7 @@
             [maria.util :as util]
             [cells.eval-context :as eval-context]
             [maria.eval :as e]
-            [maria.editors.editors :as Editor]
+            [maria.block-views.editor :as Editor]
             [fast-zip.core :as z]))
 
 (defprotocol IBlock
@@ -18,10 +18,7 @@
   (emit [this])
   (kind [this])
   (state [this])
-  (tag [this])
-
-  (append? [this other-block] "Return true if other block can be joined to next block")
-  (append [this other-block] "Append other-block to this block."))
+  (tag [this]))
 
 (defn update-view
   [block]
@@ -165,41 +162,3 @@
          (when (satisfies? eval-context/IDispose block)
            (eval-context/dispose! block))))
      result)))
-
-#_(defn join-blocks [blocks]
-    ;; PROBLEM
-    ;; unable to handle cursor properly when joining blocks.
-    ;; unable to 'thread' cursor movements through splice-blocks and
-    ;; join-blocks.
-
-    (let [the-focused-block (focused-block)]
-      (loop [blocks blocks
-             dropped-indexes []
-             block-to-focus nil
-             i 0]
-        (cond (> i (- (count blocks) 2))
-              (do (when (and the-focused-block block-to-focus)
-                    (let [[block selection] block-to-focus]
-                      (.log js/console " :set-selection" selection)
-                      (prn :focused the-focused-block)
-                      (.log js/console (get-history-selections the-focused-block))
-                      (put-selections! block selection)
-                      (focus! :join-blocks block)))
-                  (with-meta blocks {:dropped dropped-indexes}))
-              (append? (nth blocks i) (nth blocks (inc i)))
-              (let [block (nth blocks i)
-                    next-block (nth blocks (inc i))
-                    joined-block (append block next-block)
-                    next-focused-block (cond (= (:id block) (:id the-focused-block))
-                                             [block (get-history-selections block)]
-                                             (= (:id next-block) (:id the-focused-block))
-                                             [block (let [sel (get-history-selections next-block)]
-                                                      (.create pm/TextSelection (state joined-block)
-                                                               (+ (.. (state block) -content -size) (.-anchor sel))))]
-                                             :else nil)]
-                (recur (util/vector-splice blocks i 2 [joined-block])
-                       (conj dropped-indexes (+ (inc i) (count dropped-indexes)))
-                       (or block-to-focus
-                           next-focused-block)
-                       i))
-              :else (recur blocks dropped-indexes block-to-focus (inc i))))))

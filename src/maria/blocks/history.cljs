@@ -3,7 +3,7 @@
             [cells.eval-context :as eval-context]
             [re-view.core :as v]
             [maria.blocks.blocks :as Block]
-            [maria.editors.editors :as Editor]))
+            [maria.block-views.editor :as Editor]))
 
 (def ^:dynamic *ignored-op* false)
 

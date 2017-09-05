@@ -9,7 +9,7 @@
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
             [maria.blocks.prose :as Prose]
-            [maria.editors.editors :as Editor]
+            [maria.block-views.editor :as Editor]
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
             [maria.views.floating-hint :as hint]))

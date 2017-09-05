@@ -1,6 +1,6 @@
-(ns maria.editors.code
+(ns maria.block-views.code
   (:require [re-view.core :as v :refer [defview]]
-            [maria.editors.editors :as Editor]
+            [maria.block-views.editor :as Editor]
             [maria.views.codemirror :as codemirror]
             [maria.blocks.blocks :as Block]
             [maria-commands.exec :as exec]
@@ -13,13 +13,11 @@
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount     Editor/mount
    :view/will-unmount  Editor/unmount
-   :get-editor         #(.getEditor (:editor-view @(:view/state %)))
-   :focus              (fn [this coords]
-                         (.focus (:editor-view @(:view/state this)) coords))}
-  [{:keys [view/state block-list block before-change after-change on-selection-activity] :as this}]
+   :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
+  [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
   [:.flex.pv3.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
-                 (.focus this))}
+                 (Editor/focus! (.getEditor this)))}
    [:.w-50.flex-none
     (codemirror/editor {:class                 "pa3 bg-white"
                         :ref                   #(v/swap-silently! state assoc :editor-view %)
@@ -27,7 +25,6 @@
                         :on-ast                (fn [node]
                                                  (.splice block-list block [(assoc block :node node)]))
                         :before-change         before-change
-                        :after-change          after-change
                         :on-selection-activity on-selection-activity
                         :capture-event/focus   #(exec/set-context! {:block/code true
                                                                     :block-view this})
