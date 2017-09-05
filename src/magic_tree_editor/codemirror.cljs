@@ -5,7 +5,7 @@
             [magic-tree.core :as tree]
             [magic-tree-editor.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]
-            [maria-commands.registry :as registry]
+            [maria-commands.registry :as registry :refer-macros [defcommand]]
             [cljs.core.match :refer-macros [match]]
             [re-db.d :as d]
             [goog.dom :as gdom]
@@ -66,10 +66,6 @@
                (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {}))))
 
 (def M1 (registry/modifier-keycode "M1"))
-(def SHIFT (registry/modifier-keycode "SHIFT"))
-
-(defn modifier-down? [k]
-  (contains? (d/get :commands :modifiers-down) k))
 
 (defn cursor-loc
   "Current sexp, or nearest sexp to the left, or parent."
@@ -205,8 +201,8 @@
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
         evt-type (.-type e)
-        m-down? (modifier-down? M1)
-        shift-down? (modifier-down? SHIFT)]
+        m-down? (registry/M1-down? e)
+        shift-down? (.-shiftKey e)]
     (match [m-down? evt-type key-code]
            [true _ (:or 16 91)] (let [pos (cursor->range (get-cursor cm))
                                       loc (cond-> (get-in cm [:magic/cursor :bracket-loc])

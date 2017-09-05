@@ -16,7 +16,7 @@
 
 
 (defview link-dropdown [{:keys [href editor]}]
-  [:.flex.items-center
+  [:.flex.items-center.pa2.shadow-4.bg-white.br2
    [:.dib.pointer
     {:on-click (fn [e]
                  (.preventDefault e)

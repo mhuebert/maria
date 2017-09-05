@@ -9,16 +9,19 @@
                         (let [callback (fn [e]
                                          (when-not (r/closest (.-target e) (partial = (v/dom-node this)))
                                            (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
-                          (events/listen js/window #js ["click" "resize" "scroll" "keydown"] callback)
+                          (events/listen js/window #js ["click" #_"resize" #_"scroll" "keydown"] callback)
                           (v/swap-silently! state assoc :callback callback)))
    :view/will-unmount (fn [{:keys [view/state]}]
-                        (events/unlisten js/window #js ["click" "resize" "scroll" "keydown"] (:callback @state)))}
+                        (events/unlisten js/window #js ["click" #_"resize" #_"scroll" "keydown"] (:callback @state)))}
   [{:keys [rect element]}]
-  [:.fixed.pa2.shadow-4.bg-white.br2.z-999
-   {:style {:top  (cond-> (+ (.-top rect) 0)
-                          (.-height rect) (+ (.-height rect)))
-            :left (.-left rect)}}
-    element])
+  (let [top (+ (.-bottom rect)
+               (.-scrollY js/window)
+               10)
+        left (+ (.-left rect) (.-scrollX js/window))]
+    [:.absolute.z-999
+     {:style {:top  top
+              :left left}}
+     element]))
 
 (defn display-hint []
   (some-> (d/get :ui/globals :floating-hint)

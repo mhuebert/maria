@@ -15,7 +15,6 @@
 (defn before-exec [key cb]
   (vswap! -before-exec assoc key cb))
 
-
 (defn get-context
   ([] (get-context nil))
   ([event-attrs]
@@ -64,6 +63,8 @@
          (apply concat)
          (distinct))))
 
+(def reverse-compare (fn [a b] (compare b a)))
+
 (defn init-listeners []
   (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
                                   [:db/add :commands :which-key/active? false]])
@@ -81,13 +82,19 @@
                                context (when command-names
                                          (get-context {:keycode keycode
                                                        :key     (.-key e)}))
-                               commands (when command-names
-                                          (mapv #(get-command context %) command-names))
-                               _ (when (seq commands)
+                               the-command (when command-names
+                                             (->> (map #(get-command context %) command-names)
+                                                  (filter #(or (:exec? %) (:intercept? %)))
+                                                  (sort-by :priority reverse-compare)
+                                                  (first)))
+                               _ (when the-command
                                    (doseq [f (vals @-before-exec)]
                                      (f)))
-                               results (when command-names
-                                         (mapv #(exec-command context %) commands))]
+                               ;; NOTE
+                               ;; only running 1 command, sorting by priority.
+                               results [(when the-command
+                                          (exec-command context the-command)
+                                          #_(mapv #(exec-command context %) the-command))]]
                            (when (and which-key-active? (= keycode 27))
                              (d/transact! [[:db/add :commands :which-key/active? false]]))
                            ;; if we use Tab as a modifier,
@@ -113,13 +120,11 @@
                                               which-key-delay)]]))))]
 
     (clear-keys)
-    (events/listen js/window "keydown" handle-keydown true)
 
-    (events/listen js/window "mousedown"
-                   (fn [e]
-                     (doseq [command (-> (conj (d/get :commands :modifiers-down) (.-button e))
-                                         (registry/get-keyset-commands))]
-                       (exec-command-name command))))
+    ;; NOTE: 'keydown' listeners MUST be activated in the 'capture' phase.
+    ;;       Otherwise, CodeMirror/editor state can change before the command is activated.
+
+    (events/listen js/window "keydown" handle-keydown true)
 
     (events/listen js/window "keyup"
                    (fn [e]
@@ -127,8 +132,13 @@
                        (when (registry/modifiers keycode)
                          (d/transact! [[:db/update-attr :commands :modifiers-down disj keycode]])
                          (when (empty? (d/get :commands :modifiers-down))
-                           (d/transact! [[:db/add :commands :which-key/active? false]])))))
-                   true)
+                           (d/transact! [[:db/add :commands :which-key/active? false]]))))) true)
+
+    (events/listen js/window "mousedown"
+                   (fn [e]
+                     (doseq [command (-> (conj (d/get :commands :modifiers-down) (.-button e))
+                                         (registry/get-keyset-commands))]
+                       (exec-command-name command))))
 
     (events/listen js/window #js ["blur" "focus"] #(when (= (.-target %) (.-currentTarget %))
                                                      (clear-keys)))))

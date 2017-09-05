@@ -31,13 +31,8 @@
 (defmacro cell
   "Returns an anonymous cell."
   [& body]
-  (let [maybe-name (first body)
-        named? (and (> (count body) 1)
-                    (or (keyword? maybe-name)
-                        (symbol? maybe-name)
-                        (string? maybe-name)
-                        (number? maybe-name)))
-        the-name (when named? maybe-name)
+  (let [named? (> (count body) 1)
+        the-name (when named? (first body))
         body (if named? (rest body) body)
         ;; unique ID for this lexical occurrence of `cell`
         lexical-marker (str "_" (util/unique-id))

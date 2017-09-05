@@ -11,8 +11,6 @@
 (defn serialize-block [this]
   (.serialize markdown/serializer (Block/state this)))
 
-
-
 (extend-type Block/ProseBlock
 
   IFn

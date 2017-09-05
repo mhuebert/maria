@@ -12,7 +12,8 @@
             [maria.block-views.editor :as Editor]
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
-            [maria.views.floating-hint :as hint]))
+            [maria.views.floating-hint :as hint]
+            [maria.views.dropdown :as dropdown]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -59,7 +60,7 @@
   (edit/expand-selection-right (:editor context)))
 
 (defcommand :code-block/enter
-  {:bindings "Enter"
+  {:bindings ["Enter"]
    :when     :block/code}
   [{:keys [block-view editor block-list block blocks]}]
   (let [last-line (.lastLine editor)
@@ -177,9 +178,20 @@
     (when (and (#{:symbol :token} (:tag node))
                (= (tree/bounds node :right)
                   (cm/pos->boundary (cm/get-cursor editor) :left)))
-      (hint/floating-hint! {:element (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
-                                       [:.flex.items-center (str completion) [:.flex-auto] [:.gray (str namespace)]])
-                            :rect    (Editor/cursor-coords editor)}))))
+      (hint/floating-hint! {:element (dropdown/numbered-list {}
+                                                             (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
+                                                               {:action #(do
+                                                                           (hint/hide-hint!)
+                                                                           (prn completion node editor)
+                                                                           (cm/replace-range! editor (str completion) node))
+                                                                :label  [:.flex.items-center.w-100.monospace.f6.ma2
+                                                                         (str completion)
+                                                                         [:.flex-auto]
+                                                                         [:.gray.pl3 (str namespace)]]}))
+                            :rect    (let [coords (Editor/cursor-coords editor)]
+                                       #js {:left   (- (.-left coords) (.-scrollX js/window))
+                                            :top    (- (.-top coords) (.-scrollY js/window))
+                                            :bottom (- (.-bottom coords) (.-scrollY js/window))})}))))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
@@ -198,12 +210,12 @@
 #_(do
     (defcommand :navigate/jump-to-top
       "Move cursor to top of current doc"
-      {:bindings "M1-Up"
+      {:bindings ["M1-Up"]
        :when     :block/code})
 
     (defcommand :navigate/jump-to-bottom
       "Move cursor to bottom of current doc"
-      {:bindings "M1-Down"
+      {:bindings ["M1-Down"]
        :when     :block/code}))
 
 (defcommand :comment/line

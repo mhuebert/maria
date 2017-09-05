@@ -136,6 +136,10 @@ div.CodeMirror {
   white-space: pre-wrap;
 }
 
+.monospace {
+  font-family: 'Fira Code', monospace;
+}
+
 .CodeMirror, .code, code, pre {
   font-family: 'Fira Code', monospace;
   font-size: 15px;

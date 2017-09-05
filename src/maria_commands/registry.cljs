@@ -12,8 +12,6 @@
                      [:path {:d "M13 1.07V9h7c0-4.08-3.05-7.44-7-7.93zM4 15c0 4.42 3.58 8 8 8s8-3.58 8-8v-4H4v4zm7-13.93C7.05 1.56 4 4.92 4 9h7V1.07z"}]]
                     (with-meta (name "z"))))
 
-
-
 (defn endkey->keycode [k]
   (let [k-upper (string/upper-case k)
         k (get {"1"            "ONE"
@@ -94,6 +92,13 @@
          (throw (js/Error. "Invalid modifier. Must be M1, M2, M3, or SHIFT.")))
        (gobj/get KeyCodes)))
 
+(defn M1-down? [e]
+  (if mac? (.-metaKey e)
+           (.-ctrlKey e)))
+(defn M3-down? [e]
+  (if mac? (.-ctrlKey e)
+           (.-metaKey e)))
+
 (defn normalize-keyset-string [patterns]
   (->> (string/split patterns #"\s")
        (mapv (fn [s]
@@ -152,6 +157,29 @@
 
 (def normalize-keycode KeyCodes/normalizeKeyCode)
 
+(defn spaced-name [the-name]
+  (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
+
+(defn register! [{the-name :name
+                  priority :priority
+                  :as      the-command} bindings]
+  (let [parsed-bindings (mapv normalize-keyset-string bindings)]
+    (swap! commands assoc the-name (merge the-command
+                                          {:display-namespace (some-> (namespace the-name)
+                                                                      (spaced-name))
+                                           :display-name      (spaced-name (name the-name))
+                                           :bindings          bindings
+                                           :priority          (or priority 0)
+                                           :parsed-bindings   parsed-bindings}))
+    (reset! mappings (reduce (fn [mappings pattern]
+                               (update-in mappings (conj pattern :exec) conj the-name)) @mappings parsed-bindings))))
+
+(defn deregister! [the-name]
+  (let [{:keys [parsed-bindings]} (get @commands the-name)]
+    (reset! mappings (reduce (fn [mappings pattern]
+                               (update-in mappings (conj pattern :exec) disj the-name)) @mappings parsed-bindings))
+
+    (swap! commands dissoc the-name)))
 
 
 

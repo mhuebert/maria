@@ -23,7 +23,7 @@
 (def loading? cell/loading?)
 (def dependencies cell/dependencies)
 (def dependents cell/dependents)
-(def unique-id util/unique-id)
+(def unique-id (comp str util/unique-id))
 
 #_(defn restricted-swap! [specified-name cell & args]
     (if (instance? cell/Cell cell)

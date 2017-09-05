@@ -136,8 +136,7 @@
      (throw (js/Error. "Format depth too deep!")))
    (cond (satisfies? show/IShow value) (format-value depth (show/show value))
 
-         (or (satisfies? hiccup/IHiccup value)
-             (array? value)) value
+         (satisfies? hiccup/IHiccup value) value
 
          :else
          (let [kind (messages/kind value)]
