@@ -56,23 +56,36 @@
 
   Editor/ICursor
 
-  (-focus! [cm coords]
+  (-focus! [this coords]
     (let [coords (if (keyword? coords)
-                   (case coords :end (cm/Pos (.lineCount cm) (count (.getLine cm (.lineCount cm))))
+                   (case coords :end (cm/Pos (.lineCount this) (count (.getLine this (.lineCount this))))
                                 :start (cm/Pos 0 0))
                    coords)]
-      (doto cm
+      (doto this
         (.focus)
-        (cond-> coords (.setCursor coords)))))
+        (cond-> coords (.setCursor coords)))
+      (Editor/scroll-into-view (Editor/cursor-coords this))))
 
-  (get-cursor [cm]
-    (when-not (.somethingSelected cm)
-      (cm/get-cursor cm)))
+  (get-cursor [this]
+    (when-not (.somethingSelected this)
+      (cm/get-cursor this)))
 
-  (cursor-coords [cm] (.cursorCoords cm))
+  (cursor-coords [this]
+    (let [coords (.cursorCoords this)]
+      ;; TODO
+      ;; these coords don't seem to be correct when using them
+      ;; to scroll the cursor into view.
+      #_(.log js/console "cm" #js {:left   (- (.-left coords) (.-scrollX js/window))
+                                 :right  (- (.-right coords) (.-scrollX js/window))
+                                 :top    (- (.-top coords) (.-scrollY js/window))
+                                 :bottom (- (.-bottom coords) (.-scrollY js/window))})
+      #js {:left   (- (.-left coords) (.-scrollX js/window))
+           :right  (- (.-right coords) (.-scrollX js/window))
+           :top    (- (.-top coords) (.-scrollY js/window))
+           :bottom (- (.-bottom coords) (.-scrollY js/window))}))
 
-  (start [cm] (cm/Pos 0 0))
-  (end [cm] (cm/Pos (.lastLine cm) (count (.getLine cm (.lastLine cm)))))
+  (start [this] (cm/Pos 0 0))
+  (end [this] (cm/Pos (.lastLine this) (count (.getLine this (.lastLine this)))))
 
   (selection-expand [cm]
     (edit/expand-selection cm))

@@ -2,17 +2,18 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [re-view-routing.core :as r]
-            [goog.events :as events]))
+            [goog.events :as events])
+  (:import [goog.events EventType]))
 
 (defview hint-view
   {:view/did-mount    (fn [{:keys [view/state] :as this}]
                         (let [callback (fn [e]
                                          (when-not (r/closest (.-target e) (partial = (v/dom-node this)))
                                            (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
-                          (events/listen js/window #js ["click" #_"resize" #_"scroll" "keydown"] callback)
+                          (events/listen js/window #js ["mousedown" "blur"] callback true)
                           (v/swap-silently! state assoc :callback callback)))
    :view/will-unmount (fn [{:keys [view/state]}]
-                        (events/unlisten js/window #js ["click" #_"resize" #_"scroll" "keydown"] (:callback @state)))}
+                        (events/unlisten js/window #js ["mousedown" "blur"] (:callback @state) true))}
   [{:keys [rect element]}]
   (let [top (+ (.-bottom rect)
                (.-scrollY js/window)
@@ -30,5 +31,5 @@
 (defn floating-hint! [{:keys [rect element] :as content}]
   (d/transact! [[:db/add :ui/globals :floating-hint content]]))
 
-(defn hide-hint! []
+(defn clear-hint! []
   (d/transact! [[:db/retract-attr :ui/globals :floating-hint]]))

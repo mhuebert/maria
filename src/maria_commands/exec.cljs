@@ -43,8 +43,7 @@
   [context {:keys [command exec? intercept? name]}]
   (let [result (when exec? (command context))]
     (when exec? (util/log-ret "Executed command:" name))
-    {:intercept! (and intercept? (not (or (false? result)
-                                          (= result (.-Pass js/CodeMirror)))))}))
+    (and result (not= result (.-Pass js/CodeMirror)))))
 
 (defn exec-command-name
   [name]
@@ -82,19 +81,19 @@
                                context (when command-names
                                          (get-context {:keycode keycode
                                                        :key     (.-key e)}))
-                               the-command (when command-names
-                                             (->> (map #(get-command context %) command-names)
-                                                  (filter #(or (:exec? %) (:intercept? %)))
-                                                  (sort-by :priority reverse-compare)
-                                                  (first)))
-                               _ (when the-command
+                               the-commands (when command-names
+                                              (->> (map #(get-command context %) command-names)
+                                                   (filter #(or (:exec? %) (:intercept? %)))
+                                                   (sort-by :priority reverse-compare)))
+                               _ (when the-commands
                                    (doseq [f (vals @-before-exec)]
                                      (f)))
+                               _ (when (> (count the-commands) 1 )
+                                   (prn :multiple-commands command-names))
                                ;; NOTE
                                ;; only running 1 command, sorting by priority.
-                               results [(when the-command
-                                          (exec-command context the-command)
-                                          #_(mapv #(exec-command context %) the-command))]]
+                               results (when the-commands
+                                         (take 1 (filter identity (map #(exec-command context %) the-commands))))]
                            (when (and which-key-active? (= keycode 27))
                              (d/transact! [[:db/add :commands :which-key/active? false]]))
                            ;; if we use Tab as a modifier,
@@ -103,7 +102,7 @@
                                (.preventDefault e)
                                (.stopPropagation e))
 
-                           (when (seq (filter :intercept! results))
+                           (when (seq (filter identity results))
                              (util/stop! e)
                              (clear-which-key!))
 

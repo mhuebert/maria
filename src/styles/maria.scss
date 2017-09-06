@@ -180,6 +180,7 @@ div.CodeMirror {
 }
 
 $darken: rgba(0, 0, 0, 0.05);
+$darken-lightly: rgba(0, 0, 0, 0.03);
 $lighten: rgba(255, 255, 255, 0.25);
 .b--darken {
   border-color: $darken;
@@ -195,6 +196,13 @@ $lighten: rgba(255, 255, 255, 0.25);
 
 .hover-bg-darken:hover {
   background-color: $darken;
+}
+
+.bg-darken-lightly {
+  background-color: $darken-lightly;
+}
+.hover-bg-darken-lightly:hover {
+  background-color: $darken-lightly;
 }
 
 .hover-bg-lighten:hover {

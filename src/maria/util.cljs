@@ -72,12 +72,8 @@
       (.scrollTo js/window 0 (-> y-pos
                                  (- (/ innerHeight 2)))))))
 
-(defn scroll-to-cursor [cm]
-  (-> (.cursorCoords cm)
-      (.-top)
-      (scroll-into-view)))
-
 (def *debug* false)
+
 (defn log-ret [label x]
   (if *debug* (do
                 (prn label x)

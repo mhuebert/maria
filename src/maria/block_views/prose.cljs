@@ -22,7 +22,7 @@
                  (.preventDefault e)
                  (.stopPropagation e)
                  (commands/apply-command editor (partial commands/open-link true))
-                 (hint/hide-hint!))}
+                 (hint/clear-hint!))}
     (-> icons/ModeEdit
         (icons/size 16)
         (icons/class "mr1 o-50"))]
@@ -141,7 +141,9 @@
 
   Editor/ICursor
 
-  (cursor-coords [this] (pm/cursor-coords this))
+  (cursor-coords [this]
+    (.log js/console "pm" (pm/cursor-coords this))
+    (pm/cursor-coords this))
 
   (start [this] (pm/start-$pos (.-state this)))
   (end [this] (pm/end-$pos (.-state this)))
@@ -153,18 +155,18 @@
   (selection-contract [this]
     (commands/apply-command this commands/contract-selection))
 
-  (-focus! [pm-view coords]
+  (-focus! [this coords]
     (v/flush!)
-    (let [state (.-state pm-view)
+    (let [state (.-state this)
           doc (.-doc state)]
-      (.focus pm-view)
+      (.focus this)
       (when-let [selection (cond (keyword? coords)
                                  (case coords :start (.atStart pm/Selection doc)
                                               :end (.atEnd pm/Selection doc))
 
                                  (object? coords)
-                                 (pm/coords-selection pm-view coords)
+                                 (pm/coords-selection this coords)
                                  :else nil)]
-        (.dispatch pm-view (-> (.-tr state)
-                               (.setSelection selection)
-                               (.scrollIntoView)))))))
+        (.dispatch this (-> (.-tr state)
+                               (.setSelection selection)))
+        (Editor/scroll-into-view (Editor/cursor-coords this))))))

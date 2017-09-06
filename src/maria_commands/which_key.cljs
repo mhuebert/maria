@@ -41,9 +41,11 @@
 (defview show-hints
   []
   (let [modifiers-down (d/get :commands :modifiers-down)]
-    (if-let [hints (seq (exec/contextual-hints modifiers-down))]
-      [:.fixed.bottom-0.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns
-       {:style {:max-height 150}}
+    (if-let [hints (and (d/get :commands :which-key/active?)
+                        (seq (exec/contextual-hints modifiers-down)))]
+      [:.fixed.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns
+       {:style {:max-height 150
+                :bottom 30}}
        (->> hints
             (group-by :display-namespace)
             (map (partial show-namespace-hints modifiers-down)))]

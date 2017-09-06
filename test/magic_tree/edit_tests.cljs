@@ -31,9 +31,9 @@
   (are [cmd source post-source]
     (= (test-exec cmd source) post-source)
 
-    edit/kill "(prn 1 |2 3)" "(prn 1 |)"
-    edit/kill "[1 2 |'a b c' 3 4]" "[1 2 |]"
-    edit/kill "[1 2 '|a b c']" "[1 2 '|']"
+    edit/kill! "(prn 1 |2 3)" "(prn 1 |)"
+    edit/kill! "[1 2 |'a b c' 3 4]" "[1 2 |]"
+    edit/kill! "[1 2 '|a b c']" "[1 2 '|']"
 
     edit/cut-form "|(+ 1)" "|"
     edit/cut-form "(|+ 1)" "(| 1)"
@@ -48,15 +48,15 @@
     edit/comment-line "abc\n|def" "abc\n;;def|"
     edit/comment-line "abc|" ";;abc|"
 
-    edit/uneval "|[]" "|#_[]"
-    edit/uneval "[]|" "#_[]|"
-    edit/uneval "a|bcd" "#_abcd|"
+    edit/uneval! "|[]" "|#_[]"
+    edit/uneval! "[]|" "#_[]|"
+    edit/uneval! "a|bcd" "#_abcd|"
 
-    edit/unwrap "[|]" "|"
-    edit/unwrap "[| ]" "| "
-    edit/unwrap " [|]" " |"
-    edit/unwrap "[ |]" " |"
-    edit/unwrap "[ \"abc|\" ]" "[ abc| ]"
+    edit/unwrap! "[|]" "|"
+    edit/unwrap! "[| ]" "| "
+    edit/unwrap! " [|]" " |"
+    edit/unwrap! "[ |]" " |"
+    edit/unwrap! "[ \"abc|\" ]" "[ abc| ]"
 
     edit/expand-selection "(|a)" "(<a>)"
     edit/expand-selection "(a|b)" "(<ab>)"

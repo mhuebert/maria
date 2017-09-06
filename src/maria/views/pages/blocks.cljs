@@ -11,7 +11,8 @@
             [maria.persistence.local :as local]
             [goog.events :as events]
             [re-view-routing.core :as r]
-            [maria.views.floating-hint :as hint])
+            [maria.views.floating-hint :as hint]
+            [maria.views.doc-bar :as dock])
   (:require-macros [maria-commands.registry :refer [defcommand]]))
 
 (defonce _
@@ -22,13 +23,7 @@
   (subvec v (max 0 (- (count v) n))))
 
 
-(def result-toolbar
-  [:.bt.code.flex.items-center.z-1.flex-none
-   {:style {:border-color     "rgba(0,0,0,0.03)"
-            :background-color "rgba(0,0,0,0.02)"}}
-   [:.flex-auto]
-   ;; ...toolbar items
-   ])
+
 
 (defn loader [message]
   [:.w-100.sans-serif.tc
@@ -93,7 +88,8 @@
   [{:keys []}]
   [:div
    {:class "bg-light-gray"
-    :style {:min-height "100%"}}
+    :style {:min-height "100%"
+            :padding-bottom 40}}
    (hint/display-hint)
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
@@ -102,5 +98,7 @@
              ["gist" id filename] (edit-file {:id       id
                                               :filename filename})
              ["gists" username] (gists-list {:username username})))]
-   (when (d/get :commands :which-key/active?)
-     (which-key/show-hints))])
+
+   (which-key/show-hints)
+   (dock/dock)
+   ])

@@ -47,7 +47,8 @@
   ([editor]
    (focus! editor nil))
   ([editor coords]
-   (-focus! editor coords)))
+   (-focus! editor coords)
+   true))
 
 (defn at-start? [editor]
   (some-> (get-cursor editor)
@@ -59,3 +60,16 @@
 
 (defn focused-block-view []
   (:block-view @exec/context))
+
+(defn scroll-into-view [coords]
+  (when-let [scroll-y (cond (neg? (.-top coords))
+                            (-> (.-scrollY js/window)
+                                (+ (.-top coords))
+                                (- 100))
+                            (> (.-top coords) (.-innerHeight js/window))
+                            (-> (.-scrollY js/window)
+                                (+ (- (.-top coords)
+                                      (.-innerHeight js/window)))
+                                (+ 100))
+                            :else nil)]
+    (.scrollTo js/window 0 scroll-y)))

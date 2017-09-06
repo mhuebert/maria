@@ -144,6 +144,7 @@
 (defn join-with-prev [{:keys [blocks block-list block editor]}]
   (fn [_ _]
     (when (Editor/at-start? editor)
+
       (let [before (Block/left blocks block)]
         (when (= :prose (some-> before (Block/kind)))
           (when-let [editor (Editor/of-block before)]

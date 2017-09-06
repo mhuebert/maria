@@ -84,7 +84,8 @@
                             (update :history rest)
                             (update :history/redo-stack conj prev-version)))
           (v/flush!)
-          (apply-selections :selections-before prev-version))))))
+          (apply-selections :selections-before prev-version)))))
+  true)
 
 (defn redo [state]
   (when-let [next-blocks (first (:history/redo-stack @state))]
@@ -94,7 +95,8 @@
                         (update :history/redo-stack rest)
                         (update :history conj next-blocks)))
       (v/flush!)
-      (apply-selections :selections-after next-blocks))))
+      (apply-selections :selections-after next-blocks)))
+  true)
 
 
 (defn add! [state version]

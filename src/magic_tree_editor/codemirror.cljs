@@ -3,7 +3,6 @@
             [fast-zip.core :as z]
             [goog.events :as events]
             [magic-tree.core :as tree]
-            [magic-tree-editor.util :as cm]
             [goog.events.KeyCodes :as KeyCodes]
             [maria-commands.registry :as registry :refer-macros [defcommand]]
             [cljs.core.match :refer-macros [match]]
@@ -11,7 +10,10 @@
             [goog.dom :as gdom]
             [goog.object :as gobj]
             [maria.eval :as e]
-            [magic-tree-editor.util :as cm-util]))
+            [maria.live.ns-utils :as ns-utils]
+            [maria.views.floating-hint :as hint]
+            [maria.views.dropdown :as dropdown]
+            [maria.block-views.editor :as Editor]))
 
 (def Pos CM/Pos)
 (def changeEnd CM/changeEnd)
@@ -123,7 +125,8 @@
 (defn set-cursor! [cm pos]
   (unset-cursor-root! cm)
   (let [pos (cm-pos pos)]
-    (.setCursor cm pos pos)))
+    (.setCursor cm pos pos))
+  cm)
 
 (defn set-preserve-cursor!
   "If value is different from editor's current value, set value, retain cursor position"
@@ -132,7 +135,8 @@
     (let [cursor-pos (get-cursor editor)]
       (.setValue editor (str value))
       (if (-> editor (aget "state" "focused"))
-        (.setCursor editor cursor-pos)))))
+        (.setCursor editor cursor-pos))))
+  editor)
 
 (defn range->positions
   "Given a Clojure-style column and line range, return Codemirror-compatible `from` and `to` positions"
@@ -258,12 +262,50 @@
                  :ast next-ast
                  :zipper next-zip))))))
 
+(defn sym-node [node]
+  (when (= :token (:tag node))
+    (let [val (tree/sexp node)]
+      (when (symbol? val) val))))
+
+(defn hint-symbol [loc]
+  (some-> (tree/closest #(= :list (:tag (z/node %))) (z/up loc))
+          (z/children)
+          (first)
+          (sym-node)))
+
+(defn update-eldoc! [the-sym]
+  (d/transact! [[:db/add :code/context :current-sym the-sym]]))
+
+(defn update-completions! [node pos editor]
+  (if (and (= :token (:tag node))
+           (symbol? (tree/sexp node))
+           (= (tree/bounds node :right)
+              (tree/bounds pos :left)))
+    (hint/floating-hint! {:element (dropdown/numbered-list {:on-selection (fn [[completion full-name]]
+                                                                            (update-eldoc! full-name ))
+                                                            :on-select!   (fn [[completion full-name]]
+                                                                            (hint/clear-hint!)
+                                                                            (replace-range! editor completion node))}
+                                                           (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
+                                                             {:value [completion full-name]
+                                                              :label [:.flex.items-center.w-100.monospace.f7.ma2
+                                                                      (str completion)
+                                                                      [:.flex-auto]
+                                                                      [:.gray.pl3 (str (or (namespace full-name)
+                                                                                           full-name))]]}))
+                          :rect    (Editor/cursor-coords editor)})
+    (hint/clear-hint!)))
+
 (defn update-cursor!
   [{:keys [zipper magic/brackets?] :as cm}]
   (when-let [position (pos->boundary (get-cursor cm))]
     (when-let [loc (some-> zipper (tree/node-at position))]
+      (update-eldoc! (hint-symbol loc))
+
       (let [bracket-loc (cursor-loc position loc)
             bracket-node (z/node bracket-loc)]
+        (some-> bracket-node (update-completions! position cm))
+
         (when brackets? (match-brackets! cm bracket-node))
         (swap! cm update :magic/cursor merge {:loc          loc
                                               :node         (z/node loc)

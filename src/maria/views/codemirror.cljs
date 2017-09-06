@@ -9,14 +9,15 @@
             [maria.util :as util]))
 
 (def options
-  {:theme             "maria-light"
-   :lineNumbers       false
-   :lineWrapping      true
-   :mode              "clojure"
-   :keyMap            "default"
-   :styleSelectedText true
-   :magicBrackets     true
-   :magicEdit         true})
+  {:theme              "maria-light"
+   :lineNumbers        false
+   :lineWrapping       true
+   :cursorScrollMargin 40
+   :mode               "clojure"
+   :keyMap             "default"
+   :styleSelectedText  true
+   :magicBrackets      true
+   :magicEdit          true})
 
 (defview editor
   {:view/spec               {:props {:event/mousedown :Function

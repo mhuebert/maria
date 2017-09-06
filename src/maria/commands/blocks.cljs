@@ -14,26 +14,42 @@
     (when (satisfies? Block/IEval block)
       (Block/eval! block :string (Block/emit block)))))
 
+(defn focus-adjacent! [{:keys [blocks block]} dir]
+  (some-> ((case dir :right Block/right
+                     :left Block/left) blocks block)
+          (Editor/of-block)
+          (Editor/focus! (case dir :right :start
+                                   :left :end)))
+  true)
+
+
+
+(defcommand :block/next-block-jump
+  {:bindings ["M2-Tab"]}
+  [context]
+  (focus-adjacent! context :right))
+
 (defcommand :block/next-block
   {:bindings ["Down"
               "Right"]
    :when     #(some-> % :editor Editor/at-end?)}
-  [{:keys [block blocks block-view editor]}]
-  (when (Editor/at-end? editor)
-    (some-> (Block/right blocks block)
-            (Editor/of-block)
-            (Editor/focus! :start))))
+  [context]
+  (when (Editor/at-end? (:editor context))
+    (focus-adjacent! context :right)))
 
-(defcommand :block/previous-block
+(defcommand :block/prev-block
   {:bindings ["Up"
               "Left"]
    :when     #(some-> % :editor Editor/at-start?)}
-  [{:keys [block blocks editor]}]
+  [context]
+  (when (Editor/at-start? (:editor context))
+    (focus-adjacent! context :left)))
 
-  (when (Editor/at-start? editor)
-    (some-> (Block/left blocks block)
-            (Editor/of-block)
-            (Editor/focus! :end))))
+(defcommand :block/prev-block-jump
+  {:bindings ["M2-Shift-Tab"]}
+  [context]
+  (focus-adjacent! context :left))
+
 
 (defcommand :selection/expand
   "Expand current selection"

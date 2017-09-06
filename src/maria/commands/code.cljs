@@ -1,6 +1,5 @@
 (ns maria.commands.code
   (:require [maria-commands.registry :as registry :refer-macros [defcommand]]
-            [maria.repl-specials :as repl-specials]
             [maria.eval :as e]
             [magic-tree.core :as tree]
             [magic-tree-editor.edit :as edit :include-macros true]
@@ -11,9 +10,7 @@
             [maria.blocks.prose :as Prose]
             [maria.block-views.editor :as Editor]
             [maria.util :as util]
-            [maria.live.ns-utils :as ns-utils]
-            [maria.views.floating-hint :as hint]
-            [maria.views.dropdown :as dropdown]))
+            [maria.live.ns-utils :as ns-utils]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -79,14 +76,14 @@
         {cursor-line :line
          cursor-ch   :ch} (util/js-lookup (.getCursor editor))
         empty-block (Block/empty? block)]
-    (if-let [edge-position (cond empty-block :empty
-                                 (and (= cursor-line last-line)
-                                      (= cursor-ch (count (.getLine editor last-line))))
-                                 :end
-                                 (and (= cursor-line 0)
-                                      (= cursor-ch 0))
-                                 :start
-                                 :else nil)]
+    (when-let [edge-position (cond empty-block :empty
+                                   (and (= cursor-line last-line)
+                                        (= cursor-ch (count (.getLine editor last-line))))
+                                   :end
+                                   (and (= cursor-line 0)
+                                        (= cursor-ch 0))
+                                   :start
+                                   :else nil)]
       (let [adjacent-block ((case edge-position
                               :end Block/right
                               (:empty :start) Block/left) blocks block)
@@ -105,7 +102,8 @@
                  (some-> adjacent-prose (Prose/prepend-paragraph))
                  (-> (or new-block adjacent-prose)
                      (Editor/of-block)
-                     (Editor/focus! :start)))
+                     (Editor/focus! :start))
+                 true)
 
           (:empty :start)
           (do (.splice block-list block (cond-> []
@@ -114,8 +112,8 @@
               (when empty-block
                 (some-> (or new-block adjacent-prose)
                         (Editor/of-block)
-                        (Editor/focus! :end))))))
-      js/CodeMirror.Pass)))
+                        (Editor/focus! :end)))
+              true))))))
 
 (defcommand :delete/selection
   "Deletes current selection"
@@ -125,7 +123,8 @@
   [context]
   (let [editor (:editor context)]
     (when (.somethingSelected editor)
-      (.replaceSelections editor (to-array (repeat (count (.getSelections editor)) ""))))))
+      (.replaceSelections editor (to-array (repeat (count (.getSelections editor)) ""))))
+    true))
 
 (defn clear-empty-code-block [block-list blocks block]
   (let [before (Block/left blocks block)
@@ -133,7 +132,8 @@
     (.splice block-list block (if replacement [replacement] []))
     (-> (or before replacement)
         (Editor/of-block)
-        (Editor/focus! :end))))
+        (Editor/focus! :end)))
+  true)
 
 (defcommand :edit/auto-close
   {:bindings ["["
@@ -165,11 +165,11 @@
         pointer (edit/pointer editor)
         prev-char (edit/get-range pointer -1)]
     (cond
-      (and (Editor/at-start? editor) (and before (Block/empty? before)))
-      (.splice block-list before block [block])
+      (and before
+           (Editor/at-start? editor)
+           (Block/empty? before)) (.splice block-list before block [block])
 
-      (Block/empty? block)
-      (clear-empty-code-block block-list blocks block)
+      (Block/empty? block) (clear-empty-code-block block-list blocks block)
 
       (.somethingSelected editor) false
 
@@ -177,33 +177,11 @@
                                      (edit/move -1)
                                      (edit/set-editor-cursor!))
       (#{\( \[ \{ \"} prev-char) (edit/operation editor
-                                                 (edit/unwrap editor)
+                                                 (edit/unwrap! editor)
                                                  (edit/set-editor-cursor! (edit/move pointer -1)))
 
       :else false)))
 
-(defcommand :hint/completions
-  {:bindings ["M1-J"]
-   :when     :block/code}
-  [{:keys [editor block]}]
-  (let [node (get-in editor [:magic/cursor :bracket-node])]
-    (when (and (#{:symbol :token} (:tag node))
-               (= (tree/bounds node :right)
-                  (cm/pos->boundary (cm/get-cursor editor) :left)))
-      (hint/floating-hint! {:element (dropdown/numbered-list {}
-                                                             (for [[completion namespace] (ns-utils/ns-completions (tree/string node))]
-                                                               {:action #(do
-                                                                           (hint/hide-hint!)
-                                                                           (prn completion node editor)
-                                                                           (cm/replace-range! editor (str completion) node))
-                                                                :label  [:.flex.items-center.w-100.monospace.f6.ma2
-                                                                         (str completion)
-                                                                         [:.flex-auto]
-                                                                         [:.gray.pl3 (str namespace)]]}))
-                            :rect    (let [coords (Editor/cursor-coords editor)]
-                                       #js {:left   (- (.-left coords) (.-scrollX js/window))
-                                            :top    (- (.-top coords) (.-scrollY js/window))
-                                            :bottom (- (.-bottom coords) (.-scrollY js/window))})}))))
 
 (defcommand :navigate/hop-left
   "Move cursor left one form"
@@ -242,7 +220,7 @@
               "M1-Shift-;"]
    :when     :block/code}
   [context]
-  (edit/uneval (:editor context)))
+  (edit/uneval! (:editor context)))
 
 (defcommand :edit/slurp
   {:bindings ["M1-Shift-K"]
@@ -255,21 +233,21 @@
   {:bindings ["M3-K"]
    :when     :block/code}
   [context]
-  (edit/kill (:editor context)))
+  (edit/kill! (:editor context)))
 
 (defcommand :edit/unwrap
   "Splice form"
   {:bindings ["M2-S"]
    :when     :block/code}
   [context]
-  (edit/unwrap (:editor context)))
+  (edit/unwrap! (:editor context)))
 
 (defcommand :edit/raise
   "Splice form"
   {:bindings ["M2-Shift-S"]
    :when     :block/code}
   [context]
-  (edit/raise (:editor context)))
+  (edit/raise! (:editor context)))
 
 (defcommand :eval/form
   "Evaluate the current form"
@@ -294,7 +272,7 @@
                    (some-> % :editor :magic/cursor :bracket-loc z/node))}
   [{:keys [block-view editor block]}]
   (let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
-    (if (and (symbol? form) (repl-specials/resolve-var-or-special e/c-state e/c-env form))
+    (if (and (symbol? form) (ns-utils/resolve-var-or-special e/c-state e/c-env form))
       (Block/eval! block :form (list 'doc form))
       (Block/eval! block :form (list 'maria.messages/what-is (list 'quote form))))))
 
