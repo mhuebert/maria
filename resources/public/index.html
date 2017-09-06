@@ -95,7 +95,8 @@
             storageBucket: "maria-d04a7.appspot.com",
             messagingSenderId: "832199278239"
         };
-        firebase.initializeApp(config);
+        if (typeof firebase !== "undefined") {firebase.initializeApp(config);}
+
     </script>
     <script src="/js/react.production.min.js"></script>
     <script src="/js/react-dom.production.min.js"></script>

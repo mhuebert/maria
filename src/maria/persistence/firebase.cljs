@@ -6,29 +6,33 @@
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]))
 
-(def firebase-auth (.auth js/firebase))
+(def firebase? (gobj/containsKey js/window "firebase"))
 
-(.onAuthStateChanged firebase-auth (fn [user]
-                                     (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
-                                                    (let [github-id (get-in providerData [0 :uid])]
-                                                      (github/get-username github-id (fn [{:keys [value error]}]
-                                                                                       (if value (d/transact! [{:db/id     :auth-public
-                                                                                                                :username  value
-                                                                                                                :maria-url (str "/gists/" value)}])
-                                                                                                 (.error js/console "Unable to retrieve GitHub username" error))))
-                                                      [{:db/id        :auth-public
-                                                        :display-name displayName
-                                                        :id           github-id
-                                                        :signed-in?   true}
-                                                       (merge {:db/id         :auth-secret
-                                                               :uid           uid
-                                                               :provider-data providerData})])
-                                                    [[:db/retract-entity :auth-public]
-                                                     [:db/retract-entity :auth-secret]]))))
+(def firebase-auth (when firebase?
+                     (.auth js/firebase)))
+
+(when firebase?
+  (.onAuthStateChanged firebase-auth (fn [user]
+                                       (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
+                                                      (let [github-id (get-in providerData [0 :uid])]
+                                                        (github/get-username github-id (fn [{:keys [value error]}]
+                                                                                         (if value (d/transact! [{:db/id     :auth-public
+                                                                                                                  :username  value
+                                                                                                                  :maria-url (str "/gists/" value)}])
+                                                                                                   (.error js/console "Unable to retrieve GitHub username" error))))
+                                                        [{:db/id        :auth-public
+                                                          :display-name displayName
+                                                          :id           github-id
+                                                          :signed-in?   true}
+                                                         (merge {:db/id         :auth-secret
+                                                                 :uid           uid
+                                                                 :provider-data providerData})])
+                                                      [[:db/retract-entity :auth-public]
+                                                       [:db/retract-entity :auth-secret]])))))
 
 
-(def providers {:github (doto (js/firebase.auth.GithubAuthProvider.)
-                          (.addScope "gist"))})
+(def providers (when firebase? {:github (doto (js/firebase.auth.GithubAuthProvider.)
+                                          (.addScope "gist"))}))
 
 (defn sign-in [provider]
   (->

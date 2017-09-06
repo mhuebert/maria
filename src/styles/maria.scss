@@ -18,74 +18,76 @@ $selection-color: #f4f4d6;
   color: #3f4245;
 }
 
-.cm-s-maria-light .CodeMirror-line::selection, .cm-s-maria-light .CodeMirror-line > span::selection, .cm-s-maria-light .CodeMirror-line > span > span::selection {
-  background: $selection-color;
+
+
+.cm-s-maria-light {
+  &.post-eval {
+    .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection, div.CodeMirror-selected, .CodeMirror-selectedtext {
+      background: transparent;
+    }
+  }
+
+  .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection, div.CodeMirror-selected {
+    background: $selection-color;
+  }
+  .CodeMirror-selectedtext {
+    cursor: grab;
+  }
+  .CodeMirror-cursor {
+    border-left: 1px solid #868886 !important;
+  }
+  span.cm-comment {
+    color: #a3685a;
+  }
+  span.cm-atom {
+    color: #987aa0;
+  }
+  span.cm-number {
+    color: #987aa0;
+  }
+  span.cm-property, span.cm-attribute {
+    color: #98a14b;
+  }
+
+  span.cm-keyword, span.cm-builtin {
+    color: #cc6666;
+  }
+  span.cm-string {
+    color: #a78938;
+  }
+
+
+  span.cm-variable {
+    color: #98a14b;
+  }
+
+  span.cm-variable-2 {
+    color: #7192ae;
+  }
+
+  span.cm-def {
+    color: #cb804c;
+  }
+
+  span.cm-error {
+    background: #cc6666;
+    color: #969896;
+  }
+
+  span.cm-bracket {
+    color: #c9c9c9;
+  }
+
+  span.cm-tag {
+    color: #cc6666;
+  }
+
+  span.cm-link {
+    color: #987aa0;
+  }
 }
 
-.cm-s-maria-light div.CodeMirror-selected {
-  background: $selection-color !important;
-}
 
-.cm-s-maria-light .CodeMirror-selectedtext {
-  cursor: grab;
-}
-
-.cm-s-maria-light .CodeMirror-cursor {
-  border-left: 1px solid #868886 !important;
-}
-
-.cm-s-maria-light span.cm-comment {
-  color: #a3685a;
-}
-
-.cm-s-maria-light span.cm-atom {
-  color: #987aa0;
-}
-
-.cm-s-maria-light span.cm-number {
-  color: #987aa0;
-}
-
-.cm-s-maria-light span.cm-property, .cm-s-maria-light span.cm-attribute {
-  color: #98a14b;
-}
-
-.cm-s-maria-light span.cm-keyword, .cm-s-maria-light span.cm-builtin {
-  color: #cc6666;
-}
-
-.cm-s-maria-light span.cm-string {
-  color: #a78938;
-}
-
-.cm-s-maria-light span.cm-variable {
-  color: #98a14b;
-}
-
-.cm-s-maria-light span.cm-variable-2 {
-  color: #7192ae;
-}
-
-.cm-s-maria-light span.cm-def {
-  color: #cb804c;
-}
-
-.cm-s-maria-light span.cm-error {
-  background: #cc6666;
-  color: #969896;
-}
-
-.cm-s-maria-light span.cm-bracket {
-  color: #c9c9c9;
-}
-
-.cm-s-maria-light span.cm-tag {
-  color: #cc6666;
-}
-
-.cm-s-maria-light span.cm-link {
-  color: #987aa0;
-}
 
 /* I don't think we're using these */
 .cm-s-maria-light .CodeMirror-gutters {
@@ -201,6 +203,7 @@ $lighten: rgba(255, 255, 255, 0.25);
 .bg-darken-lightly {
   background-color: $darken-lightly;
 }
+
 .hover-bg-darken-lightly:hover {
   background-color: $darken-lightly;
 }

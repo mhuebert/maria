@@ -7,6 +7,7 @@
             [maria.eval :as e]
             [cells.eval-context :as eval-context]
             [maria.block-views.code :refer [CodeView]]
+            [goog.dom.classes :as classes]
             [maria.block-views.editor :as Editor]))
 
 (defn vec-take [coll n]
@@ -54,15 +55,15 @@
     ([this]
      (let [editor (Editor/of-block this)
            source (or (cm/selection-text editor)
-                      (->> editor
-                           :magic/cursor
-                           :bracket-node
-                           (tree/string (:ns @e/c-env)))
                       (Block/emit this))]
+       (when (.somethingSelected editor)
+         (let [div (.. editor -display -wrapper)]
+           (classes/add div "post-eval")
+           (js/setTimeout #(classes/remove div "post-eval") 200)))
        (Block/eval! this :string source)))
-    ([this kind value]
+    ([this mode form]
      (eval-context/dispose! this)
      (binding [cell/*eval-context* this]
-       (Block/eval-log! this ((case kind :form e/eval-form
-                                         :string e/eval-str) value))
+       (Block/eval-log! this ((case mode :form e/eval-form
+                                         :string e/eval-str) form))
        (Block/update-view this)))))
