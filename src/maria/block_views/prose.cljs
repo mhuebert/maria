@@ -142,7 +142,6 @@
   Editor/ICursor
 
   (cursor-coords [this]
-    (.log js/console "pm" (pm/cursor-coords this))
     (pm/cursor-coords this))
 
   (start [this] (pm/start-$pos (.-state this)))

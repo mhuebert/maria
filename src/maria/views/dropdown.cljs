@@ -41,20 +41,22 @@
                              :page      0}
    :down                    (fn [{:keys   [view/state]
                                   [items] :view/children}]
-                              (let [{:keys [selection page]} @state
-                                    current-page+ (take 10 (drop (* page PAGE_SIZE) items))
-                                    [selection page] (if (>= selection (min 8 (dec (count current-page+))))
-                                                       [0 (cond-> page
-                                                                  (first (drop 9 current-page+)) (inc))]
-                                                       [(min (inc selection) 8) page])]
-                                (swap! state assoc :selection selection :page page)))
+                              (when (seq items)
+                                (let [{:keys [selection page]} @state
+                                      current-page+ (take 10 (drop (* page PAGE_SIZE) items))
+                                      [selection page] (if (>= selection (min 8 (dec (count current-page+))))
+                                                         [0 (cond-> page
+                                                                    (first (drop 9 current-page+)) (inc))]
+                                                         [(min (inc selection) 8) page])]
+                                  (swap! state assoc :selection selection :page page))))
    :up                      (fn [{:keys   [view/state]
                                   [items] :view/children}]
-                              (let [{:keys [selection page]} @state
-                                    [selection page] (if (<= selection 0)
-                                                       [8 (max 0 (dec page))]
-                                                       [(dec selection) page])]
-                                (swap! state assoc :selection selection :page page)))
+                              (when (seq items)
+                                (let [{:keys [selection page]} @state
+                                      [selection page] (if (<= selection 0)
+                                                         [8 (max 0 (dec page))]
+                                                         [(dec selection) page])]
+                                  (swap! state assoc :selection selection :page page))))
    :select-n                (fn [{:keys   [on-select! view/state]
                                   [items] :view/children} n]
                               (let [offset (* PAGE_SIZE (:page @state))

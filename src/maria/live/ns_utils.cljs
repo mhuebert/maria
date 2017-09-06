@@ -157,8 +157,9 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
          (special-doc name)))))
 
 
-(def core-publics (merge (ns-publics* (get-ns 'cljs.core) true {:include '#{cljs.core/munge}})
-                         (ns-publics* (get-ns 'cljs.core$macros) true #{})))
+(def core-publics
+  (memoize (fn [] (merge (ns-publics* (get-ns 'cljs.core) true {:include '#{cljs.core/munge}})
+                         (ns-publics* (get-ns 'cljs.core$macros) true #{})))))
 
 (defn ns-completions
   ([token] (ns-completions (:ns @e/c-env) token))
@@ -166,7 +167,7 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
    (let [token (str token)]
      (sort (for [[completion full-name] (merge (ns-aliases* (get-ns ns-name))
                                                (ns-publics* (get-ns ns-name) false)
-                                               core-publics)
+                                               (core-publics))
                  :when (and (string/starts-with? completion token)
                             (not= completion token))]
              [completion full-name])))))

@@ -88,8 +88,6 @@
                                _ (when the-commands
                                    (doseq [f (vals @-before-exec)]
                                      (f)))
-                               _ (when (> (count the-commands) 1 )
-                                   (prn :multiple-commands command-names))
                                ;; NOTE
                                ;; only running 1 command, sorting by priority.
                                results (when the-commands
