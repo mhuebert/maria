@@ -3,7 +3,10 @@
             [maria.blocks.blocks :as Block]
             [maria.block-views.editor :as Editor]
             [maria.blocks.history :as history]
-            [re-db.d :as d]))
+            [maria.commands.prose :as prose]
+            [maria.commands.code :as code]
+            [re-db.d :as d]
+            [re-view-prosemirror.commands :as commands]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
@@ -22,36 +25,27 @@
                                    :left :end)))
   true)
 
-
-
-(defcommand :block/next-block-jump
-  {:bindings ["M2-Tab"]}
-  [context]
-  (focus-adjacent! context :right))
-
-(defcommand :block/next-block
+(defcommand :navigate/next-block
   {:bindings ["Down"
-              "Right"]
-   :when     #(some-> % :editor Editor/at-end?)}
+              "Right"
+              "M2-Tab"]}
   [context]
-  (when (Editor/at-end? (:editor context))
+  (if (and (#{"ArrowDown" "ArrowRight"} (:key context))
+           (not (some-> (:editor context) (Editor/at-end?))))
+    false
     (focus-adjacent! context :right)))
 
-(defcommand :block/prev-block
+(defcommand :navigate/prev-block
   {:bindings ["Up"
-              "Left"]
-   :when     #(some-> % :editor Editor/at-start?)}
+              "Left"
+              "M2-Shift-Tab"]}
   [context]
-  (when (Editor/at-start? (:editor context))
+  (if (and (#{"ArrowUp" "ArrowLeft"} (:key context))
+           (not (some-> (:editor context) (Editor/at-start?))))
+    false
     (focus-adjacent! context :left)))
 
-(defcommand :block/prev-block-jump
-  {:bindings ["M2-Shift-Tab"]}
-  [context]
-  (focus-adjacent! context :left))
-
-
-(defcommand :selection/expand
+(defcommand :select/up
   "Expand current selection"
   {:bindings ["M1-1"
               "M1-Up"]
@@ -59,7 +53,7 @@
   [{:keys [editor] :as context}]
   (Editor/selection-expand editor))
 
-(defcommand :selection/shrink
+(defcommand :select/back
   "Contract selection (reverse of expand-selection)"
   {:bindings ["M1-2"
               "M1-Down"]
@@ -67,12 +61,31 @@
   [{:keys [editor] :as context}]
   (Editor/selection-contract editor))
 
-(defcommand :block/undo
+(defcommand :select/all
+  {:bindings ["M1-A"]}
+  [context]
+  (cond (:block/prose context)
+        (commands/apply-command (:editor context) commands/select-all)
+        (:block/code context)
+        (.execCommand (:editor context) "selectAll")
+        :else nil))
+
+(defcommand :history/undo
   {:bindings ["M1-z"]}
   [{:keys [block-list]}]
   (history/undo (:view/state block-list)))
 
-(defcommand :block/redo
+(defcommand :history/redo
   {:bindings ["M1-Shift-z"]}
   [{:keys [block-list]}]
   (history/redo (:view/state block-list)))
+
+(defcommand :enter
+  {:bindings ["Enter"]
+   :private  true}
+  [context]
+  (cond (:block/prose context)
+        (prose/enter context)
+        (:block/code context)
+        (code/enter context)
+        :else nil))

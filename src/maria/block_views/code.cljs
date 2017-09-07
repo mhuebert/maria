@@ -15,7 +15,7 @@
    :view/will-unmount  Editor/unmount
    :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
-  [:.flex.pv3.cursor-text
+  [:.flex.pv2.cursor-text
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (Editor/focus! (.getEditor this)))}
    [:.w-50.flex-none

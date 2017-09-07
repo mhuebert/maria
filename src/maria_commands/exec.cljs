@@ -26,17 +26,21 @@
                  (merge {:editor (.getEditor block-view)}
                         (select-keys block-view [:block :blocks])))))))
 
+(defn apply-context
+  "Add contextual data to command"
+  [context {:keys [exec-pred intercept-pred] :as command-entry}]
+  (let [exec? (boolean (or (nil? exec-pred) (exec-pred context)))
+        intercept? (if intercept-pred (intercept-pred context)
+                                      exec?)]
+    (assoc command-entry
+      :exec? exec?
+      :intercept? intercept?)))
+
 (defn get-command
   "Returns command associated with name, if it exists.
   Add contextual data, :exec? and :intercept?."
   [context name]
-  (when-let [{:keys [exec-pred intercept-pred] :as command-entry} (get @registry/commands name)]
-    (let [exec? (boolean (or (nil? exec-pred) (exec-pred context)))
-          intercept? (if intercept-pred (intercept-pred context)
-                                        exec?)]
-      (assoc command-entry
-        :exec? exec?
-        :intercept? intercept?))))
+  (apply-context context (get @registry/commands name)))
 
 (defn exec-command
   "Execute a command (returned by `get-command`)"
@@ -46,21 +50,28 @@
     (and result (not= result (.-Pass js/CodeMirror)))))
 
 (defn exec-command-name
-  [name]
-  (let [context (get-context)]
-    (exec-command context (get-command context name))))
+  ([name] (exec-command-name name (get-context)))
+  ([name context]
+   (exec-command context (get-command context name))))
 
-(defn contextual-hints [modifiers-down]
-  (let [current-context (get-context)]
-    (->> @registry/mappings
-         (keep (fn [[keyset {:keys [exec]}]]
-                 (when (set/subset? modifiers-down keyset)
-                   ;; change this later for multi-step keysets
-                   (some->> (seq exec)
-                            (map (partial get-command current-context))
-                            (filter :exec?)))))
-         (apply concat)
-         (distinct))))
+(defn keyset-commands
+  ([] (keyset-commands #{} (get-context)))
+  ([modifiers-down current-context]
+   (->> @registry/mappings
+        (keep (fn [[keyset {:keys [exec]}]]
+                (when (set/subset? modifiers-down keyset)
+                  ;; change this later for multi-step keysets
+                  (some->> (seq exec)
+                           (map (partial get-command current-context))
+                           (filter :exec?)))))
+        (apply concat)
+        (distinct))))
+
+(defn contextual-commands
+  [context]
+  (->> (vals @registry/commands)
+       (sequence (comp (map #(apply-context context %))
+                       (filter :exec?)))))
 
 (def reverse-compare (fn [a b] (compare b a)))
 

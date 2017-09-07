@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.commands :as commands]
             [re-view-prosemirror.commands :refer [apply-command]]
-            [maria.views.floating-hint :as hint]
+            [maria.views.floating.float-ui :as hint]
             [maria.views.icons :as icons]
             [re-view-prosemirror.core :as pm]
             [re-view-prosemirror.markdown :as markdown]
@@ -16,7 +16,7 @@
 
 
 (defview link-dropdown [{:keys [href editor]}]
-  [:.flex.items-center.pa2.shadow-4.bg-white.br2
+  [:.flex.items-center.pa2.bg-white.br2.shadow-4
    [:.dib.pointer
     {:on-click (fn [e]
                  (.preventDefault e)
@@ -39,23 +39,24 @@
                                                                    (into input-rules)
                                                                    (to-array))})])}))
 
-(defn make-editor-view [{:keys [before-change on-dispatch on-selection-activity view/state] :as component}
+(defn make-editor-view [{:keys [before-change editor-props on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
-  (pm/EditorView. (v/dom-node component) (->> {:state                   editor-state
-                                               :spellcheck              false
-                                               :attributes              {:class "outline-0"}
-                                               :handleScrollToSelection (fn [view] true)
-                                               :dispatchTransaction     (fn [tr]
-                                                                          (let [^js/pm.EditorView pm-view (get @state :pm-view)
-                                                                                prev-state (.-state pm-view)]
-                                                                            (when before-change (before-change))
-                                                                            (pm/transact! pm-view tr)
-                                                                            (when-not (nil? on-dispatch)
-                                                                              (on-dispatch pm-view prev-state))
-                                                                            (when (and on-selection-activity
-                                                                                       (not= (.-selection (.-state pm-view))
-                                                                                             (.-selection prev-state)))
-                                                                              (on-selection-activity pm-view (.-selection (.-state pm-view))))))}
+  (pm/EditorView. (v/dom-node component) (->> (merge editor-props
+                                                     {:state                   editor-state
+                                                      :spellcheck              false
+                                                      :attributes              {:class "outline-0 cf"}
+                                                      :handleScrollToSelection (fn [view] true)
+                                                      :dispatchTransaction     (fn [tr]
+                                                                                 (let [^js/pm.EditorView pm-view (get @state :pm-view)
+                                                                                       prev-state (.-state pm-view)]
+                                                                                   (when before-change (before-change))
+                                                                                   (pm/transact! pm-view tr)
+                                                                                   (when-not (nil? on-dispatch)
+                                                                                     (on-dispatch pm-view prev-state))
+                                                                                   (when (and on-selection-activity
+                                                                                              (not= (.-selection (.-state pm-view))
+                                                                                                    (.-selection prev-state)))
+                                                                                     (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
                                               (clj->js))))
 
 (defview Editor
@@ -101,28 +102,30 @@
                           (exec/set-context! {:block/prose nil
                                               :block-view  nil})))}
   [{:keys [view/state block-list block before-change] :as this}]
+  [:div
+   (Editor {:doc           (Block/state block)
+            :editor-props  {:onFocus #(exec/set-context! {:block/prose true
+                                                          :block-view  this})
+                            :onBlur  #(exec/set-context! {:block/prose nil
+                                                          :block-view  nil})}
+            :block         block
+            :class         " serif f4 ph3 cb"
+            :input-rules   (prose-commands/input-rules this)
 
-  (Editor {:doc           (Block/state block)
-           :block         block
-           :class         " serif f4 ph3 cb"
-           :input-rules   (prose-commands/input-rules this)
-           :on-focus      #(exec/set-context! {:block/prose true
-                                               :block-view  this})
-           :on-blur       #(exec/set-context! {:block/prose nil
-                                               :block-view  nil})
-           :on-click      (fn [e]
-                            (when-let [a (r/closest (.-target e) r/link?)]
-                              (when-not (classes/has a "pm-link")
-                                (do (.stopPropagation e)
-                                    (hint/floating-hint! {:rect    (.getBoundingClientRect a)
-                                                          :element (link-dropdown {:href   (.-href a)
-                                                                                   :editor (.getEditor this)})})))))
-           :ref           #(v/swap-silently! state assoc :prose-editor-view %)
-           :before-change before-change
-           :on-dispatch   (fn [pm-view prev-state]
-                            (when (not= (.-doc (.-state pm-view))
-                                        (.-doc prev-state))
-                              (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))}))
+            :on-click      (fn [e]
+                             (when-let [a (r/closest (.-target e) r/link?)]
+                               (when-not (classes/has a "pm-link")
+                                 (do (.stopPropagation e)
+                                     (hint/floating-hint! {:rect      (.getBoundingClientRect a)
+                                                           :component link-dropdown
+                                                           :props     {:href   (.-href a)
+                                                                       :editor (.getEditor this)}})))))
+            :ref           #(v/swap-silently! state assoc :prose-editor-view %)
+            :before-change before-change
+            :on-dispatch   (fn [pm-view prev-state]
+                             (when (not= (.-doc (.-state pm-view))
+                                         (.-doc prev-state))
+                               (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
 
 (specify! (.-prototype js/pm.EditorView)
 
@@ -167,5 +170,5 @@
                                  (pm/coords-selection this coords)
                                  :else nil)]
         (.dispatch this (-> (.-tr state)
-                               (.setSelection selection)))
+                            (.setSelection selection)))
         (Editor/scroll-into-view (Editor/cursor-coords this))))))

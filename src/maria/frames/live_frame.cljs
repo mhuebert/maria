@@ -15,6 +15,7 @@
             [maria.user :include-macros true]
             [re-view-routing.core :as r]
             [re-view.core :as v :refer [defview]]
+            [maria.views.floating.command-search]
 
             [goog.events :as events]
 

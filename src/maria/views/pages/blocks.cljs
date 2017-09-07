@@ -7,12 +7,12 @@
             [maria.repl-specials]
             [maria.views.cards :as repl-ui]
             [cljs.core.match :refer-macros [match]]
-            [maria.views.doc-toolbar :as toolbar]
+            [maria.views.top-bar :as toolbar]
             [maria.persistence.local :as local]
             [goog.events :as events]
             [re-view-routing.core :as r]
-            [maria.views.floating-hint :as hint]
-            [maria.views.doc-bar :as dock])
+            [maria.views.floating.float-ui :as hint]
+            [maria.views.bottom-bar :as dock])
   (:require-macros [maria-commands.registry :refer [defcommand]]))
 
 (defonce _
@@ -99,6 +99,6 @@
                                               :filename filename})
              ["gists" username] (gists-list {:username username})))]
 
-   (which-key/show-hints)
+   (which-key/show-commands)
    (dock/dock)
    ])

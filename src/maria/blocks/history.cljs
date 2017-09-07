@@ -24,6 +24,18 @@
   (when-let [block-view (Editor/focused-block-view)]
     [(:block block-view) (Editor/get-selections (.getEditor block-view))]))
 
+(defn put-selections! [[block selections]]
+  (when block
+    (let [editor (Editor/of-block block)]
+      (Editor/focus! editor)
+      (Editor/put-selections! editor selections))))
+
+(defn apply-selections
+  "Applies selections for given version to doc."
+  [key version]
+  (some-> (get (meta version) key)
+          (put-selections!)))
+
 (defn before-change
   "Should be called before any change is applied to document.
   Ensures that the correct `before` selections are attached to the version."
@@ -47,16 +59,6 @@
                        :selections-after  selections
                        :timestamp         (.now js/Date)})
     (before-change)))
-
-(defn apply-selections
-  "Applies selections for given version to doc."
-  [key version]
-  (when-let [[block selections] (get (meta version) key)]
-    (when block
-      (some-> (Editor/of-block block)
-              (Editor/focus!))
-      (when selections
-        (Editor/put-selections! (Editor/of-block block) selections)))))
 
 (defn dispose-removed
   "Compares prev- and next- block lists and 'disposes' of blocks which have been removed."

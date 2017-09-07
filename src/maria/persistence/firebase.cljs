@@ -6,12 +6,13 @@
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]))
 
-(def firebase? (gobj/containsKey js/window "firebase"))
+(def firebase-connect-error "Could not initialize Firebase auth")
 
-(def firebase-auth (when firebase?
-                     (.auth js/firebase)))
+(def firebase-auth (try (.auth js/firebase)
+                        (catch js/Error e
+                          (prn firebase-connect-error))))
 
-(when firebase?
+(try
   (.onAuthStateChanged firebase-auth (fn [user]
                                        (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
                                                       (let [github-id (get-in providerData [0 :uid])]
@@ -28,11 +29,15 @@
                                                                  :uid           uid
                                                                  :provider-data providerData})])
                                                       [[:db/retract-entity :auth-public]
-                                                       [:db/retract-entity :auth-secret]])))))
+                                                       [:db/retract-entity :auth-secret]]))))
+  (catch js/Error e
+    (prn firebase-connect-error)))
 
 
-(def providers (when firebase? {:github (doto (js/firebase.auth.GithubAuthProvider.)
-                                          (.addScope "gist"))}))
+(def providers (try {:github (doto (js/firebase.auth.GithubAuthProvider.)
+                                          (.addScope "gist"))}
+                    (catch js/Error e
+                      (prn firebase-connect-error))))
 
 (defn sign-in [provider]
   (->

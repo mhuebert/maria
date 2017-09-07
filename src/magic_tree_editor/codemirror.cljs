@@ -11,7 +11,7 @@
             [goog.object :as gobj]
             [maria.eval :as e]
             [maria.live.ns-utils :as ns-utils]
-            [maria.views.floating-hint :as hint]
+            [maria.views.floating.float-ui :as hint]
             [maria.views.dropdown :as dropdown]
             [maria.block-views.editor :as Editor]))
 
@@ -281,19 +281,21 @@
            (symbol? (tree/sexp node))
            (= (tree/bounds node :right)
               (tree/bounds pos :left)))
-    (hint/floating-hint! {:element (dropdown/numbered-list {:on-selection (fn [[completion full-name]]
-                                                                            (update-eldoc! full-name ))
-                                                            :on-select!   (fn [[completion full-name]]
-                                                                            (hint/clear-hint!)
-                                                                            (replace-range! editor completion node))}
-                                                           (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
-                                                             {:value [completion full-name]
-                                                              :label [:.flex.items-center.w-100.monospace.f7.ma2
-                                                                      (str completion)
-                                                                      [:.flex-auto]
-                                                                      [:.gray.pl3 (str (or (namespace full-name)
-                                                                                           full-name))]]}))
-                          :rect    (Editor/cursor-coords editor)})
+    (hint/floating-hint! {:component dropdown/numbered-list
+                          :props     {:on-selection (fn [[completion full-name]]
+                                                      (update-eldoc! full-name))
+                                      :class        "shadow-4"
+                                      :on-select!   (fn [[completion full-name]]
+                                                      (hint/clear-hint!)
+                                                      (replace-range! editor completion node))
+                                      :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
+                                                      {:value [completion full-name]
+                                                       :label [:.flex.items-center.w-100.monospace.f7.ma2
+                                                               (str completion)
+                                                               [:.flex-auto]
+                                                               [:.gray.pl3 (str (or (namespace full-name)
+                                                                                    full-name))]]})}
+                          :rect      (Editor/cursor-coords editor)})
     (hint/clear-hint!)))
 
 (defn update-cursor!

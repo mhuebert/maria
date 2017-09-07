@@ -29,7 +29,7 @@
                  [cljsjs/react "16.0.0-beta.2-0"]
                  [cljsjs/react-dom "16.0.0-beta.2-0"]
                  [cljsjs/tinycolor "1.3.0-0"]
-                 ;[cljsjs/firebase "4.0.0-0"]
+                 [cljsjs/firebase "4.0.0-0"]
 
                  ;; just for bundles
                  [reagent "0.7.0" :exclusions [cljsjs/react]]
@@ -129,6 +129,7 @@
                                        :language-in    :ecmascript5
                                        :optimizations  :advanced
                                        :dump-core      false
+                                       ;:pseudo-names true
                                        :infer-externs  true
                                        :parallel-build true}}
                        {:id           "tests"

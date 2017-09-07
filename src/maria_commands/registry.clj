@@ -15,21 +15,23 @@
   can be used for documenting existing/built-in behaviour."
   [command-name & args]
   (let [[docstring options arglist body] (parse-opt-args [string? map? vector?] args)
-        {bindings       :bindings
-         exec-when      :when
-         intercept-when :intercept-when
-         priority       :priority
-         :or            {bindings []}} options
+        {bindings        :bindings
+         when*           :when
+         intercept-when* :intercept-when
+         priority        :priority
+         private         :private
+         :or             {bindings []}} options
         _ (when (nil? arglist)
             (assert (empty? body)))
         name-as-symbol (symbol (str (namespace command-name) "_" (name command-name)))]
     `(~'maria-commands.registry/register! {:name           ~command-name
                                            :doc            ~docstring
-                                           :exec-pred      ~exec-when
-                                           :intercept-pred ~(if (boolean? intercept-when)
-                                                              `(fn [] ~intercept-when)
-                                                              intercept-when)
+                                           :exec-pred      ~when*
+                                           :intercept-pred ~(if (boolean? intercept-when*)
+                                                              `(fn [] ~intercept-when*)
+                                                              intercept-when*)
                                            :priority       ~priority
+                                           :private        ~private
                                            :command        ~(if arglist
                                                               `(fn ~name-as-symbol ~arglist
                                                                  ~@body)

@@ -18,10 +18,7 @@
      (->> (sort-ks (set/difference keyset registry/modifiers))
           (map registry/show-key))]))
 
-(defn show-hint [modifiers-down {:keys [display-name doc parsed-bindings]}]
-  [:.flex.items-center.ws-nowrap.mv1 display-name [:.flex-auto] (show-keyset modifiers-down (first parsed-bindings))])
-
-(defn show-namespace-hints [modifiers-down [namespace hints]]
+(defn show-namespace-commands [modifiers-down [namespace hints]]
   (let [row-height 24]
     [:.avoid-break.bt.b--near-white.pv1
      [:.flex
@@ -38,15 +35,15 @@
           [:.flex-auto]
           (show-keyset modifiers-down (first parsed-bindings))])]]]))
 
-(defview show-hints
+(defview show-commands
   []
   (let [modifiers-down (d/get :commands :modifiers-down)]
-    (if-let [hints (and (d/get :commands :which-key/active?)
-                        (seq (exec/contextual-hints modifiers-down)))]
+    (if-let [commands (and (d/get :commands :which-key/active?)
+                           (seq (exec/keyset-commands modifiers-down (exec/get-context))))]
       [:.fixed.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns
        {:style {:max-height 150
                 :bottom 30}}
-       (->> hints
+       (->> commands
             (group-by :display-namespace)
-            (map (partial show-namespace-hints modifiers-down)))]
+            (map (partial show-namespace-commands modifiers-down)))]
       [:.fixed])))

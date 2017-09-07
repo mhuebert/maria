@@ -1,4 +1,4 @@
-(ns maria.views.doc-toolbar
+(ns maria.views.top-bar
   (:require [re-view.core :as v :refer [defview]]
             [maria-commands.registry :refer-macros [defcommand]]
             [maria-commands.exec :as exec]
@@ -110,7 +110,8 @@
    :when           :current-doc}
   [{{:keys [view/state doc-editor id]} :current-doc}]
   (github/clear-new!)
-  (frame/send frame/trusted-frame [:window/navigate "/new" {}]))
+  (frame/send frame/trusted-frame [:window/navigate "/new" {}])
+  true)
 
 (defcommand :doc/save
   "Save the current doc"
@@ -119,7 +120,8 @@
    :when           #(and (:signed-in? %)
                          (#{:create :save} (persistence-mode (:current-doc %))))}
   [{:keys [current-doc]}]
-  (persist! current-doc))
+  (persist! current-doc)
+  true)
 
 (defcommand :doc/save-a-copy
   "Save a new copy of a project"
@@ -129,7 +131,8 @@
                          (get-in % [:current-doc :project :persisted])
                          (valid-content? (:current-doc %)))}
   [{:keys [current-doc]}]
-  (copy! current-doc))
+  (copy! current-doc)
+  true)
 
 (defcommand :doc/revert
   {:when (fn [{:keys [current-doc]}]
@@ -137,7 +140,8 @@
                 (unsaved-changes? current-doc)))}
   [{{{persisted :persisted} :project
      filename               :filename} :current-doc}]
-  (d/transact! [[:db/add (:id persisted) :local persisted]]))
+  (d/transact! [[:db/add (:id persisted) :local persisted]])
+  true)
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]

@@ -1,11 +1,11 @@
-(ns maria.views.doc-bar
+(ns maria.views.bottom-bar
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
             [maria.live.ns-utils :as ns-utils]))
 
 (defview dock
   [this]
-  [:.bt.code.flex.items-center.z-1.flex-none.fixed.bottom-0.left-0.right-0.ph3.f7.z-9999
+  [:.bt.code.flex.items-center.flex-none.fixed.bottom-0.left-0.right-0.ph3.f7.z-999
    {:style {:border-color     "rgba(0,0,0,0.03)"
             :background-color "#e9e9e9"
             :height           30

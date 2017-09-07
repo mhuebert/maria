@@ -35,10 +35,7 @@
           (Editor/focus! cursor-coords))
       true)))
 
-(defcommand :prose-block/enter
-  {:bindings ["Enter"]
-   :when     :block/prose}
-  [{:keys [editor block block-list]}]
+(defn enter [{:keys [editor block block-list]}]
   (commands/apply-command editor
                           (commands/chain
                             (fn [state dispatch]
@@ -49,40 +46,25 @@
   {:bindings       ["Shift-Enter"
                     "M2-Enter"]
    :when           :block/prose
+   :private        true
    :intercept-when true}
   [context]
   (apply-command (:editor context) commands/newline-in-code))
 
-(comment (defcommand :prose/undo
-           {:bindings ["M1-z"]
-            :when     :block/prose}
-           [context]
-           (apply-command (:editor context) commands/undo))
-
-
-         (defcommand :prose/redo
-           {:bindings ["M1-y"
-                       "Shift-M1-z"]
-            :when     :block/prose}
-           [context]
-           (apply-command (:editor context) commands/redo)))
-
-
-(defcommand :prose/inline-bold
+(defcommand :format/bold
   {:bindings ["M1-b"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/inline-bold))
 
-
-(defcommand :prose/inline-italic
+(defcommand :format/italic
   {:bindings ["M1-i"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/inline-italic))
 
 
-(defcommand :prose/inline-code
+(defcommand :format/code-inline
   {:bindings ["M3-`"
               "M1-`"]
    :when     :block/prose}
@@ -90,28 +72,33 @@
   (apply-command (:editor context) commands/inline-code))
 
 
-(defcommand :prose/block-list-bullet
+(defcommand :format/bullet-list
   {:bindings ["Shift-Ctrl-8"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/block-list-bullet))
 
 
-(defcommand :prose/block-list-ordered
+(defcommand :format/numbered-list
   {:bindings ["Shift-Ctrl-9"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/block-list-ordered))
 
 
-(defcommand :prose/block-paragraph
+(defcommand :format/paragraph
   {:bindings ["Shift-Ctrl-0"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/block-paragraph))
 
+(defcommand :format/code-block
+  {:when :block/prose}
+  [context]
+  (apply-command (:editor context) (pm/set-block-type :code_block)))
 
-(defcommand :prose/outdent
+
+(defcommand :format/outdent
   {:bindings ["Shift-Tab"]
    :when     :block/prose}
   [context]
@@ -119,7 +106,7 @@
                                                    commands/outdent)))
 
 
-(defcommand :prose/indent
+(defcommand :format/indent
   {:bindings ["Tab"]
    :when     :block/prose}
   [context]
@@ -130,8 +117,8 @@
     (when (and (Block/empty? block) (Block/left blocks block))
       (let [result (.splice block-list block [])
             {:keys [before after]} (meta result)]
-        (if before (Editor/focus! (Editor/of-block before) :end)
-                   (Editor/focus! (Editor/of-block after) :start))
+        (if before (some-> (Editor/of-block before) (Editor/focus! :end))
+                   (some-> (Editor/of-block after) (Editor/focus! :start)))
         true))))
 
 (defn clear-previous-empty [{:keys [blocks block-list block editor]}]
@@ -166,6 +153,7 @@
 
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
+   :private  true
    :when     :block/prose}
   [{:keys [editor block blocks block-list] :as context}]
   (apply-command editor
@@ -180,46 +168,43 @@
 (defcommand :prose/space
   {:bindings       ["Space"]
    :when           :block/prose
+   :private        true
    :intercept-when false}
   [context]
   (apply-command (:editor context) commands/end-link))
 
-(defcommand :prose/join-up
+(defcommand :edit/join-up
   {:bindings ["M2-Up"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/join-up))
 
-(defcommand :prose/join-down
+(defcommand :edit/join-down
   {:bindings ["M2-Down"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/join-down))
 
-(defcommand :prose/select-all
-  {:bindings ["M1-A"]
-   :when     :block/prose}
-  [context]
-  (apply-command (:editor context) commands/select-all))
-
-(defcommand :prose/remove-all-marks
+(defcommand :format/clear-styles
   {:bindings ["Esc"]
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/clear-stored-marks))
 
-(comment
-  (defcommand :prose/increase-size
-    {:bindings ["M1-="]
-     :when     :block/prose}
-    [context]
-    (apply-command (:editor context) (partial commands/adjust-font-size dec)))
 
-  (defcommand :prose/decrease-size
-    {:bindings ["M1-DASH"]
-     :when     :block/prose}
-    [context]
-    (apply-command (:editor context) (partial commands/adjust-font-size inc))))
+(defcommand :format/larger
+  {:when           :block/prose
+   :intercept-when :block/prose
+   :bindings       ["M1-="]}
+  [context]
+  (apply-command (:editor context) (partial commands/adjust-font-size dec)))
+
+(defcommand :format/smaller
+  {:when           :block/prose
+   :intercept-when :block/prose
+   :bindings       ["M1-Dash"]}
+  [context]
+  (apply-command (:editor context) (partial commands/adjust-font-size inc)))
 
 (defn input-rules [block-view]
   [commands/rule-blockquote-start
