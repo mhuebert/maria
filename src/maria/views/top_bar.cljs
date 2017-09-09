@@ -42,7 +42,7 @@
    :update-window-title     (fn [{:keys [filename]}]
                               (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
   [{{:keys [persisted local]} :project
-    :keys                     [filename id view/state] :as this}]
+    :keys                     [filename id view/state left-content] :as this}]
   (let [signed-in? (d/get :auth-public :signed-in?)
         {parent-url :maria-url parent-username :username} (or (:parent this) (:owner persisted) (d/entity :auth-public))
         current-filename (or (get-in local [:files filename :filename]) filename)
@@ -55,22 +55,24 @@
     [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
      {:class (when (d/get :feature :in-place-eval) "bg-white")}
      [:.ph2.flex-auto.flex.items-center
-      [:a.flex.items-center.ph2.gray.hover-black.pointer {:href "/home"} icons/Home]
-      [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
-      [:.ph1.gray "/"]
-      (when filename
-        (text/autosize-text {:auto-focus  true
-                             :ref         #(when % (swap! state assoc :title-input %))
-                             :value       (doc/strip-clj-ext current-filename)
-                             :on-key-down #(when (= 13 (.-which %))
-                                             (doc/persist! this))
-                             :placeholder "Enter a title..."
-                             :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))}))
+      [:a.flex.items-center.pa2.gray.hover-black.pointer {:href "/home"} icons/Home]
+      (or left-content
+          (when filename
+            (list
+              [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
+              [:.ph1.gray "/"]
+              (text/autosize-text {:auto-focus  true
+                                   :ref         #(when % (swap! state assoc :title-input %))
+                                   :value       (doc/strip-clj-ext current-filename)
+                                   :on-key-down #(when (= 13 (.-which %))
+                                                   (doc/persist! this))
+                                   :placeholder "Enter a title..."
+                                   :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
 
-      (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-50")))
-      (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
+              (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-50")))
+              (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
 
-      (command-button command-context :doc/revert icons/Undo)]
+              (command-button command-context :doc/revert icons/Undo))))]
      [:.flex-auto]
      (command-button command-context :doc/new icons/Add)
 

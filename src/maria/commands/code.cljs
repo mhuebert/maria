@@ -127,7 +127,7 @@
   "Remove the current selection."
   {:bindings ["M1-Backspace"
               "M1-M3-Backspace"]
-   
+
    :when     :block/code}
   [context]
   (let [editor (:editor context)]

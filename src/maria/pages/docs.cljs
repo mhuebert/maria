@@ -11,10 +11,11 @@
 (defn push-recents! [this]
   (let [{:keys [id]} this
         filename (.currentFile this)]
-    (when-let [username (and filename (d/get :auth-public :username))]
-      (local/local-update! (str username "/recent-docs") #(-> (cons {:id id :filename filename}
-                                                                    %)
-                                                              (distinct))))))
+    (when-not (= "new" filename)
+      (when-let [username (and filename (d/get :auth-public :username))]
+        (local/local-update! (str username "/recent-docs") #(-> (cons {:id id :filename filename}
+                                                                      %)
+                                                                (distinct)))))))
 
 (defview file-edit
   {:doc-editor              (fn [{:keys [view/state]}] (:doc-editor @state))
@@ -77,6 +78,7 @@
 (defn gists-list
   [username]
   (let [gists (d/get username :gists)]
-    [:.flex-auto.flex.flex-column.relative.bg-white
-     (toolbar/doc-toolbar {:parent (:owner (first gists))})
-     (doc-list nil gists)]))
+    [:.flex-auto.flex.flex-column.relative
+     (toolbar/doc-toolbar {:left-content [:a.hover-underline.gray.no-underline {:href (str "/gists/" username)} username]})
+     [:.ma3.bg-white
+      (doc-list nil gists)]]))

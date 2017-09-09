@@ -10,7 +10,9 @@
             [maria.views.bottom-bar :as dock]
             [maria.pages.docs :as docs]
             [maria.persistence.local :as local]
-            [maria.views.top-bar :as toolbar]))
+            [maria.views.top-bar :as toolbar]
+            [maria.views.icons :as icons]
+            [maria.curriculum :as curriculum]))
 
 (defonce _
          (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -19,21 +21,36 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
+(defn doc-list-section [docs title]
+  [:div
+   [:.b.sans-serif.mh3.mv2 title]
+   [:.bg-white.ma3
+    (docs/doc-list docs)]])
+
 (defview home
   [this]
   (let [username (d/get :auth-public :username)]
     [:div
      (toolbar/doc-toolbar {})
-     (when username
-       (list
-         [:.b.sans-serif.mh3.mv2 "My gists"]
-         [:.bg-white.ma3
-          (docs/doc-list (d/get username :gists))]))
-     (when-let [recent-docs (local/local-get (str username "/recent-docs"))]
-       [:div
-        [:.b.sans-serif.mh3.mv2 "Recent"]
-        [:.bg-white.ma3
-         (docs/doc-list recent-docs)]])]))
+
+     
+     [:a.br1.bg-darken.hover-bg-darken-more.sans-serif.no-underline.ma3.ph3.pv2.flex.items-center.pointer
+      {:href "/new"} icons/Add [:span.ph2 "New"]]
+
+     (some-> (local/local-get (str username "/recent-docs"))
+             (doc-list-section "Recent"))
+
+     (-> (for [[filename id] curriculum/modules-by-path]
+           {:id       id
+            :filename filename})
+         (doc-list-section "Learning Modules"))
+
+     (some-> username
+             (d/get :gists)
+             (seq)
+             (doc-list-section "My gists"))
+
+     ]))
 
 (defview layout
   [{:keys []}]
