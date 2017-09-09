@@ -1,7 +1,7 @@
 (ns maria.views.top-bar
   (:require [re-view.core :as v :refer [defview]]
-            [maria-commands.registry :refer-macros [defcommand]]
-            [maria-commands.exec :as exec]
+            [commands.registry :refer-macros [defcommand]]
+            [commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
             [maria.views.icons :as icons]
@@ -107,7 +107,8 @@
   "Create a blank doc"
   {:bindings       ["M1-Shift-B"]
    :intercept-when true
-   :when           :current-doc}
+   :when           :current-doc
+   :icon           icons/Add}
   [{{:keys [view/state doc-editor id]} :current-doc}]
   (github/clear-new!)
   (frame/send frame/trusted-frame [:window/navigate "/new" {}])
@@ -118,7 +119,8 @@
   {:bindings       ["M1-S"]
    :intercept-when true
    :when           #(and (:signed-in? %)
-                         (#{:create :save} (persistence-mode (:current-doc %))))}
+                         (#{:create :save} (persistence-mode (:current-doc %))))
+   :icon           icons/Backup}
   [{:keys [current-doc]}]
   (persist! current-doc)
   true)
@@ -127,6 +129,7 @@
   "Save a new copy of a project"
   {:bindings       ["M1-Shift-S"]
    :intercept-when true
+   :icon           icons/ContentDuplicate
    :when           #(and (:signed-in? %)
                          (get-in % [:current-doc :project :persisted])
                          (valid-content? (:current-doc %)))}

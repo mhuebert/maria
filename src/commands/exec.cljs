@@ -1,7 +1,7 @@
-(ns maria-commands.exec
+(ns commands.exec
   (:require [re-db.d :as d]
             [goog.events :as events]
-            [maria-commands.registry :as registry]
+            [commands.registry :as registry]
             [clojure.set :as set]
             [maria.util :as util]))
 

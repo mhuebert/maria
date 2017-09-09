@@ -5,8 +5,8 @@
             [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
             [re-view-prosemirror.markdown :as markdown]
-            [maria.block-views.prose :refer [ProseView]]
-            [maria.block-views.editor :as Editor]))
+            [maria.editors.prose :refer [ProseRow]]
+            [maria.editors.editor :as Editor]))
 
 (defn serialize-block [this]
   (.serialize markdown/serializer (Block/state this)))
@@ -16,9 +16,9 @@
   IFn
   (-invoke
     ([this props]
-     (ProseView (assoc props
-                  :block this
-                  :id (:id this)))))
+     (ProseRow (assoc props
+                 :block this
+                 :id (:id this)))))
 
   Block/IBlock
   (kind [this] :prose)

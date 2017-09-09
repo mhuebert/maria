@@ -1,6 +1,6 @@
 (ns maria.views.floating.float-ui
   (:require [re-view.core :as v :refer [defview]]
-            [maria-commands.registry :refer-macros [defcommand]]
+            [commands.registry :refer-macros [defcommand]]
             [re-db.d :as d]
             [re-view-routing.core :as r]
             [goog.events :as events])
@@ -13,7 +13,7 @@
                         (let [callback (fn [e]
                                          (when-not (r/closest (.-target e) (partial = (v/dom-node this)))
                                            (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
-                          #_(events/listen js/window (or (some-> cancel-events (to-array))
+                          (events/listen js/window (or (some-> cancel-events (to-array))
                                                        #js ["mousedown" "blur"]) callback true)
                           (v/swap-silently! state assoc :callback callback)))
    :view/will-unmount (fn [{:keys [view/state cancel-events]}]

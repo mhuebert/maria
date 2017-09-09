@@ -9,7 +9,7 @@
             [maria.util :as util]
             [cells.eval-context :as eval-context]
             [maria.eval :as e]
-            [maria.block-views.editor :as Editor]
+            [maria.editors.editor :as Editor]
             [fast-zip.core :as z]))
 
 (defprotocol IBlock

@@ -1,11 +1,11 @@
 (ns maria.views.repl-specials
   (:require [re-view.core :as v :refer [defview]]
             [maria.live.ns-utils :as ns-utils]
-            [maria.views.codemirror :as codemirror]
             [maria.views.icons :as icons]
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]
-            [maria.views.cards :as repl-ui]))
+            [maria.views.cards :as repl-ui]
+            [maria.editors.code :as code]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
@@ -53,7 +53,7 @@
           error [:.ma3 (if special-form
                           (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
                           error)]
-          value (repl-ui/card [:.ph3.pv2 (codemirror/viewer value)]))))
+          value (repl-ui/card [:.ph3.pv2 (code/viewer value)]))))
 
 (defview dir
   {:view/initial-state {:expanded? false}}

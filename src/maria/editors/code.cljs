@@ -1,12 +1,48 @@
-(ns maria.views.codemirror
-  (:require [cljsjs.codemirror :as CM]
-            [maria.block-views.editor :as Editor]
-            [codemirror.addon.markselection]
-            [codemirror.mode.clojure]
+(ns maria.editors.code
+  (:require
 
-            [magic-tree-editor.codemirror :as cm]
-            [re-view.core :as v :refer-macros [defview]]
-            [maria.util :as util]))
+    [codemirror.addon.markselection]
+    [codemirror.mode.clojure]
+    [structure.codemirror :as cm]
+
+    [re-view.core :as v :refer [defview]]
+
+    [maria.util :as util]
+    [maria.views.floating.float-ui :as hint]
+    [maria.editors.editor :as Editor]
+    [magic-tree.core :as tree]
+    [maria.live.ns-utils :as ns-utils]
+    [maria.views.dropdown :as dropdown]
+    [maria.views.bottom-bar :as bottom-bar]
+    [structure.edit :as edit]))
+
+(defn show-eldoc! [the-sym]
+  (bottom-bar/show-var! (some-> the-sym
+                                (ns-utils/resolve-var-or-special))))
+
+(defn update-completions! [{{node :bracket-node
+                             pos  :pos :as cursor} :magic/cursor :as editor}]
+  (if (and node
+           (= :token (:tag node))
+           (symbol? (tree/sexp node))
+           (= (tree/bounds node :right)
+              (tree/bounds pos :left)))
+    (hint/floating-hint! {:component dropdown/numbered-list
+                          :props     {:on-selection (fn [[completion full-name]]
+                                                      (show-eldoc! full-name))
+                                      :class        "shadow-4"
+                                      :on-select!   (fn [[completion full-name]]
+                                                      (hint/clear-hint!)
+                                                      (cm/replace-range! editor completion node))
+                                      :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
+                                                      {:value [completion full-name]
+                                                       :label [:.flex.items-center.w-100.monospace.f7.ma2
+                                                               (str completion)
+                                                               [:.flex-auto]
+                                                               [:.gray.pl3 (str (or (namespace full-name)
+                                                                                    full-name))]]})}
+                          :rect      (Editor/cursor-coords editor)})
+    (hint/clear-hint!)))
 
 (def options
   {:theme              "maria-light"
@@ -19,7 +55,7 @@
    :magicBrackets      true
    :magicEdit          true})
 
-(defview editor
+(defview CodeView
   {:view/spec               {:props {:event/mousedown :Function
                                      :event/keydown   :Function
                                      :on-ast          :Function
@@ -48,6 +84,17 @@
                                                                                                  (assoc
                                                                                                    :readOnly true
                                                                                                    :tabindex -1))))))]
+
+                                (add-watch editor :maria
+                                           (fn [editor
+                                                {{prev-loc :loc :as prev-cursor} :magic/cursor}
+                                                {{loc :loc :as cursor} :magic/cursor}]
+                                             (when (.hasFocus editor)
+                                               (when (not= prev-loc loc)
+                                                 (show-eldoc! (edit/eldoc-symbol loc)))
+                                               (when-not (= cursor prev-cursor)
+                                                 (update-completions! editor)))))
+
                                 (set! (.-view editor) this)
                                 (swap! editor assoc :view this)
                                 (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor! editor %)
@@ -89,7 +136,7 @@
                                 (.resetValue this)
                                 nil))
    :view/should-update      (fn [_] false)}
-  [{:keys [view/state on-focus on-blur view/props] :as this}]
+  [{:keys [view/state view/props] :as this}]
   [:.cursor-text
    (-> (select-keys props [:style :class :classes])
        (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
@@ -99,6 +146,8 @@
                                 (.focus))))}))])
 
 (v/defn viewer [props source]
-  (editor (merge {:read-only? true
-                  :value      source}
-                 props)))
+  (CodeView (merge {:read-only? true
+                    :value      source}
+                   props)))
+
+

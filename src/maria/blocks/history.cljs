@@ -3,7 +3,7 @@
             [cells.eval-context :as eval-context]
             [re-view.core :as v]
             [maria.blocks.blocks :as Block]
-            [maria.block-views.editor :as Editor]))
+            [maria.editors.editor :as Editor]))
 
 (def ^:dynamic *ignored-op* false)
 
@@ -25,10 +25,9 @@
     [(:block block-view) (Editor/get-selections (.getEditor block-view))]))
 
 (defn put-selections! [[block selections]]
-  (when block
-    (let [editor (Editor/of-block block)]
-      (Editor/focus! editor)
-      (Editor/put-selections! editor selections))))
+  (when-let [editor (some-> block (Editor/of-block))]
+    (Editor/focus! editor)
+    (Editor/put-selections! editor selections)))
 
 (defn apply-selections
   "Applies selections for given version to doc."
@@ -102,6 +101,7 @@
 
 
 (defn add! [state version]
+  (.log js/console "history/add!")
   (when-not *ignored-op*
     (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
@@ -126,6 +126,7 @@
 (defn splice
   ([state block value] (splice state block nil value))
   ([state from-block to-block value]
+   (.log js/console "history/splice")
    (let [next-version (-> (current-version state)
                           (Block/splice-blocks from-block to-block value)
                           (Block/ensure-blocks))]

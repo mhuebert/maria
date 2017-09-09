@@ -1,4 +1,4 @@
-(ns maria.block-views.prose
+(ns maria.editors.prose
   (:require [re-view.core :as v :refer [defview]]
             [re-view-prosemirror.commands :as commands]
             [re-view-prosemirror.commands :refer [apply-command]]
@@ -9,10 +9,10 @@
             [goog.object :as gobj]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
-            [maria-commands.exec :as exec]
+            [commands.exec :as exec]
             [maria.commands.prose :as prose-commands]
             [re-view-routing.core :as r]
-            [maria.block-views.editor :as Editor]))
+            [maria.editors.editor :as Editor]))
 
 
 (defview link-dropdown [{:keys [href editor]}]
@@ -59,7 +59,7 @@
                                                                                      (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
                                               (clj->js))))
 
-(defview Editor
+(defview ProseEditor
   {:spec/props              {:on-dispatch :Function
                              :input-rules :Object
                              :doc         :Object}
@@ -90,8 +90,26 @@
   [:.prosemirror-content
    (-> (v/pass-props this)
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
+(comment
+  (defn Toolbar
+    [pm-view]
+    (let [[state dispatch] [(.-state pm-view) (.-dispatch pm-view)]]
+      (when-not (.. state -selection -empty)
+        [:.bg-darken-ligxhtly.h-100
+         (->> [toolbar/mark-strong
+               toolbar/mark-em
+               toolbar/mark-code
+               #_toolbar/tab-outdent
+               #_toolbar/tab-indent
+               #_toolbar/block-code
+               #_toolbar/list-bullet
+               #_toolbar/list-ordered
+               #_toolbar/wrap-quote
+               ]
 
-(defview ProseView
+              (map (fn [menu-item] (menu-item state dispatch))))]))))
+
+(defview ProseRow
   {:key               :id
    :get-editor        #(.pmView (:prose-editor-view @(:view/state %)))
    :view/did-mount    Editor/mount
@@ -103,29 +121,32 @@
                                               :block-view  nil})))}
   [{:keys [view/state block-list block before-change] :as this}]
   [:div
-   (Editor {:doc           (Block/state block)
-            :editor-props  {:onFocus #(exec/set-context! {:block/prose true
-                                                          :block-view  this})
-                            :onBlur  #(exec/set-context! {:block/prose nil
-                                                          :block-view  nil})}
-            :block         block
-            :class         " serif f4 ph3 cb"
-            :input-rules   (prose-commands/input-rules this)
+   (ProseEditor {:doc           (Block/state block)
+                 :editor-props  {:onFocus #(exec/set-context! {:block/prose true
+                                                               :block-view  this})
+                                 :onBlur  #(exec/set-context! {:block/prose nil
+                                                               :block-view  nil})}
+                 :block         block
+                 :class         " serif f4 ph3 cb"
+                 :input-rules   (prose-commands/input-rules this)
 
-            :on-click      (fn [e]
-                             (when-let [a (r/closest (.-target e) r/link?)]
-                               (when-not (classes/has a "pm-link")
-                                 (do (.stopPropagation e)
-                                     (hint/floating-hint! {:rect      (.getBoundingClientRect a)
-                                                           :component link-dropdown
-                                                           :props     {:href   (.-href a)
-                                                                       :editor (.getEditor this)}})))))
-            :ref           #(v/swap-silently! state assoc :prose-editor-view %)
-            :before-change before-change
-            :on-dispatch   (fn [pm-view prev-state]
-                             (when (not= (.-doc (.-state pm-view))
-                                         (.-doc prev-state))
-                               (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
+                 :on-click      (fn [e]
+                                  (when-let [a (r/closest (.-target e) r/link?)]
+                                    (when-not (classes/has a "pm-link")
+                                      (do (.stopPropagation e)
+                                          (hint/floating-hint! {:rect      (.getBoundingClientRect a)
+                                                                :component link-dropdown
+                                                                :props     {:href   (.-href a)
+                                                                            :editor (.getEditor this)}})))))
+                 :ref           #(v/swap-silently! state assoc :prose-editor-view %)
+                 :before-change before-change
+                 :on-dispatch   (fn [pm-view prev-state]
+                                  #_(when (not= (.-selection (.-state pm-view))
+                                              (.-selection prev-state))
+                                    (bottom-bar/set-bottom-bar! (Toolbar pm-view)))
+                                  (when (not= (.-doc (.-state pm-view))
+                                              (.-doc prev-state))
+                                    (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
 
 (specify! (.-prototype js/pm.EditorView)
 
@@ -150,12 +171,6 @@
   (start [this] (pm/start-$pos (.-state this)))
   (end [this] (pm/end-$pos (.-state this)))
   (get-cursor [this] (pm/cursor-$pos (.-state this)))
-
-  (selection-expand [this]
-    (commands/apply-command this commands/expand-selection))
-
-  (selection-contract [this]
-    (commands/apply-command this commands/contract-selection))
 
   (-focus! [this coords]
     (v/flush!)

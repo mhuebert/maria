@@ -1,4 +1,4 @@
-(ns maria-commands.registry
+(ns commands.registry
   (:require [goog.object :as gobj]
             [clojure.string :as string]
             [goog.events.KeyCodes :as KeyCodes])
@@ -95,6 +95,12 @@
 (defn M1-down? [e]
   (if mac? (.-metaKey e)
            (.-ctrlKey e)))
+
+(def M1 (modifier-keycode "M1"))
+(def M2 (modifier-keycode "M2"))
+(def M3 (modifier-keycode "M3"))
+(def SHIFT (modifier-keycode "SHIFT"))
+
 (defn M3-down? [e]
   (if mac? (.-ctrlKey e)
            (.-metaKey e)))

@@ -1,14 +1,15 @@
-(ns magic-tree.edit-tests
-  (:require [maria.views.codemirror]
-            [magic-tree-editor.codemirror]
-            [magic-tree-editor.edit :as edit]
-            [magic-tree.test-utils :as utils :refer [test-exec]]
+(ns structure.edit-tests
+  (:require [structure.codemirror]
+            [structure.edit :as edit]
+            [structure.test-utils :as utils :refer [test-exec]]
             [cljs.test :refer-macros [deftest is are testing]]))
 
 (defn prn-ret-cm [cm]
   (prn (.getValue cm))
   (.log js/console (count (.listSelections cm)))
   cm)
+
+(test-exec edit/expand-selection-left "(<a>)")
 
 (deftest edit-commands
 
@@ -52,11 +53,11 @@
     edit/uneval! "[]|" "#_[]|"
     edit/uneval! "a|bcd" "#_abcd|"
 
-    edit/unwrap! "[|]" "|"
-    edit/unwrap! "[| ]" "| "
-    edit/unwrap! " [|]" " |"
-    edit/unwrap! "[ |]" " |"
-    edit/unwrap! "[ \"abc|\" ]" "[ abc| ]"
+    edit/unwrap! "[|]" " | "
+    edit/unwrap! "[| ]" " |  "
+    edit/unwrap! " [|]" "  | "
+    edit/unwrap! "[ |]" "  | "
+    edit/unwrap! "[ \"abc|\" ]" "[  abc|  ]"
 
     edit/expand-selection "(|a)" "(<a>)"
     edit/expand-selection "(a|b)" "(<ab>)"

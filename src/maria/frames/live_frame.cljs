@@ -1,10 +1,10 @@
 (ns maria.frames.live-frame
-  (:require [maria.views.pages.blocks :as repl]
+  (:require [maria.views.pages.index :as repl]
             [maria.eval :as e]
 
             [cells.cell :as cell]
 
-            [maria-commands.exec]
+            [commands.exec]
             [maria.show :as show]
 
             [clojure.set]

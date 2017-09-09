@@ -135,12 +135,12 @@
                        {:id           "tests"
                         :source-paths ["src"
                                        "test"]
-                        :figwheel     {:on-jsload "maria-tests.runner/run-tests"}
-                        :compiler     {:main           maria-tests.runner
-                                       :output-to      "test-target/public/js/tests.js"
-                                       :output-dir     "test-target/public/js/out"
-                                       :asset-path     "js/out"
-                                       :optimizations  :none}}]}
+                        :figwheel     {:on-jsload "maria.tests-runner/run-tests"}
+                        :compiler     {:main          maria.tests-runner
+                                       :output-to     "test-target/public/js/tests.js"
+                                       :output-dir    "test-target/public/js/out"
+                                       :asset-path    "js/out"
+                                       :optimizations :none}}]}
 
   :figwheel {:ring-handler figwheel-server.core/handler
              :css-dirs     ["resources/public/css"]

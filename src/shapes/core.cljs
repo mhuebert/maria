@@ -1,6 +1,4 @@
-(ns maria.user.shapes
-  (:require [re-view-hiccup.core :as hiccup :refer [IHiccup]]
-            [maria.messages :refer [IDoc]]))
+(ns shapes.core)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
@@ -42,9 +40,7 @@
   (-dissoc [this key]
     (new Shape (dissoc attrs key)))
   ISeqable
-  (-seq [this] (seq attrs))
-  IDoc
-  (doc [this] "a shape: some geometry that Maria can draw"))
+  (-seq [this] (seq attrs)))
 
 (defn circle
   "Returns a circle of `radius`."
@@ -220,22 +216,9 @@
            text]
           (mapv shape->vector children))))
 
-;; TODO becomes a method of the shape protocol
-(extend-type Shape
-  IHiccup
-  (to-hiccup [this]
-    [:svg (assoc (bounds this) :x 0 :y 0)
-     (shape->vector this)]))
-
-(defn show
-  "Returns a component from this collection of shapes."
-  [shapes]
-  (reify
-    IHiccup
-    (to-hiccup [this]
-      (let [shapes (assure-shape-seq shapes)]
-        (-> [:svg (assoc (bounds shapes) :x 0 :y 0)]
-            (into (mapv shape->vector shapes)))))))
+(defn to-hiccup [shape]
+  [:svg (assoc (bounds shape) :x 0 :y 0)
+   (shape->vector shape)])
 
 (defn stroke
   "Return `shape` with its stroke set to `color`."

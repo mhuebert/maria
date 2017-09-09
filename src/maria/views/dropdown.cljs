@@ -1,7 +1,7 @@
 (ns maria.views.dropdown
   (:require [re-view.core :as v :refer [defview]]
-            [maria-commands.exec :as exec]
-            [maria-commands.registry :refer-macros [defcommand]]
+            [commands.exec :as exec]
+            [commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
             [re-db.d :as d]
             [maria.views.icons :as icons]))
@@ -42,7 +42,6 @@
 
 (defview numbered-list
   {:view/initial-state      (fn [{:keys [ui/max-height default-selection] :as this}]
-                              (prn :max-height max-height)
                               {:selection (or default-selection -1)
                                :PAGE_SIZE (if max-height (-> (.floor js/Math (-> max-height
                                                                                     (- 32)
@@ -124,7 +123,7 @@
           (map-indexed (fn [i {:keys [value label]}]
                          [:.nowrap.flex.items-center.pointer.items-stretch
                           {:key            (+ offset i)
-                           :on-mouse-enter #(swap! state assoc :selection (+ offset i))
+                           :on-mouse-enter #(swap! state assoc :selection i)
                            :class          (when (= i selection) "bg-darken-lightly")
                            :style          {:border-bottom "1px solid rgba(0,0,0,0.05)"}
                            trigger-event   #(do (on-select! value)

@@ -1,4 +1,4 @@
-(ns maria-commands.registry
+(ns commands.registry
   (:require [re-view.util :refer [parse-opt-args]]))
 
 (defmacro defcommand
@@ -18,21 +18,21 @@
         {bindings        :bindings
          when*           :when
          intercept-when* :intercept-when
-         priority        :priority
-         private         :private
          :or             {bindings []}} options
         _ (when (nil? arglist)
             (assert (empty? body)))
-        name-as-symbol (symbol (str (namespace command-name) "_" (name command-name)))]
-    `(~'maria-commands.registry/register! {:name           ~command-name
-                                           :doc            ~docstring
-                                           :exec-pred      ~when*
-                                           :intercept-pred ~(if (boolean? intercept-when*)
-                                                              `(fn [] ~intercept-when*)
-                                                              intercept-when*)
-                                           :priority       ~priority
-                                           :private        ~private
-                                           :command        ~(if arglist
-                                                              `(fn ~name-as-symbol ~arglist
-                                                                 ~@body)
-                                                              `(fn ~name-as-symbol [] ~'(.-Pass js/CodeMirror)))} ~bindings)))
+        name-as-symbol (symbol (str (namespace command-name) "_" (name command-name)))
+        options (-> options
+                    (dissoc :intercept-when*
+                            :when*)
+                    (assoc :name command-name
+                           :doc docstring
+                           :exec-pred when*
+                           :intercept-pred (if (boolean? intercept-when*)
+                                             `(constantly ~intercept-when*)
+                                             intercept-when*)
+                           :command (if arglist
+                                      `(fn ~name-as-symbol ~arglist
+                                         ~@body)
+                                      `(fn ~name-as-symbol [] ~'(.-Pass js/CodeMirror)))))]
+    `(~'commands.registry/register! ~options ~bindings)))

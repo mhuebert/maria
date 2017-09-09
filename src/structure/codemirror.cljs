@@ -1,51 +1,25 @@
-(ns magic-tree-editor.codemirror
+(ns structure.codemirror
   (:require [cljsjs.codemirror :as CM]
             [fast-zip.core :as z]
             [goog.events :as events]
             [magic-tree.core :as tree]
             [goog.events.KeyCodes :as KeyCodes]
-            [maria-commands.registry :as registry :refer-macros [defcommand]]
             [cljs.core.match :refer-macros [match]]
-            [re-db.d :as d]
             [goog.dom :as gdom]
             [goog.object :as gobj]
-            [maria.eval :as e]
-            [maria.live.ns-utils :as ns-utils]
-            [maria.views.floating.float-ui :as hint]
-            [maria.views.dropdown :as dropdown]
-            [maria.block-views.editor :as Editor]))
+
+
+    ;; for AST:
+            [maria.eval :as eval]
+    ;; for protocols:
+            [maria.editors.editor :as Editor]
+    ;; for `flush!`:
+            [re-view.core :as v]
+    ;; for M1 modifier differentiation
+            [commands.registry :as registry :refer-macros [defcommand]]))
 
 (def Pos CM/Pos)
 (def changeEnd CM/changeEnd)
-
-(defn cm-pos
-  "Return a CodeMirror position."
-  [pos]
-  (if (map? pos)
-    (CM/Pos (:line pos) (:column pos))
-    pos))
-
-(defn cursor->range [cursor]
-  {:line       (.-line cursor)
-   :column     (.-ch cursor)
-   :end-line   (.-line cursor)
-   :end-column (.-ch cursor)})
-
-(defn cursor-bookmark []
-  (gdom/createDom "div" #js {"className" "cursor-marker"}))
-
-(extend-type js/CodeMirror
-  ILookup
-  (-lookup
-    ([this k] (get (aget this "cljs$state") k))
-    ([this k not-found] (get (aget this "cljs$state") k not-found)))
-  ISwap
-  (-swap!
-    ([this f] (aset this "cljs$state" (f (aget this "cljs$state"))))
-    ([this f a] (aset this "cljs$state" (f (aget this "cljs$state") a)))
-    ([this f a b] (aset this "cljs$state" (f (aget this "cljs$state") a b)))
-    ([this f a b xs]
-     (aset this "cljs$state" (apply f (concat (list (aget this "cljs$state") a b) xs))))))
 
 (extend-type js/CodeMirror.Pos
   IComparable
@@ -64,27 +38,39 @@
     ([o k] (gobj/get o k))
     ([o k not-found] (gobj/get o k not-found))))
 
-(.defineOption js/CodeMirror "cljsState" false
-               (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {}))))
+(defn range->Pos
+  "Coerces Clojure maps to CodeMirror positions."
+  [{:keys [line column]}]
+  (CM/Pos line column))
+
+(defn Pos->range [cursor]
+  {:line       (.-line cursor)
+   :column     (.-ch cursor)
+   :end-line   (.-line cursor)
+   :end-column (.-ch cursor)})
+
+(defn- cursor-bookmark []
+  (gdom/createDom "div" #js {"className" "cursor-marker"}))
 
 (def M1 (registry/modifier-keycode "M1"))
 
 (defn cursor-loc
   "Current sexp, or nearest sexp to the left, or parent."
   [pos loc]
-  (let [cursor-loc (if-not (tree/whitespace? (z/node loc))
-                     loc
-                     (if (and (= pos (select-keys (z/node loc) [:line :column]))
-                              (z/left loc)
-                              (not (tree/whitespace? (z/node (z/left loc)))))
-                       (z/left loc)
-                       loc))
-        up-tag (some-> cursor-loc
+  (let [the-loc (if-not (tree/whitespace? (z/node loc))
+                  loc
+                  (if (and (= pos (select-keys (z/node loc) [:line :column]))
+                           (z/left loc)
+                           (not (tree/whitespace? (z/node (z/left loc)))))
+                    (z/left loc)
+                    loc))
+        up-tag (some-> the-loc
                        (z/up)
                        (z/node)
                        (:tag))]
-    (cond-> cursor-loc
-            (#{:quote :deref
+    (cond-> the-loc
+            (#{:quote
+               :deref
                :reader-conditional} up-tag)
             (z/up))))
 
@@ -124,7 +110,8 @@
 
 (defn set-cursor! [cm pos]
   (unset-cursor-root! cm)
-  (let [pos (cm-pos pos)]
+  (let [pos (cond-> pos
+                    (map? pos) (range->Pos))]
     (.setCursor cm pos pos))
   cm)
 
@@ -205,19 +192,25 @@
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
         evt-type (.-type e)
-        m-down? (registry/M1-down? e)
-        shift-down? (.-shiftKey e)]
-    (match [m-down? evt-type key-code]
-           [true _ (:or 16 91)] (let [pos (cursor->range (get-cursor cm))
-                                      loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
-                                                  shift-down? (tree/top-loc))]
-                                  (some->> loc
-                                           (z/node)
-                                           (highlight-range pos)
-                                           (select-node! cm)))
-           [_ "keyup" 91] (return-cursor-to-root! cm)
-           :else (when-not (contains? #{16 M1} key-code)
-                   (unset-cursor-root! cm)))))
+        primary registry/M1
+        secondary registry/M3
+        primary-down? (registry/M1-down? e)
+        secondary-down? (registry/M3-down? e)]
+    #_(.log js/console "update-selection!")
+    (cond (and primary-down? (#{secondary primary} key-code))
+          (let [pos (Pos->range (get-cursor cm))
+                loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
+                            secondary-down? (tree/top-loc))]
+            (some->> loc
+                     (z/node)
+                     (highlight-range pos)
+                     (select-node! cm)))
+
+          :else #_(and (= evt-type "keyup") (= key-code primary))
+          (return-cursor-to-root! cm)
+
+          #_:else #_(when-not (contains? registry/modifiers key-code)
+                      (unset-cursor-root! cm)))))
 
 (defn clear-brackets! [cm]
   (doseq [handle (get-in cm [:magic/cursor :handles])]
@@ -227,6 +220,7 @@
 (defn match-brackets! [cm node]
   (let [prev-node (get-in cm [:magic/cursor :node])]
     (when (not= prev-node node)
+      #_(.log js/console "match-brackets!")
       (clear-brackets! cm)
       (when (some-> node (tree/may-contain-children?))
         (swap! cm assoc-in [:magic/cursor :handles]
@@ -247,8 +241,9 @@
 
 (defn update-ast!
   [{:keys [ast] :as cm}]
-  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (:ns @e/c-env) (.getValue cm))
+  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (:ns @eval/c-env) (.getValue cm))
                                                 (catch js/Error e (.debug js/console e)))]
+    #_(.log js/console "update-ast!" next-ast)
     (when (not= next-ast ast)
       (when-let [on-ast (-> cm :view :on-ast)]
         (on-ast next-ast))
@@ -262,61 +257,109 @@
                  :ast next-ast
                  :zipper next-zip))))))
 
-(defn sym-node [node]
-  (when (= :token (:tag node))
-    (let [val (tree/sexp node)]
-      (when (symbol? val) val))))
-
-(defn hint-symbol [loc]
-  (some-> (tree/closest #(= :list (:tag (z/node %))) (z/up loc))
-          (z/children)
-          (first)
-          (sym-node)))
-
-(defn update-eldoc! [the-sym]
-  (d/transact! [[:db/add :code/context :current-sym the-sym]]))
-
-(defn update-completions! [node pos editor]
-  (if (and (= :token (:tag node))
-           (symbol? (tree/sexp node))
-           (= (tree/bounds node :right)
-              (tree/bounds pos :left)))
-    (hint/floating-hint! {:component dropdown/numbered-list
-                          :props     {:on-selection (fn [[completion full-name]]
-                                                      (update-eldoc! full-name))
-                                      :class        "shadow-4"
-                                      :on-select!   (fn [[completion full-name]]
-                                                      (hint/clear-hint!)
-                                                      (replace-range! editor completion node))
-                                      :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
-                                                      {:value [completion full-name]
-                                                       :label [:.flex.items-center.w-100.monospace.f7.ma2
-                                                               (str completion)
-                                                               [:.flex-auto]
-                                                               [:.gray.pl3 (str (or (namespace full-name)
-                                                                                    full-name))]]})}
-                          :rect      (Editor/cursor-coords editor)})
-    (hint/clear-hint!)))
-
 (defn update-cursor!
-  [{:keys [zipper magic/brackets?] :as cm}]
-  (when-let [position (pos->boundary (get-cursor cm))]
-    (when-let [loc (some-> zipper (tree/node-at position))]
-      (update-eldoc! (hint-symbol loc))
-
-      (let [bracket-loc (cursor-loc position loc)
-            bracket-node (z/node bracket-loc)]
-        (some-> bracket-node (update-completions! position cm))
-
-        (when brackets? (match-brackets! cm bracket-node))
-        (swap! cm update :magic/cursor merge {:loc          loc
-                                              :node         (z/node loc)
-                                              :bracket-loc  bracket-loc
-                                              :bracket-node bracket-node
-                                              :pos          position})))))
+  [{:keys                                    [zipper magic/brackets?]
+    {prev-pos :pos prev-zipper :prev-zipper} :magic/cursor
+    :as                                      cm}]
+  (when (.hasFocus cm)
+    (when-let [pos (pos->boundary (get-cursor cm))]
+      (when (or (not= pos prev-pos)
+                (not= prev-zipper zipper))
+        (when-let [loc (some-> zipper (tree/node-at pos))]
+          (let [bracket-loc (cursor-loc pos loc)
+                bracket-node (z/node bracket-loc)]
+            (when brackets? (match-brackets! cm bracket-node))
+            (swap! cm update :magic/cursor merge {:loc          loc
+                                                  :node         (z/node loc)
+                                                  :bracket-loc  bracket-loc
+                                                  :bracket-node bracket-node
+                                                  :pos          pos
+                                                  :prev-zipper  zipper})))))))
 
 (defn require-opts [cm opts]
   (doseq [opt opts] (.setOption cm opt true)))
+
+
+(specify! (.-prototype js/CodeMirror)
+
+  ILookup
+  (-lookup
+    ([this k] (get (aget this "cljs$state") k))
+    ([this k not-found] (get (aget this "cljs$state") k not-found)))
+
+  IDeref
+  (-deref [this] (gobj/get this "cljs$state"))
+
+  IWatchable
+  (-add-watch [this key f]
+    (swap! this update ::watches assoc key f))
+  (-remove-watch [this key]
+    (swap! this update ::watches dissoc key))
+  (-notify-watches [this oldval newval]
+    (doseq [watcher (vals (::watches @this))]
+      (watcher this oldval newval)))
+
+  IReset
+  (-reset! [this newval]
+    (let [old-val @this]
+      (gobj/set this "cljs$state" newval)
+      (-notify-watches this old-val newval)))
+
+  ISwap
+  (-swap!
+    ([this f] (-reset! this (f @this)))
+    ([this f a] (-reset! this (f @this a)))
+    ([this f a b] (-reset! this (f @this a b)))
+    ([this f a b xs] (-reset! this (apply f (concat (list @this a b) xs)))))
+
+  Editor/IKind
+  (kind [this] :code)
+
+  Editor/IHistory
+
+  (get-selections [cm]
+    (if-let [root-cursor (cursor-root cm)]
+      #js [#js {:anchor root-cursor
+                :head   root-cursor}]
+      (.listSelections cm)))
+
+  (put-selections! [cm selections]
+    (v/flush!)
+    (.setSelections cm selections))
+
+  Editor/ICursor
+
+  (-focus! [this coords]
+    (let [coords (if (keyword? coords)
+                   (case coords :end (Pos (.lineCount this) (count (.getLine this (.lineCount this))))
+                                :start (Pos 0 0))
+                   coords)]
+      (doto this
+        (.focus)
+        (cond-> coords (.setCursor coords)))
+      (Editor/scroll-into-view (Editor/cursor-coords this))))
+
+  (get-cursor [this]
+    (when-not (.somethingSelected this)
+      (get-cursor this)))
+
+  (cursor-coords [this]
+    (let [coords (.cursorCoords this)]
+      ;; TODO
+      ;; these coords don't seem to be correct when using them
+      ;; to scroll the cursor into view.
+      #_(.log js/console "cm" #js {:left   (- (.-left coords) (.-scrollX js/window))
+                                   :right  (- (.-right coords) (.-scrollX js/window))
+                                   :top    (- (.-top coords) (.-scrollY js/window))
+                                   :bottom (- (.-bottom coords) (.-scrollY js/window))})
+      #js {:left   (- (.-left coords) (.-scrollX js/window))
+           :right  (- (.-right coords) (.-scrollX js/window))
+           :top    (- (.-top coords) (.-scrollY js/window))
+           :bottom (- (.-bottom coords) (.-scrollY js/window))}))
+
+  (start [this] (Pos 0 0))
+  (end [this] (Pos (.lastLine this) (count (.getLine this (.lastLine this))))))
+
 
 (.defineOption js/CodeMirror "magicTree" false
                (fn [cm on?]
@@ -330,6 +373,7 @@
                  (when on?
                    (require-opts cm ["magicTree"])
                    (.on cm "cursorActivity" update-cursor!)
+                   (.on cm "change" update-cursor!)
                    (update-cursor! cm))))
 
 (.defineOption js/CodeMirror "magicBrackets" false
@@ -343,3 +387,6 @@
                    (events/listen js/window "blur" #(clear-brackets! cm))
 
                    (swap! cm assoc :magic/brackets? true))))
+
+(.defineOption js/CodeMirror "cljsState" false
+               (fn [cm] (aset cm "cljs$state" (or (aget cm "cljs$state") {::watches {}}))))

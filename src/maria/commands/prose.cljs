@@ -1,15 +1,16 @@
 (ns maria.commands.prose
-  (:require [maria-commands.registry :refer-macros [defcommand]]
+  (:require [commands.registry :refer-macros [defcommand]]
             [cljsjs.codemirror :as CM]
-            [magic-tree-editor.edit :as edit]
+            [structure.edit :as edit]
             [re-view-prosemirror.commands :as commands :refer [apply-command]]
             [re-view-prosemirror.markdown :as prose]
             [re-view-prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
-            [maria.block-views.editor :as Editor]
+            [maria.editors.editor :as Editor]
             [maria.util :as util]
             [maria.blocks.history :as history]
-            [re-view.core :as v]))
+            [re-view.core :as v]
+            [maria.views.icons :as icons]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
@@ -53,12 +54,14 @@
 
 (defcommand :format/bold
   {:bindings ["M1-b"]
+   :icon     icons/FormatBold
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/inline-bold))
 
 (defcommand :format/italic
   {:bindings ["M1-i"]
+   :icon     icons/FormatItalic
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/inline-italic))
@@ -67,6 +70,7 @@
 (defcommand :format/code-inline
   {:bindings ["M3-`"
               "M1-`"]
+   :icon     icons/Code
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/inline-code))
@@ -74,14 +78,16 @@
 
 (defcommand :format/bullet-list
   {:bindings ["Shift-Ctrl-8"]
-   :when     :block/prose}
+   :when     :block/prose
+   :icon     icons/FormatListBulleted}
   [context]
   (apply-command (:editor context) commands/block-list-bullet))
 
 
 (defcommand :format/numbered-list
   {:bindings ["Shift-Ctrl-9"]
-   :when     :block/prose}
+   :when     :block/prose
+   :icon     icons/FormatListOrdered}
   [context]
   (apply-command (:editor context) commands/block-list-ordered))
 
@@ -93,14 +99,16 @@
   (apply-command (:editor context) commands/block-paragraph))
 
 (defcommand :format/code-block
-  {:when :block/prose}
+  {:when :block/prose
+   :icon icons/Code}
   [context]
   (apply-command (:editor context) (pm/set-block-type :code_block)))
 
 
 (defcommand :format/outdent
   {:bindings ["Shift-Tab"]
-   :when     :block/prose}
+   :when     :block/prose
+   :icon     icons/FormatOutdent}
   [context]
   (apply-command (:editor context) (commands/chain commands/heading->paragraph
                                                    commands/outdent)))
@@ -108,7 +116,8 @@
 
 (defcommand :format/indent
   {:bindings ["Tab"]
-   :when     :block/prose}
+   :when     :block/prose
+   :icon     icons/FormatIndent}
   [context]
   (apply-command (:editor context) commands/indent))
 
@@ -175,18 +184,21 @@
 
 (defcommand :edit/join-up
   {:bindings ["M2-Up"]
+   :private  true
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/join-up))
 
 (defcommand :edit/join-down
   {:bindings ["M2-Down"]
+   :private  true
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/join-down))
 
 (defcommand :format/clear-styles
   {:bindings ["Esc"]
+   :private  true
    :when     :block/prose}
   [context]
   (apply-command (:editor context) commands/clear-stored-marks))
@@ -195,14 +207,16 @@
 (defcommand :format/larger
   {:when           :block/prose
    :intercept-when :block/prose
-   :bindings       ["M1-="]}
+   :bindings       ["M1-="]
+   :icon           icons/FormatSize}
   [context]
   (apply-command (:editor context) (partial commands/adjust-font-size dec)))
 
 (defcommand :format/smaller
   {:when           :block/prose
    :intercept-when :block/prose
-   :bindings       ["M1-Dash"]}
+   :bindings       ["M1-Dash"]
+   :icon           icons/FormatSize}
   [context]
   (apply-command (:editor context) (partial commands/adjust-font-size inc)))
 
@@ -225,3 +239,9 @@
                                    state {:content       (str bracket (edit/other-bracket bracket))
                                           :cursor-coords (CM/Pos 0 1)}) 0)
          (.-tr state))))])
+
+(defn select-up [this]
+  (commands/apply-command this commands/expand-selection))
+
+(defn select-reverse [this]
+  (commands/apply-command this commands/contract-selection))

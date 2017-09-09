@@ -1,5 +1,5 @@
-(ns magic-tree.test-utils
-  (:require [magic-tree-editor.codemirror]
+(ns structure.test-utils
+  (:require [structure.codemirror]
             [cljsjs.codemirror :as CM]
             [codemirror.addon.search.searchcursor]
             [clojure.string :as string]))

@@ -1,12 +1,14 @@
 (ns maria.views.values
   (:require [maria.show :as show]
             [goog.object :as gobj]
+            [shapes.core :as shapes]
+            [cells.cell :as cell]
             [maria.messages :as messages]
             [maria.views.icons :as icons]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
             [maria.live.magic-tree :as magic]
-            [maria.views.codemirror :as codemirror]
+            [maria.editors.code :as code]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
@@ -20,6 +22,14 @@
         :else ["(" ")"]))
 
 (def space \u00A0)
+
+(extend-protocol hiccup/IEmitHiccup
+  shapes/Shape
+  (to-hiccup [this] (shapes/to-hiccup this)))
+
+(extend-protocol cell/IRenderHiccup
+  object
+  (render-hiccup [this] (hiccup/element this)))
 
 (declare format-value)
 
@@ -123,7 +133,7 @@
            (icons/class "mln1 mrn1 o-50"))]
       (when expanded?
         (or (some-> (source-lookups/js-source->clj-source (.toString value))
-                    (codemirror/viewer))
+                    (code/viewer))
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
@@ -136,7 +146,7 @@
      (throw (js/Error. "Format depth too deep!")))
    (cond (satisfies? show/IShow value) (format-value depth (show/show value))
 
-         (satisfies? hiccup/IHiccup value) value
+         (satisfies? hiccup/IEmitHiccup value) value
 
          :else
          (let [kind (messages/kind value)]
@@ -177,7 +187,7 @@
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
    {:style {:max-height 200}}
-   (codemirror/viewer {:error-ranges (cond-> []
+   (code/viewer {:error-ranges (cond-> []
                                              position (conj (magic/highlights-for-position source position))
                                              (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
 

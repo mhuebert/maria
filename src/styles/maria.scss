@@ -183,6 +183,7 @@ div.CodeMirror {
 
 $darken: rgba(0, 0, 0, 0.05);
 $darken-lightly: rgba(0, 0, 0, 0.03);
+$darken-more: rgba(0, 0, 0, 0.075);
 $lighten: rgba(255, 255, 255, 0.25);
 .b--darken {
   border-color: $darken;
@@ -198,6 +199,10 @@ $lighten: rgba(255, 255, 255, 0.25);
 
 .hover-bg-darken:hover {
   background-color: $darken;
+}
+
+.hover-bg-darken-more:hover {
+  background-color: $darken-more;
 }
 
 .bg-darken-lightly {
@@ -391,10 +396,6 @@ $lighten: rgba(255, 255, 255, 0.25);
   }
 }
 
-svg {
-  cursor: default;
-}
-
 .cursor-marker {
   border-right: 2px solid #9b7ea3; //#9ba450 #a78939
   display: inline;
@@ -477,4 +478,20 @@ $cell-status-size: 24px;
     border-radius: 0;
     transform: rotate(45deg) scale(0.75);
   }
+}
+
+.pm-toolbar-item {
+  display: inline-block;
+  padding: 3px;
+
+}
+
+svg {
+  -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0) scale(1.0, 1.0);
+  transform: translateZ(0);
+}
+
+.ma1px {
+  margin: 1px;
 }

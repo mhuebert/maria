@@ -1,14 +1,14 @@
 (ns maria.commands.code
-  (:require [maria-commands.registry :as registry :refer-macros [defcommand]]
+  (:require [commands.registry :as registry :refer-macros [defcommand]]
             [maria.eval :as e]
             [magic-tree.core :as tree]
-            [magic-tree-editor.edit :as edit :include-macros true]
-            [magic-tree-editor.codemirror :as cm]
+            [structure.edit :as edit :include-macros true]
+            [structure.codemirror :as cm]
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
             [maria.blocks.prose :as Prose]
-            [maria.block-views.editor :as Editor]
+            [maria.editors.editor :as Editor]
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]))
 
@@ -21,7 +21,7 @@
 
 (defcommand :clipboard/copy
   {:bindings ["M1-C"
-              "M1-Shift-C"]
+              "M1-M3-C"]
    :when     selection?})
 
 (defcommand :clipboard/paste
@@ -33,40 +33,46 @@
     false))
 
 (defcommand :select/left
+  "Expand selection to include form to the left."
   {:bindings ["M1-Left"]
    :when     :block/code}
   [context]
   (edit/expand-selection-left (:editor context)))
 
+(defcommand :select/right
+  "Expand selection to include form to the right."
+  {:bindings ["M1-Right"]
+   :when     :block/code}
+  [context]
+  (edit/expand-selection-right (:editor context)))
+
 (defcommand :navigate/form-start
-  {:bindings ["M1-Shift-Up"]
+  "Move cursor to beginning of top-level form."
+  {:bindings ["M1-M3-Left"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :left))
 
 (defcommand :navigate/form-end
-  {:bindings ["M1-Shift-Down"]
+  "Move cursor to end of top-level form."
+  {:bindings ["M1-M3-Right"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :right))
 
 (defcommand :navigate/line-start
+  "Move cursor to beginning of line."
   {:bindings ["M1-Shift-Left"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :left))
 
 (defcommand :navigate/line-end
+  "Move cursor to end of line."
   {:bindings ["M1-Shift-Right"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :right))
-
-(defcommand :select/right
-  {:bindings ["M1-Right"]
-   :when     :block/code}
-  [context]
-  (edit/expand-selection-right (:editor context)))
 
 (defn enter [{:keys [block-view editor block-list block blocks]}]
   (let [last-line (.lastLine editor)
@@ -113,9 +119,9 @@
               true))))))
 
 (defcommand :edit/delete-selection
-  "Deletes current selection"
+  "Remove the current selection."
   {:bindings ["M1-Backspace"
-              "M1-Shift-Backspace"]
+              "M1-M3-Backspace"]
    :when     :block/code}
   [context]
   (let [editor (:editor context)]
@@ -155,7 +161,6 @@
                           (edit/set-editor-cursor!))))))
 
 (defcommand :edit/backspace
-  "Delete"
   {:bindings ["Backspace"]
    :private  true
    :when     :block/code}
@@ -172,12 +177,13 @@
 
       (.somethingSelected editor) false
 
-      (#{")" "]" "}"} prev-char) (-> pointer
-                                     (edit/move -1)
-                                     (edit/set-editor-cursor!))
-      (#{\( \[ \{ \"} prev-char) (edit/operation editor
-                                                 (edit/unwrap! editor)
-                                                 (edit/set-editor-cursor! (edit/move pointer -1)))
+      (#{")" "]" "}"} prev-char) (do (-> pointer
+                                         (edit/move -1)
+                                         (edit/set-editor-cursor!))
+                                     true)
+      (#{\( \[ \{ \"} prev-char) (do (edit/operation editor
+                                                     (edit/unwrap! editor)
+                                                     (edit/backspace! editor)) true)
 
       :else false)))
 
@@ -214,35 +220,37 @@
   [context]
   (edit/comment-line (:editor context)))
 
-(defcommand :edit/uneval-form
+(defcommand :edit/ignore-form
+  "Ignore the current form using the `#_` reader macro ('uneval')"
   {:bindings ["M1-;"
-              "M1-Shift-;"]
+              "M1-M3-;"]
    :when     :block/code}
   [context]
   (edit/uneval! (:editor context)))
 
 (defcommand :edit/slurp
+  "Expands the current form to include the form to the right."
   {:bindings ["M1-Shift-K"]
    :when     :block/code}
   [context]
   (edit/slurp (:editor context)))
 
 (defcommand :edit/kill
-  "Cuts to end of line"
+  "Cuts to end of current form or line, whichever comes first."
   {:bindings ["M3-K"]
    :when     :block/code}
   [context]
   (edit/kill! (:editor context)))
 
 (defcommand :edit/unwrap
-  "Splice form"
+  "Replaces the current form with its contents."
   {:bindings ["M2-S"]
    :when     :block/code}
   [context]
   (edit/unwrap! (:editor context)))
 
 (defcommand :edit/raise
-  "Splice form"
+  "Replace the selected form's parent with the selected form."
   {:bindings ["M2-Shift-S"]
    :when     :block/code}
   [context]
@@ -251,7 +259,7 @@
 (defcommand :eval/form
   "Evaluate the current form"
   {:bindings ["M1-Enter"
-              "M1-Shift-Enter"]
+              "M1-M3-Enter"]
    :when     :block/code}
   [{:keys [editor block-view block]}]
   (Block/eval! block))
@@ -263,10 +271,10 @@
     [{:keys [block-view]}]
     (eval-scope (.getEditor block-view) :bracket))
 
-(defcommand :meta/form-info
-  "Show documentation for current form"
+(defcommand :info/doc
+  "Show documentation for current form."
   {:bindings ["M1-I"
-              "M1-Shift-I"]
+              "M1-M3-I"]
    :when     :block/code}
   [{:keys [block-view editor block]}]
   (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
@@ -274,16 +282,15 @@
       (Block/eval! block :form (list 'doc form))
       (Block/eval! block :form (list 'maria.messages/what-is (list 'quote form))))))
 
-(defcommand :meta/var-source
+(defcommand :info/source
   "Show source code for the current var"
-  {:bindings ["M1-Shift-S"]
-   :when     #(and (:block/code %)
-                   (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
+  {:when #(and (:block/code %)
+               (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
   [{:keys [block editor]}]
   (Block/eval! block :form (list 'source
                                  (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
 
-(defcommand :meta/javascript-source
+(defcommand :info/javascript-source
   "Show compiled javascript for current form"
   {:bindings ["M1-Shift-J"]
    :when     :block/code}
@@ -291,3 +298,5 @@
   (when-let [node (some-> editor :magic/cursor :bracket-loc z/node)]
     (Block/eval-log! block (some-> node tree/string e/compile-str (set/rename-keys {:compiled-js :value})))))
 
+(def select-up edit/expand-selection)
+(def select-reverse edit/shrink-selection)

@@ -20,7 +20,13 @@
 (def status cell/status)
 (def message cell/message)
 (def error? cell/error?)
-(def loading? cell/loading?)
+
+(defn loading?
+  "Returns true if x has a status of :loading."
+  [x]
+  (and (satisfies? cell/IStatus x)
+       (cell/loading? x)))
+
 (def dependencies cell/dependencies)
 (def dependents cell/dependents)
 (def unique-id (comp str util/unique-id))
@@ -68,8 +74,12 @@
 (defn- timeout
   ([n f] (timeout n f nil))
   ([n f initial-value]
+
    (let [self (first cell/*cell-stack*)
-         clear-key (js/setTimeout (cell-fn [] (reset! self (f @self))) n)]
+         _ (cell/status! self :loading)
+         clear-key (js/setTimeout (cell-fn []
+                                           (cell/status! self nil)
+                                           (reset! self (f @self))) n)]
      (on-dispose self #(js/clearTimeout clear-key))
      initial-value)))
 

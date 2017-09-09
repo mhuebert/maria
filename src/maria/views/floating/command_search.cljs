@@ -1,14 +1,14 @@
 (ns maria.views.floating.command-search
   (:require [re-view.core :as v :refer [defview]]
-            [maria-commands.registry :as registry :refer-macros [defcommand]]
-            [maria-commands.which-key :as which-key]
-            [maria-commands.exec :as exec]
+            [commands.registry :as registry :refer-macros [defcommand]]
+            [commands.which-key :as which-key]
+            [commands.exec :as exec]
             [maria.views.dropdown :as dropdown]
             [maria.views.floating.float-ui :as ui]
-            [goog.events :as events]
             [clojure.string :as string]
-            [maria.util :as util]
-            [maria.blocks.history :as history]))
+            [maria.blocks.history :as history]
+            [maria.views.bottom-bar :as bottom-bar]
+            [maria.views.icons :as icons]))
 
 (defview CommandSearch
   {:view/initial-state (fn [] {:q       ""
@@ -48,15 +48,21 @@
                                                         (exec/exec-command-name % context))
                                 :ui/max-height     max-height
                                 :default-selection 0
-                                :items             (for [{:keys [name private parsed-bindings] :as command} commands
+                                :on-selection      #(bottom-bar/show-var! (exec/get-command context %))
+                                :items             (for [{:keys [name private parsed-bindings icon] :as command} commands
                                                          :when (and (string/includes? (str name) q)
                                                                     (not private))]
                                                      {:value name
                                                       :label [:.pa2.sans-serif.f7.flex.items-center.flex-auto
-                                                              [:span.gray.ph2 (:display-namespace command)]
+
+                                                              (-> (or icon icons/Blank)
+                                                                  (icons/size 16))
+                                                              [:span.gray.pl2 (some-> (:display-namespace command)
+                                                                                      (str "/"))]
                                                               (:display-name command)
                                                               [:.flex-auto]
-                                                              (which-key/show-keyset #{} (first parsed-bindings))]})})]]]))
+                                                              (some->> (first parsed-bindings)
+                                                                       (which-key/show-keyset #{}))]})})]]]))
 
 ;; input for text...
 ;; - auto-focus
@@ -67,7 +73,8 @@
 ;; store stack of previous/common commands
 
 (defcommand :commands/search
-  {:bindings ["M1-Shift-P"]}
+  {:bindings ["M1-P"
+              "M1-Shift-P"]}
   [context]
   (ui/floating-hint! {:component     CommandSearch
                       :props         nil

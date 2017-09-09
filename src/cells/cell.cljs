@@ -2,8 +2,7 @@
   (:require [com.stuartsierra.dependency :as dep]
             [clojure.set :as set]
             [cells.util :as util]
-            [cells.eval-context :as eval-context :refer [on-dispose dispose!]]
-            [re-view-hiccup.core :as hiccup])
+            [cells.eval-context :as eval-context :refer [on-dispose dispose!]])
   (:require-macros [cells.cell :refer [defcell cell cell-fn]]))
 
 (def ^:dynamic *cell-stack* (list))
@@ -32,6 +31,9 @@
   "Protocol for shallow copies of cells with different views"
   (view [this])
   (with-view [this view-fn]))
+
+(defprotocol IRenderHiccup
+  (render-hiccup [this]))
 
 #_(defprotocol ISwap*
     "Swap value of cell. (avoid ISwap because this should not be a public interface)"
@@ -118,9 +120,9 @@
   (-compute! [this] "evaluate cell and set value")
   (-compute-with-dependents! [this] "evaluate cell and flow updates to dependent cells"))
 
+(def ^:dynamic *allow-deref-while-loading?* true)
 (defprotocol IStatus
-  "NOT EVEN ALPHA
-  Just an experiment to see what it might feel like store and read status information on cells."
+  "Just an experiment to see what it might feel like store and read status information on cells."
   (status! [this]
            [this status]
            [this status message] "Set loading status")
@@ -133,16 +135,33 @@
 
 (def ^:dynamic *read-log* nil)
 
+(defn status-view [this]
+  (render-hiccup [:.cell-status
+                  [(case (status this) :loading :.circle-loading :error :.circle-error)
+                   [:div]
+                   [:div]]]))
 
+(defn default-view [self]
+  (if (status self)
+    (status-view self)
+    @self))
 
 (declare make-cell)
 
-(deftype Cell [id ^:mutable f ^:mutable state eval-context]
+(deftype Cell [id ^:mutable f ^:mutable state eval-context __meta]
 
   ICellStore
   (get-value [this] (:value state))
   (put-value! [this value] (set! state (assoc state :value value)))
   (invalidate! [this])
+
+  IWithMeta
+  (-with-meta [this new-meta]
+    (-> (new Cell id f state eval-context new-meta)
+        (-set! @this)))
+
+  IMeta
+  (-meta [_] __meta)
 
   IPrintWithWriter
   (-pr-writer [this writer _]
@@ -156,11 +175,10 @@
     (make-cell (keyword (namespace id) (util/unique-id)) f state))
 
   ICellView
-  (view [this] ((:view state) this))
+  (view [this] ((or (::view __meta)
+                    default-view) this))
   (with-view [this view-fn]
-    (let [cell (new Cell id f (assoc state :view view-fn) eval-context)]
-      (-set! cell @this)
-      cell))
+    (with-meta this (assoc (meta this) ::view view-fn)))
 
   IStatus
   (status! [this]
@@ -195,12 +213,16 @@
   (-deref [this]
     (when *read-log*
       (vswap! *read-log* conj (name this)))
-    (get-value this))
+
+    (cond-> this (or *allow-deref-while-loading?*
+                     (not= (:cell.status/status state) :loading))
+            (get-value)))
 
   ISet!
   (-set! [this newval]
     (log :-set-cell! this)
-    (put-value! this newval))
+    (put-value! this newval)
+    this)
   IReset
   (-reset! [this newval]
     (log :-reset! this newval)
@@ -282,29 +304,10 @@
   (-set! cell nil)
   (vswap! -cells dissoc (name cell))
   (remove-node cell)
-  #_(let [dependents (map name (topo-sort (dependents cell)))]
-      (js/setTimeout #(doseq [dep dependents]
-                        (when-let [other-cell (get @-cells dep)]
-                          (log :recompute-dependents-of-purged cell other-cell)
-                          (-compute! other-cell)
-                          ))))
-  (log :purged-cell-dependents (dependents cell))
-  #_(-compute-dependents! cell)
-  )
+  (log :purged-cell-dependents (dependents cell)))
 
-(defn cell-status [cell]
-  (hiccup/element [:.cell-status
-                   [(case (status cell) :loading :.circle-loading :error :.circle-error)
-                    [:div]
-                    [:div]]]))
 
-(defn default-view [self]
-  (if (status self)
-    (cell-status self)
-    @self))
-
-(def empty-cell-state {:view          default-view
-                       :initial-value nil
+(def empty-cell-state {:initial-value nil
                        :dispose-fns   []})
 
 (defn make-cell
@@ -314,7 +317,7 @@
   ([id f] (make-cell id f {:initial-value nil}))
   ([id f state]
    (or (get @-cells id)
-       (let [cell (->Cell id f (merge empty-cell-state state) *eval-context*)]
+       (let [cell (->Cell id f (merge empty-cell-state state) *eval-context* {})]
          (log :make-cell id)
          (on-dispose *eval-context* #(purge-cell! cell))
          (vswap! -cells assoc id cell)

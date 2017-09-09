@@ -1,14 +1,17 @@
 (ns maria.blocks.code
   (:require [re-view.core :as v :refer [defview]]
-            [magic-tree-editor.codemirror :as cm]
+            [structure.codemirror :as cm]
             [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
             [maria.eval :as e]
             [cells.eval-context :as eval-context]
-            [maria.block-views.code :refer [CodeView]]
+            [maria.editors.code :as code]
             [goog.dom.classes :as classes]
-            [maria.block-views.editor :as Editor]))
+            [maria.editors.editor :as Editor]
+            [maria.editors.code :as code]
+            [commands.exec :as exec]
+            [maria.views.values :as value-views]))
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
@@ -16,12 +19,40 @@
 
 (def -dispose-callbacks (volatile! {}))
 
+(defview CodeRow
+  {:key                :id
+   :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
+   :view/did-mount     Editor/mount
+   :view/will-unmount  Editor/unmount
+   :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
+  [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
+  [:.flex.pv2.cursor-text
+   {:on-click #(when (= (.-target %) (.-currentTarget %))
+                 (Editor/focus! (.getEditor this)))}
+   [:.w-50.flex-none
+    (code/CodeView {:class                 "pa3 bg-white"
+                    :ref                   #(v/swap-silently! state assoc :editor-view %)
+                    :value                 (Block/emit (:block this))
+                    :on-ast                (fn [node]
+                                             (.splice block-list block [(assoc block :node node)]))
+                    :before-change         before-change
+                    :on-selection-activity on-selection-activity
+                    :capture-event/focus   #(exec/set-context! {:block/code true
+                                                                :block-view this})
+                    :capture-event/blur    #(exec/set-context! {:block/code nil
+                                                                :block-view nil})})]
+
+   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto
+    (some-> (first (Block/eval-log block))
+            (assoc :block-id (:id block))
+            (value-views/display-result))]])
+
 (extend-type Block/CodeBlock
 
   IFn
   (-invoke
-    ([this props] (CodeView (assoc props :block this
-                                         :id (:id this)))))
+    ([this props] (CodeRow (assoc props :block this
+                                        :id (:id this)))))
 
   Block/IBlock
   (kind [this] :code)

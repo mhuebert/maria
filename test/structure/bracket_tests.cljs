@@ -1,4 +1,4 @@
-(ns magic-tree.bracket-tests
+(ns structure.bracket-tests
   (:require [magic-tree.core :as tree]
             [cljs.test :refer-macros [deftest testing is are run-tests]]))
 

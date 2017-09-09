@@ -1,12 +1,12 @@
 (ns maria.commands.blocks
-  (:require [maria-commands.registry :refer-macros [defcommand]]
+  (:require [commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
-            [maria.block-views.editor :as Editor]
+            [maria.editors.editor :as Editor]
             [maria.blocks.history :as history]
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
-            [re-db.d :as d]
-            [re-view-prosemirror.commands :as commands]))
+            [re-view-prosemirror.commands :as commands]
+            [maria.views.icons :as icons]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
@@ -50,16 +50,20 @@
   {:bindings ["M1-1"
               "M1-Up"]
    :when     :block}
-  [{:keys [editor] :as context}]
-  (Editor/selection-expand editor))
+  [{:keys [editor block/prose block/code] :as context}]
+  (cond code (code/select-up editor)
+        prose (prose/select-up editor)
+        :else nil))
 
 (defcommand :select/back
   "Contract selection (reverse of expand-selection)"
   {:bindings ["M1-2"
               "M1-Down"]
    :when     :block}
-  [{:keys [editor] :as context}]
-  (Editor/selection-contract editor))
+  [{:keys [editor block/prose block/code] :as context}]
+  (cond code (code/select-reverse editor)
+        prose (prose/select-reverse editor)
+        :else nil))
 
 (defcommand :select/all
   {:bindings ["M1-A"]}
@@ -71,12 +75,14 @@
         :else nil))
 
 (defcommand :history/undo
-  {:bindings ["M1-z"]}
+  {:bindings ["M1-z"]
+   :icon     icons/Undo}
   [{:keys [block-list]}]
   (history/undo (:view/state block-list)))
 
 (defcommand :history/redo
-  {:bindings ["M1-Shift-z"]}
+  {:bindings ["M1-Shift-z"]
+   :icon     icons/Redo}
   [{:keys [block-list]}]
   (history/redo (:view/state block-list)))
 

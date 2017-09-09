@@ -6,7 +6,7 @@
             [maria.blocks.code]
             [maria.blocks.prose]
             [maria.blocks.blocks :as Block]
-            [maria-commands.exec :as exec]
+            [commands.exec :as exec]
             [maria.commands.blocks]
             [maria.eval :as e]))
 

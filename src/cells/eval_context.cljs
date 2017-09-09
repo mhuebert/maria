@@ -1,10 +1,9 @@
 (ns cells.eval-context)
 
 (defprotocol IDispose
-  "Cells interact with evaluation contexts. In particular, cells are designed
-   to be programmed from within interactive interfaces where users will re-evaluate
-   code frequently. Facility must be provided for 'disposing' of things like
-   intervals. "
+  "Cells are designed to be used within interactive interfaces where users re-evaluate
+   code frequently. Implement the IDispose protocol on an editor context to control the
+    'disposal' of side-effects like intervals when code is (re)-evaluated."
   (on-dispose [context f] "Register a callback to be fired when context is disposed.")
   (-dispose! [context]))
 

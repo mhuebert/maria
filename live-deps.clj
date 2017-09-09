@@ -12,7 +12,7 @@
                                      cljs-live.eval
                                      cljs.js
                                      cljs.compiler
-                                     maria.views.codemirror
+                                     maria.editors.code
                                      maria.repl-specials
                                      cljs.core.match
                                      maria.views.repl-specials

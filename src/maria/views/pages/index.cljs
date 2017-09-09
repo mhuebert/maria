@@ -1,7 +1,7 @@
-(ns maria.views.pages.blocks
+(ns maria.views.pages.index
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [maria-commands.which-key :as which-key]
+            [commands.which-key :as which-key]
             [maria.blocks.tree-view :as block-list]
             [maria.eval :as e]
             [maria.repl-specials]
@@ -9,11 +9,9 @@
             [cljs.core.match :refer-macros [match]]
             [maria.views.top-bar :as toolbar]
             [maria.persistence.local :as local]
-            [goog.events :as events]
-            [re-view-routing.core :as r]
             [maria.views.floating.float-ui :as hint]
             [maria.views.bottom-bar :as dock])
-  (:require-macros [maria-commands.registry :refer [defcommand]]))
+  (:require-macros [commands.registry :refer [defcommand]]))
 
 (defonce _
          (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -21,9 +19,6 @@
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
-
-
-
 
 (defn loader [message]
   [:.w-100.sans-serif.tc
@@ -100,5 +95,5 @@
              ["gists" username] (gists-list {:username username})))]
 
    (which-key/show-commands)
-   (dock/dock)
+   (dock/BottomBar)
    ])

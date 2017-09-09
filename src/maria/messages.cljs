@@ -1,10 +1,15 @@
 (ns maria.messages
   (:require [clojure.string :as string]
             [cljs.analyzer :as ana]
-            [maria.util :as util]))
+            [shapes.core :as shapes]))
 
 (defprotocol IDoc
   (doc [this] "Return a docstring for type"))
+
+(extend-protocol
+  IDoc
+  shapes/Shape
+  (doc [this] "a shape: some geometry that Maria can draw"))
 
 (def kinds
   {:maria.kinds/character    {:doc "a character: a unit of writing (letter, emoji, and so on)"}

@@ -1,5 +1,5 @@
-(ns maria.block-views.editor
-  (:require [maria-commands.exec :as exec]
+(ns maria.editors.editor
+  (:require [commands.exec :as exec]
             [re-view.core :as v]))
 
 (def view-index (volatile! {}))
@@ -37,9 +37,6 @@
 
   (start [this])
   (end [this])
-
-  (selection-expand [this])
-  (selection-contract [this])
 
   (-focus! [this coords]))
 

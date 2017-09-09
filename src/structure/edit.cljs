@@ -1,26 +1,50 @@
-(ns magic-tree-editor.edit
+(ns structure.edit
   (:refer-clojure :exclude [char])
   (:require [magic-tree.core :as tree]
             [magic-tree.range :as range]
-            [magic-tree-editor.codemirror :as cm]
-            [magic-tree-editor.util :as cm-util]
-            [fast-zip.core :as z])
-  (:require-macros [magic-tree-editor.edit :refer [operation]]))
+            [structure.codemirror :as cm]
+            [fast-zip.core :as z]
+            [goog.dom :as dom]
+            [goog.dom.Range :as Range]
+            [clojure.string :as string])
+  (:require-macros [structure.edit :refer [operation]]))
 
 (def other-bracket {\( \) \[ \] \{ \} \" \"})
+(defn spaces [n] (apply str (take n (repeat " "))))
 
 (def pass (.-Pass js/CodeMirror))
+
+(def clipboard-helper-element
+  (memoize (fn []
+             (let [textarea (doto (dom/createElement "div")
+                              (dom/setProperties #js {:id              "magic-tree.pasteHelper"
+                                                      :contentEditable true
+                                                      :className       "fixed pre o-0 z-0 bottom-0 right-0"}))]
+               (dom/appendChild js/document.body textarea)
+               textarea))))
+
+(defn copy
+  "Copy text to clipboard using a hidden input element."
+  [text]
+  (let [hadFocus (.-activeElement js/document)
+        text (string/replace text #"[\n\r]" "<br/>")
+        _ (aset (clipboard-helper-element) "innerHTML" text)]
+    (doto (Range/createFromNodeContents (clipboard-helper-element))
+      (.select))
+    (try (.execCommand js/document "copy")
+         (catch js/Error e (.error js/console "Copy command didn't work. Maybe a browser incompatibility?")))
+    (.focus hadFocus)))
 
 (defn copy-range!
   "Copy a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (cm-util/copy (cm/range-text cm range))
+  (copy (cm/range-text cm range))
   true)
 
 (defn cut-range!
   "Cut a {:line .. :column ..} range from a CodeMirror instance."
   [cm range]
-  (cm-util/copy (cm/range-text cm range))
+  (copy (cm/range-text cm range))
   (cm/replace-range! cm "" range)
   true)
 
@@ -54,7 +78,8 @@
 (def ^:dynamic *changes* nil)
 
 (defn log-editor-changes [cm changes]
-  (.apply (.-push *changes*) *changes* changes))
+  (when *changes*
+    (.apply (.-push *changes*) *changes* changes)))
 
 (defn adjust-for-change [pos change]
   (cond (<= (compare pos (.-from change)) 0) pos
@@ -167,10 +192,13 @@
                                           (tree/has-edges? (z/node loc)) (z/node loc)
                                           :else (recur (z/up loc))))]
       (let [pos (cm/get-cursor cm)
-            goal (move-char cm pos -1)]
+            [l r] (tree/edges closest-edges-node)]
         (operation cm
-                   (cm/replace-range! cm (cm/range-text cm (tree/inner-range closest-edges-node)) closest-edges-node)
-                   (cm/set-cursor! cm goal)))
+                   (cm/replace-range! cm (str (spaces (count l))
+                                              (cm/range-text cm (tree/inner-range closest-edges-node))
+                                              (spaces (count r)))
+                                      closest-edges-node)
+                   (cm/set-cursor! cm pos)))
 
       true))
   true)
@@ -229,7 +257,7 @@
     (push-stack! cm (tree/bounds node))))
 
 (defn push-cursor! [cm]
-  (push-stack! cm (cm/cursor->range (cm/get-cursor cm)))
+  (push-stack! cm (cm/Pos->range (cm/get-cursor cm)))
   (cm/unset-cursor-root! cm))
 
 (def expand-selection
@@ -278,17 +306,13 @@
   (let [selection-bounds (cm/selection-bounds cm)
         selection-loc (tree/node-at zipper (tree/bounds selection-bounds :left))
         cursor-root (cm/cursor-root cm)]
-    (when cursor-root (push-cursor! cm))
-    (if (and cursor-root
-             (not= (tree/bounds pos :left)
-                   (tree/bounds bracket-node :left)))
-      (tracked-select cm (merge {:end-line   (:line pos)
-                                 :end-column (:column pos)}
-                                (tree/bounds bracket-node :left)))
-      (if-let [left-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/left-locs selection-loc)))]
-        (tracked-select cm (merge (tree/bounds (z/node left-loc) :left)
-                                  (select-keys selection-bounds [:end-line :end-column])))
-        (expand-selection cm))))
+    (when cursor-root
+      (push-cursor! cm)
+      (push-stack! cm selection-bounds))
+    (if-let [left-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/left-locs selection-loc)))]
+      (tracked-select cm (merge (tree/bounds (z/node left-loc) :left)
+                                (select-keys selection-bounds [:end-line :end-column])))
+      (expand-selection cm)))
   true)
 
 (defn expand-selection-right [{{:keys [bracket-node] pos :pos} :magic/cursor
@@ -298,17 +322,15 @@
         selection-loc (tree/node-at zipper (tree/bounds selection-bounds :right))
         cursor-root (cm/cursor-root cm)]
     (when cursor-root
-      (push-cursor! cm))
-    (if (and cursor-root (not= (tree/bounds pos :right)
-                               (tree/bounds bracket-node :right)))
-      (tracked-select cm (merge (tree/bounds pos :left)
-                                {:end-line   (:end-line bracket-node)
-                                 :end-column (:end-column bracket-node)}))
-      (if-let [right-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/right-locs selection-loc)))]
-        (tracked-select cm (merge (select-keys (z/node right-loc) [:end-line :end-column])
-                                  (tree/bounds selection-bounds :left)))
-        (expand-selection cm))))
+      (push-cursor! cm)
+      (push-stack! cm selection-bounds))
+    (if-let [right-loc (first (filter (comp (complement tree/whitespace?) z/node) (tree/right-locs selection-loc)))]
+      (tracked-select cm (merge (select-keys (z/node right-loc) [:end-line :end-column])
+                                (tree/bounds selection-bounds :left)))
+      (expand-selection cm)))
   true)
+
+(def backspace! #(.execCommand % "delCharBefore"))
 
 (def comment-line
   (fn [{zipper :zipper :as cm}]
@@ -331,16 +353,17 @@
   (fn [{{:keys [loc pos]} :magic/cursor
         :as               cm}]
     (let [node (z/node loc)
-          loc (cond-> loc
-                      (and (not (= :string (:tag node)))
-                           (or (not (tree/may-contain-children? node))
-                               (not (tree/inside? node pos)))) z/up)
+          loc (tree/include-prefix (cond-> loc
+                                           (and (not (= :string (:tag node)))
+                                                (or (not (tree/may-contain-children? node))
+                                                    (not (tree/inside? node pos)))) z/up))
           {:keys [tag] :as node} (z/node loc)]
       (when-not (= :base tag)
-        (when-let [next-form (some->> (z/rights loc)
-                                      (filter tree/sexp?)
-                                      first)]
-          (operation cm (let [right-bracket (second (get tree/edges tag))]
+        (when-let [next-form (some->> (tree/right-locs loc)
+                                      (filter (comp tree/sexp? z/node))
+                                      first
+                                      (z/node))]
+          (operation cm (let [right-bracket (second (tree/edges node))]
                           (cm/replace-range! cm right-bracket (tree/bounds next-form :right))
                           (cm/replace-range! cm "" (-> (tree/bounds node :right)
                                                        (assoc :end-column (dec (:end-column node))))))))))
@@ -362,3 +385,14 @@
                                                      :right (- (count line) padding)))))
   true)
 
+(defn sym-node [node]
+  (when (= :token (:tag node))
+    (let [val (tree/sexp node)]
+      (when (symbol? val) val))))
+
+(defn eldoc-symbol [loc]
+  (some->> loc
+           (tree/closest #(= :list (:tag (z/node %))))
+           (z/children)
+           (first)
+           (sym-node)))
