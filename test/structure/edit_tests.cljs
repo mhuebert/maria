@@ -9,7 +9,6 @@
   (.log js/console (count (.listSelections cm)))
   cm)
 
-(test-exec edit/expand-selection-left "(<a>)")
 
 (deftest edit-commands
 
@@ -68,6 +67,13 @@
     edit/expand-selection-left "(b <a>)" "(<b a>)"
     edit/expand-selection-left "c (<b a>)" "c <(b a)>"
     edit/expand-selection-left "c <(b a)>" "<c (b a)>"
+
+    edit/slurp "(|) a" "(| a)"
+    edit/slurp "`(|) a" "`(| a)"
+    edit/slurp "@(|) a" "@(| a)"
+    edit/slurp "`@(|) a" "`@(| a)"
+    edit/slurp "~@(|) a" "~@(| a)"
+    edit/slurp "~@[|]a" "~@[|a]"
 
     ))
 

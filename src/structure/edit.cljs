@@ -353,18 +353,19 @@
   (fn [{{:keys [loc pos]} :magic/cursor
         :as               cm}]
     (let [node (z/node loc)
-          loc (tree/include-prefix (cond-> loc
-                                           (and (not (= :string (:tag node)))
-                                                (or (not (tree/may-contain-children? node))
-                                                    (not (tree/inside? node pos)))) z/up))
-          {:keys [tag] :as node} (z/node loc)]
-      (when-not (= :base tag)
-        (when-let [next-form (some->> (tree/right-locs loc)
+          end-loc (cond-> loc
+                      (and (not (= :string (:tag node)))
+                           (or (not (tree/may-contain-children? node))
+                               (not (tree/inside? node pos)))) z/up)
+          start-loc (tree/include-prefix-parents end-loc)
+          {:keys [tag] :as node} (z/node start-loc)]
+      (when (and node (not= :base tag))
+        (when-let [next-form (some->> (tree/right-locs start-loc)
                                       (filter (comp tree/sexp? z/node))
                                       first
                                       (z/node))]
-          (operation cm (let [right-bracket (second (tree/edges node))]
-                          (cm/replace-range! cm right-bracket (tree/bounds next-form :right))
+          (operation cm (let [right-bracket (second (tree/edges (z/node end-loc)))]
+                          (cm/replace-range! cm (or right-bracket "") (tree/bounds next-form :right))
                           (cm/replace-range! cm "" (-> (tree/bounds node :right)
                                                        (assoc :end-column (dec (:end-column node))))))))))
     true))

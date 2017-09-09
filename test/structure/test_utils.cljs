@@ -52,6 +52,7 @@
   cm)
 
 (defn test-exec [command pre-source]
+  (.focus (editor))
   (.setValue (editor) (string/replace pre-source "'" \"))
   (-> (editor)
       (deserialize-selections)
