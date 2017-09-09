@@ -2,11 +2,11 @@
   (:require [maria.persistence.local :as local]))
 
 (defn clear-tokens []
-  (local/local-put "auth/accessToken" nil))
+  (local/local-put! "auth/accessToken" nil))
 
 (defn put-token [provider token]
-  (local/local-put "auth/accessToken" (merge (local/local-get "auth/accessToken")
-                                             {provider token})))
+  (local/local-put! "auth/accessToken" (merge (local/local-get "auth/accessToken")
+                                              {provider token})))
 
 (defn get-token [provider]
   (get (local/local-get "auth/accessToken") provider))

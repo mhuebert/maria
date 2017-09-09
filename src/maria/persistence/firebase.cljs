@@ -48,5 +48,5 @@
                                             (gobj/get "accessToken")))))))
 
 (defn sign-out []
-  (local/local-put "auth/accessToken" nil)
+  (local/local-put! "auth/accessToken" nil)
   (.signOut firebase-auth))

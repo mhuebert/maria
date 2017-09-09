@@ -4,6 +4,10 @@
             [re-view.core :as v]
             [clojure.string :as string]))
 
+(defn loader [message]
+  [:.w-100.sans-serif.tc
+   [:.pa3.gray message]])
+
 (defn stop! [e]
   (.stopPropagation e)
   (.preventDefault e))

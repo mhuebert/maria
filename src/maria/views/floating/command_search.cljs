@@ -74,12 +74,16 @@
 
 (defcommand :commands/search
   {:bindings ["M1-P"
-              "M1-Shift-P"]}
+              "M1-Shift-P"]
+   :icon     icons/Search}
   [context]
-  (ui/floating-hint! {:component     CommandSearch
-                      :props         nil
-                      :cancel-events ["scroll" "mousedown"]
-                      :rect          #js {:top    (+ (.-scrollY js/window) 100)
-                                          :bottom (+ (.-scrollY js/window) 100)
-                                          :left   (/ (.-innerWidth js/window) 2)}})
+  (if (= :commands/search (:kind (ui/current-hint)))
+    (ui/clear-hint!)
+    (ui/floating-hint! {:component     CommandSearch
+                        :kind          :commands/search
+                        :props         nil
+                        :cancel-events ["scroll" "mousedown"]
+                        :rect          #js {:top    (+ (.-scrollY js/window) 100)
+                                            :bottom (+ (.-scrollY js/window) 100)
+                                            :left   (/ (.-innerWidth js/window) 2)}}))
   true)

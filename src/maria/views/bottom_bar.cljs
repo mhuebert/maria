@@ -24,9 +24,9 @@
 
 (defview BottomBar
   [this]
-  [:.bt.monospace.flex.items-center.flex-none.fixed.bottom-0.left-0.right-0.ph3.f7.z-999
-   {:style {:border-color     "rgba(0,0,0,0.03)"
-            :background-color "#e9e9e9"
-            :height           30
-            }}
-   (d/get :ui/globals :bottom-bar)])
+  (let [bottom-bar (d/get :ui/globals :bottom-bar)]
+    [:.bt.monospace.flex.items-center.flex-none.fixed.bottom-0.left-0.right-0.ph3.f7.z-999
+     {:style {:border-color     "rgba(0,0,0,0.03)"
+              :background-color "#e9e9e9"
+              :height           (when bottom-bar 30)}}
+     bottom-bar]))

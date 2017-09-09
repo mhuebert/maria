@@ -49,7 +49,8 @@
   "Expand current selection"
   {:bindings ["M1-1"
               "M1-Up"]
-   :when     :block}
+   :when     :block
+   :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
   (cond code (code/select-up editor)
         prose (prose/select-up editor)
@@ -59,14 +60,16 @@
   "Contract selection (reverse of expand-selection)"
   {:bindings ["M1-2"
               "M1-Down"]
-   :when     :block}
+   :when     :block
+   :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
   (cond code (code/select-reverse editor)
         prose (prose/select-reverse editor)
         :else nil))
 
 (defcommand :select/all
-  {:bindings ["M1-A"]}
+  {:bindings ["M1-A"]
+   :icon     icons/Select}
   [context]
   (cond (:block/prose context)
         (commands/apply-command (:editor context) commands/select-all)

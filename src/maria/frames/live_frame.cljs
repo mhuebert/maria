@@ -1,5 +1,5 @@
 (ns maria.frames.live-frame
-  (:require [maria.views.pages.index :as repl]
+  (:require [maria.pages.index :as repl]
             [maria.eval :as e]
 
             [cells.cell :as cell]

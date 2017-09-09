@@ -40,12 +40,17 @@
 
          ["gists" username]
          (do (github/load-user-gists username)
-             (frame-view/editor-frame-view {:current-entity  username
-                                            :db/transactions [(assoc (sanitized-location)
+             (frame-view/editor-frame-view {:db/transactions [(assoc (sanitized-location)
                                                                 :segments segments)]}))
 
          ["gist" id]
          (match-route-segments ["gist" id false])
+
+         ["home"]
+         (let [username (d/get :auth-public :username)]
+           (github/load-user-gists username)
+           (frame-view/editor-frame-view {:db/transactions [(assoc (sanitized-location)
+                                                              :segments segments)]}))
 
          ["gist" id filename]
          (do (github/load-gist id)

@@ -10,7 +10,8 @@
             [maria.blocks.prose :as Prose]
             [maria.editors.editor :as Editor]
             [maria.util :as util]
-            [maria.live.ns-utils :as ns-utils]))
+            [maria.live.ns-utils :as ns-utils]
+            [maria.views.icons :as icons]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -22,10 +23,12 @@
 (defcommand :clipboard/copy
   {:bindings ["M1-C"
               "M1-M3-C"]
+   :icon     icons/ContentCopy
    :when     selection?})
 
 (defcommand :clipboard/paste
   {:bindings       ["M1-v"]
+   :icon           icons/ContentPaste
    :intercept-when false}
   [{:keys [editor]}]
   (when-let [pos (cm/cursor-root editor)]
@@ -35,14 +38,16 @@
 (defcommand :select/left
   "Expand selection to include form to the left."
   {:bindings ["M1-Left"]
-   :when     :block/code}
+   :when     :block/code
+   :icon     icons/Select}
   [context]
   (edit/expand-selection-left (:editor context)))
 
 (defcommand :select/right
   "Expand selection to include form to the right."
   {:bindings ["M1-Right"]
-   :when     :block/code}
+   :when     :block/code
+   :icon     icons/Select}
   [context]
   (edit/expand-selection-right (:editor context)))
 
@@ -122,6 +127,7 @@
   "Remove the current selection."
   {:bindings ["M1-Backspace"
               "M1-M3-Backspace"]
+   
    :when     :block/code}
   [context]
   (let [editor (:editor context)]

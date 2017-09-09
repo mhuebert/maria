@@ -44,6 +44,8 @@
 (defn floating-hint! [{:keys [rect element] :as content}]
   (d/transact! [[:db/add :ui/globals :floating-hint content]]))
 
+(defn current-hint [] (d/get :ui/globals :floating-hint))
+
 (defn clear-hint! []
   (d/transact! [[:db/retract-attr :ui/globals :floating-hint]]))
 

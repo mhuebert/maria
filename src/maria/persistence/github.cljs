@@ -76,20 +76,21 @@
         (tokens/auth-headers :github)))
 
 (defn load-user-gists [username]
-  (case username
-    "modules"
-    (d/transact! [[:db/add "modules" :gists (for [[path id] curriculum/modules-by-path]
-                                              {:owner curriculum/modules-owner
-                                               :id    id
-                                               :files {path {}}})]])
-    (do
-      (d/transact! [{:db/id           username
-                     :loading-message "Loading gists..."}])
-      (get-user-gists username (fn [{:keys [value error]}]
-                                 (d/transact! (if value
-                                                [[:db/add username :gists value]
-                                                 [:db/add username :loading-message false]]
-                                                [{:error error}])))))))
+  (when username
+    (case username
+      "modules"
+      (d/transact! [[:db/add "modules" :gists (for [[path id] curriculum/modules-by-path]
+                                                {:owner curriculum/modules-owner
+                                                 :id    id
+                                                 :files {path {}}})]])
+      (do
+        (d/transact! [{:db/id           username
+                       :loading-message "Loading gists..."}])
+        (get-user-gists username (fn [{:keys [value error]}]
+                                   (d/transact! (if value
+                                                  [[:db/add username :gists value]
+                                                   [:db/add username :loading-message false]]
+                                                  [{:error error}]))))))))
 
 (defn patch-gist [gist-id gist-data cb]
   (send (str "https://api.github.com/gists/" gist-id)
