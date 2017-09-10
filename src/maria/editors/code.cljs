@@ -37,7 +37,7 @@
                                                           (cm/replace-range! editor completion node))
                                           :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
                                                           {:value [completion full-name]
-                                                           :label [:.flex.items-center.w-100.monospace.f7.ma2
+                                                           :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
                                                                    (str completion)
                                                                    [:.flex-auto]
                                                                    [:.gray.pl3 (str (or (namespace full-name)

@@ -10,8 +10,9 @@
 
 (defview FloatingContainer
   {:view/did-mount    (fn [{:keys [view/state cancel-events] :as this}]
-                        (let [callback (fn [e]
-                                         (when-not (r/closest (.-target e) (partial = (v/dom-node this)))
+                        (let [this-node (v/dom-node this)
+                              callback (fn [e]
+                                         (when-not (r/closest (.-target e) (partial = this-node))
                                            (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
                           (events/listen js/window (or (some-> cancel-events (to-array))
                                                        #js ["mousedown" "blur"]) callback true)

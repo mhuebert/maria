@@ -33,9 +33,7 @@
   (let [username (d/get :auth-public :username)]
     [:div
      (toolbar/doc-toolbar {})
-
-
-     [:a.br1.bg-darken.hover-bg-darken-more.sans-serif.no-underline.ma3.ph3.pv2.flex.items-center.pointer
+     [:a.br1.bg-darken-lightly.hover-bg-darken.sans-serif.no-underline.ma3.ph3.pv2.flex.items-center.pointer.gray.hover-black
       {:href "/new"} icons/Add [:span.ph2 "New"]]
 
      (some-> (local/local-get (str username "/recent-docs"))
@@ -49,9 +47,7 @@
      (some-> username
              (d/get :gists)
              (seq)
-             (doc-list-section "My gists"))
-
-     ]))
+             (doc-list-section "My gists"))]))
 
 (defview layout
   [{:keys []}]

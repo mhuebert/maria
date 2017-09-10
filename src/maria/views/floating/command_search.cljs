@@ -38,7 +38,7 @@
               :top         20}}
      [:.bg-darken.br2.pa2
       [:.shadow-4.flex.flex-column.items-stretch
-       [:input.outline-0.pa2.bn {:placeholder "Search..."
+       [:input.outline-0.pa2.bn {:placeholder "Search commands..."
                                  :style       {:border-bottom "1px solid #eee"}
                                  :ref         #(when % (swap! state assoc :input %))
                                  :value       q
@@ -53,12 +53,13 @@
                                                          :when (and (string/includes? (str name) q)
                                                                     (not private))]
                                                      {:value name
-                                                      :label [:.pa2.sans-serif.f7.flex.items-center.flex-auto
+                                                      :label [:.pv2.mr2.sans-serif.f7.flex.items-center.flex-auto
 
-                                                              (-> (or icon icons/Blank)
-                                                                  (icons/size 16))
-                                                              [:span.gray.pl2 (some-> (:display-namespace command)
-                                                                                      (str "/"))]
+                                                              ;; Icons may add too much visual clutter
+                                                              #_(-> (or icon icons/Blank)
+                                                                    (icons/size 16))
+                                                              [:span.gray (some-> (:display-namespace command)
+                                                                                  (str "/"))]
                                                               (:display-name command)
                                                               [:.flex-auto]
                                                               (some->> (first parsed-bindings)

@@ -11,13 +11,17 @@
             [maria.util :as util]
             [maria.editors.editor :as Editor]))
 
+(defn toolbar-icon [icon]
+  (icons/size icon 20))
 
-(defn toolbar-button [[action icon]]
-  [:.pa2.flex.items-center {:on-click action
-                            :class    (when action "pointer hover-bg-near-white")}
-   (-> icon
-       (icons/size 20)
-       (icons/class "gray"))])
+(defn toolbar-button [[action icon text]]
+  [(if (:href action) :a :div)
+   (cond-> {:class (str "pa2 flex items-center gray "
+                        (when action "pointer hover-black hover-bg-near-white"))}
+           (fn? action) (assoc :on-click action)
+           (map? action) (merge action))
+   (some-> icon (toolbar-icon))
+   text])
 
 (defn command-button
   ([context command-name icon]
@@ -56,7 +60,7 @@
     [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
      {:class (when (d/get :feature :in-place-eval) "bg-white")}
      [:.ph2.flex-auto.flex.items-center
-      [:a.flex.items-center.pa2.gray.hover-black.pointer {:href "/home"} icons/Home]
+      (toolbar-button [{:href "/home"} icons/Home])
       (or left-content
           (when filename
             (list
@@ -80,11 +84,13 @@
 
               (command-button command-context :doc/revert icons/Undo))))]
      [:.flex-auto]
+     (toolbar-button [{:on-click #(do (util/stop! %)
+                                      (exec/exec-command-name :commands/search command-context))} icons/Help])
      (command-button command-context :doc/new icons/Add)
 
 
-     (if signed-in? [:a.flex.items-center.ph2.pointer.gray.hover-black {:on-click #(doc/send [:auth/sign-out])} "Sign out"]
-                    [toolbar-text {:on-click #(frame/send frame/trusted-frame [:auth/sign-in])} "Sign in with GitHub"])
+     (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) nil "Sign out"])
+                    (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
      [:.ph1]]))
 
 ;; (str "/gists/" (d/get :auth-public :username))

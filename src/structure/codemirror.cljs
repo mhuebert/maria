@@ -261,7 +261,7 @@
   [{:keys                                    [zipper magic/brackets?]
     {prev-pos :pos prev-zipper :prev-zipper} :magic/cursor
     :as                                      cm}]
-  (when (.hasFocus cm)
+  (when (or (.hasFocus cm) (nil? prev-zipper))
     (when-let [pos (pos->boundary (get-cursor cm))]
       (when (or (not= pos prev-pos)
                 (not= prev-zipper zipper))

@@ -23,17 +23,21 @@
 (defcommand :clipboard/copy
   {:bindings ["M1-C"
               "M1-M3-C"]
-   :icon     icons/ContentCopy
-   :when     selection?})
+   :when     :block/code
+   :icon     icons/ContentCopy}
+  [{:keys [editor block/code block/prose]}]
+  (edit/copy (.getSelection editor))
+  true)
 
 (defcommand :clipboard/paste
   {:bindings       ["M1-v"]
-   :icon           icons/ContentPaste
-   :intercept-when false}
-  [{:keys [editor]}]
+   :when           :block/code
+   :intercept-when false
+   :icon           icons/ContentPaste}
+  [{:keys [editor block/code]}]
   (when-let [pos (cm/cursor-root editor)]
-    (.setCursor editor pos)
-    false))
+    (.setCursor editor pos))
+  false)
 
 (defcommand :select/left
   "Expand selection to include form to the left."

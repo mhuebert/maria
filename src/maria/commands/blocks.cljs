@@ -52,8 +52,8 @@
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
-  (cond code (code/select-up editor)
-        prose (prose/select-up editor)
+  (cond code (do (code/select-up editor) true)
+        prose (do (prose/select-up editor) true)
         :else nil))
 
 (defcommand :select/back
@@ -63,8 +63,8 @@
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
-  (cond code (code/select-reverse editor)
-        prose (prose/select-reverse editor)
+  (cond code (do (code/select-reverse editor) true)
+        prose (do (prose/select-reverse editor) true)
         :else nil))
 
 (defcommand :select/all

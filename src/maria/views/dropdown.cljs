@@ -44,8 +44,8 @@
   {:view/initial-state      (fn [{:keys [ui/max-height default-selection] :as this}]
                               {:selection (or default-selection -1)
                                :PAGE_SIZE (if max-height (-> (.floor js/Math (-> max-height
-                                                                                    (- 32)
-                                                                                    (/ 30)))
+                                                                                 (- 32)
+                                                                                 (/ 30)))
                                                              (min 9)
                                                              (max 1))
                                                          DEFAULT_PAGE_SIZE)
@@ -99,9 +99,8 @@
   (let [{:keys [selection page PAGE_SIZE]} @state
         waiting? (nil? items)
         mobile? (d/get :UI :mobile-width?)
-        legend #(do [:span.o-70.monospace.bg-darken-lightly.ph2.inline-flex.items-center.f7
-                     {:style {:color        "#000"
-                              :border-right "1px solid rgba(0,0,0,0.03)"}}
+        legend #(do [:span.o-70.monospace.gray.mh2.ph1.inline-flex.items-center.f7
+                     {:style {:color "#000"}}
                      [:span (when waiting? {:class "o-50"}) %]])
         items (if waiting? (:last-items @state) items)
         trigger-event (if mobile? :on-click
