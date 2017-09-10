@@ -12,7 +12,8 @@
             [maria.persistence.local :as local]
             [maria.views.top-bar :as toolbar]
             [maria.views.icons :as icons]
-            [maria.curriculum :as curriculum]))
+            [maria.curriculum :as curriculum]
+            [commands.exec :as exec]))
 
 (defonce _
          (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -33,7 +34,7 @@
     [:div
      (toolbar/doc-toolbar {})
 
-     
+
      [:a.br1.bg-darken.hover-bg-darken-more.sans-serif.no-underline.ma3.ph3.pv2.flex.items-center.pointer
       {:href "/new"} icons/Add [:span.ph2 "New"]]
 
@@ -54,10 +55,11 @@
 
 (defview layout
   [{:keys []}]
-  [:div
-   {:class "bg-light-gray"
-    :style {:min-height     "100%"
-            :padding-bottom 40}}
+  [:.cursor-text.bg-light-gray
+   {:on-click #(when (= (.-target %) (.-currentTarget %))
+                 (exec/exec-command-name :navigate/focus-end))
+    :style    {:min-height     "100%"
+               :padding-bottom 40}}
    (hint/display-hint)
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]

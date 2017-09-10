@@ -54,6 +54,7 @@
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
   {:bindings ["M1-M3-Left"]
+   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :left))
@@ -61,6 +62,7 @@
 (defcommand :navigate/form-end
   "Move cursor to end of top-level form."
   {:bindings ["M1-M3-Right"]
+   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :right))
@@ -68,6 +70,7 @@
 (defcommand :navigate/line-start
   "Move cursor to beginning of line."
   {:bindings ["M1-Shift-Left"]
+   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :left))
@@ -75,6 +78,7 @@
 (defcommand :navigate/line-end
   "Move cursor to end of line."
   {:bindings ["M1-Shift-Right"]
+   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :right))
@@ -197,6 +201,7 @@
 (defcommand :navigate/hop-left
   "Move cursor left one form"
   {:bindings ["M2-Left"]
+   :icon     icons/CursorText
    :when     :block/code}
   [context]
   (edit/hop-left (:editor context)))
@@ -204,6 +209,7 @@
 (defcommand :navigate/hop-right
   "Move cursor right one form"
   {:bindings ["M2-Right"]
+   :icon     icons/CursorText
    :when     :block/code}
   [context]
   (edit/hop-right (:editor context)))

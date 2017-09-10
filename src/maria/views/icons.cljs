@@ -58,6 +58,16 @@
    [:path {:d "M0 0h24v24H0z", :fill "none"}]
    [:path {:d "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"}]])
 
+(def CursorText
+  [:svg {:fill "currentColor"  :xml:space "preserve", :width "24px", :view-box "5.5 5.5 24 24", :xmlns "http://www.w3.org/2000/svg",:height "24px"}
+   [:g {:id "rotation", :transform "translate(17.500000, 17.000000) rotate(-270.000000) translate(-17.500000, -17.000000) translate(9.500000, 13.500000)"} "\t\t\t"
+    [:path {:id "stem", :d "M1.975,3.994h11.993V3.008H1.975V3.994z"}]
+    [:path {:id "stem-dash", :d "M7.976,4.996H8.96V2.01H7.976V4.996z"}]
+    [:path {:id "curve4", :fill "none", :stroke "#000000", :d "M2.713,3.494c-0.5-0.167-1.27-0.737-1.525-1.107\n\t\t\t\tc-0.243-0.35-0.45-0.71-0.559-1.054C0.494,0.912,0.535,0.025,0.535,0.025"}] "\t\t\t"
+    [:path {:id "curve3", :fill "none", :stroke "#000000", :d "M2.715,3.528C2.19,3.681,1.385,4.312,1.166,4.593\n\t\t\t\tc-0.26,0.336-0.428,0.709-0.537,1.053C0.494,6.068,0.535,6.955,0.535,6.955"}] "\t\t\t"
+    [:path {:id "curve2", :fill "none", :stroke "#000000", :d "M13.26,3.494c0.5-0.167,1.269-0.737,1.523-1.107\n\t\t\t\tc0.244-0.35,0.451-0.71,0.558-1.054c0.136-0.421,0.095-1.308,0.095-1.308"}] "\t\t\t"
+    [:path {:id "curve1", :fill "none", :stroke "#000000", :d "M13.256,3.528c0.525,0.153,1.329,0.784,1.549,1.065\n\t\t\t\tc0.261,0.336,0.429,0.709,0.537,1.053c0.136,0.422,0.095,1.309,0.095,1.309"}] "\t\t"] "\t"])
+
 (def ExpandMore
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
    [:path {:d "M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"}]

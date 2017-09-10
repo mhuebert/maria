@@ -7,8 +7,9 @@
             [maria.views.icons :as icons]
             [re-db.d :as d]
             [maria.commands.doc :as doc]
-
-            [maria.util :as util]))
+            [maria.blocks.blocks :as blocks]
+            [maria.util :as util]
+            [maria.editors.editor :as Editor]))
 
 
 (defn toolbar-button [[action icon]]
@@ -64,8 +65,13 @@
               (text/autosize-text {:auto-focus  true
                                    :ref         #(when % (swap! state assoc :title-input %))
                                    :value       (doc/strip-clj-ext current-filename)
-                                   :on-key-down #(when (= 13 (.-which %))
-                                                   (doc/persist! this))
+                                   :on-key-down #(cond (and (= 13 (.-which %))
+                                                            (not (or (.-metaKey %)
+                                                                     (.-ctrlKey %))))
+                                                       (doc/persist! this)
+                                                       (= 40 (.-which %))
+                                                       (exec/exec-command-name :navigate/focus-start)
+                                                       :else nil)
                                    :placeholder "Enter a title..."
                                    :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
 
