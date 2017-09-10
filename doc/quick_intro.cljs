@@ -272,19 +272,22 @@
 ;; was it. The same goes for the values we've been using, like strings
 ;; and vectors--none of them have had names, either.
 
-;; It's often easier to think about values and functions if we name
-;; them. For instance, if we're going to use a specific set of colors
-;; for some shapes, we might want to name them so we don't have to
-;; repeat ourselves. For this, we can use `let`, like this palette of
+;; But sometimes you'll need to use a particular function call over
+;; and over. That's when you should consider naming it, so the
+;; computation only gets done once, and the result is saved for the
+;; next time we need it. For instance, if we're going to use a
+;; specific set of colors for some shapes, we might want to create a
+;; named color palette so we don't have to repeat the list of colors
+;; over and over. For this, we can use `let`, like this palette of
 ;; blues:
 
 (let [palette ["blue" "turquoise" "midnightblue"]]
   palette)
 
-;; `let` is a function that takes two arguments. The first argument is
-;; a vector with pairs: first a name, and then an expression that gets
-;; that name. The second argument is an expression that uses the names
-;; from the first vector. Here, we didn't do anything to the name
+;; `let` takes two arguments. The first argument is a vector with
+;; pairs: first a name, and then an expression that gets that
+;; name. The second argument is an expression that uses the names from
+;; the first vector. Here, we didn't do anything to the name
 ;; `palette`, so we just get its value. Notice that our name doesn't
 ;; do anything outside the `let`:
 
