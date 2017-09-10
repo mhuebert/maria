@@ -28,10 +28,10 @@
            (= (tree/bounds node :right)
               (tree/bounds pos :left)))
     (hint/floating-hint! {:component     dropdown/numbered-list
-                          :cancel-events ["mousedown" "scroll" "blur"]
+                          :cancel-events ["mousedown" "scroll" "focus"]
                           :props         {:on-selection (fn [[completion full-name]]
                                                           (show-eldoc! full-name))
-                                          :class        "shadow-4"
+                                          :class        "shadow-4 bg-white"
                                           :on-select!   (fn [[completion full-name]]
                                                           (hint/clear-hint!)
                                                           (cm/replace-range! editor completion node))

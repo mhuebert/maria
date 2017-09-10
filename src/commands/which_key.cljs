@@ -5,18 +5,24 @@
             [commands.exec :as exec]
             [clojure.set :as set]))
 
+
+(def sort-ks #(sort-by (fn [x] (if (string? x) x (:name (meta x)))) %))
+
+(defn keyset-string [keyset]
+  (->> (concat (->> (sort-ks (set/intersection keyset registry/modifiers))
+                    (map registry/show-key))
+
+               (->> (sort-ks (set/difference keyset registry/modifiers))
+                    (map registry/show-key)))
+       (apply str)))
+
 (defn show-keyset
   "Render a keyset. Does not support multi-step key-combos."
   [modifiers-down [keyset]]
-  (let [keyset (set/difference keyset modifiers-down)
-        sort-ks #(sort-by (fn [x] (if (string? x) x (:name (meta x)))) %)]
+  (let [keyset (set/difference keyset modifiers-down)]
     [:.dib.bg-near-white.ph1.br2.pv05
      {:key (str keyset)}
-     (->> (sort-ks (set/intersection keyset registry/modifiers))
-          (map registry/show-key))
-     " "
-     (->> (sort-ks (set/difference keyset registry/modifiers))
-          (map registry/show-key))]))
+     (keyset-string (set/difference keyset modifiers-down))]))
 
 (defn show-namespace-commands [modifiers-down [namespace hints]]
   (let [row-height 24]

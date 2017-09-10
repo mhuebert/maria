@@ -12,7 +12,9 @@
             [commands.exec :as exec]
             [maria.commands.prose :as prose-commands]
             [re-view-routing.core :as r]
-            [maria.editors.editor :as Editor]))
+            [maria.editors.editor :as Editor]
+    #_[re-view-prosemirror.example-toolbar :as toolbar]
+    #_[maria.views.bottom-bar :as bottom-bar]))
 
 
 (defview link-dropdown [{:keys [href editor]}]
@@ -90,6 +92,7 @@
   [:.prosemirror-content
    (-> (v/pass-props this)
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
+
 (comment
   (defn Toolbar
     [pm-view]
@@ -142,8 +145,8 @@
                  :before-change before-change
                  :on-dispatch   (fn [pm-view prev-state]
                                   #_(when (not= (.-selection (.-state pm-view))
-                                              (.-selection prev-state))
-                                    (bottom-bar/set-bottom-bar! (Toolbar pm-view)))
+                                                (.-selection prev-state))
+                                      (bottom-bar/set-bottom-bar! (Toolbar pm-view)))
                                   (when (not= (.-doc (.-state pm-view))
                                               (.-doc prev-state))
                                     (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])

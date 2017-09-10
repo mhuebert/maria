@@ -28,7 +28,8 @@
 (defcommand :navigate/next-block
   {:bindings ["Down"
               "Right"
-              "M2-Tab"]}
+              "M2-Tab"]
+   :when     :block-list}
   [context]
   (if (and (#{"ArrowDown" "ArrowRight"} (:key context))
            (not (some-> (:editor context) (Editor/at-end?))))
@@ -38,7 +39,8 @@
 (defcommand :navigate/prev-block
   {:bindings ["Up"
               "Left"
-              "M2-Shift-Tab"]}
+              "M2-Shift-Tab"]
+   :when     :block-list}
   [context]
   (if (and (#{"ArrowUp" "ArrowLeft"} (:key context))
            (not (some-> (:editor context) (Editor/at-start?))))
@@ -69,6 +71,7 @@
 
 (defcommand :select/all
   {:bindings ["M1-A"]
+   :when     :editor
    :icon     icons/Select}
   [context]
   (cond (:block/prose context)

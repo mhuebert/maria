@@ -9,15 +9,17 @@
             [maria.commands.doc :as doc]
             [maria.blocks.blocks :as blocks]
             [maria.util :as util]
-            [maria.editors.editor :as Editor]))
+            [maria.editors.editor :as Editor]
+            [commands.registry :as registry]))
 
 (defn toolbar-icon [icon]
   (icons/size icon 20))
 
-(defn toolbar-button [[action icon text]]
+(defn toolbar-button [[action icon text title]]
   [(if (:href action) :a :div)
    (cond-> {:class (str "pa2 flex items-center gray "
                         (when action "pointer hover-black hover-bg-near-white"))}
+           title (assoc :data-tooltip title)
            (fn? action) (assoc :on-click action)
            (map? action) (merge action))
    (some-> icon (toolbar-icon))
@@ -27,12 +29,11 @@
   ([context command-name icon]
    (command-button context command-name icon nil))
   ([context command-name icon else-icon]
-   (if (:exec? (exec/get-command context command-name))
-     (toolbar-button [#(exec/exec-command-name command-name) icon])
-     (when else-icon
-       (toolbar-button [nil else-icon])))))
-
-(def toolbar-text :.f7.gray.no-underline.pa2.pointer.hover-black.flex.items-center)
+   (let [tooltip (registry/spaced-name (name command-name))]
+     (if (:exec? (exec/get-command context command-name))
+       (toolbar-button [#(exec/exec-command-name command-name) icon nil tooltip])
+       (when else-icon
+         (toolbar-button [nil else-icon nil tooltip]))))))
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
@@ -60,33 +61,37 @@
     [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
      {:class (when (d/get :feature :in-place-eval) "bg-white")}
      [:.ph2.flex-auto.flex.items-center
-      (toolbar-button [{:href "/home"} icons/Home])
+      (toolbar-button [{:href "/home"} icons/Home nil "Home"])
+
+      (command-button command-context :doc/new icons/Add)
+
       (or left-content
           (when filename
-            (list
-              [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
-              [:.ph1.gray "/"]
-              (text/autosize-text {:auto-focus  true
-                                   :ref         #(when % (swap! state assoc :title-input %))
-                                   :value       (doc/strip-clj-ext current-filename)
-                                   :on-key-down #(cond (and (= 13 (.-which %))
-                                                            (not (or (.-metaKey %)
-                                                                     (.-ctrlKey %))))
-                                                       (doc/persist! this)
-                                                       (= 40 (.-which %))
-                                                       (exec/exec-command-name :navigate/focus-start)
-                                                       :else nil)
-                                   :placeholder "Enter a title..."
-                                   :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
+            [:.flex.items-center.bg-darken-lightly
 
-              (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-50")))
-              (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
+             [:a.hover-underline.gray.no-underline.pl2 {:href parent-url} parent-username]
+             [:.ph1.gray "/"]
+             (text/autosize-text {:auto-focus  true
+                                  :class       "mr2"
+                                  :ref         #(when % (swap! state assoc :title-input %))
+                                  :value       (doc/strip-clj-ext current-filename)
+                                  :on-key-down #(cond (and (= 13 (.-which %))
+                                                           (not (or (.-metaKey %)
+                                                                    (.-ctrlKey %))))
+                                                      (doc/persist! this)
+                                                      (= 40 (.-which %))
+                                                      (exec/exec-command-name :navigate/focus-start)
+                                                      :else nil)
+                                  :placeholder "Enter a title..."
+                                  :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
 
-              (command-button command-context :doc/revert icons/Undo))))]
+             (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-30")))
+             (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
+
+             (command-button command-context :doc/revert icons/Undo)]))]
      [:.flex-auto]
      (toolbar-button [{:on-click #(do (util/stop! %)
-                                      (exec/exec-command-name :commands/search command-context))} icons/Help])
-     (command-button command-context :doc/new icons/Add)
+                                      (exec/exec-command-name :commands/search command-context))} icons/Help nil "Command Search"])
 
 
      (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) nil "Sign out"])

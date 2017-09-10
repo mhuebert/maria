@@ -1,5 +1,6 @@
 (ns maria.pages.index
   (:require [re-view.core :as v :refer [defview]]
+            [maria.views.floating.tooltip :as tooltip]
             [re-db.d :as d]
             [commands.which-key :as which-key]
             [maria.eval :as e]
@@ -33,20 +34,14 @@
   (let [username (d/get :auth-public :username)]
     [:div
      (toolbar/doc-toolbar {})
-     [:a.br1.bg-darken-lightly.hover-bg-darken.sans-serif.no-underline.ma3.ph3.pv2.flex.items-center.pointer.gray.hover-black
-      {:href "/new"} icons/Add [:span.ph2 "New"]]
 
      (some-> (local/local-get (str username "/recent-docs"))
              (doc-list-section "Recent"))
 
-     (-> (for [[filename id] curriculum/modules-by-path]
-           {:id       id
-            :filename filename})
+     (-> (d/get "modules" :gists)
          (doc-list-section "Learning Modules"))
 
-     (some-> username
-             (d/get :gists)
-             (seq)
+     (some-> (d/get username :gists)
              (doc-list-section "My gists"))]))
 
 (defview layout
@@ -68,5 +63,6 @@
              ["gists" username] (docs/gists-list username)))]
 
    (which-key/show-commands)
-   (dock/BottomBar)
+   (dock/BottomBar {})
+   (tooltip/Tooltip)
    ])

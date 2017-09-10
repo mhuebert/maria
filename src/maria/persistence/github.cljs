@@ -79,10 +79,7 @@
   (when username
     (case username
       "modules"
-      (d/transact! [[:db/add "modules" :gists (for [[path id] curriculum/modules-by-path]
-                                                {:owner curriculum/modules-owner
-                                                 :id    id
-                                                 :files {path {}}})]])
+      nil
       (do
         (d/transact! [{:db/id           username
                        :loading-message "Loading gists..."}])

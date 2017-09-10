@@ -38,11 +38,11 @@
               :top         20}}
      [:.bg-darken.br2.pa2
       [:.shadow-4.flex.flex-column.items-stretch
-       [:input.outline-0.pa2.bn {:placeholder "Search commands..."
-                                 :style       {:border-bottom "1px solid #eee"}
-                                 :ref         #(when % (swap! state assoc :input %))
-                                 :value       q
-                                 :on-change   #(swap! state assoc :q (.. % -target -value))}]
+       [:input.outline-0.pa2.bn.f6 {:placeholder "Search commands..."
+                                    :style       {:border-bottom "1px solid #eee"}
+                                    :ref         #(when % (swap! state assoc :input %))
+                                    :value       q
+                                    :on-change   #(swap! state assoc :q (.. % -target -value))}]
        (dropdown/numbered-list {:on-select!        #(do (.returnSelections this)
                                                         (ui/clear-hint!)
                                                         (exec/exec-command-name % context))
@@ -53,17 +53,18 @@
                                                          :when (and (string/includes? (str name) q)
                                                                     (not private))]
                                                      {:value name
-                                                      :label [:.pv2.mr2.sans-serif.f7.flex.items-center.flex-auto
+                                                      :label [:.h2.mr2.sans-serif.f7.flex.items-center.flex-auto
 
                                                               ;; Icons may add too much visual clutter
-                                                              #_(-> (or icon icons/Blank)
-                                                                    (icons/size 16))
-                                                              [:span.gray (some-> (:display-namespace command)
-                                                                                  (str "/"))]
-                                                              (:display-name command)
+                                                              #_[:.gray.pr2 (-> (or icon icons/Blank)
+                                                                                (icons/size 16))]
+                                                              [:.gray (some-> (:display-namespace command)
+                                                                              (str "/"))]
+                                                              [:div {:style {:font-weight 500}} (:display-name command)]
                                                               [:.flex-auto]
-                                                              (some->> (first parsed-bindings)
-                                                                       (which-key/show-keyset #{}))]})})]]]))
+                                                              [:.gray
+                                                               (some->> (ffirst parsed-bindings)
+                                                                        (which-key/keyset-string))]]})})]]]))
 
 ;; input for text...
 ;; - auto-focus

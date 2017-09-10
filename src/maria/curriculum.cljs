@@ -7,3 +7,8 @@
 
 (def modules-owner {:username  "modules"
                     :maria-url "/modules"})
+
+(def as-gists (for [[path id] modules-by-path]
+                {:owner modules-owner
+                 :id    id
+                 :files {path {}}}))

@@ -8,14 +8,15 @@
 (enable-console-print!)
 
 (defview remote-progress []
-  [:div {:style {:width    "50%"
-                 :height   10
-                 :left     0
-                 :top      0
-                 :position "absolute"}}
+  (let [active? (> (d/get :remote/status :in-progress) 0)]
+    [:div {:style {:width    "50%"
+                   :height   (if active? 10 0)
+                   :left     0
+                   :top      0
+                   :position "absolute"}}
 
-   (when (> (d/get :remote/status :in-progress) 0)
-     [:.progress-indeterminate])])
+     (when active?
+       [:.progress-indeterminate])]))
 
 (defview layout []
   [:div {:style {:width  "100%"

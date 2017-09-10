@@ -21,21 +21,20 @@
                          (some-> (:editor %) (.somethingSelected) (not))))
 
 (defcommand :clipboard/copy
-  {:bindings ["M1-C"
-              "M1-M3-C"]
-   :when     :block/code
+  {:bindings ["M1-C"]
+   :private true
    :icon     icons/ContentCopy}
   [{:keys [editor block/code block/prose]}]
-  (edit/copy (.getSelection editor))
-  true)
+  (when code
+    (edit/copy (.getSelection editor))
+    true))
 
 (defcommand :clipboard/paste
-  {:bindings       ["M1-v"]
-   :when           :block/code
-   :intercept-when false
-   :icon           icons/ContentPaste}
+  {:bindings ["M1-v"]
+   :private true
+   :icon     icons/ContentPaste}
   [{:keys [editor block/code]}]
-  (when-let [pos (cm/cursor-root editor)]
+  (when-let [pos (and code (cm/cursor-root editor))]
     (.setCursor editor pos))
   false)
 

@@ -99,9 +99,7 @@
   (let [{:keys [selection page PAGE_SIZE]} @state
         waiting? (nil? items)
         mobile? (d/get :UI :mobile-width?)
-        legend #(do [:span.o-70.monospace.gray.mh2.ph1.inline-flex.items-center.f7
-                     {:style {:color "#000"}}
-                     [:span (when waiting? {:class "o-50"}) %]])
+        legend #(do [:span.o-70.monospace.gray.mh2.ph1.inline-flex.items-center.f7 %])
         items (if waiting? (:last-items @state) items)
         trigger-event (if mobile? :on-click
                                   :on-mouse-down)

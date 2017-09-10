@@ -6,7 +6,10 @@
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [maria.persistence.local :as local]
-            [maria.pages.block_list :as block-list]))
+            [maria.pages.block_list :as block-list]
+            [maria.curriculum :as curriculum]))
+
+(d/transact! [[:db/add "modules" :gists curriculum/as-gists]])
 
 (defn push-recents! [this]
   (let [{:keys [id]} this

@@ -115,7 +115,7 @@
 (def code->symbol
   (->> {(.-CTRL KeyCodes)                 "Ctrl" #_"⌃"
         (.-META KeyCodes)                 (if mac? "⌘" "Meta")
-        (.-SHIFT KeyCodes)                "Shift"       #_"⇧"
+        (.-SHIFT KeyCodes)                #_"Shift"       "⇧"
         (.-ALT KeyCodes)                  (if mac? "⎇" "Alt")
         (.-ENTER KeyCodes)                "Enter"             #_"⏎"
         (.-BACKSPACE KeyCodes)            "⌫"
