@@ -7,10 +7,9 @@
             [maria.views.icons :as icons]
             [re-db.d :as d]
             [maria.commands.doc :as doc]
-            [maria.blocks.blocks :as blocks]
             [maria.util :as util]
-            [maria.editors.editor :as Editor]
-            [commands.registry :as registry]))
+            [commands.registry :as registry]
+            [maria.persistence.local :as local]))
 
 (defn toolbar-icon [icon]
   (icons/size icon 20))
@@ -35,16 +34,26 @@
        (when else-icon
          (toolbar-button [nil else-icon nil tooltip]))))))
 
+(defn push-recents! [id filename]
+  (when (and filename (not= "new" filename))
+    (when-let [username (and filename (d/get :auth-public :username))]
+      (local/local-update! (str username "/recent-docs") #(->> (remove (comp (partial = id) :id) %)
+                                                               (cons {:id id :filename filename}))))))
+
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
-                              (exec/set-context! {:current-doc this}))
+                              (exec/set-context! {:current-doc this})
+                              (push-recents! (:id this) (:filename this)))
    :view/will-unmount       #(exec/set-context! {:current-doc nil})
-   :view/will-receive-props (fn [{filename                  :filename
-                                  {prev-filename :filename} :view/prev-props
-                                  :as                       this}]
+   :view/will-receive-props (fn [{filename                                 :filename
+                                  props                                    :view/props
+                                  {prev-filename :filename :as prev-props} :view/prev-props
+                                  :as                                      this}]
                               (when-not (= filename prev-filename)
-                                (.updateWindowTitle this)))
+                                (.updateWindowTitle this))
+                              (when (not= props prev-props)
+                                (push-recents! (:id this) filename)))
    :update-window-title     (fn [{:keys [filename]}]
                               (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
   [{{:keys [persisted local]} :project
@@ -93,7 +102,8 @@
      (toolbar-button [{:on-click #(do (util/stop! %)
                                       (exec/exec-command-name :commands/search command-context))} icons/Help nil "Command Search"])
 
-
+     (toolbar-button [{:href   "https://www.github.com/mhuebert/maria/issues"
+                       :target "_blank"} icons/Bug nil "Report a Bug"])
      (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) nil "Sign out"])
                     (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
      [:.ph1]]))

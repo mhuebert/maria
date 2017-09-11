@@ -11,25 +11,15 @@
 
 (d/transact! [[:db/add "modules" :gists curriculum/as-gists]])
 
-(defn push-recents! [this]
-  (let [{:keys [id]} this
-        filename (.currentFile this)]
-    (when-not (= "new" filename)
-      (when-let [username (and filename (d/get :auth-public :username))]
-        (local/local-update! (str username "/recent-docs") #(-> (cons {:id id :filename filename}
-                                                                      %)
-                                                                (distinct)))))))
+
 
 (defview file-edit
   {:doc-editor              (fn [{:keys [view/state]}] (:doc-editor @state))
    :view/will-receive-props (fn [{:keys [id filename] {prev-id :id} :view/prev-props :as this}]
                               (when-not (= id prev-id)
-                                (local/init-storage id)
-                                (push-recents! this)
-                                ))
+                                (local/init-storage id)))
    :view/will-mount         (fn [{:keys [id filename] :as this}]
-                              (local/init-storage id)
-                              (push-recents! this))
+                              (local/init-storage id))
    :project-files           (fn [{:keys [id]}]
                               (-> (concat (keys (d/get-in id [:persisted :files])) (keys (d/get-in id [:local :files])))
                                   (distinct)))

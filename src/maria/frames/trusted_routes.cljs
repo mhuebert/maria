@@ -32,7 +32,6 @@
          ;; prevent malicious code from attempting to overwrite
          ;; documents other than what the user is currently editing.
 
-
          ["new"]
          (frame-view/editor-frame-view {:current-entity  "new"
                                         :db/transactions [(assoc (sanitized-location)

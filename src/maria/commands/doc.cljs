@@ -56,8 +56,8 @@
 (defn create! [local]
   (send [:project/create local]))
 
-(defn copy! [{{local-version :local} :project
-              filename               :filename}]
+(defn make-a-copy! [{{local-version :local} :project
+              filename                      :filename}]
   (let [{local-filename :filename
          local-content  :content} (or (get-in local-version [:files filename])
                                       filename)
@@ -110,7 +110,7 @@
                          (get-in % [:current-doc :project :persisted])
                          (valid-content? (:current-doc %)))}
   [{:keys [current-doc]}]
-  (copy! current-doc)
+  (make-a-copy! current-doc)
   true)
 
 (defcommand :doc/revert
