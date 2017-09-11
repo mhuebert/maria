@@ -404,9 +404,8 @@ rainbow-colors
 ;; color-name-checking function:
 
 (def color-name?
-  ;; ⬇ your code goes here
+  ;; your code goes here
 
-  ;; ⬆ your code goes here
   )
 
 (color-name? "burntochre")
