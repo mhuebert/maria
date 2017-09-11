@@ -46,7 +46,7 @@
 
 (defview layout
   [{:keys []}]
-  [:.cursor-text.bg-light-gray
+  [:.cursor-text.bg-light-gray.overflow-hidden.w-100.relative
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (exec/exec-command-name :navigate/focus-end))
     :style    {:min-height     "100%"

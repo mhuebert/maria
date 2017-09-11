@@ -8,11 +8,11 @@
 
 (defview Tooltip
   {:view/did-mount    (fn [{:keys [view/state]}]
-                        (let [the-events #js ["mouseover" "mouseout"  "mouseenter" "mouseleave"]
+                        (let [the-events #js ["mouseover" "mouseout" "mousedown" "mouseenter" "mouseleave"]
                               body (.-body js/document)
                               callback (fn [e]
                                          (let [target (.-target e)]
-                                           (if (#{"mouseenter" "mouseleave"} (.-type e))
+                                           (if (#{"mouseenter" "mouseleave" "mousedown"} (.-type e))
                                              (swap! state dissoc :tooltip)
                                              (when (data/has target "tooltip")
                                                (swap! state assoc :tooltip

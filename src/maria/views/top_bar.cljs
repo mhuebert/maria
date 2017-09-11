@@ -104,7 +104,7 @@
 
      (toolbar-button [{:href   "https://www.github.com/mhuebert/maria/issues"
                        :target "_blank"} icons/Bug nil "Report a Bug"])
-     (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) nil "Sign out"])
+     (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
                     (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
      [:.ph1]]))
 
