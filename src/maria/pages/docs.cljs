@@ -34,23 +34,25 @@
         filename (.currentFile this)]
     (cond loading-message (util/loader loading-message)
           error [:.pa2.dark-red (str error)]
-          (empty? filenames) [:.pa2 "Empty gist."]
           :else
           (let [local-value (get-in project [:local :files filename :content])
                 persisted-value (get-in project [:persisted :files filename :content])]
             [:.h-100.flex.flex-column
-             (toolbar/doc-toolbar {:project  project
-                                   :owner    (:owner project)
-                                   :filename filename
-                                   :id       id})
+             (toolbar/doc-toolbar (if (empty? filenames)
+                                    {:left-content "Empty Gist"}
+                                    {:project  project
+                                     :owner    (:owner project)
+                                     :filename filename
+                                     :id       id}))
              [:.flex.flex-auto
-              (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
-                                      :on-update     (fn [source]
-                                                       (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                      :source-id     id
-                                      :class         "flex-auto"
-                                      :value         (or local-value persisted-value)
-                                      :default-value default-value})]]))))
+              (when-let [value (or local-value persisted-value)]
+                (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
+                                        :on-update     (fn [source]
+                                                         (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                        :source-id     id
+                                        :class         "flex-auto"
+                                        :value         value
+                                        :default-value default-value}))]]))))
 
 (defview doc-list
   {:view/initial-state {:limit-n 8}}

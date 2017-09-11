@@ -26,6 +26,8 @@
 (let [this-hostname (.. js/window -location -hostname)
       other-hostname-lookup {"0.0.0.0"              "localhost"
                              "localhost"            "0.0.0.0"
+                             "maria.dev"            "maria-live.dev"
+                             "maria-live.dev"       "maria.dev"
                              "www.maria.cloud"      "user.maria.cloud"
                              "user.maria.cloud"     "www.maria.cloud"
                              "dev.maria.cloud"      "dev-user.maria.cloud"

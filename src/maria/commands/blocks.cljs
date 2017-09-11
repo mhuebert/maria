@@ -31,7 +31,10 @@
               "M2-Tab"]
    :when     :block-list}
   [context]
-  (if (and (#{"ArrowDown" "ArrowRight"} (:key context))
+  (if (and (#{"ArrowDown"
+              "ArrowRight"
+              "Down"
+              "Right"} (:key context))
            (not (some-> (:editor context) (Editor/at-end?))))
     false
     (focus-adjacent! context :right)))
@@ -42,7 +45,10 @@
               "M2-Shift-Tab"]
    :when     :block-list}
   [context]
-  (if (and (#{"ArrowUp" "ArrowLeft"} (:key context))
+  (if (and (#{"ArrowUp"
+              "ArrowLeft"
+              "Up"
+              "Left"} (:key context))
            (not (some-> (:editor context) (Editor/at-start?))))
     false
     (focus-adjacent! context :left)))
@@ -111,9 +117,12 @@
           (Editor/focus! :start)))
 
 (defcommand :navigate/focus-end
-  {:private true}
+  {:private true
+   :when :block-list}
   [context]
-  (some-> (filter (complement Block/whitespace?) (.getBlocks (:block-list context)))
+  (some-> (:block-list context)
+          (.getBlocks )
+          (filter (complement Block/whitespace?) )
           (last)
           (Editor/of-block)
           (Editor/focus! :end)))

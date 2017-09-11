@@ -56,7 +56,7 @@
 
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
-  {:bindings ["M1-M3-Left"]
+  {:bindings ["M1-Shift-Left"]
    :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
@@ -64,7 +64,7 @@
 
 (defcommand :navigate/form-end
   "Move cursor to end of top-level form."
-  {:bindings ["M1-M3-Right"]
+  {:bindings ["M1-Shift-Right"]
    :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
@@ -133,7 +133,7 @@
 (defcommand :edit/delete-selection
   "Remove the current selection."
   {:bindings ["M1-Backspace"
-              "M1-M3-Backspace"]
+              "M1-Shift-Backspace"]
 
    :when     :block/code}
   [context]
@@ -238,7 +238,7 @@
 (defcommand :edit/ignore-form
   "Ignore the current form using the `#_` reader macro ('uneval')"
   {:bindings ["M1-;"
-              "M1-M3-;"]
+              "M1-Shift-;"]
    :when     :block/code}
   [context]
   (edit/uneval! (:editor context)))
@@ -274,7 +274,7 @@
 (defcommand :eval/form
   "Evaluate the current form"
   {:bindings ["M1-Enter"
-              "M1-M3-Enter"]
+              "M1-Shift-Enter"]
    :when     :block/code}
   [{:keys [editor block-view block]}]
   (Block/eval! block))
@@ -289,7 +289,7 @@
 (defcommand :info/doc
   "Show documentation for current form."
   {:bindings ["M1-I"
-              "M1-M3-I"]
+              "M1-Shift-I"]
    :when     :block/code}
   [{:keys [block-view editor block]}]
   (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]

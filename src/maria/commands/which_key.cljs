@@ -5,7 +5,6 @@
             [commands.exec :as exec]
             [clojure.set :as set]))
 
-
 (defn show-keyset
   "Render a keyset. Does not support multi-step key-combos."
   [modifiers-down [keyset]]

@@ -69,16 +69,16 @@
         command-context (exec/get-context)]
     [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
      {:class (when (d/get :feature :in-place-eval) "bg-white")}
-     [:.ph2.flex-auto.flex.items-center
+     [:.ph2.flex-auto.flex.items-stretch
       (toolbar-button [{:href "/home"} icons/Home nil "Home"])
 
       (command-button command-context :doc/new icons/Add)
 
       (or left-content
           (when filename
-            [:.flex.items-center.bg-darken-lightly
+            [:.flex.items-center.bg-darken-lightly.ph2
 
-             [:a.hover-underline.gray.no-underline.pl2 {:href parent-url} parent-username]
+             [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
              [:.ph1.gray "/"]
              (text/autosize-text {:auto-focus  true
                                   :class       "mr2"

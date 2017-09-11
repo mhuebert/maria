@@ -49,7 +49,7 @@
                                                                                          (r/nav! (str "/gist/" id)))
                                                                                        (.error js/console "Error creating gist: " error))))
 
-                      [:auth/sign-in] (remote/sign-in :github)
+                      [:auth/sign-in] (remote/sign-in :github.com)
 
                       [:auth/sign-out] (remote/sign-out)
 

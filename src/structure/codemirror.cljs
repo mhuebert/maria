@@ -193,10 +193,9 @@
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
         evt-type (.-type e)
         primary registry/M1
-        secondary registry/M3
+        secondary registry/SHIFT
         primary-down? (registry/M1-down? e)
-        secondary-down? (registry/M3-down? e)]
-    #_(.log js/console "update-selection!")
+        secondary-down? (and (= "keydown" evt-type) (= key-code secondary))]
     (cond (and primary-down? (#{secondary primary} key-code))
           (let [pos (Pos->range (get-cursor cm))
                 loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
