@@ -6,8 +6,6 @@
             [goog.events :as events])
   (:import [goog.events EventType]))
 
-(def BOTTOM_PADDING 30)
-
 (defview FloatingContainer
   {:teardown                (fn [{:keys [view/state]}]
                               (when-let [teardown (:teardown @state)]
@@ -28,9 +26,12 @@
                                 (.setupListener this)))
    :view/will-unmount       (fn [this] (.teardown this))}
   [{:keys [rect component props element offset]
-    :or {offset [0 10]}}]
+    :or   {offset [0 10]}}]
 
-  (let [scroll-y (.-scrollY js/window)
+  (let [BOTTOM_PADDING (-> (.getElementById js/document "bottom-bar")
+                           (.-width))
+        _ (prn BOTTOM_PADDING)
+        scroll-y (.-scrollY js/window)
         inner-height (.-innerHeight js/window)
         top (+ (.-bottom rect)
                scroll-y

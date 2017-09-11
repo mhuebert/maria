@@ -74,7 +74,7 @@
                        (filter :exec?)))))
 
 (def reverse-compare (fn [a b] (compare b a)))
-
+ 
 (defn init-listeners []
   (let [clear-keys #(d/transact! [[:db/add :commands :modifiers-down #{}]
                                   [:db/add :commands :which-key/active? false]])

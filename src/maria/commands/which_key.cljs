@@ -3,13 +3,14 @@
             [re-db.d :as d]
             [commands.registry :as registry]
             [commands.exec :as exec]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [maria.views.bottom-bar :as bottom-bar]))
 
 (defn show-keyset
   "Render a keyset. Does not support multi-step key-combos."
   [modifiers-down [keyset]]
   (let [keyset (set/difference keyset modifiers-down)]
-    [:.dib.bg-near-white.ph1.br2.pv05
+    [:.dib.bg-near-white.ph1.br2.pv05.gray
      {:key (str keyset)}
      (registry/keyset-string (set/difference keyset modifiers-down))]))
 
@@ -31,14 +32,29 @@
           (show-keyset modifiers-down (first parsed-bindings))])]]]))
 
 (defview show-commands
+  {:update             (fn [{:keys [view/state]}]
+                         (let [{:keys [active? prev-content]} @state
+                               next-active? (d/get :commands :which-key/active?)
+                               start? (and next-active? (not active?))
+                               finish? (and (not next-active?) active?)]
+                           (when start?
+                             (v/swap-silently! state assoc :prev-content prev-content :active? true))
+                           (when finish?
+                             (v/swap-silently! state dissoc :prev-content :active?))
+                           (bottom-bar/set-bottom-bar! (cond next-active?
+                                                             (let [modifiers-down (d/get :commands :modifiers-down)]
+                                                               (if-let [commands (seq (exec/keyset-commands modifiers-down (exec/get-context)))]
+                                                                 [:.f7.sans-serif.ph2.hint-columns.bg-white
+                                                                  {:style {:max-height 150}}
+                                                                  (->> commands
+                                                                       (group-by :display-namespace)
+                                                                       (map (partial show-namespace-commands modifiers-down)))]
+                                                                 [:.fixed]))
+                                                             finish? prev-content
+                                                             :else nil))))
+   :view/did-mount     #(.update %)
+   :view/should-update (constantly true)
+   :view/did-update    #(.update %)}
   []
-  (let [modifiers-down (d/get :commands :modifiers-down)]
-    (if-let [commands (and (d/get :commands :which-key/active?)
-                           (seq (exec/keyset-commands modifiers-down (exec/get-context))))]
-      [:.fixed.left-0.right-0.z-999.bg-white.shadow-4.f7.sans-serif.ph2.hint-columns
-       {:style {:max-height 150
-                :bottom 30}}
-       (->> commands
-            (group-by :display-namespace)
-            (map (partial show-namespace-commands modifiers-down)))]
-      [:.fixed])))
+  (d/get :commands :which-key/active?)
+  nil)
