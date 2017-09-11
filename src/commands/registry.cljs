@@ -1,7 +1,8 @@
 (ns commands.registry
   (:require [goog.object :as gobj]
             [clojure.string :as string]
-            [goog.events.KeyCodes :as KeyCodes])
+            [goog.events.KeyCodes :as KeyCodes]
+            [clojure.set :as set])
   (:import [goog.events KeyCodes]))
 
 (defonce commands (atom {}))
@@ -188,5 +189,12 @@
     (swap! commands dissoc the-name)))
 
 
+(def sort-ks #(sort-by (fn [x] (if (string? x) x (:name (meta x)))) %))
 
+(defn keyset-string [keyset]
+  (->> (concat (->> (sort-ks (set/intersection keyset modifiers))
+                    (map show-key))
 
+               (->> (sort-ks (set/difference keyset modifiers))
+                    (map show-key)))
+       (apply str)))

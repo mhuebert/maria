@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [maria.views.floating.tooltip :as tooltip]
             [re-db.d :as d]
-            [commands.which-key :as which-key]
+            [maria.commands.which-key :as which-key]
             [maria.eval :as e]
             [maria.repl-specials]
             [maria.views.cards :as repl-ui]

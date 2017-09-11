@@ -76,7 +76,7 @@
       (.scrollTo js/window 0 (-> y-pos
                                  (- (/ innerHeight 2)))))))
 
-(def *debug* false)
+(def *debug* true)
 
 (defn log-ret [label x]
   (if *debug* (do

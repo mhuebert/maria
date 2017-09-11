@@ -1,7 +1,7 @@
 (ns maria.views.floating.command-search
   (:require [re-view.core :as v :refer [defview]]
             [commands.registry :as registry :refer-macros [defcommand]]
-            [commands.which-key :as which-key]
+            [maria.commands.which-key :as which-key]
             [commands.exec :as exec]
             [maria.views.dropdown :as dropdown]
             [maria.views.floating.float-ui :as ui]
@@ -64,7 +64,7 @@
                                                               [:.flex-auto]
                                                               [:.gray
                                                                (some->> (ffirst parsed-bindings)
-                                                                        (which-key/keyset-string))]]})})]]]))
+                                                                        (registry/keyset-string))]]})})]]]))
 
 ;; input for text...
 ;; - auto-focus

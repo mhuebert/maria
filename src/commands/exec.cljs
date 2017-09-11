@@ -2,9 +2,9 @@
   (:require [re-db.d :as d]
             [goog.events :as events]
             [commands.registry :as registry]
-            [clojure.set :as set]
-            [maria.util :as util]))
+            [clojure.set :as set]))
 
+(def debug? false)
 (def context (volatile! {}))
 (def last-selections (volatile! (list)))
 
@@ -46,7 +46,7 @@
   "Execute a command (returned by `get-command`)"
   [context {:keys [command exec? intercept? name]}]
   (let [result (when exec? (command context))]
-    (when exec? (util/log-ret "Executed command:" name))
+    (when (and exec? debug?) (prn "Executed command:" name))
     (and result (not= result (.-Pass js/CodeMirror)))))
 
 (defn exec-command-name
@@ -112,7 +112,8 @@
                                (.stopPropagation e))
 
                            (when (seq (filter identity results))
-                             (util/stop! e)
+                             (.stopPropagation e)
+                             (.preventDefault e)
                              (clear-which-key!))
 
                            (clear-timeout!)
