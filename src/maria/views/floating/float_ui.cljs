@@ -28,9 +28,8 @@
   [{:keys [rect component props element offset]
     :or   {offset [0 10]}}]
 
-  (let [BOTTOM_PADDING (-> (.getElementById js/document "bottom-bar")
-                           (.-width))
-        _ (prn BOTTOM_PADDING)
+  (let [BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
+                               (.-width)) 0)
         scroll-y (.-scrollY js/window)
         inner-height (.-innerHeight js/window)
         top (+ (.-bottom rect)

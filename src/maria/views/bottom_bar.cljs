@@ -13,7 +13,7 @@
             (ns-utils/elide-quote)
             (mapv str)
             (interpose " ")
-            (into [:.mh2.truncate.blue.flex-none.nowrap])))
+            (into [:.mr2.truncate.blue.flex-none.nowrap])))
      [:.gray.nowrap.truncate (or doc (:doc meta))]]))
 
 (defn set-bottom-bar! [view]

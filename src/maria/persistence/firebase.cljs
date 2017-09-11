@@ -6,17 +6,17 @@
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]))
 
-(def firebase-connect-error "Could not initialize Firebase auth")
+(def CONNECT_ERR_MESSAGE "Could not initialize Firebase auth")
 
 (def firebase-auth (try (.auth js/firebase)
                         (catch js/Error e
-                          (prn firebase-connect-error))))
+                          (prn CONNECT_ERR_MESSAGE))))
 
 
-(def providers (try {:github.com (doto (js/firebase.auth.GithubAuthProvider.)
-                                   (.addScope "gist"))}
+(def providers (try {"github.com" (doto (js/firebase.auth.GithubAuthProvider.)
+                                    (.addScope "gist"))}
                     (catch js/Error e
-                      (prn firebase-connect-error))))
+                      (prn CONNECT_ERR_MESSAGE))))
 
 (defn sign-in [provider]
   (->
@@ -28,6 +28,7 @@
 
 (defn sign-out []
   (local/local-put! "auth/accessToken" nil)
+  (tokens/clear-tokens)
   (.signOut firebase-auth))
 
 
@@ -39,8 +40,8 @@
                                                                                          (if value (d/transact! [{:db/id     :auth-public
                                                                                                                   :username  value
                                                                                                                   :maria-url (str "/gists/" value)}])
-                                                                                                   (if (re-find #"Unauthorized" error)
-                                                                                                     (sign-in (keyword (:providerId (first providerData))))
+                                                                                                   (if (re-find #"40" error)
+                                                                                                     (sign-in (:providerId (first providerData)))
                                                                                                      (.error js/console "Unable to retrieve GitHub username" error)))))
                                                         [{:db/id        :auth-public
                                                           :display-name displayName
@@ -52,5 +53,5 @@
                                                       [[:db/retract-entity :auth-public]
                                                        [:db/retract-entity :auth-secret]]))))
   (catch js/Error e
-    (prn firebase-connect-error)))
+    (prn CONNECT_ERR_MESSAGE)))
 

@@ -25,7 +25,7 @@
 
 (defn doc-list-section [docs title]
   [:div
-   [:.b.sans-serif.mh3.mv2 title]
+   [:.sans-serif.mh3.mv2 title]
    [:.bg-white.ma3
     (docs/doc-list docs)]])
 
@@ -46,7 +46,7 @@
 
 (defview layout
   [{:keys []}]
-  [:.cursor-text.bg-light-gray.overflow-hidden.w-100.relative
+  [:.cursor-text.bg-light-gray.overflow-hidden.w-100.relative.sans-serif
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (exec/exec-command-name :navigate/focus-end))
     :style    {:min-height     "100%"
@@ -64,5 +64,4 @@
 
    (which-key/show-commands)
    (dock/BottomBar {})
-   (tooltip/Tooltip)
-   ])
+   (tooltip/Tooltip)])

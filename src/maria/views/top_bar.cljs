@@ -74,30 +74,32 @@
 
       (command-button command-context :doc/new icons/Add)
 
-      (or left-content
-          (when filename
-            [:.flex.items-center.bg-darken-lightly.ph2
+      (some->>
+        (or left-content
+            (when filename
+              (list
 
-             [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
-             [:.ph1.gray "/"]
-             (text/autosize-text {:auto-focus  true
-                                  :class       "mr2"
-                                  :ref         #(when % (swap! state assoc :title-input %))
-                                  :value       (doc/strip-clj-ext current-filename)
-                                  :on-key-down #(cond (and (= 13 (.-which %))
-                                                           (not (or (.-metaKey %)
-                                                                    (.-ctrlKey %))))
-                                                      (doc/persist! this)
-                                                      (= 40 (.-which %))
-                                                      (exec/exec-command-name :navigate/focus-start)
-                                                      :else nil)
-                                  :placeholder "Enter a title..."
-                                  :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
+                [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
+                [:.ph1.gray "/"]
+                (text/autosize-text {:auto-focus  true
+                                     :class       "mr2 half-b sans-serif"
+                                     :ref         #(when % (swap! state assoc :title-input %))
+                                     :value       (doc/strip-clj-ext current-filename)
+                                     :on-key-down #(cond (and (= 13 (.-which %))
+                                                              (not (or (.-metaKey %)
+                                                                       (.-ctrlKey %))))
+                                                         (doc/persist! this)
+                                                         (= 40 (.-which %))
+                                                         (exec/exec-command-name :navigate/focus-start)
+                                                         :else nil)
+                                     :placeholder "Enter a title..."
+                                     :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
 
-             (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-30")))
-             (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
+                (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-30")))
+                (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
 
-             (command-button command-context :doc/revert icons/Undo)]))]
+                (command-button command-context :doc/revert icons/Undo))))
+        (conj [:.flex.items-center.bg-darken-lightly.ph2]))]
      [:.flex-auto]
      (toolbar-button [{:on-click #(do (util/stop! %)
                                       (exec/exec-command-name :commands/search command-context))} icons/Help nil "Command Search"])

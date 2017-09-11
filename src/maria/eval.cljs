@@ -84,4 +84,4 @@
   (log-eval-result! (eval-str* source)))
 
 (defn eval-form [form]
-  (log-eval-result! (eval-form* form)))
+  (log-eval-result! (eval-form* form))) 

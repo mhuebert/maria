@@ -51,7 +51,7 @@
               (cb {:error (.getLastError target)}))))
         "GET"
         nil
-        (tokens/auth-headers :github)))
+        (tokens/auth-headers "github.com")))
 
 (defn load-gist [id]
   (d/transact! [{:db/id           id
@@ -73,21 +73,20 @@
               (cb nil))))
         "GET"
         nil
-        (tokens/auth-headers :github)))
+        (tokens/auth-headers "github.com")))
 
 (defn load-user-gists [username]
-  (when username
-    (case username
-      "modules"
-      nil
-      (do
-        (d/transact! [{:db/id           username
-                       :loading-message "Loading gists..."}])
-        (get-user-gists username (fn [{:keys [value error]}]
-                                   (d/transact! (if value
-                                                  [[:db/add username :gists value]
-                                                   [:db/add username :loading-message false]]
-                                                  [{:error error}]))))))))
+  (case username
+    "modules"
+    nil
+    (do
+      (d/transact! [{:db/id           username
+                     :loading-message "Loading gists..."}])
+      (get-user-gists username (fn [{:keys [value error]}]
+                                 (d/transact! (if value
+                                                [[:db/add username :gists value]
+                                                 [:db/add username :loading-message false]]
+                                                [{:error error}])))))))
 
 (defn patch-gist [gist-id gist-data cb]
   (send (str "https://api.github.com/gists/" gist-id)
@@ -100,7 +99,7 @@
               (cb {:error (.getLastError target)}))))
         "PATCH"
         (->> gist-data (clj->js) (.stringify js/JSON))
-        (tokens/auth-headers :github)))
+        (tokens/auth-headers "github.com")))
 
 (defn create-gist [gist-data cb]
   (send (str "https://api.github.com/gists")
@@ -113,7 +112,7 @@
               (cb {:error (.getLastError target)}))))
         "POST"
         (->> gist-data (clj->js) (.stringify js/JSON))
-        (tokens/auth-headers :github)))
+        (tokens/auth-headers "github.com")))
 
 #_(defn fork-gist [gist-id cb]
     (send (str "https://api.github.com/gists/" gist-id "/forks")
@@ -126,7 +125,7 @@
                 (cb {:error (.getLastError target)}))))
           "POST"
           nil
-          (tokens/auth-headers :github)))
+          (tokens/auth-headers "github.com")))
 
 (defn get-username [id cb]
   (send (str "https://api.github.com/user/" id)
@@ -137,7 +136,7 @@
               (cb {:error (.getLastError target)}))))
         "GET"
         nil
-        (tokens/auth-headers :github)))
+        (tokens/auth-headers "github.com")))
 
 (def blank {:files {"" {:content ""}}})
 

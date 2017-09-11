@@ -74,6 +74,6 @@
   [username]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar/doc-toolbar {:left-content [:a.hover-underline.gray.no-underline {:href (str "/gists/" username)} username]})
+     (toolbar/doc-toolbar {:left-content [:a.hover-underline.gray.no-underline {:href (str "/gists/" username)} username " /"]})
      [:.ma3.bg-white
       (doc-list nil gists)]]))
