@@ -351,7 +351,7 @@ palette
 (map first color-names)
 
 ;; To ask whether a color name is contained in those names, we turn it
-;; into a `set` and use `contains`. (A set is an unordered collection,
+;; into a `set` and use `contains?`. (A set is an unordered collection,
 ;; which is much easier to search through than an ordered collection
 ;; like a vector.)
 
