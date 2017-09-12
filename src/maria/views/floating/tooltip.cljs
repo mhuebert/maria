@@ -4,7 +4,8 @@
             [re-db.d :as d]
             [goog.events :as events]
             [goog.dom.dataset :as data]
-            [re-view-routing.core :as r]))
+            [re-view-routing.core :as r]
+            [maria.util :as util]))
 
 (defview Tooltip
   {:view/did-mount    (fn [{:keys [view/state]}]
@@ -21,19 +22,20 @@
                                                                 (some-> (.-relatedTarget e)
                                                                         (r/closest #(and (not= % js/document)
                                                                                          (data/has % "tooltip")))))
-                                                        (let [rect (.getBoundingClientRect target)]
-                                                          {:rect rect
-                                                           :offset [(/ (.-width rect) 2) 5]
-                                                           :title (data/get target "tooltip")})))))))]
+
+                                                        {:float/pos    (util/rect->abs-pos (.getBoundingClientRect target)
+                                                                                           [:center :bottom])
+                                                         :float/offset [0 5]
+                                                         :title        (data/get target "tooltip")}))))))]
                           (events/listen body the-events callback)
                           (v/swap-silently! state assoc :unlisten #(events/unlisten body the-events callback))))
    :view/will-unmount #((:unlisten @(:view/state %)))}
   [{:keys [view/state]}]
-  (when-let [{:keys [title rect offset]} (:tooltip @state)]
-    (ui/FloatingContainer {:rect    rect
-                           :offset  offset
-                           :element [:.absolute.tc
-                                     {:style {:width 150
-                                              :left  -75}}
-                                     [:.pa1.br1.bg-white.f7.sans-serif.gray.dib title]]})))
+  (when-let [{:keys [title float/pos float/offset]} (:tooltip @state)]
+    (ui/FloatingContainer {:float/pos    pos
+                           :float/offset offset
+                           :element      [:.absolute.tc
+                                          {:style {:width 150
+                                                   :left  -75}}
+                                          [:.pa1.br1.bg-white.f7.sans-serif.gray.dib title]]})))
 

@@ -85,7 +85,6 @@
                         :kind          :commands/search
                         :props         nil
                         :cancel-events ["scroll" "mousedown"]
-                        :rect          #js {:top    (+ (.-scrollY js/window) 100)
-                                            :bottom (+ (.-scrollY js/window) 100)
-                                            :left   (/ (.-innerWidth js/window) 2)}}))
+                        :float/pos           [(/ (.-innerWidth js/window) 2)
+                                        (+ (.-scrollY js/window) 100)]}))
   true)

@@ -101,7 +101,7 @@
 
 
 (defn add! [state version]
-  (.log js/console "history/add!")
+  #_(.log js/console "history/add!")
   (when-not *ignored-op*
     (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
@@ -126,7 +126,7 @@
 (defn splice
   ([state block value] (splice state block nil value))
   ([state from-block to-block value]
-   (.log js/console "history/splice")
+   #_(.log js/console "history/splice")
    (let [next-version (-> (current-version state)
                           (Block/splice-blocks from-block to-block value)
                           (Block/ensure-blocks))]

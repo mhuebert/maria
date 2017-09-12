@@ -42,7 +42,9 @@
                                                                    [:.flex-auto]
                                                                    [:.gray.pl3 (str (or (namespace full-name)
                                                                                         full-name))]]})}
-                          :rect          (Editor/cursor-coords editor)})
+                          :float/pos     (util/rect->abs-pos (Editor/cursor-coords editor)
+                                                             [:right :bottom])
+                          :float/offset  [0 10]})
     (hint/clear-hint!)))
 
 (def options

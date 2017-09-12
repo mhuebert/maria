@@ -14,21 +14,22 @@
             [re-view-routing.core :as r]
             [maria.editors.editor :as Editor]
     #_[re-view-prosemirror.example-toolbar :as toolbar]
-    #_[maria.views.bottom-bar :as bottom-bar]))
+    #_[maria.views.bottom-bar :as bottom-bar]
+            [maria.util :as util]))
 
 
 (defview link-dropdown [{:keys [href editor]}]
-  [:.flex.items-center.pa2.bg-white.br2.shadow-4
-   [:.dib.pointer
-    {:on-click (fn [e]
-                 (.preventDefault e)
-                 (.stopPropagation e)
-                 (commands/apply-command editor (partial commands/open-link true))
-                 (hint/clear-hint!))}
+  [:.flex.items-center.bg-white.br2.shadow-4.overflow-hidden
+   [:.dib.pointer.hover-bg-darken.pa2.bg-darken-lightly
+    {:on-mouse-down (fn [e]
+                      (.preventDefault e)
+                      (.stopPropagation e)
+                      (commands/apply-command editor (partial commands/open-link true))
+                      (hint/clear-hint!))}
     (-> icons/ModeEdit
         (icons/size 16)
-        (icons/class "mr1 o-50"))]
-   [:a.pm-link {:href href} href]])
+        (icons/class "o-50"))]
+   [:a.pm-link.ph2.no-underline.black.f6.hover-underline {:href href} href]])
 
 (defn make-editor-state [doc input-rules]
   (.create pm/EditorState
@@ -137,10 +138,12 @@
                                   (when-let [a (r/closest (.-target e) r/link?)]
                                     (when-not (classes/has a "pm-link")
                                       (do (.stopPropagation e)
-                                          (hint/floating-hint! {:rect      (.getBoundingClientRect a)
-                                                                :component link-dropdown
-                                                                :props     {:href   (.-href a)
-                                                                            :editor (.getEditor this)}})))))
+                                          (hint/floating-hint! {:float/pos    (util/rect->abs-pos (.getBoundingClientRect a)
+                                                                                                  [:left :bottom])
+                                                                :float/offset [0 10]
+                                                                :component    link-dropdown
+                                                                :props        {:href   (.-href a)
+                                                                               :editor (.getEditor this)}})))))
                  :ref           #(v/swap-silently! state assoc :prose-editor-view %)
                  :before-change before-change
                  :on-dispatch   (fn [pm-view prev-state]

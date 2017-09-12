@@ -54,13 +54,14 @@
         (tokens/auth-headers "github.com")))
 
 (defn load-gist [id]
-  (d/transact! [{:db/id           id
-                 :loading-message "Loading gist..."}])
-  (get-gist id (fn [{:keys [value error]}]
-                 (d/transact! [{:db/id           id
-                                :persisted       value
-                                :persisted-error error
-                                :loading-message false}]))))
+  (when-not (d/get id :persisted)
+    (d/transact! [{:db/id           id
+                   :loading-message "Loading gist..."}])
+    (get-gist id (fn [{:keys [value error]}]
+                   (d/transact! [{:db/id           id
+                                  :persisted       value
+                                  :persisted-error error
+                                  :loading-message false}])))))
 
 (defn get-user-gists [username cb]
   (send (str "https://api.github.com/users/" username "/gists")
@@ -79,7 +80,7 @@
   (case username
     "modules"
     nil
-    (do
+    (when-not (d/get username :gists)
       (d/transact! [{:db/id           username
                      :loading-message "Loading gists..."}])
       (get-user-gists username (fn [{:keys [value error]}]

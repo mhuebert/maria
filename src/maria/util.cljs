@@ -95,3 +95,20 @@
       (if (pred (first s))
         (cons (first s) nil)
         (cons (first s) (take-until pred (rest s)))))))
+
+(defn rect->abs-pos [rect [x y]]
+  (let [x-offset (.-scrollX js/window)
+        y-offset (.-scrollY js/window)]
+    [(case x
+       :left (+ x-offset (.-left rect))
+       :right (+ x-offset (.-right rect))
+       :center (+ x-offset
+                  (.-left rect)
+                  (/ (.-width rect) 2)))
+     (case y
+       :top (+ y-offset (.-top rect))
+       :bottom (+ y-offset
+                  (.-bottom rect))
+       :center (+ y-offset
+                  (.-top rect)
+                  (/ (.-height rect) 2)))]))

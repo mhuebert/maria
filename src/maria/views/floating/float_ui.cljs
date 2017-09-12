@@ -25,20 +25,14 @@
                               (when-not (= cancel-events prev-cancel-events)
                                 (.setupListener this)))
    :view/will-unmount       (fn [this] (.teardown this))}
-  [{:keys [rect component props element offset]
-    :or   {offset [0 10]}}]
-
-  (let [BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
+  [{:keys [component props element float/offset]
+    [left top] :float/pos
+    :or   {offset [0 0]}}]
+  (let [left (+ left (first offset))
+        top (+ top (second offset))
+        BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
                                (.-width)) 0)
-        scroll-y (.-scrollY js/window)
-        inner-height (.-innerHeight js/window)
-        top (+ (.-bottom rect)
-               scroll-y
-               (second offset))
-        left (+ (.-left rect)
-                (.-scrollX js/window)
-                (first offset))
-        max-height (-> inner-height
+        max-height (-> (.-innerHeight js/window)
                        (- (- top (.-scrollY js/window)))
                        (- BOTTOM_PADDING))]
     [:.absolute.z-9999
