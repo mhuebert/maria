@@ -260,8 +260,10 @@
   [{:keys                                    [zipper magic/brackets?]
     {prev-pos :pos prev-zipper :prev-zipper} :magic/cursor
     :as                                      cm}]
+
   (when (or (.hasFocus cm) (nil? prev-zipper))
     (when-let [pos (pos->boundary (get-cursor cm))]
+
       (when (or (not= pos prev-pos)
                 (not= prev-zipper zipper))
         (when-let [loc (some-> zipper (tree/node-at pos))]
@@ -371,6 +373,7 @@
                (fn [cm on?]
                  (when on?
                    (require-opts cm ["magicTree"])
+                   (.on cm "focus" update-cursor!)
                    (.on cm "cursorActivity" update-cursor!)
                    (.on cm "change" update-cursor!)
                    (update-cursor! cm))))

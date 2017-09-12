@@ -28,7 +28,7 @@
          (util/whitespace-string? (serialize-block this))))
 
   (emit [this]
-    (tree/string {:tag   :comment
+    (tree/string {:tag   :comment-block
                   :value (serialize-block this)})))
 
 (defn prepend-paragraph [this]

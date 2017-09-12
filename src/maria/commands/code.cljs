@@ -188,7 +188,8 @@
 
       (Block/empty? block) (clear-empty-code-block block-list blocks block)
 
-      (.somethingSelected editor) false
+      (or (.somethingSelected editor)
+          (#{:comment :string} (get-in editor [:magic/cursor :node :tag]))) false
 
       (#{")" "]" "}"} prev-char) (do (-> pointer
                                          (edit/move -1)

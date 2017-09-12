@@ -64,7 +64,7 @@
   "Returns a block, given a magic-tree AST node."
   [{:keys [tag] :as node}]
   (case tag
-    :comment (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
+    :comment-block (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
     (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
     (->CodeBlock (d/unique-id) node)))
 
@@ -75,7 +75,7 @@
                   :prose ""
                   :code [])))
   ([kind value]
-   (from-ast {:tag   (case kind :prose :comment
+   (from-ast {:tag   (case kind :prose :comment-block
                                 :code :base)
               :value value})))
 

@@ -48,7 +48,7 @@
                                                                    [:right :bottom])
                                 :float/offset  [0 10]})
           (hint/clear-hint!)))
-      (gf/debounce 300))) 
+      (gf/debounce 300)))
 
 (def options
   {:theme              "maria-light"
