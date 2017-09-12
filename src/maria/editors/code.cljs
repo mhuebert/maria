@@ -14,38 +14,41 @@
     [maria.live.ns-utils :as ns-utils]
     [maria.views.dropdown :as dropdown]
     [maria.views.bottom-bar :as bottom-bar]
-    [structure.edit :as edit]))
+    [structure.edit :as edit]
+    [goog.functions :as gf]))
 
 (defn show-eldoc! [the-sym]
   (bottom-bar/show-var! (some-> the-sym
                                 (ns-utils/resolve-var-or-special))))
 
-(defn update-completions! [{{node :bracket-node
-                             pos  :pos :as cursor} :magic/cursor :as editor}]
-  (if (and node
-           (= :token (:tag node))
-           (symbol? (tree/sexp node))
-           (= (tree/bounds node :right)
-              (tree/bounds pos :left)))
-    (hint/floating-hint! {:component     dropdown/numbered-list
-                          :cancel-events ["mousedown" "scroll" "focus"]
-                          :props         {:on-selection (fn [[completion full-name]]
-                                                          (show-eldoc! full-name))
-                                          :class        "shadow-4 bg-white"
-                                          :on-select!   (fn [[completion full-name]]
-                                                          (hint/clear-hint!)
-                                                          (cm/replace-range! editor completion node))
-                                          :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
-                                                          {:value [completion full-name]
-                                                           :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
-                                                                   (str completion)
-                                                                   [:.flex-auto]
-                                                                   [:.gray.pl3 (str (or (namespace full-name)
-                                                                                        full-name))]]})}
-                          :float/pos     (util/rect->abs-pos (Editor/cursor-coords editor)
-                                                             [:right :bottom])
-                          :float/offset  [0 10]})
-    (hint/clear-hint!)))
+(def update-completions!
+  (-> (fn [{{node :bracket-node
+             pos  :pos :as cursor} :magic/cursor :as editor}]
+        (if (and node
+                 (= :token (:tag node))
+                 (symbol? (tree/sexp node))
+                 (= (tree/bounds node :right)
+                    (tree/bounds pos :left)))
+          (hint/floating-hint! {:component     dropdown/numbered-list
+                                :cancel-events ["mousedown" "scroll" "focus"]
+                                :props         {:on-selection (fn [[completion full-name]]
+                                                                (show-eldoc! full-name))
+                                                :class        "shadow-4 bg-white"
+                                                :on-select!   (fn [[completion full-name]]
+                                                                (hint/clear-hint!)
+                                                                (cm/replace-range! editor completion node))
+                                                :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
+                                                                {:value [completion full-name]
+                                                                 :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
+                                                                         (str completion)
+                                                                         [:.flex-auto]
+                                                                         [:.gray.pl3 (str (or (namespace full-name)
+                                                                                              full-name))]]})}
+                                :float/pos     (util/rect->abs-pos (Editor/cursor-coords editor)
+                                                                   [:right :bottom])
+                                :float/offset  [0 10]})
+          (hint/clear-hint!)))
+      (gf/debounce 300))) 
 
 (def options
   {:theme              "maria-light"
