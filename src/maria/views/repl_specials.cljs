@@ -15,8 +15,8 @@
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
 (defview doc
-  {:view/initial-state #(:expanded? %)
-   :key                :name}
+  {:view/state #(atom (:expanded? %))
+   :key        :name}
   [{:keys [doc
            meta
            arglists
@@ -39,8 +39,8 @@
      (when @state
        (list
          [:.mv1.blue.f6 (string/join ", " (map str (ns-utils/elide-quote (or forms
-                                                                          (:arglists meta)
-                                                                          arglists))))]
+                                                                             (:arglists meta)
+                                                                             arglists))))]
          [:.gray.mv2.f6 doc]
          (docs-link namespace name)))]))
 
@@ -51,8 +51,8 @@
   (let [{:keys [value error] :as result} @state]
     (cond (nil? result) [:.pa2 "Loading..."]
           error [:.ma3 (if special-form
-                          (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
-                          error)]
+                         (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
+                         error)]
           value (repl-ui/card [:.ph3.pv2 (code/viewer value)]))))
 
 (defview dir

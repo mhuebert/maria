@@ -28,31 +28,34 @@
   [{:keys [view/state id] :as this}]
   (let [{:keys [default-value
                 loading-message
-                error]
+                error
+                persisted-error]
          :as   project} (d/entity id)
+        error (or persisted-error error)
         filenames (.projectFiles this)
         filename (.currentFile this)]
-    (cond loading-message (util/loader loading-message)
-          error [:.pa2.dark-red (str error)]
-          :else
-          (let [local-value (get-in project [:local :files filename :content])
-                persisted-value (get-in project [:persisted :files filename :content])]
-            [:.h-100.flex.flex-column
-             (toolbar/doc-toolbar (if (empty? filenames)
-                                    {:left-content "Empty Gist"}
-                                    {:project  project
-                                     :owner    (:owner project)
-                                     :filename filename
-                                     :id       id}))
-             [:.flex.flex-auto
-              (when-let [value (or local-value persisted-value)]
-                (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
-                                        :on-update     (fn [source]
-                                                         (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                        :source-id     id
-                                        :class         "flex-auto"
-                                        :value         value
-                                        :default-value default-value}))]]))))
+    (if loading-message (util/loader loading-message)
+
+                        (let [local-value (get-in project [:local :files filename :content])
+                              persisted-value (get-in project [:persisted :files filename :content])]
+                          [:.h-100.flex.flex-column
+                           (toolbar/doc-toolbar (cond (empty? filenames)
+                                                      {:left-content "Empty Gist"}
+                                                      error nil
+                                                      :else {:project  project
+                                                             :owner    (:owner project)
+                                                             :filename filename
+                                                             :id       id}))
+                           [:.flex.flex-auto
+                            (or (some->> error (conj [:.pa3.dark-red]))
+                                (when-let [value (or local-value persisted-value)]
+                                  (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
+                                                          :on-update     (fn [source]
+                                                                           (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                                          :source-id     id
+                                                          :class         "flex-auto"
+                                                          :value         value
+                                                          :default-value default-value})))]]))))
 
 (defview doc-list
   {:view/initial-state {:limit-n 8}}
@@ -60,10 +63,10 @@
   (let [{:keys [limit-n]} @state
         more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
     [:.flex-auto.overflow-auto.sans-serif.f6
-     (for [{:keys [id description files filename]} (take limit-n docs)
-           :let [filename (or filename (ffirst files))]]
+     (for [doc (take limit-n docs)
+           :let [{:keys [id description url filename]} (doc/normalize-doc doc)]]
        [:a.db.ph3.pv2.bb.b--near-white.black.no-underline.b.hover-bg-washed-blue.pointer
-        {:href (str "/gist/" id)}
+        {:href url}
         (doc/strip-clj-ext filename)
         (some->> description (conj [:.gray.f7.mt1.normal]))])
      (when more? [:.pointer.gray.hover-black.ph3
@@ -74,6 +77,6 @@
   [username]
   (let [gists (d/get username :gists)]
     [:.flex-auto.flex.flex-column.relative
-     (toolbar/doc-toolbar {:left-content [:a.hover-underline.gray.no-underline {:href (str "/gists/" username)} username " /"]})
+     (toolbar/doc-toolbar {:left-content [:a.hover-underline.gray.no-underline {:href (str "/gists/" username)} username "/"]})
      [:.ma3.bg-white
       (doc-list nil gists)]]))

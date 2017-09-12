@@ -18,6 +18,11 @@
   (some-> s
           (string/replace #"\.clj[cs]?$" "")))
 
+(defn normalize-doc [{:keys [filename files url id] :as doc}]
+  (cond-> doc
+          (nil? filename) (assoc :filename (ffirst files))
+          (nil? url) (assoc :url (str "/gist/" id))))
+
 (defn unsaved-changes? [{{{local-files :files}     :local
                           {persisted-files :files} :persisted} :project
                          filename                              :filename}]

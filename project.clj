@@ -18,7 +18,7 @@
 
                  [fast-zip "0.7.0"]
 
-                 [re-view "0.3.29-SNAPSHOT"]
+                 [re-view "0.3.29"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.9-SNAPSHOT"]
                  [cljs-live "0.2.6"]
