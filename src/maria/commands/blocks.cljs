@@ -123,9 +123,7 @@
   {:private true
    :when :block-list}
   [context]
-  (some-> (:block-list context)
-          (.getBlocks )
-          (filter (complement Block/whitespace?) )
+  (some-> (filter (complement Block/whitespace?) (.getBlocks (:block-list context)))
           (last)
           (Editor/of-block)
           (Editor/focus! :end)))

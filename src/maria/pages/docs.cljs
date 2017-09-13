@@ -49,13 +49,13 @@
                            [:.flex.flex-auto
                             (or (some->> error (conj [:.pa3.dark-red]))
                                 (when-let [value (or local-value persisted-value)]
-                                  (block-list/block-list {:ref           #(when % (swap! state assoc :doc-editor %))
-                                                          :on-update     (fn [source]
-                                                                           (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
-                                                          :source-id     id
-                                                          :class         "flex-auto"
-                                                          :value         value
-                                                          :default-value default-value})))]]))))
+                                  (block-list/BlockList {:ref           #(when % (swap! state assoc :doc-editor %))
+                                                         :on-update     (fn [source]
+                                                                          (d/transact! [[:db/update-attr (:id this) :local #(assoc-in % [:files (.currentFile this) :content] source)]]))
+                                                         :source-id     id
+                                                         :class         "flex-auto"
+                                                         :value         value
+                                                         :default-value default-value})))]]))))
 
 (defview doc-list
   {:view/initial-state {:limit-n 8}}

@@ -387,9 +387,8 @@
   true)
 
 (defn sym-node [node]
-  (when (= :token (:tag node))
-    (let [val (tree/sexp node)]
-      (when (symbol? val) val))))
+  (when (= :symbol (:tag node))
+    (tree/sexp node)))
 
 (defn eldoc-symbol [loc]
   (some->> loc

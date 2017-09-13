@@ -10,7 +10,7 @@
             [maria.commands.blocks]
             [maria.eval :as e]))
 
-(defview block-list
+(defview BlockList
   {:key                     :source-id
    :view/initial-state      (fn [{value :value}] (history/initial-state value))
    :view/did-mount          (fn [this]

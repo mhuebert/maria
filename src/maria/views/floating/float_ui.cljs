@@ -11,11 +11,11 @@
                               (when-let [teardown (:teardown @state)]
                                 (teardown)))
    :setupListener           (fn [{:keys [view/state cancel-events] :as this
-                                  :or   {cancel-events ["mousedown" "blur"]}}]
+                                  :or   {cancel-events ["mousedown" "focus"]}}]
                               (.teardown this)
                               (let [the-events (to-array cancel-events)
                                     callback (fn [e]
-                                               (when-not (r/closest (.-target e) #(= % (.-currentTarget e)))
+                                               (when (not (r/closest (.-target e) #(= % (.-currentTarget e))))
                                                  (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
                                 (events/listen js/window the-events callback true)
                                 (v/swap-silently! state assoc :teardown #(events/unlisten js/window the-events callback true))))

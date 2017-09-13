@@ -170,15 +170,18 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
   ([token] (ns-completions (:ns @e/c-env) token))
   ([ns-name node]
    (let [the-symbol (tree/sexp node)
-         root-ns (some->> (namespace the-symbol)
+         root-ns-sym (namespace the-symbol)
+         root-ns (some->> root-ns-sym
                           (ana/resolve-ns-alias (ana-env))
                           (get-ns))
          sym-string (if root-ns (name the-symbol) (str the-symbol))]
-     (sort (for [[completion full-name] (if root-ns
-                                          (ns-publics* root-ns false)
-                                          (merge (ns-aliases* (get-ns ns-name))
-                                                 (ns-publics* (get-ns ns-name) false)
-                                                 (core-publics)))
-                 :when (and (string/starts-with? completion sym-string)
-                            (not= completion the-symbol))]
-             [completion full-name])))))
+     (sort (for [[alias full-name] (if root-ns
+                                     (ns-publics* root-ns false)
+                                     (merge (ns-aliases* (get-ns ns-name))
+                                            (ns-publics* (get-ns ns-name) false)
+                                            (core-publics)))
+                 :when (and (string/starts-with? alias sym-string)
+                            (not= alias sym-string))
+                 :let [completion (cond->> alias
+                                           root-ns-sym (str root-ns-sym "/"))]]
+             [alias completion full-name])))))

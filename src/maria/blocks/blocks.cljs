@@ -91,22 +91,22 @@
                     (str out source "\n\n")
                     out)))) "\n" blocks)))
 
+(defn ensure-blocks [blocks]
+  (if-not (first (remove whitespace? blocks))
+    [(create :prose)]
+    blocks))
+
 (defn from-source
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
   (->> (tree/ast (:ns @e/c-env) source)
        (:value)
        (mapv from-ast)
+       (ensure-blocks)
        #_(reduce (fn [out node]
                    (cond-> out
                            (not (tree/whitespace? node))
                            (conj (from-ast node)))) [])))
-
-
-(defn ensure-blocks [blocks]
-  (if-not (seq blocks)
-    [(create :prose)]
-    blocks))
 
 (defn id-index
   ([blocks id] (id-index blocks id 0))

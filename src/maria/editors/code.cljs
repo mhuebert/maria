@@ -29,17 +29,16 @@
              (= (tree/bounds node :right)
                 (tree/bounds pos :left)))
       (hint/floating-hint! {:component     dropdown/numbered-list
-                            :cancel-events ["mousedown" "scroll" "focus"]
-                            :props         {:on-selection (fn [[completion full-name]]
+                            :props         {:on-selection (fn [[alias completion full-name]]
                                                             (show-eldoc! full-name))
                                             :class        "shadow-4 bg-white"
-                                            :on-select!   (fn [[completion full-name]]
+                                            :on-select!   (fn [[alias completion full-name]]
                                                             (hint/clear-hint!)
                                                             (cm/replace-range! editor completion node))
-                                            :items        (for [[completion full-name] (ns-utils/ns-completions node)]
-                                                            {:value [completion full-name]
+                                            :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
+                                                            {:value [alias completion full-name]
                                                              :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
-                                                                     (str completion)
+                                                                     alias
                                                                      [:.flex-auto]
                                                                      [:.gray.pl3 (str (or (namespace full-name)
                                                                                           full-name))]]})}
