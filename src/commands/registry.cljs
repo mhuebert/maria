@@ -55,7 +55,6 @@
   [k]
   (->> (case (string/upper-case k)
          ("CMD"
-           "M"
            "META"
            "COMMAND") "META"
 
@@ -63,7 +62,6 @@
            "CONTROL") "CTRL"
 
          ("ALT"
-           "A"
            "OPT"
            "OPTION") "ALT"
 

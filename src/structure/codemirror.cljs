@@ -189,13 +189,13 @@
     (tree/inner-range node)
     node))
 
-(defn select-at-cursor [cm top-loc?]
-  (let [pos (Pos->range (get-cursor cm))]
-    (some->> (cond-> (get-in cm [:magic/cursor :bracket-loc])
-                     top-loc? (tree/top-loc))
-             (z/node)
-             (highlight-range pos)
-             (select-node! cm))))
+(defn select-at-cursor [{{:keys [bracket-loc]} :magic/cursor :as cm} top-loc?]
+  (when bracket-loc
+    (let [pos (Pos->range (get-cursor cm))
+          node (if top-loc? (z/node (tree/top-loc bracket-loc))
+                            (highlight-range pos (z/node bracket-loc)))]
+      (some->> node
+               (select-node! cm)))))
 
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))

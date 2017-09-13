@@ -6,7 +6,8 @@
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
             [re-view-prosemirror.commands :as commands]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            [structure.codemirror :as cm]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
@@ -76,14 +77,16 @@
         :else nil))
 
 (defcommand :select/all
-  {:bindings ["M1-A"]
+  {:bindings ["M1-a"]
    :when     :editor
    :icon     icons/Select}
-  [context]
-  (cond (:block/prose context)
-        (commands/apply-command (:editor context) commands/select-all)
-        (:block/code context)
-        (.execCommand (:editor context) "selectAll")
+  [{:keys [editor block/prose block/code]}]
+  (cond prose
+        (commands/apply-command editor commands/select-all)
+        code
+        (do
+          (cm/unset-cursor-root! editor)
+          (.execCommand editor "selectAll"))
         :else nil))
 
 (defcommand :history/undo
