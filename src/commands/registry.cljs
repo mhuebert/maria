@@ -90,7 +90,7 @@
          "M3" (if mac? "CTRL"
                        "META")
 
-         (throw (js/Error. "Invalid modifier. Must be M1, M2, M3, or SHIFT.")))
+         nil)
        (gobj/get KeyCodes)))
 
 (defn M1-down? [e]
@@ -109,9 +109,9 @@
 (defn normalize-keyset-string [patterns]
   (->> (string/split patterns #"\s")
        (mapv (fn [s]
-               (let [keys (string/split s #"[-+]")]
-                 (conj (set (mapv modifier-keycode (drop-last keys)))
-                       (endkey->keycode (last keys))))))))
+               (let [keys (string/split s #"[-]")]
+                 (set (mapv #(or (modifier-keycode %)
+                                 (endkey->keycode %)) keys)))))))
 
 (def code->symbol
   (->> {(.-CTRL KeyCodes)                 "Ctrl" #_"⌃"

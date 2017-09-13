@@ -189,6 +189,14 @@
     (tree/inner-range node)
     node))
 
+(defn select-at-cursor [cm top-loc?]
+  (let [pos (Pos->range (get-cursor cm))]
+    (some->> (cond-> (get-in cm [:magic/cursor :bracket-loc])
+                     top-loc? (tree/top-loc))
+             (z/node)
+             (highlight-range pos)
+             (select-node! cm))))
+
 (defn update-selection! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
         evt-type (.-type e)
@@ -219,7 +227,6 @@
 (defn match-brackets! [cm node]
   (let [prev-node (get-in cm [:magic/cursor :node])]
     (when (not= prev-node node)
-      #_(.log js/console "match-brackets!")
       (clear-brackets! cm)
       (when (some-> node (tree/may-contain-children?))
         (swap! cm assoc-in [:magic/cursor :handles]
@@ -240,9 +247,10 @@
 
 (defn update-ast!
   [{:keys [ast] :as cm}]
-  (when-let [{:keys [errors] :as next-ast} (try (tree/ast (:ns @eval/c-env) (.getValue cm))
-                                                (catch js/Error e (.debug js/console e)))]
-    #_(.log js/console "update-ast!" next-ast)
+  (when-let [{:keys [errors modified-source?] :as next-ast} (try (tree/ast (:ns @eval/c-env) (.getValue cm))
+                                                                 (catch js/Error e
+                                                                   (prn "error in update-ast!" e)))]
+
     (when (not= next-ast ast)
       (when-let [on-ast (-> cm :view :on-ast)]
         (on-ast next-ast))
@@ -260,10 +268,8 @@
   [{:keys                                    [zipper magic/brackets?]
     {prev-pos :pos prev-zipper :prev-zipper} :magic/cursor
     :as                                      cm}]
-
   (when (or (.hasFocus cm) (nil? prev-zipper))
     (when-let [pos (pos->boundary (get-cursor cm))]
-
       (when (or (not= pos prev-pos)
                 (not= prev-zipper zipper))
         (when-let [loc (some-> zipper (tree/node-at pos))]
@@ -384,7 +390,7 @@
                    (require-opts cm ["magicCursor"])
 
                    (.on cm "keyup" update-selection!)
-                   (.on cm "keydown" update-selection!)
+                   #_(.on cm "keydown" update-selection!)
                    (events/listen js/window "blur" #(return-cursor-to-root! cm))
                    (events/listen js/window "blur" #(clear-brackets! cm))
 

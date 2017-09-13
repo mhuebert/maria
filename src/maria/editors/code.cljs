@@ -25,8 +25,7 @@
   (-> (fn [{{node :bracket-node
              pos  :pos :as cursor} :magic/cursor :as editor}]
         (if (and node
-                 (= :token (:tag node))
-                 (symbol? (tree/sexp node))
+                 (= :symbol (:tag node))
                  (= (tree/bounds node :right)
                     (tree/bounds pos :left)))
           (hint/floating-hint! {:component     dropdown/numbered-list
@@ -37,7 +36,7 @@
                                                 :on-select!   (fn [[completion full-name]]
                                                                 (hint/clear-hint!)
                                                                 (cm/replace-range! editor completion node))
-                                                :items        (for [[completion full-name] (ns-utils/ns-completions (tree/string node))]
+                                                :items        (for [[completion full-name] (ns-utils/ns-completions node)]
                                                                 {:value [completion full-name]
                                                                  :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
                                                                          (str completion)

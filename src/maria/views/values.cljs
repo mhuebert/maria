@@ -24,6 +24,8 @@
 (def space \u00A0)
 
 (extend-protocol hiccup/IEmitHiccup
+  Keyword
+  (to-hiccup [this] (str this))
   shapes/Shape
   (to-hiccup [this] (shapes/to-hiccup this)))
 

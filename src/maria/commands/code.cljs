@@ -20,14 +20,26 @@
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
 
+
+
 (defcommand :clipboard/copy
-  {:bindings ["M1-C"]
+  {:bindings ["M1-c"]
    :private true
    :icon     icons/ContentCopy}
   [{:keys [editor block/code block/prose]}]
   (when code
     (edit/copy (.getSelection editor))
     true))
+
+(defcommand :clipboard/cut
+  {:bindings ["M1-x"]
+   :private true
+   :when :block/code
+   :icon     icons/ContentCopy}
+  [{:keys [editor block/code block/prose]}]
+  (edit/copy (.getSelection editor))
+  (.replaceSelection editor "")
+  true)
 
 (defcommand :clipboard/paste
   {:bindings ["M1-v"]
@@ -37,6 +49,18 @@
   (when-let [pos (and code (cm/cursor-root editor))]
     (.setCursor editor pos))
   false)
+
+(defcommand :select/form-at-cursor
+  {:bindings ["M1"]
+   :when :block/code}
+  [context]
+  (cm/select-at-cursor (:editor context) false))
+
+(defcommand :select/top-level-form
+  {:bindings ["M1-Shift"]
+   :when :block/code}
+  [context]
+  (cm/select-at-cursor (:editor context) true))
 
 (defcommand :select/left
   "Expand selection to include form to the left."

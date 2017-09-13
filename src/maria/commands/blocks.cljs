@@ -25,7 +25,7 @@
                                    :left :end)))
   true)
 
-(defcommand :navigate/next-block
+(defcommand :navigate/forward
   {:bindings ["Down"
               "Right"
               "M2-Tab"]
@@ -39,7 +39,7 @@
     false
     (focus-adjacent! context :right)))
 
-(defcommand :navigate/prev-block
+(defcommand :navigate/backward
   {:bindings ["Up"
               "Left"
               "M2-Shift-Tab"]

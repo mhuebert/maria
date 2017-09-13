@@ -1,7 +1,8 @@
 (ns maria.live.ns-utils
   (:require [maria.eval :as e]
             [cljs-live.eval :as c-e]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [magic-tree.core :as tree]))
 
 
 (defn builtin-ns? [s]
@@ -163,11 +164,13 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 
 (defn ns-completions
   ([token] (ns-completions (:ns @e/c-env) token))
-  ([ns-name token]
-   (let [token (str token)]
+  ([ns-name node]
+   (let [the-symbol (tree/sexp node)
+         sym-string (str the-symbol)]
+     (prn :ns-completions sym-string (namespace the-symbol))
      (sort (for [[completion full-name] (merge (ns-aliases* (get-ns ns-name))
                                                (ns-publics* (get-ns ns-name) false)
                                                (core-publics))
-                 :when (and (string/starts-with? completion token)
-                            (not= completion token))]
+                 :when (and (string/starts-with? completion sym-string)
+                            (not= completion the-symbol))]
              [completion full-name])))))

@@ -99,10 +99,12 @@
       (apply-selections :selections-after next-blocks)))
   true)
 
+(defn current-version [state]
+  (first (:history @state)))
 
 (defn add! [state version]
-  #_(.log js/console "history/add!")
-  (when-not *ignored-op*
+  (when (and (not *ignored-op*)
+             (not= (current-version state) version))
     (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
             prev-version (first history)
@@ -111,14 +113,11 @@
                                                                            @-prior-selection)
                                              :selections-after  (get-selections)
                                              :timestamp         (.now js/Date)})]
-        (v/flush!)
         (reset! state (-> @state
                           (cond-> merge? (update :history rest))
                           (update :history conj next-version)
-                          (cond-> (seq redo-stack) (update :history/redo-stack empty))))))))
-
-(defn current-version [state]
-  (first (:history @state)))
+                          (cond-> (seq redo-stack) (update :history/redo-stack empty))))
+        (v/flush!)))))
 
 (defn update! [state f & args]
   (add! state (apply f (current-version state) args)))
@@ -126,7 +125,6 @@
 (defn splice
   ([state block value] (splice state block nil value))
   ([state from-block to-block value]
-   #_(.log js/console "history/splice")
    (let [next-version (-> (current-version state)
                           (Block/splice-blocks from-block to-block value)
                           (Block/ensure-blocks))]

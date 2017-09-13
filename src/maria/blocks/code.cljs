@@ -11,6 +11,7 @@
             [maria.editors.editor :as Editor]
             [maria.editors.code :as code]
             [commands.exec :as exec]
+            [maria.views.error :as error]
             [maria.views.values :as value-views]))
 
 (defn vec-take [coll n]
@@ -30,17 +31,19 @@
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (Editor/focus! (.getEditor this)))}
    [:.w-50.flex-none
-    (code/CodeView {:class                 "pa3 bg-white"
-                    :ref                   #(v/swap-silently! state assoc :editor-view %)
-                    :value                 (Block/emit (:block this))
-                    :on-ast                (fn [node]
-                                             (.splice block-list block [(assoc block :node node)]))
-                    :before-change         before-change
-                    :on-selection-activity on-selection-activity
-                    :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                :block-view this})
-                    :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                :block-view nil})})]
+    (error/error-boundary
+      {:block-id (:id block)}
+      (code/CodeView {:class                 "pa3 bg-white"
+                      :ref                   #(v/swap-silently! state assoc :editor-view %)
+                      :value                 (Block/emit (:block this))
+                      :on-ast                (fn [node]
+                                               (.splice block-list block [(assoc block :node node)]))
+                      :before-change         before-change
+                      :on-selection-activity on-selection-activity
+                      :capture-event/focus   #(exec/set-context! {:block/code true
+                                                                  :block-view this})
+                      :capture-event/blur    #(exec/set-context! {:block/code nil
+                                                                  :block-view nil})}))]
 
    [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto
     (some-> (first (Block/eval-log block))

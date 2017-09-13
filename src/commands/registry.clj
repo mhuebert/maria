@@ -8,7 +8,7 @@
       :bindings, a vector of keymaps to bind, each containing a keyset of the form 'Cmd-X'
       :intercept-when, a predicate indicating whether the key binding should stopPropagation and preventDefault
            (if not supplied, will stop the event when :exec-when is true)
-      :exec-when, a predicate indicating whether the command is enabled for a given context
+      :when, a predicate indicating whether the command is enabled for a given context
   - a vector of arguments followed by body forms, for the command function.
 
   If no arglist/body is provided, a passthrough function will be supplied, so that `defcommand`

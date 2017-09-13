@@ -15,6 +15,8 @@
             [maria.pages.docs :as docs]
             [maria.commands.doc :as doc]))
 
+
+
 (defview FloatingSearch
   "A floating search bar, displayed near the top-middle of the screen.
   Takes care of saving and returning the current focus/selection."
@@ -83,26 +85,31 @@
                                                  (some->> (ffirst parsed-bindings)
                                                           (registry/keyset-string))]]}))})))
 
+
 (defcommand :doc/open
   {:bindings ["M1-O"]}
   []
-  (if (= ::open (:kind (ui/current-hint)))
-    (ui/clear-hint!)
-    (ui/floating-hint! {:component     FloatingSearch
-                        :kind          ::open
+  (let [Label :.sans-serif.f7.pv2.half-b]
+    (if (= ::open (:kind (ui/current-hint)))
+      (ui/clear-hint!)
+      (ui/floating-hint! {:component     FloatingSearch
+                          :kind          ::open
 
-                        :props         {:placeholder "Open..."
-                                        :on-select!  (fn [value]
-                                                       (frame/send frame/trusted-frame [:window/navigate value {}]))
-                                        :items       (fn [q]
-                                                       (for [doc (local/local-get (str (d/get :auth-public :username) "/recent-docs"))
-                                                             :let [{:keys [url filename]} (doc/normalize-doc doc)]
-                                                             :when (and filename (not= "" filename) (string/includes? filename q))]
-                                                         {:value url
-                                                          :label [:.sans-serif.f7.pv2.half-b (doc/strip-clj-ext filename)]}))}
-                        :cancel-events ["scroll" "mousedown"]
-                        :float/pos     [(/ (.-innerWidth js/window) 2)
-                                        (+ (.-scrollY js/window) 100)]})))
+                          :props         {:placeholder "Open..."
+                                          :on-select!  (fn [value]
+                                                         (frame/send frame/trusted-frame [:window/navigate value {}]))
+                                          :items       (fn [q]
+                                                         (cons
+                                                           {:value "/home"
+                                                            :label [Label "Home"]}
+                                                           (for [doc (local/local-get (str (d/get :auth-public :username) "/recent-docs"))
+                                                                 :let [{:keys [url filename]} (doc/normalize-doc doc)]
+                                                                 :when (and filename (not= "" filename) (string/includes? filename q))]
+                                                             {:value url
+                                                              :label [Label (doc/strip-clj-ext filename)]})))}
+                          :cancel-events ["scroll" "mousedown"]
+                          :float/pos     [(/ (.-innerWidth js/window) 2)
+                                          (+ (.-scrollY js/window) 100)]}))))
 
 ;; input for text...
 ;; - auto-focus

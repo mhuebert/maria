@@ -42,6 +42,9 @@
   [context name]
   (apply-context context (get @registry/commands name)))
 
+(defn contextual? [command]
+  (or (:exec? command) (:intercept? command)))
+
 (defn exec-command
   "Execute a command (returned by `get-command`)"
   [context {:keys [command exec? intercept? name]}]
@@ -88,13 +91,14 @@
                                {keys-down         :modifiers-down
                                 which-key-active? :which-key/active?} (d/entity :commands)
                                modifier? (contains? registry/modifiers keycode)
-                               command-names (seq (registry/get-keyset-commands (conj keys-down keycode)))
+                               all-keys-down (conj keys-down keycode)
+                               command-names (seq (registry/get-keyset-commands all-keys-down))
                                context (when command-names
                                          (get-context {:keycode keycode
                                                        :key     (.-key e)}))
                                the-commands (when command-names
                                               (->> (map #(get-command context %) command-names)
-                                                   (filter #(or (:exec? %) (:intercept? %)))
+                                                   (filter contextual?)
                                                    (sort-by :priority reverse-compare)))
                                _ (when the-commands
                                    (doseq [f (vals @-before-exec)]
@@ -103,8 +107,11 @@
                                ;; only running 1 command, sorting by priority.
                                results (when the-commands
                                          (take 1 (filter identity (map #(exec-command context %) the-commands))))]
-                           (when (and which-key-active? (= keycode 27))
-                             (d/transact! [[:db/add :commands :which-key/active? false]]))
+
+                           (d/transact! [(when (and which-key-active? (= keycode 27))
+                                           [:db/add :commands :which-key/active? false])
+                                         (when the-commands
+                                           [:db/add :commands :last-exec-keys all-keys-down])])
                            ;; if we use Tab as a modifier,
                            ;; we'll stop its default behaviour
                            #_(when (= 9 keycode)
@@ -117,6 +124,8 @@
                              (clear-which-key!))
 
                            (clear-timeout!)
+
+
 
                            (when modifier?
                              (d/transact! [[:db/update-attr :commands :modifiers-down conj keycode]
