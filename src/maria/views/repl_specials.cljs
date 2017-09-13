@@ -58,7 +58,7 @@
 (defview dir
   {:view/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
-  (let [defs (->> (:defs (ns-utils/analyzer-ns @c-state ns))
+  (let [defs (->> (:defs (ns-utils/analyzer-ns c-state ns))
                   (seq)
                   (sort)
                   (map second)

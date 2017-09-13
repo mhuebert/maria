@@ -2,7 +2,8 @@
   (:require [maria.eval :as e]
             [cljs-live.eval :as c-e]
             [clojure.string :as string]
-            [magic-tree.core :as tree]))
+            [magic-tree.core :as tree]
+            [cljs.analyzer :as ana]))
 
 
 (defn builtin-ns? [s]
@@ -10,7 +11,7 @@
        (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))
 
 (defn analyzer-ns [c-state ns]
-  (get-in c-state [:cljs.analyzer/namespaces ns]))
+  (get-in @c-state [:cljs.analyzer/namespaces ns]))
 
 (defn user-namespaces [c-state]
   (->> (keys (:cljs.analyzer/namespaces c-state))
@@ -77,11 +78,11 @@
             (merge names (update-kvs (get the-ns k)
                                      (comp str first)
                                      #(full-name k %)))) {} [:rename-macros
-                                                           :renames
-                                                           :use-macros
-                                                           :imports
-                                                           :requires
-                                                           :uses]))
+                                                             :renames
+                                                             :use-macros
+                                                             :imports
+                                                             :requires
+                                                             :uses]))
 
 
 
@@ -162,15 +163,22 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
   (memoize (fn [] (merge (ns-publics* (get-ns 'cljs.core) true {:include '#{cljs.core/munge}})
                          (ns-publics* (get-ns 'cljs.core$macros) true #{})))))
 
+(defn ana-env []
+  (assoc @e/c-state :ns (ana/get-namespace e/c-state (:ns @e/c-env))))
+
 (defn ns-completions
   ([token] (ns-completions (:ns @e/c-env) token))
   ([ns-name node]
    (let [the-symbol (tree/sexp node)
-         sym-string (str the-symbol)]
-     (prn :ns-completions sym-string (namespace the-symbol))
-     (sort (for [[completion full-name] (merge (ns-aliases* (get-ns ns-name))
-                                               (ns-publics* (get-ns ns-name) false)
-                                               (core-publics))
+         root-ns (some->> (namespace the-symbol)
+                          (ana/resolve-ns-alias (ana-env))
+                          (get-ns))
+         sym-string (if root-ns (name the-symbol) (str the-symbol))]
+     (sort (for [[completion full-name] (if root-ns
+                                          (ns-publics* root-ns false)
+                                          (merge (ns-aliases* (get-ns ns-name))
+                                                 (ns-publics* (get-ns ns-name) false)
+                                                 (core-publics)))
                  :when (and (string/starts-with? completion sym-string)
                             (not= completion the-symbol))]
              [completion full-name])))))
