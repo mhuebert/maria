@@ -40,7 +40,10 @@
   (-dissoc [this key]
     (new Shape (dissoc attrs key)))
   ISeqable
-  (-seq [this] (seq attrs)))
+  (-seq [this] (seq attrs))
+  IPrintWithWriter
+  (-pr-writer [this writer _]
+    (write-all writer (pr-str attrs))))
 
 (defn circle
   "Returns a circle of `radius`."

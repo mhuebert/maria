@@ -112,3 +112,5 @@
        :center (+ y-offset
                   (.-top rect)
                   (/ (.-height rect) 2)))]))
+
+(def space \u00A0)

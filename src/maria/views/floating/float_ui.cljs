@@ -11,14 +11,21 @@
                               (when-let [teardown (:teardown @state)]
                                 (teardown)))
    :setupListener           (fn [{:keys [view/state cancel-events] :as this
-                                  :or   {cancel-events ["mousedown" "focus"]}}]
+                                  :or   {cancel-events ["mousedown" "focus" "scroll"]}}]
                               (.teardown this)
                               (let [the-events (to-array cancel-events)
+                                    this-node (v/dom-node this)
                                     callback (fn [e]
-                                               (when (not (r/closest (.-target e) #(= % (.-currentTarget e))))
+                                               (when (= (.-type e) "scroll")
+                                                 (.log js/console (.-target e)))
+                                               (when (and (not (r/closest (.-target e) (partial = this-node)))
+                                                          (or (not= (.-type e) "scroll")
+                                                              (= (.-target e) js/document)))
+                                                 (.teardown this)
                                                  (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
                                 (events/listen js/window the-events callback true)
-                                (v/swap-silently! state assoc :teardown #(events/unlisten js/window the-events callback true))))
+                                (v/swap-silently! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
+                                                                             (v/swap-silently! state dissoc :teardown)))))
    :view/did-mount          (fn [this] (.setupListener this))
    :view/will-receive-props (fn [{cancel-events                       :cancel-events
                                   {prev-cancel-events :cancel-events} :view/prev-props :as this}]

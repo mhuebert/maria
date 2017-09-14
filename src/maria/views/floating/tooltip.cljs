@@ -5,7 +5,8 @@
             [goog.events :as events]
             [goog.dom.dataset :as data]
             [re-view-routing.core :as r]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [cljs.tools.reader.edn :as edn]))
 
 (defview Tooltip
   {:view/did-mount    (fn [{:keys [view/state]}]
@@ -26,16 +27,16 @@
                                                         {:float/pos    (util/rect->abs-pos (.getBoundingClientRect target)
                                                                                            [:center :bottom])
                                                          :float/offset [0 5]
-                                                         :title        (data/get target "tooltip")}))))))]
+                                                         :content      (edn/read-string (data/get target "tooltip"))}))))))]
                           (events/listen body the-events callback)
                           (v/swap-silently! state assoc :unlisten #(events/unlisten body the-events callback))))
    :view/will-unmount #((:unlisten @(:view/state %)))}
   [{:keys [view/state]}]
-  (when-let [{:keys [title float/pos float/offset]} (:tooltip @state)]
+  (when-let [{:keys [content float/pos float/offset]} (:tooltip @state)]
     (ui/FloatingContainer {:float/pos    pos
                            :float/offset offset
                            :element      [:.absolute.tc
                                           {:style {:width 150
                                                    :left  -75}}
-                                          [:.pa1.br1.bg-white.f7.sans-serif.gray.dib title]]})))
+                                          [:.pa1.br1.bg-white.f7.sans-serif.dib content]]})))
 

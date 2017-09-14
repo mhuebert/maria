@@ -42,7 +42,7 @@
      {:style {:width       300
               :margin-left -150
               :left        "50%"
-              :top         20}}
+              :top         50}}
      [:.bg-darken.br2.pa2
       [:.shadow-4.flex.flex-column.items-stretch
        [:input.outline-0.pa2.bn.f6 {:placeholder placeholder
@@ -107,7 +107,7 @@
                                                                  :when (and filename (not= "" filename) (string/includes? filename q))]
                                                              {:value url
                                                               :label [Label (doc/strip-clj-ext filename)]})))}
-                          :cancel-events ["scroll" "mousedown"]
+                          ;:cancel-events ["scroll" "mousedown"]
                           :float/pos     [(/ (.-innerWidth js/window) 2)
                                           (+ (.-scrollY js/window) 100)]}))))
 
@@ -119,7 +119,7 @@
 
 ;; store stack of previous/common commands
 
-(defcommand :commands/search
+(defcommand :commands/command-search
   {:bindings ["M1-P"
               "M1-Shift-P"]
    :icon     icons/Search}
@@ -129,7 +129,6 @@
     (ui/floating-hint! {:component     CommandSearch
                         :kind          ::search
                         :props         nil
-                        :cancel-events ["scroll" "mousedown"]
                         :float/pos     [(/ (.-innerWidth js/window) 2)
                                         (+ (.-scrollY js/window) 100)]}))
   true)

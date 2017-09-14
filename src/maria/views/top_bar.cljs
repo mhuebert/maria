@@ -9,30 +9,39 @@
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [commands.registry :as registry]
+            [goog.events :as events]
+            [goog.functions :as gf]
             [maria.persistence.local :as local]))
 
 (defn toolbar-icon [icon]
   (icons/size icon 20))
 
-(defn toolbar-button [[action icon text title]]
-  [(if (:href action) :a :div)
+(defn toolbar-button [[action icon text tooltip]]
+  [(if (:href action) :a.no-underline :div)
    (cond-> {:class (str "pa2 flex items-center gray "
                         (when action "pointer hover-black hover-bg-near-white"))}
-           title (assoc :data-tooltip title)
+           tooltip (assoc :data-tooltip (pr-str tooltip))
            (fn? action) (assoc :on-click action)
            (map? action) (merge action))
    (some-> icon (toolbar-icon))
-   text])
+   (when (and icon text) util/space)
+   (cond->>
+     text
+     icon (conj [:.dn.dib-ns]))])
 
 (defn command-button
-  ([context command-name icon]
-   (command-button context command-name icon nil))
-  ([context command-name icon else-icon]
-   (let [tooltip (registry/spaced-name (name command-name))]
-     (if (:exec? (exec/get-command context command-name))
-       (toolbar-button [#(exec/exec-command-name command-name) icon nil tooltip])
-       (when else-icon
-         (toolbar-button [nil else-icon nil tooltip]))))))
+  [context command-name {:keys [icon else-icon tooltip text]}]
+  (let [tooltip (registry/spaced-name (name command-name))
+        {:keys [exec? parsed-bindings]} (exec/get-command context command-name)
+        key-string (some-> (ffirst parsed-bindings) (registry/keyset-string))]
+    (if exec?
+      (toolbar-button [#(do (util/stop! %)
+                            (exec/exec-command-name command-name)) icon text (if key-string
+                                                                               [:.flex.items-center tooltip
+                                                                                [:.gray.o-70.ml1 key-string]]
+                                                                               tooltip)])
+      (when else-icon
+        (toolbar-button [nil else-icon nil tooltip])))))
 
 (defn push-recents! [id filename]
   (when (and filename (not= "new" filename))
@@ -40,8 +49,21 @@
       (local/local-update! (str username "/recent-docs") #(->> (remove (comp (partial = id) :id) %)
                                                                (cons {:id id :filename filename}))))))
 
+
+(defview fixed-top
+  {:view/did-mount    (fn [{:keys [view/state]}]
+                        (->> (events/listen js/window "scroll"
+                                            (gf/throttle (fn [e]
+                                                           (swap! state assoc :scrolled? (not= 0 (.-scrollY js/window)))) 300))
+                             (v/swap-silently! state assoc :listener-key)))
+   :view/will-unmount #(events/unlistenByKey (:listener-key @(:view/state %)))}
+  [{:keys [when-scrolled view/state]} child]
+  [:.fixed.top-0.left-0.right-0.z-5
+   (when (:scrolled? @state) when-scrolled) child])
+
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
+
                               (.updateWindowTitle this)
                               (exec/set-context! {:current-doc this})
                               (push-recents! (:id this) (:filename this)))
@@ -67,47 +89,49 @@
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
         command-context (exec/get-context)]
-    [:.bb.flex.sans-serif.items-stretch.br.b--light-gray.f7.flex-none.b--light-gray
-     {:class (when (d/get :feature :in-place-eval) "bg-white")}
-     [:.ph2.flex-auto.flex.items-stretch
-      (toolbar-button [{:href "/home"} icons/Home nil "Home"])
+    [:div
+     (fixed-top
+       {:when-scrolled {:style {:background-color "#e7e7e7"
+                                :border-bottom    "2px solid #e2e2e2"}}}
+       [:.flex.sans-serif.items-stretch.br.f7.flex-none.overflow-hidden.pl2
+        (toolbar-button [{:href "/home"} icons/Home nil "Home"])
+        (command-button command-context :doc/new {:icon icons/Add})
 
-      (command-button command-context :doc/new icons/Add)
+        (some->>
+          (or left-content
+              (when filename
+                (list
+                  [:.ph2.flex.items-center
+                   [:a.hover-underline.gray.no-underline.dn.dib-ns {:href parent-url} parent-username]
+                   [:.ph1.gray.dn.dib-ns "/"]
+                   (text/autosize-text {:auto-focus  true
+                                        :class       "mr2 half-b sans-serif"
+                                        :ref         #(when % (swap! state assoc :title-input %))
+                                        :value       (doc/strip-clj-ext current-filename)
+                                        :on-key-down #(cond (and (= 13 (.-which %))
+                                                                 (not (or (.-metaKey %)
+                                                                          (.-ctrlKey %))))
+                                                            (doc/persist! this)
+                                                            (= 40 (.-which %))
+                                                            (exec/exec-command-name :navigate/focus-start)
+                                                            :else nil)
+                                        :placeholder "Enter a title..."
+                                        :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})]
+                  (command-button command-context :doc/save {:icon      icons/Backup
+                                                             :else-icon (when signed-in? (icons/class icons/Backup "o-30"))})
+                  (command-button command-context :doc/save-a-copy {:icon icons/ContentDuplicate})
 
-      (some->>
-        (or left-content
-            (when filename
-              (list
+                  (command-button command-context :doc/revert {:text "Revert"}))))
+          (conj [:.flex.items-stretch.bg-darken-lightly]))
+        [:.flex-auto]
+        (command-button command-context :commands/command-search {:icon icons/Search :text "Commands..."})
 
-                [:a.hover-underline.gray.no-underline {:href parent-url} parent-username]
-                [:.ph1.gray "/"]
-                (text/autosize-text {:auto-focus  true
-                                     :class       "mr2 half-b sans-serif"
-                                     :ref         #(when % (swap! state assoc :title-input %))
-                                     :value       (doc/strip-clj-ext current-filename)
-                                     :on-key-down #(cond (and (= 13 (.-which %))
-                                                              (not (or (.-metaKey %)
-                                                                       (.-ctrlKey %))))
-                                                         (doc/persist! this)
-                                                         (= 40 (.-which %))
-                                                         (exec/exec-command-name :navigate/focus-start)
-                                                         :else nil)
-                                     :placeholder "Enter a title..."
-                                     :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})
-
-                (command-button command-context :doc/save icons/Backup (when signed-in? (icons/class icons/Backup "o-30")))
-                (command-button command-context :doc/save-a-copy icons/ContentDuplicate)
-
-                (command-button command-context :doc/revert icons/Undo))))
-        (conj [:.flex.items-center.bg-darken-lightly.ph2]))]
-     [:.flex-auto]
-     (toolbar-button [{:on-click #(do (util/stop! %)
-                                      (exec/exec-command-name :commands/search command-context))} icons/Help nil "Command Search"])
-
-     (toolbar-button [{:href   "https://www.github.com/mhuebert/maria/issues"
-                       :target "_blank"} icons/Bug nil "Report a Bug"])
-     (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
-                    (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
-     [:.ph1]]))
+        (toolbar-button [{:href   "https://www.github.com/mhuebert/maria/issues"
+                          :target "_blank"} icons/Bug "Bug Report"])
+        (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
+                       (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
+        [:.ph1]])
+     [:.h2]
+     ]))
 
 ;; (str "/gists/" (d/get :auth-public :username))
