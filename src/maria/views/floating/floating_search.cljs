@@ -15,7 +15,7 @@
             [maria.pages.docs :as docs]
             [maria.commands.doc :as doc]))
 
-
+(def -prev-selection (volatile! nil))
 
 (defview FloatingSearch
   "A floating search bar, displayed near the top-middle of the screen.
@@ -25,11 +25,15 @@
                          (.captureSelections this)
                          (some-> (:input @state) (.focus)))
    :capture-selections (fn [{:keys [view/state]}]
-                         (swap! state assoc :prev-selections (history/get-selections)))
-   :return-selections  (fn [{:keys [view/state]}]
-                         (when-let [selections (:prev-selections @state)]
-                           (history/put-selections! selections)
-                           (v/swap-silently! state dissoc :prev-selections)))
+                         (when-not @-prev-selection
+                           (vreset! -prev-selection (history/get-selections))))
+   :return-selections  (fn [_]
+                         (when (not= (some-> (:kind (ui/current-hint))
+                                             (namespace))
+                                     (namespace ::this))
+                           (when-let [selections @-prev-selection]
+                             (history/put-selections! selections)
+                             (vreset! -prev-selection nil))))
    :view/will-unmount  (fn [this] (.returnSelections this))}
   [{:keys [view/state on-selection on-select! items placeholder] :as this}]
   (let [{:keys [q]} @state
