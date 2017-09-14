@@ -17,4 +17,5 @@ maria-editor/node_modules
 **/checkouts
 **/.cljs_live_planck_cache
 **/test-target/public/js
-**-editor/.cljs_rhino_repl/
+**/.cljs_rhino_repl/
+**/.firebaserc
