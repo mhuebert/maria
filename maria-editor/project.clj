@@ -1,5 +1,5 @@
-(defproject maria "0.1.0-SNAPSHOT"
-  :description "A learning project."
+(defproject maria-editor "0.1.0-SNAPSHOT"
+  :description "A ClojureScript editor for beginners"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
@@ -52,7 +52,9 @@
                  "checkouts/re_view_prosemirror/src"
                  "checkouts/magic_tree/src"
                  "checkouts/re_db/src"
-                 "checkouts/cljs_live/src"]
+                 "checkouts/cljs_live/src"
+                 "checkouts/shapes"
+                 "checkouts/cells"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

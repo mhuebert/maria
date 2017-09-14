@@ -16,8 +16,6 @@
                               (let [the-events (to-array cancel-events)
                                     this-node (v/dom-node this)
                                     callback (fn [e]
-                                               (when (= (.-type e) "scroll")
-                                                 (.log js/console (.-target e)))
                                                (when (and (not (r/closest (.-target e) (partial = this-node)))
                                                           (or (not= (.-type e) "scroll")
                                                               (= (.-target e) js/document)))
