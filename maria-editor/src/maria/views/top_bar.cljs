@@ -44,7 +44,7 @@
         (toolbar-button [nil else-icon nil tooltip])))))
 
 (defn push-recents! [id filename]
-  (when (and filename (not= "new" filename))
+  (when (and filename (not= "new" id))
     (when-let [username (and filename (d/get :auth-public :username))]
       (local/local-update! (str username "/recent-docs") #(->> (remove (comp (partial = id) :id) %)
                                                                (cons {:id id :filename filename}))))))
@@ -63,7 +63,6 @@
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
-
                               (.updateWindowTitle this)
                               (exec/set-context! {:current-doc this})
                               (push-recents! (:id this) (:filename this)))
