@@ -64,7 +64,7 @@
    [:path {:d "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"}]])
 
 (def CursorText
-  [:svg {:fill "currentColor"  :xml:space "preserve", :width "24px", :view-box "5.5 5.5 24 24", :xmlns "http://www.w3.org/2000/svg",:height "24px"}
+  [:svg {:fill "currentColor" :xml:space "preserve", :width "24px", :view-box "5.5 5.5 24 24", :xmlns "http://www.w3.org/2000/svg", :height "24px"}
    [:g {:id "rotation", :transform "translate(17.500000, 17.000000) rotate(-270.000000) translate(-17.500000, -17.000000) translate(9.500000, 13.500000)"} "\t\t\t"
     [:path {:id "stem", :d "M1.975,3.994h11.993V3.008H1.975V3.994z"}]
     [:path {:id "stem-dash", :d "M7.976,4.996H8.96V2.01H7.976V4.996z"}]
@@ -140,6 +140,11 @@
    [:path {:d "M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"}]])
 
 (def Redo (update Undo 1 assoc :style {:transform "scaleX(-1)"}))
+
+(def Replay
+  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
+   [:path {:d "M0 0h24v24H0z", :fill "none"}]
+   [:path {:d "M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"}]])
 
 (def Select
   [:svg {:fill "currentColor" :width "24px", :view-box "0 0 24 24", :xmlns "http://www.w3.org/2000/svg", :height "24px"}

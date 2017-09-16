@@ -13,7 +13,8 @@
             [maria.persistence.local :as local]
             [re-db.d :as d]
             [maria.pages.docs :as docs]
-            [maria.commands.doc :as doc]))
+            [maria.commands.doc :as doc]
+            [maria.util :as util]))
 
 (def -prev-selection (volatile! nil))
 
@@ -106,11 +107,14 @@
                                                      (cons
                                                        {:value "/home"
                                                         :label [Label "Home"]}
-                                                       (for [doc (local/local-get (str (d/get :auth-public :username) "/recent-docs"))
-                                                             :let [{:keys [url filename]} (doc/normalize-doc doc)]
-                                                             :when (and filename (not= "" filename) (string/includes? filename q))]
-                                                         {:value url
-                                                          :label [Label (doc/strip-clj-ext filename)]})))}
+                                                       (let [username (d/get :auth-public :username)
+                                                             pattern (re-pattern (str "(?i)\\b" q))]
+                                                         (for [{:keys [filename local-url]} (distinct (concat (doc/locals-dir :local/recents)
+                                                                                                              (doc/user-gists username)
+                                                                                                              (seq doc/modules)))
+                                                               :when (and (util/some-str filename) (re-find pattern filename))]
+                                                           {:value local-url
+                                                            :label [Label (doc/strip-clj-ext filename)]}))))}
                           ;:cancel-events ["scroll" "mousedown"]
                           :float/pos [(/ (.-innerWidth js/window) 2)
                                       (+ (.-scrollY js/window) 100)]}))))
@@ -130,9 +134,9 @@
   [context]
   (if (= ::search (:kind (ui/current-hint)))
     (ui/clear-hint!)
-    (ui/floating-hint! {:component     CommandSearch
-                        :kind          ::search
-                        :props         nil
-                        :float/pos     [(/ (.-innerWidth js/window) 2)
-                                        (+ (.-scrollY js/window) 100)]}))
+    (ui/floating-hint! {:component CommandSearch
+                        :kind      ::search
+                        :props     nil
+                        :float/pos [(/ (.-innerWidth js/window) 2)
+                                    (+ (.-scrollY js/window) 100)]}))
   true)

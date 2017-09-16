@@ -14,17 +14,18 @@
       (update :query #(select-keys % [:eval]))))
 
 (defn match-route-segments [segments]
-  (let [current-username (d/get :auth-public :username)]
+  (let [current-username (d/get :auth-public :username)
+        route-tx (assoc (sanitized-location)
+                   :segments segments)]
     (match segments
            []
-           (match-route-segments ["modules" "intro"])
+           (match-route-segments ["modules" (:id (first curriculum/as-gists))])
            #_(match-route-segments ["modules" "intro"])
 
            ["modules"]
            (match-route-segments ["gists" "modules"])
-
-           ["modules" module-name]
-           (match-route-segments ["gist" (curriculum/modules-by-path module-name)])
+           ["modules" id]
+           (match-route-segments ["gist" id])
 
 
            ;; re/ :current-entity
@@ -33,27 +34,29 @@
            ;; prevent malicious code from attempting to overwrite
            ;; documents other than what the user is currently editing.
 
-           ["new"]
-           (frame-view/editor-frame-view {:current-entity  "new"
-                                          :db/transactions [(assoc (sanitized-location)
-                                                              :segments segments)]})
-
            ["gists" username]
            (do (some-> username (github/load-user-gists))
-               (frame-view/editor-frame-view {:db/transactions [(assoc (sanitized-location)
-                                                                  :segments segments)]}))
+               (frame-view/editor-frame-view {:db/transactions [route-tx]
+                                              :db/queries      (when username
+                                                                 [[:gist.owner/username username]])}))
+
+
+           (:or
+             ["local" id]
+             ["local"])
+           (frame-view/editor-frame-view {:db/transactions [route-tx]})
 
            ["gist" id]
            (match-route-segments ["gist" id false])
 
            ["home"] (do
                       (some-> current-username (github/load-user-gists))
-                      (frame-view/editor-frame-view {:db/transactions [(assoc (sanitized-location)
-                                                                         :segments segments)]}))
+                      (frame-view/editor-frame-view {:db/transactions [route-tx]
+                                                     :db/queries      (when current-username
+                                                                        [[:gist.owner/username current-username]])}))
 
            ["gist" id filename]
            (do (github/load-gist id)
                (frame-view/editor-frame-view {:current-entity  id
-                                              :db/transactions [(assoc (sanitized-location)
-                                                                  :segments segments)]})))))
+                                              :db/transactions [route-tx]})))))
 

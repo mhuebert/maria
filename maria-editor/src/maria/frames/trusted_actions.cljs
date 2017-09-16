@@ -26,26 +26,24 @@
                           (github/patch-gist project-id
                                              (github/project->gist project)
                                              (fn [{:keys [value error]}]
-                                               (if value (d/transact! [{:db/id     project-id
-                                                                        :persisted value
-                                                                        :local     value}])
+                                               (if value (d/transact! [(assoc value :local (:persisted value))])
                                                          (.error js/console "Error patching gist: " error))))
                           (throw (js/Error. "Cannot publish project owned by another user."))))
 
-                      [:project/create project]
-                      (github/create-gist (github/project->gist project) (fn [{{id :id :as project} :value
-                                                                               error                :error}]
+                      [:project/create project local-id]
+                      (github/create-gist (github/project->gist project) (fn [{{{id :id :as project} :persisted :as value} :value
+                                                                               error                                       :error}]
                                                                            (if project (do
-                                                                                         (d/transact! [[:db/add id :persisted project]])
-                                                                                         (frame/send frame-id [:project/clear-new!])
+                                                                                         (d/transact! [value])
+                                                                                         (frame/send frame-id [:project/clear-local! local-id])
                                                                                          (r/nav! (str "/gist/" id)))
                                                                                        (.error js/console "Error creating gist: " error))))
 
                       [:project/copy project]
-                      (github/create-gist (github/project->gist project) (fn [{{id :id :as project} :value
-                                                                               error                :error}]
+                      (github/create-gist (github/project->gist project) (fn [{{{id :id :as project} :persisted :as value} :value
+                                                                               error                                       :error}]
                                                                            (if project (do
-                                                                                         (d/transact! [[:db/add id :persisted project]])
+                                                                                         (d/transact! [value])
                                                                                          (r/nav! (str "/gist/" id)))
                                                                                        (.error js/console "Error creating gist: " error))))
 

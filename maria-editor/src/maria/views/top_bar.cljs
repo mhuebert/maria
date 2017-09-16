@@ -43,12 +43,6 @@
       (when else-icon
         (toolbar-button [nil else-icon nil tooltip])))))
 
-(defn push-recents! [id filename]
-  (when (and filename (not= "new" id))
-    (when-let [username (and filename (d/get :auth-public :username))]
-      (local/local-update! (str username "/recent-docs") #(->> (remove (comp (partial = id) :id) %)
-                                                               (cons {:id id :filename filename}))))))
-
 
 (defview fixed-top
   {:view/did-mount    (fn [{:keys [view/state]}]
@@ -65,7 +59,7 @@
   {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
                               (exec/set-context! {:current-doc this})
-                              (push-recents! (:id this) (:filename this)))
+                              (some->> (:id this) (doc/locals-push! :local/recents)))
    :view/will-unmount       #(exec/set-context! {:current-doc nil})
    :view/will-receive-props (fn [{filename                                 :filename
                                   props                                    :view/props
@@ -74,13 +68,16 @@
                               (when-not (= filename prev-filename)
                                 (.updateWindowTitle this))
                               (when (not= props prev-props)
-                                (push-recents! (:id this) filename)))
+                                (some->> (:id this)
+                                         (doc/locals-push! :local/recents))))
    :update-window-title     (fn [{:keys [filename]}]
                               (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
   [{{:keys [persisted local]} :project
     :keys                     [filename id view/state left-content] :as this}]
   (let [signed-in? (d/get :auth-public :signed-in?)
-        {parent-url :maria-url parent-username :username} (or (:parent this) (:owner persisted) (d/entity :auth-public))
+        {parent-url :local-url parent-username :username} (or (:owner persisted)
+                                                              (:owner this)
+                                                              (d/entity :auth-public))
         current-filename (or (get-in local [:files filename :filename]) filename)
         {local-content :content} (get-in local [:files filename])
         {persisted-content :content} (get-in persisted [:files filename])
@@ -120,13 +117,19 @@
                                                              :else-icon (when signed-in? (icons/class icons/Backup "o-30"))})
                   (command-button command-context :doc/save-a-copy {:icon icons/ContentDuplicate})
 
-                  (command-button command-context :doc/revert {:text "Revert"}))))
+                  (command-button command-context :doc/revert {:icon (update-in icons/Replay [1 :style] assoc
+                                                                                :transform "scaleX(-1) rotate(-90deg)"
+                                                                                :color "darkred")
+                                                               :text "Reset"}))))
           (conj [:.flex.items-stretch.bg-darken-lightly]))
+
         [:.flex-auto]
+
         (command-button command-context :commands/command-search {:icon icons/Search :text "Commands..."})
 
-        (toolbar-button [{:href   "https://www.github.com/mhuebert/maria/issues"
-                          :target "_blank"} icons/Bug "Bug Report"])
+        (toolbar-button [{:href      "https://www.github.com/mhuebert/maria/issues"
+                          :tab-index -1
+                          :target    "_blank"} icons/Bug "Bug Report"])
         (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
                        (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
         [:.ph1]])

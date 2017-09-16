@@ -39,7 +39,7 @@
                                                         (github/get-username github-id (fn [{:keys [value error]}]
                                                                                          (if value (d/transact! [{:db/id     :auth-public
                                                                                                                   :username  value
-                                                                                                                  :maria-url (str "/gists/" value)}])
+                                                                                                                  :local-url (str "/gists/" value)}])
                                                                                                    (if (re-find #"40" error)
                                                                                                      (sign-in (:providerId (first providerData)))
                                                                                                      (.error js/console "Unable to retrieve GitHub username" error)))))

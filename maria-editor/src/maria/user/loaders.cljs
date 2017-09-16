@@ -49,7 +49,7 @@
                             (swap! status assoc
                                    :status [:.dark-red "Error:"]
                                    :error error)
-                            (let [project value
+                            (let [project (:persisted value)
                                   [_ {source :content}] (first (:files project))]
                               (eval/eval-str* source)
                               (swap! status assoc

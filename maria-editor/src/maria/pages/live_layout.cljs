@@ -1,4 +1,4 @@
-(ns maria.pages.index
+(ns maria.pages.live-layout
   (:require [re-view.core :as v :refer [defview]]
             [maria.views.floating.tooltip :as tooltip]
             [re-db.d :as d]
@@ -14,7 +14,8 @@
             [maria.views.top-bar :as toolbar]
             [maria.views.icons :as icons]
             [maria.curriculum :as curriculum]
-            [commands.exec :as exec]))
+            [commands.exec :as exec]
+            [maria.commands.doc :as doc]))
 
 (defonce _
          (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -35,13 +36,13 @@
     [:div
      (toolbar/doc-toolbar {})
 
-     (-> (d/get "modules" :gists)
+     (-> doc/modules
          (doc-list-section "Learning Modules"))
 
-     (some-> (local/local-get (str username "/recent-docs"))
+     (some-> (doc/locals-dir :local/recents)
              (doc-list-section "Recent"))
 
-     (some-> (d/get username :gists)
+     (some-> (seq (doc/user-gists username))
              (doc-list-section "My gists"))]))
 
 (defview layout
@@ -57,10 +58,15 @@
 
       (match segments
              ["home"] (home)
-             ["new"] (docs/file-edit {:id "new"})
              ["gist" id filename] (docs/file-edit {:id       id
                                                    :filename filename})
-             ["gists" username] (docs/gists-list username)))]
+             ["gists" username] (docs/gists-list username)
+
+             ["local"] (docs/doc-list (doc/user-gists "local"))
+             ["local" id] (docs/file-edit {:id     id
+                                           :local? true})
+
+             ))]
 
    (which-key/show-commands)
    (dock/BottomBar {})

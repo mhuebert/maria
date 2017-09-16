@@ -1,5 +1,5 @@
 (ns maria.frames.live-frame
-  (:require [maria.pages.index :as repl]
+  (:require [maria.pages.live-layout :as repl]
             [maria.eval :as e]
 
 
@@ -64,7 +64,6 @@
 
 (defn main []
 
-  (local/init-storage "new" github/blank)
   (e/init)
 
   (v/render-to-dom (repl/layout {}) "maria-env")

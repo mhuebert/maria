@@ -39,10 +39,11 @@
 
 (defview editor-frame-view
   {:spec/props {:default-value :String}}
-  [{:keys [current-entity db/transactions]}]
-  (frame-view {:db/transactions (into [(or (d/entity :auth-public)
-                                           [:db/retract-entity :auth-public])
-                                       (some-> current-entity (d/entity))
-                                       (some-> (d/get :auth-public :username) (d/entity))]
-                                      transactions)
+  [{:keys [current-entity db/transactions db/queries]}]
+  (frame-view {:db/transactions (cond-> (into [(or (d/entity :auth-public)
+                                                   [:db/retract-entity :auth-public])
+                                               (some-> current-entity (d/entity))
+                                               (some-> (d/get :auth-public :username) (d/entity))]
+                                              transactions)
+                                        queries (into (d/entities queries)))
                :on-message      (actions/handle-message current-entity)}))

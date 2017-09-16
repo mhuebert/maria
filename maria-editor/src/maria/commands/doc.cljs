@@ -5,7 +5,10 @@
             [maria.frames.frame-communication :as frame]
             [re-db.d :as d]
             [maria.views.icons :as icons]
-            [maria.persistence.github :as github]))
+            [maria.persistence.github :as github]
+            [maria.persistence.local :as local]
+            [maria.curriculum :as curriculum]
+            [maria.util :as util]))
 
 (def send (partial frame/send frame/trusted-frame))
 
@@ -18,10 +21,72 @@
   (some-> s
           (string/replace #"\.clj[cs]?$" "")))
 
-(defn normalize-doc [{:keys [filename files url id] :as doc}]
-  (cond-> doc
-          (nil? filename) (assoc :filename (ffirst files))
-          (nil? url) (assoc :url (str "/gist/" id))))
+(defn local-url* [provider id]
+  (case provider :gist (str "/gist/" id)
+                 :maria/local (str "/local/" id)
+                 :maria/module (str "/modules/" id)
+                 (do (prn provider id)
+                     (throw (js/Error. (str "no local url" provider id))))))
+
+(defn locals-path
+  ([store] (locals-path (d/get :auth-public :username) store))
+  ([username store]
+   (case store :local/recents (str username "/recents"))))
+
+(defn get-filename
+  "Given a map of <filename, {:filename, content}>, return the inner or outer filename when present."
+  [file]
+  (let [[old-name {new-name :filename}] file]
+    (or (util/some-str new-name) (util/some-str old-name))))
+
+(defn project-filename [project]
+  (get-filename (first (:files (or (:local project)
+                                   (:persisted project))))))
+
+(defn locals-push!
+  "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
+  [store id]
+  (local/local-update! (locals-path store) #(->> (remove (partial = id) (seq %))
+                                                 (cons id))))
+(defn locals-remove!
+  "Remove a locally-stored id from `path`"
+  [store id]
+  (local/local-update! (locals-path store) #(remove (partial = id) %)))
+
+(defn normalize-doc
+  ([doc] (normalize-doc (:id doc) doc))
+  ([doc-id {updated-at :updated-at :as doc}]
+   (let [{:keys [filename files persistence/provider local-url id] :as doc
+          :or   {provider :maria/local}} (merge (:persisted doc)
+                                                (:local doc))
+         the-id (or doc-id id)
+         the-provider (or provider :maria/local)
+         the-filename (or filename (get-filename (first files)))]
+     (cond-> (assoc doc :updated-at updated-at)
+             (nil? filename) (assoc :filename the-filename)
+             (nil? id) (assoc :id the-id)
+             (nil? local-url) (assoc :local-url (local-url* the-provider (or the-id id)))
+             (nil? provider) (assoc :persistence/provider the-provider)))))
+
+(defn sort-projects [projects]
+  (sort-by #(or
+              (:updated-at %)
+              (project-filename %)) (fn [a b] (compare b a)) projects))
+
+(defn locals-dir
+  "List the locally-stored ids for `path`"
+  [store]
+  (let [username (d/get :auth-public :username)]
+    (seq (for [id (cond-> (local/local-get (locals-path username store))
+                          username (concat (local/local-get (locals-path nil store))))]
+           (normalize-doc id (merge {:local (local/local-get id)}
+                                    (d/entity id)))))))
+
+(defn user-gists [username]
+  (seq (->> (map normalize-doc (d/entities [[:gist.owner/username username]]))
+            (sort-projects))))
+
+(def modules (mapv normalize-doc curriculum/as-gists))
 
 (defn unsaved-changes? [{{{local-files :files}     :local
                           {persisted-files :files} :persisted} :project
@@ -58,18 +123,21 @@
              [true false _] :copy
              :else nil))))
 
-(defn create! [local]
-  (send [:project/create local]))
+(defn create! [local local-id]
+  (send [:project/create local local-id]))
+
+(defn rename-file [version old-name new-name]
+  (-> version
+      (update :files dissoc old-name)
+      (assoc-in [:files new-name :content] (get-in version [:files old-name :content]))))
 
 (defn make-a-copy! [{{local-version :local} :project
-              filename                      :filename}]
-  (let [{local-filename :filename
-         local-content  :content} (or (get-in local-version [:files filename])
-                                      filename)
-        new-filename (str "Copy of " local-filename)]
+                     filename               :filename}]
+  (let [local-filename (or (get-in local-version [:files filename :filename])
+                           filename)]
     (create! (-> local-version
-                 (update :files dissoc filename)
-                 (assoc-in [:files new-filename :content] local-content)))))
+                 (rename-file filename (str "Copy of " local-filename)))
+             false)))
 
 (defn save! [{filename                                      :filename
               {{persisted-id :id :as persisted} :persisted} :project
@@ -82,17 +150,22 @@
 (defn persist! [toolbar]
   (case (persistence-mode toolbar)
     :save (save! toolbar)
-    :create (create! (d/get "new" :local))))
+    :create (create! (d/get (:id toolbar) :local) (:id toolbar))))
+
+(defn init-new! []
+  (let [id (d/unique-id)]
+    (local/init-storage id {:persistence/provider :maria/local
+                            :files                {"Untitled" {:content ""}}})
+    id))
 
 (defcommand :doc/new
   "Create a blank doc"
   {:bindings       ["M1-Shift-B"]
    :intercept-when true
-   :when           :current-doc
    :icon           icons/Add}
   [{{:keys [view/state doc-editor id]} :current-doc}]
-  (github/clear-new!)
-  (frame/send frame/trusted-frame [:window/navigate "/new" {}])
+  (let [id (init-new!)]
+    (frame/send frame/trusted-frame [:window/navigate (str "/local/" id) {}]))
   true)
 
 (defcommand :doc/save

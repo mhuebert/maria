@@ -3,7 +3,10 @@
             [goog.object :as gobj]
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
-            [maria.curriculum :as curriculum]))
+            [maria.curriculum :as curriculum]
+            [maria.persistence.local :as local]))
+
+(d/merge-schema! {:gist.owner/username {:db/index true}})
 
 (defn send [url cb & args]
   (d/transact! [[:db/update-attr :remote/status :in-progress (fnil inc 0)]])
@@ -14,25 +17,31 @@
 
 (defn gist-person [{:keys [html_url url id login gists_url] :as person}]
   {:username  login
-   :maria-url (str "/gists/" login)
+   :local-url (str "/gists/" login)
    :id        (str id)})
 
 (defn gist->project
   "Convert a gist to local project format"
-  [{:keys [description files owner html_url id] :as gist-data}]
-  {:description          description
-   :id                   id
-   :owner                (if (curriculum/modules-by-id id)
-                           curriculum/modules-owner
-                           (gist-person owner))
-   :html-url             html_url
-   :persistence/provider :gist
-   :files                (->> files
-                              (reduce-kv (fn [m filename {:keys [language]
-                                                          :as   file}]
-                                           (cond-> m
-                                                   (= language "Clojure")
-                                                   (assoc (name filename) (select-keys file [:filename :truncated :content])))) {}))})
+  [{:keys [description files updated_at owner html_url id] :as gist-data}]
+  (let [{:keys [username] :as owner} (if (curriculum/modules-by-id id)
+                                       curriculum/modules-owner
+                                       (gist-person owner))]
+    (let [files (->> files
+                     (reduce-kv (fn [m filename {:keys [language]
+                                                 :as   file}]
+                                  (cond-> m
+                                          (= language "Clojure")
+                                          (assoc (name filename) (select-keys file [:filename :truncated :content])))) {}))]
+      (when (seq files)
+        {:db/id               id
+         :updated-at          updated_at
+         :gist.owner/username username
+         :persisted           {:description          description
+                               :id                   id
+                               :owner                owner
+                               :html-url             html_url
+                               :persistence/provider :gist
+                               :files                files}}))))
 
 (defn project->gist
   "Convert a project to gist format, for persistence"
@@ -58,19 +67,16 @@
     (d/transact! [{:db/id           id
                    :loading-message "Loading gist..."}])
     (get-gist id (fn [{:keys [value error]}]
-                   (d/transact! [{:db/id           id
-                                  :persisted       value
-                                  :persisted-error error
-                                  :loading-message false}])))))
+                   (d/transact! [(merge {:loading-message false}
+                                        (or value
+                                            {:persisted-error error}))])))))
 
 (defn get-user-gists [username cb]
   (send (str "https://api.github.com/users/" username "/gists")
         (fn [e]
           (let [target (.-target e)]
             (if (.isSuccess target)
-              (cb {:value (->> (js->clj (.getResponseJson target) :keywordize-keys true)
-                               (map gist->project)
-                               (filter #(> (count (:files %)) 0)))})
+              (cb {:value (keep gist->project (js->clj (.getResponseJson target) :keywordize-keys true))})
               (cb nil))))
         "GET"
         nil
@@ -85,8 +91,9 @@
                      :loading-message "Loading gists..."}])
       (get-user-gists username (fn [{:keys [value error]}]
                                  (d/transact! (if value
-                                                [[:db/add username :gists value]
-                                                 [:db/add username :loading-message false]]
+                                                (into value
+                                                      [[:db/add username :gists true]
+                                                       [:db/add username :loading-message false]])
                                                 [{:error error}])))))))
 
 (defn patch-gist [gist-id gist-data cb]
@@ -138,10 +145,3 @@
         "GET"
         nil
         (tokens/auth-headers "github.com")))
-
-(def blank {:files {"" {:content ""}}})
-
-(defn clear-new! []
-  (d/transact! [{:db/id     "new"
-                 :persisted nil
-                 :local     blank}]))

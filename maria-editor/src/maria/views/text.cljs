@@ -74,7 +74,7 @@
    (when-let [{:keys [input-element fake-element]} @state]
      (let [id (:node/id props)
            root-node (v/dom-node this)
-           computed-style (select-keys-js (js/getComputedStyle fake-element) ["font-size" "line-height" "font-style" "padding"])
+           computed-style (select-keys-js (js/getComputedStyle fake-element) ["font-size" "line-height" "font-style" "padding" "font-weight"])
            value (.-innerHTML fake-element)
            _ (when char (set! (.-innerHTML fake-element) (value-adjust (str value char))))
            width (+ 1 width-adjust (max 10 (get-prop "offsetWidth" id computed-style value fake-element)))
@@ -130,7 +130,7 @@
    :focus           (fn [{:keys [view/state]}]
                       (.focus (:input-element @state)))
    :cursorPos       (fn [{:keys [view/state]}] (get-cursor-pos (:input-element @state)))}
-  [{:keys [value placeholder style on-key-down view/props view/state] :as this}]
+  [{:keys [value placeholder class style on-key-down view/props view/state] :as this}]
   (let [placeholder (or placeholder "...")
         v (if (empty? value) placeholder value)]
     [:.autosize-input
@@ -138,7 +138,8 @@
      [:.fixed.o-0.z-0.dib.w-100
       {:style {:top -2000}}
       [:.autosize-input-fake.w-auto
-       {:ref #(when % (swap! state assoc :fake-element %))}
+       {:ref #(when % (swap! state assoc :fake-element %))
+        :class class}
        (str v (when (#{"\n" "\r"} (last v)) " "))]]
      [:input (-> props
                  (update :classes into ["autosize-input-input dib"])
