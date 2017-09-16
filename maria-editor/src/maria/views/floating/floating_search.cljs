@@ -96,24 +96,24 @@
   (let [Label :.sans-serif.f7.pv2.half-b]
     (if (= ::open (:kind (ui/current-hint)))
       (ui/clear-hint!)
-      (ui/floating-hint! {:component     FloatingSearch
-                          :kind          ::open
+      (ui/floating-hint! {:component FloatingSearch
+                          :kind      ::open
 
-                          :props         {:placeholder "Open..."
-                                          :on-select!  (fn [value]
-                                                         (frame/send frame/trusted-frame [:window/navigate value {}]))
-                                          :items       (fn [q]
-                                                         (cons
-                                                           {:value "/home"
-                                                            :label [Label "Home"]}
-                                                           (for [doc (local/local-get (str (d/get :auth-public :username) "/recent-docs"))
-                                                                 :let [{:keys [url filename]} (doc/normalize-doc doc)]
-                                                                 :when (and filename (not= "" filename) (string/includes? filename q))]
-                                                             {:value url
-                                                              :label [Label (doc/strip-clj-ext filename)]})))}
+                          :props     {:placeholder "Open..."
+                                      :on-select!  (fn [value]
+                                                     (frame/send frame/trusted-frame [:window/navigate value {}]))
+                                      :items       (fn [q]
+                                                     (cons
+                                                       {:value "/home"
+                                                        :label [Label "Home"]}
+                                                       (for [doc (local/local-get (str (d/get :auth-public :username) "/recent-docs"))
+                                                             :let [{:keys [url filename]} (doc/normalize-doc doc)]
+                                                             :when (and filename (not= "" filename) (string/includes? filename q))]
+                                                         {:value url
+                                                          :label [Label (doc/strip-clj-ext filename)]})))}
                           ;:cancel-events ["scroll" "mousedown"]
-                          :float/pos     [(/ (.-innerWidth js/window) 2)
-                                          (+ (.-scrollY js/window) 100)]}))))
+                          :float/pos [(/ (.-innerWidth js/window) 2)
+                                      (+ (.-scrollY js/window) 100)]}))))
 
 ;; input for text...
 ;; - auto-focus

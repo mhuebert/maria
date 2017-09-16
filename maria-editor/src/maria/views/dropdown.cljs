@@ -40,6 +40,9 @@
 
 (def DEFAULT_PAGE_SIZE 9)
 
+(defn page-count [item-count page-size]
+  (.ceil js/Math (/ item-count page-size)))
+
 (defview numbered-list
   {:view/initial-state      (fn [{:keys [ui/max-height default-selection] :as this}]
                               {:selection (or default-selection -1)
@@ -53,17 +56,26 @@
    :down                    (fn [{:keys [view/state items]}]
                               (when (seq items)
                                 (let [{:keys [selection page PAGE_SIZE]} @state
-                                      current-page+ (take (inc PAGE_SIZE) (drop (* page PAGE_SIZE) items))
-                                      [selection page] (if (>= selection (min (dec PAGE_SIZE) (dec (count current-page+))))
-                                                         [0 (cond-> page
-                                                                    (first (drop PAGE_SIZE current-page+)) (inc))]
+                                      item-count (count items)
+                                      page-count (page-count item-count PAGE_SIZE)
+                                      last-page? (= page (dec page-count))
+                                      current-max-selection (if last-page?
+                                                              (dec (- item-count (* page PAGE_SIZE)))
+                                                              (dec PAGE_SIZE))
+                                      [selection page] (if (>= selection current-max-selection)
+                                                         [0 (if last-page? 0 (inc page))]
                                                          [(min (inc selection) (dec PAGE_SIZE)) page])]
                                   (swap! state assoc :selection selection :page page))))
    :up                      (fn [{:keys [view/state items]}]
                               (when (seq items)
                                 (let [{:keys [selection page PAGE_SIZE]} @state
+                                      item-count (count items)
                                       [selection page] (if (<= selection 0)
-                                                         [(dec PAGE_SIZE) (max 0 (dec page))]
+                                                         (let [page (max 0 (if (= page 0) (dec (page-count item-count PAGE_SIZE))
+                                                                                          (dec page)))
+                                                               selection (min (dec PAGE_SIZE)
+                                                                              (dec (- item-count (* page PAGE_SIZE))))]
+                                                           [selection page])
                                                          [(dec selection) page])]
                                   (swap! state assoc :selection selection :page page))))
    :select-n                (fn [{:keys [on-select! view/state items]} n]
@@ -104,18 +116,11 @@
         trigger-event (if mobile? :on-click
                                   :on-mouse-down)
         offset (* page PAGE_SIZE)
-        items (drop offset items)
-        more? (first (drop PAGE_SIZE items))]
+        page-count (page-count (count items) PAGE_SIZE)
+        items (drop offset items)]
     [:div.bg-white.br1
      {:class (str class " " (when waiting? "o-50"))}
      (when waiting? [:.progress-indeterminate])
-     (when (> page 0)
-       [:.tc.pointer.flex.flex-column.items-center.h1
-        {:on-mouse-down #(do
-                           (util/stop! %)
-                           (swap! state update :page dec))
-         :style         {:border-bottom "1px solid rgba(0,0,0,0.05)"}}
-        icons/ArrowDropUp])
      (->> (take PAGE_SIZE items)
           (map-indexed (fn [i {:keys [value label]}]
                          [:.nowrap.flex.items-center.pointer.items-stretch
@@ -127,8 +132,19 @@
                                                 (util/stop! %))}
                           (when-not mobile? (legend (if (< i 9) (inc i) " ")))
                           label])))
-     (when more?
-       [:.tc.pointer.flex.flex-column.items-center.h1
-        {:on-mouse-down #(do
-                           (util/stop! %)
-                           (swap! state update :page inc))} icons/ArrowDropDown])]))
+     (when (> page-count 1)
+       [:.tc.items-center.flex.items-stretch
+        [:.flex-auto]
+        (map (fn [i]
+               (let [active? (= i page)
+                     action (when-not active?
+                              #(swap! state assoc :page i))]
+                 [:.pa1.dib.pointer
+                  {:on-mouse-over action
+                   :on-click      action}
+                  [:.br-100.mv1
+                   {:style {:width 10 :height 10}
+                    :class (if active?
+                             "bg-light-silver"
+                             "bg-light-gray")}]])) (range page-count))
+        [:.flex-auto]])]))

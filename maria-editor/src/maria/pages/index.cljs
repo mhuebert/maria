@@ -35,11 +35,11 @@
     [:div
      (toolbar/doc-toolbar {})
 
-     (some-> (local/local-get (str username "/recent-docs"))
-             (doc-list-section "Recent"))
-
      (-> (d/get "modules" :gists)
          (doc-list-section "Learning Modules"))
+
+     (some-> (local/local-get (str username "/recent-docs"))
+             (doc-list-section "Recent"))
 
      (some-> (d/get username :gists)
              (doc-list-section "My gists"))]))
