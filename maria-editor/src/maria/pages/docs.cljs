@@ -9,7 +9,7 @@
             [maria.pages.block_list :as block-list]
             [maria.curriculum :as curriculum]))
 
-(d/merge-schema! {:gist.owner/username {:db/index true}})
+(d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/as-gists)
 
 (defview file-edit
@@ -20,7 +20,7 @@
    :view/will-receive-props (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
                               (when-not (= id prev-id)
                                 (.initDoc this)))
-   :view/will-mount         (fn [{:keys [id filename] :as this}]
+   :view/will-mount         (fn [this]
                               (.initDoc this))
    :project-files           (fn [{:keys [id]}]
                               (-> (concat (keys (d/get-in id [:persisted :files]))

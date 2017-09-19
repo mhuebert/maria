@@ -55,18 +55,14 @@
    (hint/display-hint)
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
-
       (match segments
              ["home"] (home)
-             ["gist" id filename] (docs/file-edit {:id       id
-                                                   :filename filename})
+             ["doc" id] (docs/file-edit {:id id})
              ["gists" username] (docs/gists-list username)
 
-             ["local"] (docs/doc-list (doc/user-gists "local"))
+             ["local"] (docs/gists-list "local")
              ["local" id] (docs/file-edit {:id     id
-                                           :local? true})
-
-             ))]
+                                           :local? true})))]
 
    (which-key/show-commands)
    (dock/BottomBar {})

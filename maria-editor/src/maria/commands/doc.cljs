@@ -22,16 +22,18 @@
           (string/replace #"\.clj[cs]?$" "")))
 
 (defn local-url* [provider id]
-  (case provider :gist (str "/gist/" id)
-                 :maria/local (str "/local/" id)
-                 :maria/module (str "/modules/" id)
-                 (do (prn provider id)
-                     (throw (js/Error. (str "no local url" provider id))))))
+
+  (case (or provider (d/get id :persistence/provider))
+    :gist (str "/gist/" id)
+    :maria/local (str "/local/" id)
+    :maria/module (str "/modules/" id)
+    (do (prn "NO LOCAL URL" provider id)
+        #_(throw (js/Error. (str "no local url" provider id))))))
 
 (defn locals-path
   ([store] (locals-path (d/get :auth-public :username) store))
   ([username store]
-   (case store :local/recents (str username "/recents"))))
+   (case store :local/recents (str username "/recent_1"))))
 
 (defn get-filename
   "Given a map of <filename, {:filename, content}>, return the inner or outer filename when present."
@@ -55,18 +57,22 @@
 
 (defn normalize-doc
   ([doc] (normalize-doc (:id doc) doc))
-  ([doc-id {updated-at :updated-at :as doc}]
-   (let [{:keys [filename files persistence/provider local-url id] :as doc
-          :or   {provider :maria/local}} (merge (:persisted doc)
-                                                (:local doc))
-         the-id (or doc-id id)
-         the-provider (or provider :maria/local)
+  ([doc-id {updated-at :updated-at
+            root-id    :db/id :as the-doc}]
+   (let [{:keys [filename files local-url id]
+          :as   doc} (merge (:persisted the-doc)
+                            (:local the-doc)
+                            (select-keys the-doc [:owner]))
+         provider (or (:persistence/provider the-doc)
+                      (:persistence/provider (:persisted the-doc))
+                      (:persistence/provider (:local the-doc)))
+         the-id (or doc-id root-id id)
          the-filename (or filename (get-filename (first files)))]
-     (cond-> (assoc doc :updated-at updated-at)
+     (cond-> (assoc doc :updated-at updated-at
+                        :persistence/provider provider)
              (nil? filename) (assoc :filename the-filename)
              (nil? id) (assoc :id the-id)
-             (nil? local-url) (assoc :local-url (local-url* the-provider (or the-id id)))
-             (nil? provider) (assoc :persistence/provider the-provider)))))
+             (nil? local-url) (assoc :local-url (local-url* provider the-id))))))
 
 (defn sort-projects [projects]
   (sort-by #(or
@@ -83,7 +89,7 @@
                                     (d/entity id)))))))
 
 (defn user-gists [username]
-  (seq (->> (map normalize-doc (d/entities [[:gist.owner/username username]]))
+  (seq (->> (map normalize-doc (d/entities [[:doc.owner/username username]]))
             (sort-projects))))
 
 (def modules (mapv normalize-doc curriculum/as-gists))
@@ -155,7 +161,7 @@
 (defn init-new! []
   (let [id (d/unique-id)]
     (local/init-storage id {:persistence/provider :maria/local
-                            :files                {"Untitled" {:content ""}}})
+                            :files                {"Untitled.cljs" {:content ""}}})
     id))
 
 (defcommand :doc/new

@@ -70,15 +70,23 @@
                               (when (not= props prev-props)
                                 (some->> (:id this)
                                          (doc/locals-push! :local/recents))))
-   :update-window-title     (fn [{:keys [filename]}]
-                              (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))}
+   :get-filename            (fn [{:keys [filename] :as this}]
+                              (get-in this [:project :local :files filename :filename] filename))
+   :update-window-title     (fn [{:keys [view/state] :as this}]
+                              (let [filename (.getFilename this)]
+                                (when (= filename "Untitled.cljs")
+                                  (js/setTimeout #(some-> (:title-input @state)
+                                                          :view/state
+                                                          (deref)
+                                                          :input-element
+                                                          (.select)) 50))
+                                (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)])))}
   [{{:keys [persisted local]} :project
     :keys                     [filename id view/state left-content] :as this}]
   (let [signed-in? (d/get :auth-public :signed-in?)
         {parent-url :local-url parent-username :username} (or (:owner persisted)
-                                                              (:owner this)
-                                                              (d/entity :auth-public))
-        current-filename (or (get-in local [:files filename :filename]) filename)
+                                                              (:owner this))
+        current-filename (.getFilename this)
         {local-content :content} (get-in local [:files filename])
         {persisted-content :content} (get-in persisted [:files filename])
         update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
@@ -98,7 +106,8 @@
               (when filename
                 (list
                   [:.ph2.flex.items-center
-                   [:a.hover-underline.gray.no-underline.dn.dib-ns {:href parent-url} parent-username]
+                   (when (and parent-username parent-url)
+                     [:a.hover-underline.gray.no-underline.dn.dib-ns {:href parent-url} parent-username])
                    [:.ph1.gray.dn.dib-ns "/"]
                    (text/autosize-text {:auto-focus  true
                                         :class       "mr2 half-b sans-serif"

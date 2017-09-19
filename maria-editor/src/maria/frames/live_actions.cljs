@@ -9,6 +9,7 @@
   (match message
          [:db/transactions txs] (d/transact! txs)
          [:db/copy-local from-id to-id] (local/init-storage to-id (d/get from-id :local))
-         [:project/clear-local! local-id] (do
-                                            (local/local-put! local-id nil)
-                                            (doc/locals-remove! :local/recents local-id))))
+         [:project/move-local! from-id to-id] (do
+                                                (local/local-put! to-id (local/local-get from-id))
+                                                (local/local-put! from-id nil)
+                                                (doc/locals-remove! :local/recents from-id))))

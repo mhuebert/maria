@@ -35,7 +35,7 @@
                                                                                error                                       :error}]
                                                                            (if project (do
                                                                                          (d/transact! [value])
-                                                                                         (frame/send frame-id [:project/clear-local! local-id])
+                                                                                         (frame/send frame-id [:project/move-local! local-id id])
                                                                                          (r/nav! (str "/gist/" id)))
                                                                                        (.error js/console "Error creating gist: " error))))
 

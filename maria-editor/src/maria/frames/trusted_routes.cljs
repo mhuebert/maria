@@ -19,13 +19,19 @@
                    :segments segments)]
     (match segments
            []
-           (match-route-segments ["modules" (:id (first curriculum/as-gists))])
+           (match-route-segments ["modules" (:db/id (first curriculum/as-gists))])
            #_(match-route-segments ["modules" "intro"])
 
            ["modules"]
            (match-route-segments ["gists" "modules"])
-           ["modules" id]
-           (match-route-segments ["gist" id])
+           ["modules" url]
+           (match-route-segments ["http-text" url])
+
+           ["http-text" id]
+           (let [url (js/decodeURIComponent id)]
+             (github/load-url-text url)
+             (frame-view/editor-frame-view {:db/transactions [(assoc route-tx :segments ["doc" id])]
+                                            :current-entity  id}))
 
 
            ;; re/ :current-entity
@@ -38,7 +44,7 @@
            (do (some-> username (github/load-user-gists))
                (frame-view/editor-frame-view {:db/transactions [route-tx]
                                               :db/queries      (when username
-                                                                 [[:gist.owner/username username]])}))
+                                                                 [[:doc.owner/username username]])}))
 
 
            (:or
@@ -53,10 +59,10 @@
                       (some-> current-username (github/load-user-gists))
                       (frame-view/editor-frame-view {:db/transactions [route-tx]
                                                      :db/queries      (when current-username
-                                                                        [[:gist.owner/username current-username]])}))
+                                                                        [[:doc.owner/username current-username]])}))
 
            ["gist" id filename]
            (do (github/load-gist id)
                (frame-view/editor-frame-view {:current-entity  id
-                                              :db/transactions [route-tx]})))))
+                                              :db/transactions [(assoc route-tx :segments ["doc" id])]})))))
 

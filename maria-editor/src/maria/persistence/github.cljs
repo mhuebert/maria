@@ -4,9 +4,10 @@
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
             [maria.curriculum :as curriculum]
-            [maria.persistence.local :as local]))
+            [maria.persistence.local :as local]
+            [clojure.string :as string]))
 
-(d/merge-schema! {:gist.owner/username {:db/index true}})
+(d/merge-schema! {:doc.owner/username {:db/index true}})
 
 (defn send [url cb & args]
   (d/transact! [[:db/update-attr :remote/status :in-progress (fnil inc 0)]])
@@ -33,15 +34,15 @@
                                           (= language "Clojure")
                                           (assoc (name filename) (select-keys file [:filename :truncated :content])))) {}))]
       (when (seq files)
-        {:db/id               id
-         :updated-at          updated_at
-         :gist.owner/username username
-         :persisted           {:description          description
-                               :id                   id
-                               :owner                owner
-                               :html-url             html_url
-                               :persistence/provider :gist
-                               :files                files}}))))
+        {:db/id              id
+         :updated-at         updated_at
+         :doc.owner/username username
+         :persisted          {:description          description
+                              :id                   id
+                              :owner                owner
+                              :html-url             html_url
+                              :persistence/provider :gist
+                              :files                files}}))))
 
 (defn project->gist
   "Convert a project to gist format, for persistence"
@@ -62,14 +63,35 @@
         nil
         (tokens/auth-headers "github.com")))
 
+(defn get-url [url cb]
+  (send url (fn [e]
+              (let [target (.-target e)]
+                (if (.isSuccess target)
+                  (cb {:value (.getResponseText target)})
+                  (cb {:error (.getLastError target)}))))
+        "GET"))
+
 (defn load-gist [id]
   (when-not (d/get id :persisted)
     (d/transact! [{:db/id           id
-                   :loading-message "Loading gist..."}])
-    (get-gist id (fn [{:keys [value error]}]
-                   (d/transact! [(merge {:loading-message false}
-                                        (or value
-                                            {:persisted-error error}))])))))
+                   :loading-message "Loading gist..."}]))
+  (get-gist id (fn [{:keys [value error]}]
+                 (d/transact! [(merge {:loading-message false}
+                                      (or value
+                                          {:persisted-error error}))]))))
+
+(defn load-url-text [url]
+  (let [id (js/encodeURIComponent url)]
+    (when-not (d/get id :persisted)
+      (d/transact! [{:db/id           id
+                     :loading-message "Loading..."}]))
+    (get-url url (fn [{:keys [value error]}]
+                   (let [filename (last (string/split url #"/"))]
+                     (d/transact! [(merge {:db/id           id
+                                           :loading-message false}
+                                          (or {:persisted {:files                {filename {:content value}}
+                                                           :persistence/provider :http-text}}
+                                              {:persisted-error error}))]))))))
 
 (defn get-user-gists [username cb]
   (send (str "https://api.github.com/users/" username "/gists")
