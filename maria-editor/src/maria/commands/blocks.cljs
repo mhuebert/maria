@@ -57,7 +57,8 @@
 (defcommand :select/up
   "Expand current selection"
   {:bindings ["M1-1"
-              "M1-Up"]
+              "M1-Up"
+              "M1-Shift-Up"]
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
@@ -68,7 +69,8 @@
 (defcommand :select/back
   "Contract selection (reverse of expand-selection)"
   {:bindings ["M1-2"
-              "M1-Down"]
+              "M1-Down"
+              "M1-Shift-Down"]
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]

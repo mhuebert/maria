@@ -76,23 +76,32 @@
 
 
 (defn set-cursor-root! [cm]
-  (swap! cm assoc :cursor-root/marker (.setBookmark cm
-                                                    (.getCursor cm)
-                                                    #js {:widget (cursor-bookmark)})))
+  (if (and (.somethingSelected cm)
+           (not (:selection-root/marker cm))
+           (not (:cursor-root/marker cm)))
+    (swap! cm assoc :selection-root/marker (.listSelections cm))
+    (swap! cm assoc :cursor-root/marker (.setBookmark cm
+                                                      (.getCursor cm)
+                                                      #js {:widget (cursor-bookmark)}))))
 
 (defn unset-cursor-root! [cm]
   (when-let [marker (:cursor-root/marker cm)]
-    (.clear marker)
-    (swap! cm dissoc :cursor-root/marker)))
+    (.clear marker))
+  (swap! cm dissoc :cursor-root/marker :selection-root/marker))
 
 (defn cursor-root [cm]
   (when-let [marker (:cursor-root/marker cm)]
     (.find marker)))
 
+(defn selection-root [cm]
+  (:selection-root/marker cm))
+
 (defn return-cursor-to-root! [cm]
   (when (.somethingSelected cm)
-    (some->> (cursor-root cm)
-             (.setCursor cm)))
+    (if-let [cursor (cursor-root cm)]
+      (.setCursor cm cursor)
+      (if-let [sels (selection-root cm)]
+        (.setSelections cm sels))))
   (unset-cursor-root! cm))
 
 (defn get-cursor [cm]
@@ -156,10 +165,9 @@
                   (Pos (or end-line line) (or end-column column)))))
 
 (defn select-node! [cm node]
-  (when (and (not (tree/whitespace? node))
-             (or (not (.somethingSelected cm))
-                 (cursor-root cm)))
-    (when-not (cursor-root cm)
+  (when (not (tree/whitespace? node))
+    (when (and (not (:cursor-root/marker cm))
+               (not (:selection-root/marker cm)))
       (set-cursor-root! cm))
     (select-range cm (tree/bounds node))))
 
@@ -197,27 +205,15 @@
       (some->> node
                (select-node! cm)))))
 
-(defn update-selection! [cm e]
+(defn keyup-selection-update! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
-        evt-type (.-type e)
-        primary registry/M1
         secondary registry/SHIFT
-        primary-down? (registry/M1-down? e)
-        secondary-down? (and (= "keydown" evt-type) (= key-code secondary))]
-    (cond (and primary-down? (#{secondary primary} key-code))
-          (let [pos (Pos->range (get-cursor cm))
-                loc (cond-> (get-in cm [:magic/cursor :bracket-loc])
-                            secondary-down? (tree/top-loc))]
-            (some->> loc
-                     (z/node)
-                     (highlight-range pos)
-                     (select-node! cm)))
-
-          :else #_(and (= evt-type "keyup") (= key-code primary))
-          (return-cursor-to-root! cm)
-
-          #_:else #_(when-not (contains? registry/modifiers key-code)
-                      (unset-cursor-root! cm)))))
+        primary-down? (registry/M1-down? e)]
+    (if (and (= key-code secondary)
+             primary-down?
+             (not (selection-root cm)))
+      (select-at-cursor cm false)
+      (return-cursor-to-root! cm))))
 
 (defn clear-brackets! [cm]
   (doseq [handle (get-in cm [:magic/cursor :handles])]
@@ -389,8 +385,8 @@
                  (when on?
                    (require-opts cm ["magicCursor"])
 
-                   (.on cm "keyup" update-selection!)
-                   #_(.on cm "keydown" update-selection!)
+                   (.on cm "keyup" keyup-selection-update!)
+                   #_(.on cm "keydown" keyup-selection-update!)
                    (events/listen js/window "blur" #(return-cursor-to-root! cm))
                    (events/listen js/window "blur" #(clear-brackets! cm))
 
