@@ -201,7 +201,7 @@
   {:when (fn [{:keys [current-doc]}]
            (and (get-in current-doc [:project :persisted])
                 (unsaved-changes? current-doc)))}
-  [{{{persisted :persisted} :project
-     filename               :filename} :current-doc}]
-  (d/transact! [[:db/add (:id persisted) :local persisted]])
+  [{{{persisted :persisted :as project} :project
+     filename                           :filename} :current-doc}]
+  (d/transact! [[:db/update-attr (:db/id project) :local merge (dissoc persisted :persistence/provider)]])
   true)

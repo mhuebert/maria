@@ -24,7 +24,8 @@
                    segments)]
     (match segments
            []
-           (trusted-views/editor-frame-view {:db/transactions [route-tx]})
+           (do (some-> current-username (github/load-user-gists))
+               (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
 
            ["curriculum" slug]
            (match-route-segments ["modules" (first (for [[module-slug _ id] curriculum/modules-by-path
@@ -70,9 +71,7 @@
 
            ["home"] (do
                       (some-> current-username (github/load-user-gists))
-                      (trusted-views/editor-frame-view {:db/transactions [route-tx]
-                                                        :db/queries      (when current-username
-                                                                           [[:doc.owner/username current-username]])}))
+                      (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
 
            ["gist" id filename]
            (do (github/load-gist id)
