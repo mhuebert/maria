@@ -5,7 +5,7 @@
 
             [cells.cell :as cell]
 
-            [commands.exec]
+            [lark.commands.exec]
             [maria.show :as show]
 
             [clojure.set]

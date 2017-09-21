@@ -1,5 +1,5 @@
 (ns maria.commands.prose
-  (:require [commands.registry :refer-macros [defcommand]]
+  (:require [lark.commands.registry :refer-macros [defcommand]]
             [cljsjs.codemirror :as CM]
             [structure.edit :as edit]
             [re-view-prosemirror.commands :as commands :refer [apply-command]]

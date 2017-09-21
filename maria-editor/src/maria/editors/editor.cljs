@@ -1,5 +1,5 @@
 (ns maria.editors.editor
-  (:require [commands.exec :as exec]
+  (:require [lark.commands.exec :as exec]
             [re-view.core :as v]))
 
 (def view-index (volatile! {}))

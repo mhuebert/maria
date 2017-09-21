@@ -1,8 +1,8 @@
 (ns maria.views.floating.floating-search
   (:require [re-view.core :as v :refer [defview]]
-            [commands.registry :as registry :refer-macros [defcommand]]
+            [lark.commands.registry :as registry :refer-macros [defcommand]]
             [maria.commands.which-key :as which-key]
-            [commands.exec :as exec]
+            [lark.commands.exec :as exec]
             [maria.views.dropdown :as dropdown]
             [maria.views.floating.float-ui :as ui]
             [clojure.string :as string]
@@ -71,7 +71,8 @@
         commands (exec/contextual-commands context)]
     (FloatingSearch {:on-selection #(bottom-bar/show-var! (exec/get-command context %))
                      :placeholder  "Search commands..."
-                     :on-select!   #(fn [value] (exec/exec-command-name value context))
+                     :on-select!   (fn [value]
+                                     (exec/exec-command-name value context))
                      :items        (fn [q]
                                      (for [{:keys [name private parsed-bindings icon] :as command} commands
                                            :when (and (string/includes? (str name) q)
@@ -92,32 +93,32 @@
 
 
 (defcommand :doc/open
-  {:bindings ["M1-O"]}
-  []
-  (let [Label :.sans-serif.f7.pv2.half-b]
-    (if (= ::open (:kind (ui/current-hint)))
-      (ui/clear-hint!)
-      (ui/floating-hint! {:component FloatingSearch
-                          :kind      ::open
+            {:bindings ["M1-O"]}
+            []
+            (let [Label :.sans-serif.f7.pv2.half-b]
+              (if (= ::open (:kind (ui/current-hint)))
+                (ui/clear-hint!)
+                (ui/floating-hint! {:component FloatingSearch
+                                    :kind      ::open
 
-                          :props     {:placeholder "Open..."
-                                      :on-select!  (fn [value]
-                                                     (frame/send frame/trusted-frame [:window/navigate value {}]))
-                                      :items       (fn [q]
-                                                     (cons
-                                                       {:value "/home"
-                                                        :label [Label "Home"]}
-                                                       (let [username (d/get :auth-public :username)
-                                                             pattern (re-pattern (str "(?i)\\b" q))]
-                                                         (for [{:keys [filename local-url]} (distinct (concat (doc/locals-dir :local/recents)
-                                                                                                              (doc/user-gists username)
-                                                                                                              (seq doc/modules)))
-                                                               :when (and (util/some-str filename) (re-find pattern filename))]
-                                                           {:value local-url
-                                                            :label [Label (doc/strip-clj-ext filename)]}))))}
-                          ;:cancel-events ["scroll" "mousedown"]
-                          :float/pos [(/ (.-innerWidth js/window) 2)
-                                      (+ (.-scrollY js/window) 100)]}))))
+                                    :props     {:placeholder "Open..."
+                                                :on-select!  (fn [value]
+                                                               (frame/send frame/trusted-frame [:window/navigate value {}]))
+                                                :items       (fn [q]
+                                                               (cons
+                                                                 {:value "/"
+                                                                  :label [Label "Home"]}
+                                                                 (let [username (d/get :auth-public :username)
+                                                                       pattern (re-pattern (str "(?i)\\b" q))]
+                                                                   (for [{:keys [filename local-url]} (distinct (concat (doc/locals-dir :local/recents)
+                                                                                                                        (doc/user-gists username)
+                                                                                                                        (seq doc/modules)))
+                                                                         :when (and (util/some-str filename) (re-find pattern filename))]
+                                                                     {:value local-url
+                                                                      :label [Label (doc/strip-clj-ext filename)]}))))}
+                                    ;:cancel-events ["scroll" "mousedown"]
+                                    :float/pos [(/ (.-innerWidth js/window) 2)
+                                                (+ (.-scrollY js/window) 100)]}))))
 
 ;; input for text...
 ;; - auto-focus
@@ -128,15 +129,15 @@
 ;; store stack of previous/common commands
 
 (defcommand :commands/command-search
-  {:bindings ["M1-P"
-              "M1-Shift-P"]
-   :icon     icons/Search}
-  [context]
-  (if (= ::search (:kind (ui/current-hint)))
-    (ui/clear-hint!)
-    (ui/floating-hint! {:component CommandSearch
-                        :kind      ::search
-                        :props     nil
-                        :float/pos [(/ (.-innerWidth js/window) 2)
-                                    (+ (.-scrollY js/window) 100)]}))
-  true)
+            {:bindings ["M1-P"
+                        "M1-Shift-P"]
+             :icon     icons/Search}
+            [context]
+            (if (= ::search (:kind (ui/current-hint)))
+              (ui/clear-hint!)
+              (ui/floating-hint! {:component CommandSearch
+                                  :kind      ::search
+                                  :props     nil
+                                  :float/pos [(/ (.-innerWidth js/window) 2)
+                                              (+ (.-scrollY js/window) 100)]}))
+            true)

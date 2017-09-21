@@ -270,28 +270,19 @@
           select! (partial tracked-select cm)
           cursor-root (cm/cursor-root cm)
           selection? (cm/selection? cm)]
-      (if (or cursor-root (not selection?))
-        (do
-          (push-cursor! cm)
-          (push-stack! cm (cm/selection-bounds cm))
-          (select! (let [node (if (tree/comment? node) node bracket-node)]
-                     (or (when (tree/inside? node cursor-pos)
-                           (let [inner-range (tree/inner-range node)]
-                             (when-not (and (= (:line inner-range) (:end-line inner-range))
-                                            (= (:column inner-range) (:end-column inner-range)))
-                               inner-range)))
-                         node))))
-
-        (loop [loc loc]
-          (if-not loc
-            sel
-            (let [node (z/node loc)
-                  inner-range (tree/inner-range node)]
-              (cond (range/pos= sel (tree/inner-range node)) (select! node)
-                    (tree/within? inner-range sel) (select! inner-range)
-                    (range/pos= sel node) (recur (z/up loc))
-                    (tree/within? node sel) (select! node)
-                    :else (recur (z/up loc))))))))
+      (when (or cursor-root (not selection?))
+        (push-cursor! cm)
+        (push-stack! cm (cm/selection-bounds cm)))
+      (loop [loc loc]
+        (if-not loc
+          sel
+          (let [node (z/node loc)
+                inner-range (tree/inner-range node)]
+            (cond (range/pos= sel (tree/inner-range node)) (select! node)
+                  (tree/within? inner-range sel) (select! inner-range)
+                  (range/pos= sel node) (recur (z/up loc))
+                  (tree/within? node sel) (select! node)
+                  :else (recur (z/up loc)))))))
     true))
 
 (def shrink-selection

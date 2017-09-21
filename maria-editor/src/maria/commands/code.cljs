@@ -1,5 +1,5 @@
 (ns maria.commands.code
-  (:require [commands.registry :as registry :refer-macros [defcommand]]
+  (:require [lark.commands.registry :as registry :refer-macros [defcommand]]
             [maria.eval :as e]
             [magic-tree.core :as tree]
             [structure.edit :as edit :include-macros true]
@@ -24,7 +24,7 @@
 
 (defcommand :clipboard/copy
   {:bindings ["M1-c"]
-   :private true
+   :private  true
    :icon     icons/ContentCopy}
   [{:keys [editor block/code block/prose]}]
   (when code
@@ -33,8 +33,8 @@
 
 (defcommand :clipboard/cut
   {:bindings ["M1-x"]
-   :private true
-   :when :block/code
+   :private  true
+   :when     :block/code
    :icon     icons/ContentCopy}
   [{:keys [editor block/code block/prose]}]
   (edit/copy (.getSelection editor))
@@ -43,7 +43,7 @@
 
 (defcommand :clipboard/paste
   {:bindings ["M1-v"]
-   :private true
+   :private  true
    :icon     icons/ContentPaste}
   [{:keys [editor block/code]}]
   (when-let [pos (and code (cm/cursor-root editor))]
@@ -52,13 +52,14 @@
 
 (defcommand :select/form-at-cursor
   {:bindings ["M1"]
-   :when :block/code}
+   :when     :block/code}
   [context]
-  (cm/select-at-cursor (:editor context) false))
+  (when-not (cm/selection? (:editor context))
+    (cm/select-at-cursor (:editor context) false)))
 
 (defcommand :select/top-level-form
   {:bindings ["M1-Shift"]
-   :when :block/code}
+   :when     :block/code}
   [context]
   (cm/select-at-cursor (:editor context) true))
 

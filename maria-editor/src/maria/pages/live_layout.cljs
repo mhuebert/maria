@@ -10,11 +10,11 @@
             [maria.views.floating.float-ui :as hint]
             [maria.views.bottom-bar :as dock]
             [maria.pages.docs :as docs]
+
             [maria.persistence.local :as local]
             [maria.views.top-bar :as toolbar]
-            [maria.views.icons :as icons]
             [maria.curriculum :as curriculum]
-            [commands.exec :as exec]
+            [lark.commands.exec :as exec]
             [maria.commands.doc :as doc]))
 
 (defonce _
@@ -29,6 +29,32 @@
    [:.sans-serif.mh3.mv2 title]
    [:.bg-white.ma3
     (docs/doc-list docs)]])
+
+
+
+(defn landing []
+  [:div
+   (toolbar/doc-toolbar {})
+   [:.tc.serif.center
+    {:style {:max-width 550}}
+    [:.f1.mb3.pt5 "Welcome to Maria,"]
+    [:.f3.mv3 "a coding environment for beginners."]
+
+    [:.flex.items-center.f3.mv4.br3.bg-darken.pa3
+     [:.flex-auto]
+     "Your journey begins here: "
+     [:a.br2.bg-white.shadow-4.pa3.ml3.sans-serif.black.no-underline.f5.b.pointer.hover-underline.hover-shadow-5 {:href "/intro"} "Learn Clojure with Shapes"]
+     [:.flex-auto]]
+
+    [:.tc.i.f3.mv3 "More reading:"]
+
+    [:ul.f4.tl.lh-copy
+     [:li "The " [:a {:href "/quickstart"} "Editor Quickstart"] ", if you're already familiar with Clojure."]
+     [:li "Understand the " [:a {:target "_blank"
+                                 :href   "https://github.com/mhuebert/maria/blob/master/curriculum/pedagogy.md"} "Pedagogy"] " behind Maria's curriculum."]
+     [:li "Discover the " [:a {:target "_blank"
+                               :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
+   ])
 
 (defview home
   [this]
@@ -47,7 +73,7 @@
 
 (defview layout
   [{:keys []}]
-  [:.cursor-text.bg-light-gray.overflow-hidden.w-100.relative.sans-serif
+  [:.bg-light-gray.overflow-hidden.w-100.relative.sans-serif
    {:on-click #(when (= (.-target %) (.-currentTarget %))
                  (exec/exec-command-name :navigate/focus-end))
     :style    {:min-height     "100%"
@@ -56,7 +82,11 @@
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
       (match segments
+             [] (if (d/get :auth-public :username)
+                  (home)
+                  (landing))
              ["home"] (home)
+             ["landing"] (landing)
              ["doc" id] (docs/file-edit {:id id})
              ["gists" username] (docs/gists-list username)
 

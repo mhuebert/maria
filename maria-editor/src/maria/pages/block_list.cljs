@@ -6,9 +6,16 @@
             [maria.blocks.code]
             [maria.blocks.prose]
             [maria.blocks.blocks :as Block]
-            [commands.exec :as exec]
+            [lark.commands.exec :as exec]
             [maria.commands.blocks]
             [maria.eval :as e]))
+
+(exec/add-context-augmenter! :auth #(assoc % :signed-in? (d/get :auth-public :signed-in?)))
+
+(exec/add-context-augmenter! :block-meta (fn [{:keys [block-view] :as context}]
+                                           (cond-> context
+                                                   block-view (merge {:editor (.getEditor block-view)}
+                                                                     (select-keys block-view [:block :blocks])))))
 
 (defview BlockList
   {:key                     :source-id

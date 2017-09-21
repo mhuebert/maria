@@ -1,8 +1,8 @@
 (ns maria.commands.which-key
   (:require [re-view.core :as v :refer [defview]]
             [re-db.d :as d]
-            [commands.registry :as registry]
-            [commands.exec :as exec]
+            [lark.commands.registry :as registry]
+            [lark.commands.exec :as exec]
             [clojure.set :as set]
             [maria.views.bottom-bar :as bottom-bar]))
 

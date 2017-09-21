@@ -1,14 +1,14 @@
 (ns maria.views.top-bar
   (:require [re-view.core :as v :refer [defview]]
-            [commands.registry :refer-macros [defcommand]]
-            [commands.exec :as exec]
+            [lark.commands.registry :refer-macros [defcommand]]
+            [lark.commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
             [maria.views.icons :as icons]
             [re-db.d :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]
-            [commands.registry :as registry]
+            [lark.commands.registry :as registry]
             [goog.events :as events]
             [goog.functions :as gf]
             [maria.persistence.local :as local]))
@@ -98,7 +98,7 @@
        {:when-scrolled {:style {:background-color "#e7e7e7"
                                 :border-bottom    "2px solid #e2e2e2"}}}
        [:.flex.sans-serif.items-stretch.br.f7.flex-none.overflow-hidden.pl2
-        (toolbar-button [{:href "/home"} icons/Home nil "Home"])
+        (toolbar-button [{:href "/"} icons/Home nil "Home"])
         (command-button command-context :doc/new {:icon icons/Add})
 
         (some->>
@@ -127,8 +127,7 @@
                   (command-button command-context :doc/save-a-copy {:icon icons/ContentDuplicate})
 
                   (command-button command-context :doc/revert {:icon (update-in icons/Replay [1 :style] assoc
-                                                                                :transform "scaleX(-1) rotate(-90deg)"
-                                                                                :color "darkred")
+                                                                                :transform "scaleX(-1) rotate(-90deg)")
                                                                :text "Reset"}))))
           (conj [:.flex.items-stretch.bg-darken-lightly]))
 

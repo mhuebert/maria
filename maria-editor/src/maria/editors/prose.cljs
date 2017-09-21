@@ -9,7 +9,7 @@
             [goog.object :as gobj]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
-            [commands.exec :as exec]
+            [lark.commands.exec :as exec]
             [maria.commands.prose :as prose-commands]
             [re-view-routing.core :as r]
             [maria.editors.editor :as Editor]

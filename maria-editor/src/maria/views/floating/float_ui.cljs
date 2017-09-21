@@ -1,6 +1,6 @@
 (ns maria.views.floating.float-ui
   (:require [re-view.core :as v :refer [defview]]
-            [commands.registry :refer-macros [defcommand]]
+            [lark.commands.registry :refer-macros [defcommand]]
             [re-db.d :as d]
             [re-view-routing.core :as r]
             [goog.events :as events])

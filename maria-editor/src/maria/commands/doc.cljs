@@ -1,5 +1,5 @@
 (ns maria.commands.doc
-  (:require [commands.registry :refer-macros [defcommand]]
+  (:require [lark.commands.registry :refer-macros [defcommand]]
             [cljs.core.match :refer-macros [match]]
             [clojure.string :as string]
             [maria.frames.frame-communication :as frame]

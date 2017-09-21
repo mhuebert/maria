@@ -1,7 +1,7 @@
 (ns maria.views.dropdown
   (:require [re-view.core :as v :refer [defview]]
-            [commands.exec :as exec]
-            [commands.registry :refer-macros [defcommand]]
+            [lark.commands.exec :as exec]
+            [lark.commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
             [re-db.d :as d]
             [maria.views.icons :as icons]))

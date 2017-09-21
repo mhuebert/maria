@@ -1,5 +1,5 @@
 (ns maria.commands.blocks
-  (:require [commands.registry :refer-macros [defcommand]]
+  (:require [lark.commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
             [maria.editors.editor :as Editor]
             [maria.blocks.history :as history]

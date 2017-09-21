@@ -22,7 +22,10 @@
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.9-SNAPSHOT"]
                  [cljs-live "0.2.6"]
+
                  [magic-tree "0.0.14-SNAPSHOT"]
+
+                 [lark/commands "0.1.0-SNAPSHOT"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]
@@ -54,7 +57,8 @@
                  "checkouts/re_db/src"
                  "checkouts/cljs_live/src"
                  "checkouts/shapes"
-                 "checkouts/cells"]
+                 "checkouts/cells"
+                 "../../lark/commands/src"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

@@ -10,7 +10,7 @@
             [goog.dom.classes :as classes]
             [maria.editors.editor :as Editor]
             [maria.editors.code :as code]
-            [commands.exec :as exec]
+            [lark.commands.exec :as exec]
             [maria.views.error :as error]
             [maria.views.values :as value-views]))
 

@@ -47,3 +47,4 @@
                                               transactions)
                                         queries (into (d/entities queries)))
                :on-message      (actions/handle-message current-entity)}))
+

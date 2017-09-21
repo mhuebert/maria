@@ -16,7 +16,7 @@
     ;; for `flush!`:
             [re-view.core :as v]
     ;; for M1 modifier differentiation
-            [commands.registry :as registry :refer-macros [defcommand]]))
+            [lark.commands.registry :as registry :refer-macros [defcommand]]))
 
 (def Pos CM/Pos)
 (def changeEnd CM/changeEnd)
