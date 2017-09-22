@@ -25,7 +25,7 @@
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 
-                 [lark/commands "0.1.0-SNAPSHOT"]
+                 [lark/commands "0.1.0"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]

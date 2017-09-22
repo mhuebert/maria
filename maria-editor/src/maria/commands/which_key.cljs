@@ -4,57 +4,67 @@
             [lark.commands.registry :as registry]
             [lark.commands.exec :as exec]
             [clojure.set :as set]
-            [maria.views.bottom-bar :as bottom-bar]))
+            [maria.views.bottom-bar :as bottom-bar]
+            [maria.util :as util]))
 
 (defn show-keyset
   "Render a keyset. Does not support multi-step key-combos."
   [modifiers-down [keyset]]
   (let [keyset (set/difference keyset modifiers-down)]
-    [:.dib.bg-near-white.ph1.br2.pv05.gray
+    [:.dib.ph1.br2.pv05.gray
      {:key (str keyset)}
      (registry/keyset-string (set/difference keyset modifiers-down))]))
 
 (defn show-namespace-commands [modifiers-down [namespace hints]]
   (let [row-height 24]
-    [:.avoid-break.bt.b--near-white.pv1
-     [:.flex
-      [:.pr1.flex-none.tr.b.pv2.flex.items-center.justify-end
-       {:style {:min-width 70
-                :height    row-height}}
-       namespace]
-      [:.flex-auto
-       (for [{:keys [display-name name parsed-bindings]} hints]
-         [:.flex.items-center.ws-nowrap.pointer.hover-bg-near-white.pl1.br2
-          {:on-mouse-down #(exec/exec-command-name name)
-           :style         {:height row-height}}
-          display-name
-          [:.flex-auto]
-          (show-keyset modifiers-down (first parsed-bindings))])]]]))
+    [:.avoid-break.ph3.pv2
+     {:style {:max-width 200}}
+     [:.b.mb2 namespace]
+     [:.flex.flex-column.bg-near-white.ph2
 
-(defview show-commands
-  {:update             (fn [{:keys [view/state]}]
-                         (let [{:keys [active? prev-content]} @state
-                               next-active? (d/get :commands :which-key/active?)
-                               start? (and next-active? (not active?))
-                               finish? (and (not next-active?) active?)]
+      (for [{:keys [display-name name parsed-bindings]} hints]
+        [:.flex.items-center.ws-nowrap.pointer.hover-bg-near-white.br2
+         {:on-mouse-down #(exec/exec-command-name name)
+          :style         {:height row-height}}
+         display-name
+         [:.flex-auto]
+         (show-keyset modifiers-down (first parsed-bindings))])]]))
+
+(defview show-commands 
+  {:view/state         exec/state
+   :update             (fn [{:keys [view/state view/prev-state]}]
+                         (let [{next-active? :which-key/active?
+                                :keys        [modifiers-down]} @state
+                               prev-content (::prev-content @state)
+                               next-active? next-active?
+                               start? (and next-active? (not (:which-key/active? prev-state)))
+                               finish? (and (not next-active?) (:which-key/active? prev-state))]
                            (when start?
-                             (v/swap-silently! state assoc :prev-content prev-content :active? true))
+                             (v/swap-silently! state assoc ::prev-content prev-content))
                            (when finish?
-                             (v/swap-silently! state dissoc :prev-content :active?))
+                             (v/swap-silently! state dissoc ::prev-content))
                            (bottom-bar/set-bottom-bar! (cond next-active?
-                                                             (let [modifiers-down (d/get :commands :modifiers-down)]
-                                                               (if-let [commands (seq (exec/keyset-commands modifiers-down (exec/get-context)))]
-                                                                 [:.f7.sans-serif.ph2.hint-columns.bg-white
-                                                                  {:style {:max-height 150}}
-                                                                  (->> commands
-                                                                       (group-by :display-namespace)
-                                                                       (map (partial show-namespace-commands modifiers-down)))]
-                                                                 [:.fixed]))
+                                                             (let [commands (seq (exec/keyset-commands modifiers-down (exec/get-context)))]
+                                                               [:.bg-white.sans-serif.relative
+                                                                [:.pb0.f4.absolute.left-0.top-0.inline-flex.items-center.bg-white.b--light-gray.ph3
+                                                                 {:style {:padding-top  10
+                                                                          :border-width 1
+                                                                          :border-style "solid solid none solid"
+                                                                          :height       30
+                                                                          :margin-top   -30}}
+
+                                                                 (registry/keyset-string modifiers-down)
+                                                                 util/space
+                                                                 [:span.gray "-"]]
+                                                                [:.f7.hint-columns.pv2
+                                                                 (if commands (->> commands
+                                                                                   (group-by :display-namespace)
+                                                                                   (map (partial show-namespace-commands modifiers-down)))
+                                                                              [:.gray.ph2 "No commands"])]])
                                                              finish? prev-content
                                                              :else nil))))
    :view/did-mount     #(.update %)
    :view/should-update (constantly true)
    :view/did-update    #(.update %)}
   []
-  (d/get :commands :which-key/active?)
   nil)
