@@ -1,8 +1,8 @@
 ;; # Hi!
-;; This environment is called Maria, and we're going to show you
-;; some things you can do with it. 😃 Don't worry if anything's new
-;; and a little confusing at first, we're going to explain everything
-;; as we go.
+
+;; This environment is called Maria. We're going to learn to program
+;; with it. 😃 Don't worry if anything's new or a little confusing at
+;; first--we'll explain everything as we go.
 
 ;; First, let's ask the computer some questions. We'll ask our
 ;; questions in a programming language called Clojure. Here we go!
