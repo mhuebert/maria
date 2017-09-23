@@ -184,7 +184,7 @@
 
 ;; Let's start by evaluating this:
 
-(what-is [1 2 3 4])
+(what-is [1 "one" 1️⃣])
 
 ;; "Vectors" are how we store sequences of things. They're written
 ;; using square braces `[]` and they evaluate to themselves like
