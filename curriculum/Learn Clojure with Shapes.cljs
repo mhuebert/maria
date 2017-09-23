@@ -1,7 +1,7 @@
 ;; # Hi!
 
 ;; This environment is called Maria. We're going to learn to program
-;; with it. 😃 Don't worry if anything's new or a little confusing at
+;; with Maria. 😃 Don't worry if anything's new or a little confusing at
 ;; first–we'll explain everything as we go.
 
 ;; First, let's ask the computer some questions. We'll ask our
@@ -82,7 +82,7 @@
 (what-is what-is)
 
 
-;; ## Shapes and Colors
+;; ## Shapes 🔺 and Colors 🌈
 
 ;; Now that you've seen the basics of evaluating expressions, calling
 ;; functions, and asking the computer clarifying questions with
@@ -164,7 +164,7 @@
 ;; sure you know how they fit into the expression containing them. 🕸️
 
 
-;; ## Computing Superpowers
+;; ## 🖳 Computing Superpowers 💪🏽
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
 ;; over and over again is a 😴 chore. We don't have time for that! Our
@@ -265,7 +265,7 @@
 ;; heart of the power of programming.
 
 
-;; ## Names
+;; ## 👨🏾‍🚀 Names 👩🏻‍🚀
 
 ;; So far, none of the functions we've created have had names. We've
 ;; created these "anonymous" functions, used them briefly, and that
