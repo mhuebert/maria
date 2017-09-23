@@ -22,6 +22,12 @@
         (map? value) ["{" "}"]
         :else ["(" ")"]))
 
+(defn wrap-value [[lb rb] value]
+  [:.inline-flex.items-stretch
+   [:.flex.items-start.nowrap lb]
+   [:div.v-top value]
+   [:.flex.items-end.nowrap rb]])
+
 (extend-protocol hiccup/IEmitHiccup
   Keyword
   (to-hiccup [this] (str this))
@@ -32,7 +38,16 @@
   object
   (render-hiccup [this] (hiccup/element this)))
 
+
+
 (declare format-value)
+
+(extend-protocol show/IShow
+  cell/Cell
+  (show [this] (cell/view this)
+    #_(hiccup/element (format-value (cell/view this))
+                      #_[:.br1.bg-darken.dib.inline-flex {:style {:margin 1 :padding 4}}
+                         (format-value (cell/view this))])))
 
 (defview display-deferred
   {:view/will-mount (fn [{:keys [deferred view/state]}]
@@ -161,16 +176,16 @@
 
                :maria.kinds/map (format-map depth value)
 
-               (:maria.kinds/var
-                 :maria.kinds/cell) [:div
-                                     [:.o-50.mb2 (str value)]
-                                     (format-value depth @value)]
+               :maria.kinds/var [:div
+                                 [:.o-50.mb2 (str value)]
+                                 (format-value depth @value)]
 
                :maria.kinds/nil "nil"
 
                :maria.kinds/function (format-function value)
 
-               :maria.kinds/atom (format-value depth (gobj/get value "state"))
+               :maria.kinds/atom (wrap-value [[:span.gray.mr1 "#Atom"] nil]
+                                             (format-value depth (gobj/get value "state")))
 
                (cond
                  (v/is-react-element? value) value
@@ -189,8 +204,8 @@
   [:.code.overflow-auto.pre.gray.mv3.ph3
    {:style {:max-height 200}}
    (code/viewer {:error-ranges (cond-> []
-                                             position (conj (magic/highlights-for-position source position))
-                                             (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
+                                       position (conj (magic/highlights-for-position source position))
+                                       (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
 
 (defview display-result
   {:key :id}

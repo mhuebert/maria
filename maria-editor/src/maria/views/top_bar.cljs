@@ -74,7 +74,8 @@
                               (get-in this [:project :local :files filename :filename] filename))
    :update-window-title     (fn [{:keys [view/state] :as this}]
                               (let [filename (.getFilename this)]
-                                (when (= filename "Untitled.cljs")
+
+                                #_(when (= filename "Untitled.cljs")
                                   (js/setTimeout #(some-> (:title-input @state)
                                                           :view/state
                                                           (deref)

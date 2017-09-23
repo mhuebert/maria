@@ -12,7 +12,6 @@
                  [org.clojure/tools.reader "1.0.5"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [com.cognitect/transit-clj "0.8.300"]
-                 [com.stuartsierra/dependency "0.2.0"]
                  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                  [org.clojure/data.json "0.2.6"]
 
@@ -26,6 +25,7 @@
                  [magic-tree "0.0.14-SNAPSHOT"]
 
                  [lark/commands "0.1.0"]
+                 [cells "0.1.1"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]

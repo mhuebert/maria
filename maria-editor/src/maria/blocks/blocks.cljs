@@ -1,6 +1,7 @@
 (ns maria.blocks.blocks
   (:refer-clojure :exclude [empty?])
   (:require [magic-tree.core :as tree]
+            [lark.commands.registry :refer-macros [defcommand]]
             [re-view.core :as v]
             [clojure.string :as string]
             [re-db.d :as d]
@@ -85,11 +86,12 @@
     (reduce (fn [out block]
               (if (whitespace? block)
                 out
-                (let [source (-> (emit block)
-                                 (string/trim-newline))]
+                (let [source (emit block)]
                   (if-not (clojure.core/empty? source)
                     (str out source "\n\n")
-                    out)))) "\n" blocks)))
+                    out))))
+            ""
+            blocks)))
 
 (defn ensure-blocks [blocks]
   (if-not (first (remove whitespace? blocks))
@@ -162,3 +164,11 @@
          (when (satisfies? eval-context/IDispose block)
            (eval-context/dispose! block))))
      result)))
+
+(defcommand :doc/print-to-console
+  "Prints the current document to console as a string."
+  {:when :block-list}
+  [{:keys [block-list]}]
+  (print (-> (.getBlocks block-list)
+             (ensure-blocks)
+             (emit-list))))

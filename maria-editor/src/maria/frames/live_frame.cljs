@@ -38,9 +38,7 @@
   (get-value [this]
     (d/get :cells (name this)))
   (invalidate! [this]
-    (patterns/invalidate! d/*db* :ea_ [:cells (name this)]))
-  show/IShow
-  (show [this] (cell/view this)))
+    (patterns/invalidate! d/*db* :ea_ [:cells (name this)])))
 
 (enable-console-print!)
 

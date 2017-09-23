@@ -30,7 +30,7 @@
          [:.flex-auto]
          (show-keyset modifiers-down (first parsed-bindings))])]]))
 
-(defview show-commands 
+(defview show-commands
   {:view/state         exec/state
    :update             (fn [{:keys [view/state view/prev-state]}]
                          (let [{next-active? :which-key/active?
