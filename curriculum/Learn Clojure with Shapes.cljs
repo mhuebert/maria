@@ -2,7 +2,7 @@
 
 ;; This environment is called Maria. We're going to learn to program
 ;; with it. 😃 Don't worry if anything's new or a little confusing at
-;; first--we'll explain everything as we go.
+;; first–we'll explain everything as we go.
 
 ;; First, let's ask the computer some questions. We'll ask our
 ;; questions in a programming language called Clojure. Here we go!
@@ -37,7 +37,7 @@
 ;; what's given to a function).
 
 ;; What do you think evaluating this next function might do? Say your
-;; guess out loud before trying it--it's fun and helpful to try to
+;; guess out loud before trying it–it's fun and helpful to try to
 ;; predict what the computer will do.
 
 (circle 50)
@@ -270,7 +270,7 @@
 ;; So far, none of the functions we've created have had names. We've
 ;; created these "anonymous" functions, used them briefly, and that
 ;; was it. The same goes for the values we've been using, like strings
-;; and vectors--none of them have had names, either.
+;; and vectors–none of them have had names, either.
 
 ;; But sometimes you'll need to use a particular function call over
 ;; and over. That's when you should consider naming it, so the
@@ -440,7 +440,7 @@ rainbow-colors
 
 ;; How it works is that we're mapping over `colorize`, which takes two
 ;; arguments. For each step it takes the first argument from the first
-;; collection and the second argument from the second collection--and
+;; collection and the second argument from the second collection–and
 ;; so on if there are more.
 
 ;; Evaluate sub-expressions to see what that means. Each step
