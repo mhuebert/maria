@@ -58,14 +58,25 @@
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
-;; function? Why, we can ask our friend the computer!
+;; function? Well, our friend Maria knows, and will tell us. Put your
+;; cursor on the `color` expression. At the bottom left of your
+;; browser you should see a short description of the `color`
+;; function. The part in square brackets, "`[radius]`", tells us what
+;; arguments the `circle` function takes: one argument called
+;; `radius`. The last part of Maria’s hints are a description of what
+;; the function does.
+
+;; Sometimes the description of what a function does is quite long, so
+;; you’ll want to take a better look at it than the quick hint that
+;; Maria shows. You can do that with this expression:
 
 (doc circle)
 
 ;; The `doc` function is short for "documentation". It tells us what a
 ;; function does and what arguments it needs. We gave `doc` the
 ;; argument `circle`, so it gives us documentation for the `circle`
-;; function. The computer wants to help us.
+;; function. The computer knows things and wants to share what it
+;; knows with us.
 
 ;; Remember, we can also examine the different pieces of that
 ;; expression with `what-is`:
@@ -199,9 +210,9 @@
 (map circle [16 32 64 128])
 
 ;; Have a look at both of those two expressions. As far as the
-;; computer is concerned, they do the same thing, but the magic
-;; of `map` saves typing and improves clarity. Map is a
-;; great way to do avoid repeating yourself.
+;; computer is concerned, they do the same thing, but the magic of
+;; `map` saves typing and improves clarity. Map is a great way to
+;; avoid repeating yourself.
 
 ;; FIXME Let's make a new
 ;; function right now! To start with, here's a really simple example
