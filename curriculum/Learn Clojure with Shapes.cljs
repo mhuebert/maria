@@ -200,19 +200,19 @@
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
 ;; But there's a better, shorter way! When we have a bunch of things,
-;; and we want to call a function on each thing, we can use
-;; `map`. `map` is a great function that gives us a new collection
-;; that is the result of calling our function on each thing.
-
-;; That means we can map the function `circle` over a vector of all
-;; the sizes we want our circles to be:
+;; and we want to call a function on each thing, we can use the great
+;; `map` function. Watch:
 
 (map circle [16 32 64 128])
 
-;; Have a look at both of those two expressions. As far as the
-;; computer is concerned, they do the same thing, but the magic of
-;; `map` saves typing and improves clarity. Map is a great way to
-;; avoid repeating yourself.
+;; We "mapped" the function `circle` over a vector of all the sizes we
+;; want our circles to be.
+
+;; Have a look at both of those two expressions: one spelling out four
+;; calls to `circle`, the other using `map` to call `circle` on every
+;; value in a vector. As far as the computer is concerned, both
+;; expressions do the same thing. This magic function comes in handy
+;; all the time, and not just to avoid repeating yourself.
 
 ;; FIXME Let's make a new
 ;; function right now! To start with, here's a really simple example
