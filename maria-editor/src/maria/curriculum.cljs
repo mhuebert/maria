@@ -1,25 +1,28 @@
 (ns maria.curriculum
   (:require [clojure.set :as set]))
 
-(defn maria-path [path]
+(defn repo-path [path]
   (js/encodeURIComponent (str "https://raw.githubusercontent.com/mhuebert/maria/master/" path)))
 
-(def modules-by-path
-  [["intro" "Learn Clojure with Shapes" (maria-path "curriculum/Learn Clojure with Shapes.cljs")]
-   ["quickstart" "Editor Quickstart" (maria-path "curriculum/Editor Quickstart.cljs")]
-   ["gallery" "Example Gallery" (maria-path "curriculum/Example Gallery.cljs")]])
+(def modules
+  [["intro" "Learn Clojure with Shapes" (repo-path "curriculum/Learn Clojure with Shapes.cljs")]
+   ["quickstart" "Editor Quickstart" (repo-path "curriculum/Editor Quickstart.cljs")]
+   ["gallery" "Example Gallery" (repo-path "curriculum/Example Gallery.cljs")]])
 
-(def module-ids (set (mapv last modules-by-path)))
-(def module-slugs (set (mapv first modules-by-path)))
+(def owner {:username  "curriculum"
+            :local-url "/curriculum"})
 
-(def modules-owner {:username  "modules"
-                    :local-url "/modules"})
+(def docs (for [[slug friendly-name id] modules]
+            {:db/id                id
+             :doc.owner/username   "curriculum"
+             :owner                owner
+             :slug                 slug
+             :persistence/provider :maria/curriculum
+             :persisted            {:owner owner
+                                    :id    id
+                                    :files {friendly-name {}}}}))
 
-(def as-gists (for [[_ friendly-name id] modules-by-path]
-                {:db/id                id
-                 :doc.owner/username   "modules"
-                 :owner                modules-owner
-                 :persistence/provider :maria/module
-                 :persisted            {:owner modules-owner
-                                        :id    id
-                                        :files {friendly-name {}}}}))
+(def by-id (reduce (fn [m {:keys [db/id] :as item}]
+                     (assoc m id item)) {} docs))
+
+(def slugs (set (mapv :slug docs)))

@@ -62,7 +62,7 @@
     [:div
      (toolbar/doc-toolbar {})
 
-     (-> doc/modules
+     (-> doc/curriculum
          (doc-list-section "Learning Modules"))
 
      (some-> (doc/locals-dir :local/recents)

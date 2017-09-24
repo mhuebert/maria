@@ -18,7 +18,7 @@
         route-tx (assoc (sanitized-location)
                    :segments segments)
         curriculum? (and (= 1 (count segments))
-                         (contains? curriculum/module-slugs (first segments)))
+                         (contains? curriculum/slugs (first segments)))
         segments (if curriculum?
                    ["curriculum" (first segments)]
                    segments)]
@@ -28,18 +28,14 @@
                (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
 
            ["curriculum" slug]
-           (match-route-segments ["modules" (first (for [[module-slug _ id] curriculum/modules-by-path
+           (match-route-segments ["http-text" (first (for [[module-slug _ id] curriculum/modules
                                                          :when (= slug module-slug)]
                                                      id))])
            ["quickstart"]
-           (match-route-segments ["modules" (:db/id (second curriculum/as-gists))])
-
-
+           (match-route-segments ["http-text" (:db/id (second curriculum/docs))])
 
            ["modules"]
            (match-route-segments ["gists" "modules"])
-           ["modules" url]
-           (match-route-segments ["http-text" url])
 
            ["http-text" id]
            (let [url (js/decodeURIComponent id)]

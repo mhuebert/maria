@@ -26,7 +26,7 @@
   (case (or provider (d/get id :persistence/provider))
     :gist (str "/gist/" id)
     :maria/local (str "/local/" id)
-    :maria/module (str "/modules/" id)
+    :maria/curriculum (str "/" (get-in curriculum/by-id [id :slug]))
     (do (prn "NO LOCAL URL" provider id)
         #_(throw (js/Error. (str "no local url" provider id))))))
 
@@ -92,7 +92,7 @@
   (seq (->> (map normalize-doc (d/entities [[:doc.owner/username username]]))
             (sort-projects))))
 
-(def modules (mapv normalize-doc curriculum/as-gists))
+(def curriculum (mapv normalize-doc curriculum/docs))
 
 (defn unsaved-changes? [{{{local-files :files}     :local
                           {persisted-files :files} :persisted} :project

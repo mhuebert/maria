@@ -112,7 +112,7 @@
                                                                        pattern (re-pattern (str "(?i)\\b" q))]
                                                                    (for [{:keys [filename local-url]} (distinct (concat (doc/locals-dir :local/recents)
                                                                                                                         (doc/user-gists username)
-                                                                                                                        (seq doc/modules)))
+                                                                                                                        (seq doc/curriculum)))
                                                                          :when (and (util/some-str filename) (re-find pattern filename))]
                                                                      {:value local-url
                                                                       :label [Label (doc/strip-clj-ext filename)]}))))}

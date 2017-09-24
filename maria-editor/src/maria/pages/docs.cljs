@@ -10,7 +10,7 @@
             [maria.curriculum :as curriculum]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
-(d/transact! curriculum/as-gists)
+(d/transact! curriculum/docs)
 
 (defview file-edit
   {:doc-editor              (fn [{:keys [view/state]}] (:doc-editor @state))

@@ -356,6 +356,9 @@ $lighten: rgba(255, 255, 255, 0.25);
 }
 
 .prosemirror-content {
+  h1, h2 {
+    margin-top: 3rem;
+  }
   blockquote {
     border-left: 4px solid rgba(0, 0, 0, 0.05);
     padding-left: 0.5rem;

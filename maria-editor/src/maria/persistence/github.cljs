@@ -24,8 +24,8 @@
 (defn gist->project
   "Convert a gist to local project format"
   [{:keys [description files updated_at owner html_url id] :as gist-data}]
-  (let [{:keys [username] :as owner} (if (contains? curriculum/module-ids id)
-                                       curriculum/modules-owner
+  (let [{:keys [username] :as owner} (if (contains? curriculum/by-id id)
+                                       curriculum/owner
                                        (gist-person owner))]
     (let [files (->> files
                      (reduce-kv (fn [m filename {:keys [language]
