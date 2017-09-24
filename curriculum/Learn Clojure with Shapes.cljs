@@ -12,9 +12,9 @@
 
 "puppy"
 
-;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate means
-;; something special. It's what happens when you tell the computer
-;; to "run" your code and tell you what it thinks it means.
+;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate
+;; means to tell the computer to "run" your code and tell you the
+;; result.
 
 ;; Clojure is a language full of things called expressions, and
 ;; "puppy" is one of them. All expressions can be evaluated, as you
@@ -29,12 +29,14 @@
 ;; later, but in the meantime let's talk about those parentheses.
 
 ;; Whenever you see an expression in parentheses, it's kind of like a
-;; sentence where the first thing after the `(` is treated as the
-;; verb. We call these verbs "functions", and when we evaluate a form
-;; in parens it _calls_ the function at the beginning of the
-;; expression on the _arguments_ that follow. (These arguments don't
-;; have anything to do with arguing, it's just a word from maths for
-;; what's given to a function).
+;; sentence. In Clojure, sentences start with an open-parenthesis:
+;; `(`. Next in the Clojure sentence is the verb, in this case,
+;; `what-is`. We call these verbs "functions". Whatever comes after
+;; the function "verb" are the *argumnents* we want to give to the
+;; function. When we evaluate a form in parens it *calls* the function
+;; at the beginning of the expression on the arguments that
+;; follow. (These arguments don't have anything to do with arguing,
+;; it's just a word from maths for what's given to a function).
 
 ;; What do you think evaluating this next function might do? Say your
 ;; guess out loud before trying it–it's fun and helpful to try to
@@ -52,15 +54,15 @@
 ;; 😱 Don't worry, errors happens to every programmer. Stay positive ✌️
 ;; and track down the misunderstanding between you and the
 ;; computer. In this case, we gave `circle` one too many
-;; arguments. Notice that when we write code that Clojure can't
+;; arguments. Notice that when we wrote code that Clojure couldn’t
 ;; understand, Maria told us. Maria will even try to tell us how to
 ;; fix our code. Thanks, invisible robot helper.
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
 ;; function? Well, our friend Maria knows, and will tell us. Put your
-;; cursor on the `color` expression. At the bottom left of your
-;; browser you should see a short description of the `color`
+;; cursor on the `circle` expression. At the bottom left of your
+;; browser you should see a short description of the `circle`
 ;; function. The part in square brackets, "`[radius]`", tells us what
 ;; arguments the `circle` function takes: one argument called
 ;; `radius`. The last part of Maria’s hints are a description of what
@@ -103,7 +105,7 @@
 ;; Try creating your own expression to use some other numbers with
 ;; `circle`.
 
-;; ⬇ your code goes here 😀
+;; ⬇ your code goes here 😀 (press "return" or "enter" twice with the cursor there)
 
 ;; ⬆ your code goes here
 
@@ -136,7 +138,7 @@
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another
 ;; color. (For a list of colors that Maria understands, try evaluating
-;; `color-names`.)
+;; `color-names`, without parentheses around it.)
 
 ;; We can also combine expressions to create a layer of shapes, by
 ;; using the `layer` function:
@@ -223,7 +225,7 @@
 ;; Evaluating that doesn't return anything that's like what we've seen
 ;; before. This expression doesn’t return a shape or value. It returns
 ;; a funny "f" that shows our code when you click on it. Let’s inspect
-;; it b wrapping the expression in a `what-is` call. Go ahead.
+;; it by wrapping the expression in a `what-is` call. Go ahead.
 
 ;; ... it's a function! What does this mean?
 
@@ -316,9 +318,12 @@
 ;; The second argument to `let` is an expression that uses the names
 ;; from the first argument. Here, we use the name `palette` to paint
 ;; some shapes using the `rand-nth` function. Use all the techniques
-;; you've learned to explore what `rand-nth` does: Maria’s parameter
-;; hints, `what-is`, `doc`, and evaluating the function with different
-;; input.
+;; you've learned to explore what `rand-nth` does: Maria’s argument
+;; list hints, `what-is`, `doc`, and evaluating the function with
+;; different input.
+
+;; ⬇ explore here (press "return" or "enter" twice to create a code block)
+;; ⬆ explore here
 
 ;; (The "rand" in `rand-nth` comes from random; the "nth" comes from
 ;; maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3,
@@ -402,10 +407,16 @@ rainbow
 
 (doc labeled-swatch)
 
-;; ...but if you go back to our `defn` and add a string between the
-;; function name and the argument vector, it will show up when you
-;; call `doc`. Try writing a docstring describing what
+;; ...but if we add a string to our `defn` between the function name
+;; and the argument vector, that string will show up when you call
+;; `doc`. We call those "docstrings", short for "documentation
+;; string". Let’s write our own docstring describing what
 ;; `labeled-swatch` does, and then re-evaluate `(doc swatch)`.
+
+(defn labeled-swatch
+  "HI I’M A DOCSTRING PLEASE TURN ME INTO SOMETHING HELPFUL"
+  [color]
+  [color (colorize color (square 25))])
 
 ;; Hey–nice work! 🎉 💯 👏🏾 You created a function. That’s the only
 ;; requirement to being a True Programmer. Give yourself a
