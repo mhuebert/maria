@@ -75,6 +75,13 @@
 ;; And see how color swatches are made by digging into the source:
 (source color-names)
 
+;; `color-names`-style swatches for every possible shade of blue (and
+;; note *how* we get all those shades):
+(map (fn [color-name]
+       [color-name (colorize color-name (square 25))])
+     (filter #(clojure.string/includes? % "blue")
+             (map first color-names)))
+
 ;;;; Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
