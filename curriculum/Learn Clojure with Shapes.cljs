@@ -23,7 +23,7 @@
 
 (what-is "puppy")
 
-;; It's a _string_, which is a funny way of saying "some text". You
+;; It's a *string*, which is a funny way of saying "some text". You
 ;; can tell it's a string because it's wrapped in double-quotes. There
 ;; are several other kinds of things in Clojure that we'll get to know
 ;; later, but in the meantime let's talk about those parentheses.
@@ -371,24 +371,42 @@ rainbow
 (map (fn [color] (colorize color (rectangle 20 20))) (reverse rainbow))
 
 ;; Did you notice we’re repeating ourselves AGAIN with that function?
-;; Let’s `def` it, too!
+;; Let’s `def` it, too! We can call it "swatch", like the swatches of
+;; color samples you get when choosing paint at the hardware store.
 
 (def swatch (fn [color] (colorize color (rectangle 20 20))))
 
+;; Now that the colors have been moved to `rainbow` and the
+;; square-making function has been moved to `swatch`, our code to see
+;; all our rainbow colors is shorter and more clear:
+
 (map swatch rainbow)
 
-;; Cool. But it gets better. We programmers define functions so often
-;; that Clojure has a special shorthand, `defn`, that is like a
-;; combined `def` and `fn`. It takes a name like `def`, then a vector
-;; of arguments like `fn`, then an expression using those arguments,
-;; like both. Let’s use `defn` to make labeled swatches (like
-;; `color-names` uses) so we know what color we’re looking at.
+;; Notice that this short three-word function call is the same as
+;; this more verbose expression:
+
+(map (fn [color] (colorize color (rectangle 20 20))) ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
+
+;; It gets better. We programmers define functions so often that
+;; Clojure has a special shorthand, `defn`, that is like a combined
+;; `def` and `fn`. It takes a name like `def`, then a vector of
+;; arguments like `fn`, then an expression using those arguments, like
+;; both. Let’s use `defn` to make labeled swatches (like `color-names`
+;; uses) so we know what color we’re looking at. Our function will
+;; take a color and return a vector that has the color name (the
+;; label) and then a square showing the color (the swatch):
 
 (defn labeled-swatch [color]
   [color (colorize color (square 25))])
 
-;; This will be super-useful for distinguishing all the shades of blue
-;; that we have:
+;; Just like with `fn`, evaluating that `defn` doesn't return a shape
+;; or a value or anything else tangible. It returns the function
+;; itself. Now the name `labeled-swatch` is defined, so we can call
+;; it:
+
+(labeled-swatch "red")
+
+;; We can use it to help make sense of what shades of blue there are.
 
 (map labeled-swatch ["blue" "lightskyblue" "darkslateblue"
                      "midnightblue" "powderblue" "steelblue"
