@@ -211,27 +211,27 @@
 ;; Have a look at both of those two expressions: one spelling out four
 ;; calls to `circle`, the other using `map` to call `circle` on every
 ;; value in a vector. As far as the computer is concerned, both
-;; expressions do the same thing. This magic function comes in handy
-;; all the time, and not just to avoid repeating yourself.
-
-;; FIXME Let's make a new
+;; expressions do the same thing. That makes `map` powerful and
+;; useful. Lots of `map`’s power comes alive when you pass it a
+;; function tailor-made for the problem you’re solving. This probably
+;; isn’t obvious yet, so to see what we mean, let's make a new
 ;; function right now! To start with, here's a really simple example
 ;; of a function:
 
 (fn [radius] (circle radius))
 
 ;; Evaluating that doesn't return anything that's like what we've seen
-;; before. There's no shape, there's no value. It's just a funny "f"
-;; that shows our code when you click on it. That's because evaluating
-;; that expression gives us a function, not the result of calling a
-;; function. If that doesn't make any sense, try wrapping the
-;; expression in a `what-is` call. Go ahead.
+;; before. This expression doesn’t return a shape or value. It returns
+;; a funny "f" that shows our code when you click on it. Let’s inspect
+;; it b wrapping the expression in a `what-is` call. Go ahead.
 
-;; ... it's a function! But what does it mean?
+;; ... it's a function! What does this mean?
 
 ;; `fn` is a special kind of function that returns a brand new
 ;; function. Whenever you see an expression that starts with `fn`,
-;; that's what it's doing: creating a function.
+;; that's what it's doing: creating a function. Evaluating a `fn`
+;; expression gives us back a function itself, not the result of
+;; calling a function.
 
 ;; To go a bit deeper in how `fn` works, evaluate this giant
 ;; expression. It will draw a small diagram to help explain how
