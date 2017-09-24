@@ -51,6 +51,7 @@
                                                                  :uid           uid
                                                                  :provider-data providerData})])
                                                       [[:db/retract-entity :auth-public]
+                                                       [:db/add :auth-public :signed-in? false]
                                                        [:db/retract-entity :auth-secret]]))))
   (catch js/Error e
     (prn CONNECT_ERR_MESSAGE)))

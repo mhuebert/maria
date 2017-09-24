@@ -9,9 +9,9 @@
 
 (defview remote-progress []
   (let [active? (> (d/get :remote/status :in-progress) 0)]
-    [:div {:style {:width    "50%"
-                   :height   (if active? 10 0)
+    [:div {:style {:height   (if active? 10 0)
                    :left     0
+                   :right    0
                    :top      0
                    :position "absolute"}}
 

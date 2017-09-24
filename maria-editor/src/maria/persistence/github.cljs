@@ -106,7 +106,7 @@
 
 (defn load-user-gists [username]
   (case username
-    "modules"
+    "curriculum"
     nil
     (when-not (d/get username :gists)
       (d/transact! [{:db/id           username

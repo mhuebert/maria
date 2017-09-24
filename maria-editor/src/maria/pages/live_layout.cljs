@@ -58,18 +58,18 @@
 
 (defview home
   [this]
-  (let [username (d/get :auth-public :username)]
-    [:div
-     (toolbar/doc-toolbar {})
+  [:div
+   (toolbar/doc-toolbar {})
 
-     (-> doc/curriculum
-         (doc-list-section "Learning Modules"))
+   (-> doc/curriculum
+       (doc-list-section "Learning Modules"))
 
-     (some-> (doc/locals-dir :local/recents)
-             (doc-list-section "Recent"))
+   (some-> (doc/locals-dir :local/recents)
+           (doc-list-section "Recent"))
 
+   (when-let [username (d/get :auth-public :username)]
      (some-> (seq (doc/user-gists username))
-             (doc-list-section "My gists"))]))
+             (doc-list-section "My gists")))])
 
 (defview layout
   [{:keys []}]
@@ -82,7 +82,7 @@
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
       (match segments
-             [] (if (d/get :auth-public :username)
+             [] (if (d/get :auth-public :signed-in?)
                   (home)
                   (landing))
              ["home"] (home)

@@ -22,7 +22,6 @@
           (string/replace #"\.clj[cs]?$" "")))
 
 (defn local-url* [provider id]
-
   (case (or provider (d/get id :persistence/provider))
     :gist (str "/gist/" id)
     :maria/local (str "/local/" id)
@@ -48,8 +47,8 @@
 (defn locals-push!
   "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
   [store id]
-  (local/local-update! (locals-path store) #(->> (remove (partial = id) (seq %))
-                                                 (cons id))))
+  (local/local-update! (locals-path store) #(->> (cons id %)
+                                                 (distinct))))
 (defn locals-remove!
   "Remove a locally-stored id from `path`"
   [store id]
@@ -84,7 +83,8 @@
   [store]
   (let [username (d/get :auth-public :username)]
     (seq (for [id (cond-> (local/local-get (locals-path username store))
-                          username (concat (local/local-get (locals-path nil store))))]
+                          username (concat (local/local-get (locals-path nil store))))
+               :when id]
            (normalize-doc id (merge {:local (local/local-get id)}
                                     (d/entity id)))))))
 
