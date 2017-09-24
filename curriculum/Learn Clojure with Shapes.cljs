@@ -1,8 +1,8 @@
 ;; # Hi!
 
 ;; This environment is called Maria. We're going to learn to program
-;; with it. 😃 Don't worry if anything's new or a little confusing at
-;; first--we'll explain everything as we go.
+;; with Maria. 😃 Don't worry if anything's new or a little confusing at
+;; first–we'll explain everything as we go.
 
 ;; First, let's ask the computer some questions. We'll ask our
 ;; questions in a programming language called Clojure. Here we go!
@@ -37,7 +37,7 @@
 ;; what's given to a function).
 
 ;; What do you think evaluating this next function might do? Say your
-;; guess out loud before trying it--it's fun and helpful to try to
+;; guess out loud before trying it–it's fun and helpful to try to
 ;; predict what the computer will do.
 
 (circle 50)
@@ -58,14 +58,25 @@
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
-;; function? Why, we can ask our friend the computer!
+;; function? Well, our friend Maria knows, and will tell us. Put your
+;; cursor on the `color` expression. At the bottom left of your
+;; browser you should see a short description of the `color`
+;; function. The part in square brackets, "`[radius]`", tells us what
+;; arguments the `circle` function takes: one argument called
+;; `radius`. The last part of Maria’s hints are a description of what
+;; the function does.
+
+;; Sometimes the description of what a function does is quite long, so
+;; you’ll want to take a better look at it than the quick hint that
+;; Maria shows. You can do that with this expression:
 
 (doc circle)
 
 ;; The `doc` function is short for "documentation". It tells us what a
 ;; function does and what arguments it needs. We gave `doc` the
 ;; argument `circle`, so it gives us documentation for the `circle`
-;; function. The computer wants to help us.
+;; function. The computer knows things and wants to share what it
+;; knows with us.
 
 ;; Remember, we can also examine the different pieces of that
 ;; expression with `what-is`:
@@ -82,7 +93,7 @@
 (what-is what-is)
 
 
-;; ## Shapes and Colors
+;; ## Shapes 🔺 and Colors 🌈
 
 ;; Now that you've seen the basics of evaluating expressions, calling
 ;; functions, and asking the computer clarifying questions with
@@ -164,7 +175,7 @@
 ;; sure you know how they fit into the expression containing them. 🕸️
 
 
-;; ## Computing Superpowers
+;; ## 🖳 Computing Superpowers 💪🏽
 
 ;; What if we want to draw a whole bunch of shapes? Typing "rectangle"
 ;; over and over again is a 😴 chore. We don't have time for that! Our
@@ -189,34 +200,38 @@
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
 ;; But there's a better, shorter way! When we have a bunch of things,
-;; and we want to call a function on each thing, we can use
-;; `map`. `map` is a great function that gives us a new collection
-;; that is the result of calling our function on each thing.
-
-;; That means we can map the function `circle` over a vector of all
-;; the sizes we want our circles to be:
+;; and we want to call a function on each thing, we can use the great
+;; `map` function. Watch:
 
 (map circle [16 32 64 128])
 
-;; Have a look at both of those two expressions. As far as the
-;; computer is concerned, they do the same thing, but the magic
-;; of `map` saves typing and improves clarity. Map is a
-;; great way to do avoid repeating yourself.
+;; We "mapped" the function `circle` over a vector of all the sizes we
+;; want our circles to be.
 
-;; FIXME Let's make a new
+;; Have a look at both of those two expressions: one spelling out four
+;; calls to `circle`, the other using `map` to call `circle` on every
+;; value in a vector. As far as the computer is concerned, both
+;; expressions do the same thing. That makes `map` powerful and
+;; useful. Lots of `map`’s power comes alive when you pass it a
+;; function tailor-made for the problem you’re solving. This probably
+;; isn’t obvious yet, so to see what we mean, let's make a new
 ;; function right now! To start with, here's a really simple example
 ;; of a function:
 
 (fn [radius] (circle radius))
 
-;; If that doesn't make any sense, try wrapping it in a `what-is`
-;; call. Go ahead.
+;; Evaluating that doesn't return anything that's like what we've seen
+;; before. This expression doesn’t return a shape or value. It returns
+;; a funny "f" that shows our code when you click on it. Let’s inspect
+;; it b wrapping the expression in a `what-is` call. Go ahead.
 
-;; ... it's a function! But what does it mean?
+;; ... it's a function! What does this mean?
 
 ;; `fn` is a special kind of function that returns a brand new
 ;; function. Whenever you see an expression that starts with `fn`,
-;; that's what it's doing: creating a function.
+;; that's what it's doing: creating a function. Evaluating a `fn`
+;; expression gives us back a function itself, not the result of
+;; calling a function.
 
 ;; To go a bit deeper in how `fn` works, evaluate this giant
 ;; expression. It will draw a small diagram to help explain how
@@ -247,7 +262,8 @@
 ;; arguments used to call this function will be available by the names
 ;; they were given in the square bracket part before.
 
-;; Try to guess what this expression will return 🤔, then evaluate it.
+;; Try to guess what this expression will return 🤔. Once you have an
+;; idea, evaluate the expression to test your hypothesis.
 
 (map (fn [radius] (circle radius))
      [16 32 64 128])
@@ -265,196 +281,173 @@
 ;; heart of the power of programming.
 
 
-;; ## Names
+;; ## 👨🏾‍🚀 Names 👩🏻‍🚀
 
 ;; So far, none of the functions we've created have had names. We've
 ;; created these "anonymous" functions, used them briefly, and that
 ;; was it. The same goes for the values we've been using, like strings
-;; and vectors--none of them have had names, either.
+;; and vectors–none of them have had names, either.
 
-;; But sometimes you'll need to use a particular function call over
-;; and over. That's when you should consider naming it, so the
-;; computation only gets done once, and the result is saved for the
-;; next time we need it. For instance, if we're going to use a
-;; specific set of colors for some shapes, we might want to create a
-;; named color palette so we don't have to repeat the list of colors
-;; over and over. For this, we can use `let`, like this palette of
-;; blues:
+;; But sometimes you'll need to use a particular value or function
+;; call over and over. That's when you should consider naming it, so
+;; it's easier to change, so we know all the occurrences are supposed
+;; to be the same thing, and so we don't unnecessarily repeat any
+;; computations. For instance, if we're going to use a specific set of
+;; colors for some shapes, we might want to create a named color
+;; palette so we don't have to repeat the whole list of colors over
+;; and over. For this, we can use `let`, like the color-shifting
+;; picture we draw using this rainbow palette:
 
-(let [palette ["blue" "turquoise" "midnightblue"]]
-  palette)
+(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
+  (layer (colorize (rand-nth palette) (square 100))
+         (colorize (rand-nth palette) (triangle 100))
+         (colorize (rand-nth palette) (circle 15))))
 
-;; `let` takes two arguments. The first argument is a vector with
-;; pairs: first a name, and then an expression that gets that
-;; name. The second argument is an expression that uses the names from
-;; the first vector. Here, we didn't do anything to the name
-;; `palette`, so we just get its value. Notice that our name doesn't
-;; do anything outside the `let`:
+;; Make sure you evaluate this expression more than once 😇
+
+;; How does it work? `let` takes two arguments. The first argument is
+;; a vector with pairs: first a name, and then an expression that gets
+;; that name. In the above expression, that's the `[palette ["red"
+;; "orange" "yellow" "green" "blue" "indigo" "violet"]]` part, with
+;; `palette` being the name (since it's the first of the pair) and the
+;; vector of colors being the expression that `let` turns into that
+;; name.
+
+;; The second argument to `let` is an expression that uses the names
+;; from the first argument. Here, we use the name `palette` to paint
+;; some shapes using the `rand-nth` function. Use all the techniques
+;; you've learned to explore what `rand-nth` does: Maria’s parameter
+;; hints, `what-is`, `doc`, and evaluating the function with different
+;; input.
+
+;; (The "rand" in `rand-nth` comes from random; the "nth" comes from
+;; maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3,
+;; n". So instead of getting "1st" or "2nd" one from our vector, it's
+;; a random "nth". 🤓)
+
+;; Notice that the name we made up doesn't do anything outside the
+;; `let`:
 
 palette
 
-;; That's actually a good thing. It's helpful to name things, but most
-;; of the time we only want our names for a short time. One thing
-;; programmers have found out is that having a lot of names that work
-;; everywhere gets confusing.
+;; Why? It's helpful to name things, but most of the time we only want
+;; our names for a short time. One thing programmers have found out is
+;; that having a lot of names that work everywhere gets hard to keep
+;; track of. In the above expression, we needed the name `palette`
+;; because we wanted to use it several times, and it makes no sense to
+;; write out all those color names over and over. If we only needed
+;; the list of colors once, we wouldn’t have named it at all. Fewer
+;; names makes for simpler code that’s easier to read.
 
-;; Now let's do something with a name we create. This time, we'll make
-;; a new palette of colors, and show them off instead of just
-;; returning the names:
+;; What else can we do with that rainbow palette? Well, let’s take a
+;; look at the whole thing:
 
 (let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
   (map (fn [color] (colorize color (rectangle 20 20))) palette))
 
-;; Super. Let's try another palette, but this time we just want to
-;; sample from it one at a time:
+;; Wait. We’re repeating ourselves. If we’re going to use that rainbow
+;; palette everywhere, it’s silly to make the same `let` every time.
 
-(let [palette ["grey" "black" "white" "darkgrey" "lightgrey" "slate"]]
-  (colorize (rand-nth palette) (circle 25)))
+;; We can *define* names that work all across your program using `def`:
 
-;; Evaluate this one more than once. We snuck in a new function there,
-;; `rand-nth`, that grabs a random color from our palette to colorize
-;; the circle. (The "rand" in `rand-nth` comes from random; the "nth"
-;; comes from maths, where it's common to write "1, 2, 3, and so on"
-;; as "1, 2, 3, n". So instead of getting "1st" or "2nd" one from our
-;; vector, it's a random "nth". 🤓)
+(def rainbow ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
 
-;; But...is "slate" really a color? I think I saw it before when we
-;; played with `color-names`, but I just can't remember. And that list
-;; of colors is so long, it's a pain to look through it to
-;; check. Maybe...maybe the computer could help?
+rainbow
 
-;; ...
+(map (fn [color] (colorize color (rectangle 20 20))) rainbow)
 
-;; The computer says yes, it would love to help, and that it is really
-;; really super good at looking at long lists of things.
+;; 🏳️‍🌈 😺
 
-;; First let's take a look at our data. There are a lot of colors, so
-;; let's grab just a few:
+;; Now we’ve got a `rainbow` in our toolbox, ready to use for
+;; whatever. Programming like this is like building a LEGO spaceship,
+;; except we can invent whatever blocks we need, and use them as many
+;; times as we like.
 
-(take 5 color-names)
+(map (fn [color] (colorize color (rectangle 20 20))) (reverse rainbow))
 
-;; Hmm. We've got square brackets, some text in double-quotes, and a
-;; colored square. Let's ask this data some questions. (Feel free to
-;; `what-is` any of these if you're not sure.)
+;; Did you notice we’re repeating ourselves AGAIN with that function?
+;; Let’s `def` it, too!
 
-(first color-names)
+(def swatch (fn [color] (colorize color (rectangle 20 20))))
 
-(first (first color-names))
+(map swatch rainbow)
 
-(second (first color-names))
+;; Cool. But it gets better. We programmers define functions so often
+;; that Clojure has a special shorthand, `defn`, that is like a
+;; combined `def` and `fn`. It takes a name like `def`, then a vector
+;; of arguments like `fn`, then an expression using those arguments,
+;; like both. Let’s use `defn` to make labeled swatches (like
+;; `color-names` uses) so we know what color we’re looking at.
 
-;; So each entry in color-names seems to be a vector with two values:
-;; first a string for the color name, and second a shape using that
-;; color. We don't really need the shapes, so let's work with only all
-;; the names:
+(defn labeled-swatch [color]
+  [color (colorize color (square 25))])
 
-(map first color-names)
+;; This will be super-useful for distinguishing all the shades of blue
+;; that we have:
 
-;; To ask whether a color name is contained in those names, we turn it
-;; into a `set` and use `contains?`. (A set is an unordered collection,
-;; which is much easier to search through than an ordered collection
-;; like a vector.)
+(map labeled-swatch ["blue" "lightskyblue" "darkslateblue"
+                     "midnightblue" "powderblue" "steelblue"
+                     "cornflowerblue" "aliceblue" "deepskyblue"
+                     "skyblue" "dodgerblue" "mediumblue"
+                     "darkblue" "blueviolet" "cadetblue"
+                     "slateblue" "royalblue" "lightblue"
+                     "lightsteelblue" "mediumslateblue"])
 
-(contains? (set (map first color-names)) "slate")
+;; Or:
+(labeled-swatch (rand-nth rainbow))
 
-;; And let's double-check that it's not `false` for *every* name:
+;; We can even tell future programmers how to use our function by
+;; documenting it. Right now `labeled-swatch` doesn’t have any
+;; documentation:
 
-(contains? (set (map first color-names)) "gray")
+(doc labeled-swatch)
 
-;; OK. Maybe I was thinking of IKEA couch colors when I thought of
-;; "slate"? Regardless, we've solved our question. But our code isn't
-;; super clear, is it? If we saved this somewhere, without a name,
-;; would we know what it does? Would it be easy to figure out why we
-;; wrote it? Not really. We can make our life easier by making it a
-;; function and giving that function a name. Here's that same code as
-;; a function:
+;; ...but if you go back to our `defn` and add a string between the
+;; function name and the argument vector, it will show up when you
+;; call `doc`. Try writing a docstring describing what
+;; `labeled-swatch` does, and then re-evaluate `(doc swatch)`.
 
-((fn [color] (contains? (set (map first color-names)) color)) "orange")
-
-((fn [color] (contains? (set (map first color-names)) color)) "moonblue")
-
-;; ...and now let's name it:
-
-(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
-  (color-name? "slate"))
-
-;; We should be suspicious of this code. Do we really have to say all
-;; that every time we want to check if something is a valid color
-;; name?
-
-(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
-  (color-name? "purple"))
-
-;; 😩
-
-(let [color-name? (fn [color] (contains? (set (map first color-names)) color))]
-  (color-name? "reallydarkgrey"))
-
-;; Ugh! 😫 Let's not repeat ourselves. `let` is good when we'll use a
-;; name only in one spot, but this is a function we want to be able to
-;; call from anywhere. And for that, we have `def`.
-
-;; You can _define_ names that work all across your program using `def`:
-
-(def rainbow-colors ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
-
-rainbow-colors
-
-;; Nice! 🏳️‍🌈 Now you fill in this `def` to do the same for our
-;; color-name-checking function:
-
-(def color-name?
-  ;; your code goes here
-
-  )
-
-(color-name? "burntochre")
-
-(color-name? "charredogre")
-
-;; Pretty cool, right? There's even `defn`, a special shorthand for
-;; defining functions:
-
-(defn color-name? [color]
-  (contains? (set (map first color-names)) color))
-
-(color-name? "blue")
-
-(color-name? "blau")
-
-;; Unfortunately Maria doesn't understand German color names 🇩🇪 🙁
+;; Hey–nice work! 🎉 💯 👏🏾 You created a function. That’s the only
+;; requirement to being a True Programmer. Give yourself a
+;; high-five. I am right now giving you a high-five. Maria is giving
+;; you a high-five.
 
 
-
-
-
-;; Programming like this is like building a LEGO spaceship, except we
-;; can invent whatever blocks we need, and use them as many times as
-;; we like. For instance, `rainbow-colors` is in our toolbox, ready
-;; whenever we need it. Here's another way to show off our rainbow,
-;; using the power of `map` over more than one vector at a time:
-
-(map colorize
-     rainbow-colors
-	 (repeat (rectangle 20 20)))
-
-;; How it works is that we're mapping over `colorize`, which takes two
-;; arguments. For each step it takes the first argument from the first
-;; collection and the second argument from the second collection--and
-;; so on if there are more.
-
-;; Evaluate sub-expressions to see what that means. Each step
-;; colorizes one color from `rainbow-colors`, and one shape to get
-;; colorized, which comes from the output of `repeat`. What comes out
-;; of `repeat`?
-
-;; ...???
-
-;; Congratulations! Now that we've created a function, you are a True
-;; Programmer. Give yourself a high-five. I am right now giving you a
-;; high-five. Maria is giving you a high-five.
+;; # Where to Go From Here
 
 ;; You've been introduced to the essence of code: writing expressions,
 ;; asking the computer questions, and creating functions. Where to go
-;; with that power is up to you: the next step is finding interesting
-;; ways to put functions together to create cool stuff.
+;; with that power is up to you. Your next step is to find interesting
+;; ways to put functions together to create cool stuff. I look forward
+;; to seeing what you make.
+
+;; This introduction to Clojure intentionally avoids getting into the
+;; benefits of Lisp syntax, language features like immutability or
+;; laziness, hosting and tooling concerns, and the full span of basic
+;; data types. This document is a consciously incomplete
+;; introduction. While all of those topics are valuable material, they
+;; are secondary for the Clojure beginner. Instead, since Clojure
+;; programmers typically spend the majority of their time juggling
+;; expressions, names, and functions, we try to offer in Maria a
+;; playground where the beginner is introduced to those fundamental
+;; tools.
+
+;; To explore other things one can do with Clojure and Maria, check
+;; out the [Gallery](https://maria.cloud/gallery), explore other
+;; [curriculum modules](https://maria.cloud/), or write your own
+;; code on a fresh page by using the New button at the top left.
+
+;; If you want to use full powers of the Maria environment, take a
+;; look at the [Editor
+;; Quickstart](https://maria.cloud/quickstart).
+
+;; If you have the patience to work through a textbook, consider
+;; [these Clojure books](https://clojure.org/community/books).
+
+;; If you’re not sure which of these is best, it might help to
+;; consider what you would find rewarding to build. What is your
+;; purpose for learning programming? Your answer might be to build
+;; mobile apps, websites, or games, or to make art, design graphics,
+;; or explore science or math or statistics or [information
+;; theory](https://maria.cloud/gist/888b354fe941866721370a91e181252c)
+;; or linguistics, or...?

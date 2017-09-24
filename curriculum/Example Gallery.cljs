@@ -50,7 +50,7 @@
 ;; confetti
 (let [palette (cycle ["aqua" "springgreen" "magenta"])]
   (->> (repeat 20 (triangle 20))
-       (map #(position [(rand-int 500) (rand-int 500)] %))
+       (map #(position (rand-int 500) (rand-int 500) %))
        (map colorize palette)
        (apply layer)))
 
@@ -64,6 +64,23 @@
  (position 45 74 (colorize "orange" (rectangle 10 5)))
  (position 33 82 (colorize "orange" (rectangle 10 5)))
  (position 35 2  (colorize "black"  (rectangle 10 20))))
+
+;; Sample from a palette every quarter-second
+(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
+  (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
+
+;; Labeled color swatches:
+(take 10 color-names)
+
+;; And see how color swatches are made by digging into the source:
+(source color-names)
+
+;; `color-names`-style swatches for every possible shade of blue (and
+;; note *how* we get all those shades):
+(map (fn [color-name]
+       [color-name (colorize color-name (square 25))])
+     (filter #(clojure.string/includes? % "blue")
+             (map first color-names)))
 
 ;;;; Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))

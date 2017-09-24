@@ -70,13 +70,13 @@ color-names ;; XXX consider rand-nth, count, first, second here
 
 [(circle 16) (circle 32) (circle 64) (circle 128)]
 
-;; map TODO reword the explanation of this fn
+;; map
 
 (map circle [16 32 64 128])
 
 ;; creating functions on the fly
 
-(what-is (fn [radius] (circle radius))) ;; TODO add some user interaction by showing this fn without the `what-is`
+(what-is (fn [radius] (circle radius)))
 
 (layer
  (position 50 60 (text "(fn [radius] (circle radius))"))
@@ -91,7 +91,6 @@ color-names ;; XXX consider rand-nth, count, first, second here
 
 (map (fn [radius] (colorize "purple" (circle radius))) [16 32 64 128])
 
-;; TODO reformat for clarity as
 (map (fn [radius] (colorize "purple" (circle radius)))
      [16 32 64 128])
 
@@ -100,6 +99,14 @@ color-names ;; XXX consider rand-nth, count, first, second here
 
 ;; let
 
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
+;; XXX lots has changed in this section
 (let [palette ["blue" "turquoise" "midnightblue"]]
   palette) ;; user input
 
