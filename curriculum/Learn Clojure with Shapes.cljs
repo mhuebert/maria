@@ -32,7 +32,7 @@
 ;; sentence. In Clojure, sentences start with an open-parenthesis:
 ;; `(`. Next in the Clojure sentence is the verb, in this case,
 ;; `what-is`. We call these verbs "functions". Whatever comes after
-;; the function "verb" are the *argumnents* we want to give to the
+;; the function "verb" are the *arguments* we want to give to the
 ;; function. When we evaluate a form in parens it *calls* the function
 ;; at the beginning of the expression on the arguments that
 ;; follow. (These arguments don't have anything to do with arguing,
