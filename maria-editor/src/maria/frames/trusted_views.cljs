@@ -45,6 +45,7 @@
         queries (cond-> queries
                         username (conj [:doc.owner/username username]))]
     (frame-view {:db/transactions (cond-> (into [(d/entity :auth-public)
+                                                 [:db/add :window/location :origin (.. js/window -location -origin)]
                                                  (some-> current-entity (d/entity))
                                                  (some-> username (d/entity))]
                                                 transactions)

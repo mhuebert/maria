@@ -55,6 +55,14 @@
                    (.preventDefault e)
                    (navigate a))))
 
+(events/listen js/window "mousedown"
+               (fn [e]
+                 (when-let [a (r/closest (.-target e) r/link?)]
+                   (when (= (.-origin a) (.. js/window -location -origin))
+                     (let [href (.-href a)]
+                       (set! (.-href a) (string/replace href (.-origin a) (d/get :window/location :origin)))
+                       (events/listenOnce js/window "mouseup" #(set! (.-href a) href)))))))
+
 
 
 (defview not-found []
