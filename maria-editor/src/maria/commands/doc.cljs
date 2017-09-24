@@ -11,6 +11,7 @@
             [maria.util :as util]))
 
 (def send (partial frame/send frame/trusted-frame))
+(local/init-storage ::locals)
 
 (defn add-clj-ext [s]
   (when s
@@ -32,7 +33,7 @@
 (defn locals-path
   ([store] (locals-path (d/get :auth-public :username) store))
   ([username store]
-   (case store :local/recents (str username "/recent_1"))))
+   [username store]))
 
 (defn get-filename
   "Given a map of <filename, {:filename, content}>, return the inner or outer filename when present."
@@ -44,15 +45,22 @@
   (get-filename (first (:files (or (:local project)
                                    (:persisted project))))))
 
+(defn locals-dir
+  [store]
+  (let [username (d/get :auth-public :username)]
+    (cond-> (d/get-in ::locals (conj [:local] (locals-path username store)))
+            username (into  (d/get-in ::locals (conj [:local] (locals-path nil store)))))))
+
 (defn locals-push!
   "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
   [store id]
-  (local/local-update! (locals-path store) #(->> (cons id %)
-                                                 (distinct))))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(->> (cons id %)
+                                                                                  (distinct))]]))
 (defn locals-remove!
   "Remove a locally-stored id from `path`"
   [store id]
-  (local/local-update! (locals-path store) #(remove (partial = id) %)))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(remove (fn [x] (or (nil? x)
+                                                                                                 (= x id))) %)]]))
 
 (defn normalize-doc
   ([doc] (normalize-doc (:id doc) doc))
@@ -78,15 +86,13 @@
               (:updated-at %)
               (project-filename %)) (fn [a b] (compare b a)) projects))
 
-(defn locals-dir
-  "List the locally-stored ids for `path`"
+(defn locals-docs
+  "Return the locally-stored docs for `path`"
   [store]
-  (let [username (d/get :auth-public :username)]
-    (seq (for [id (cond-> (local/local-get (locals-path username store))
-                          username (concat (local/local-get (locals-path nil store))))
-               :when id]
-           (normalize-doc id (merge {:local (local/local-get id)}
-                                    (d/entity id)))))))
+  (seq (for [id (locals-dir store)
+             :when id]
+         (normalize-doc id (merge {:local (local/local-get id)}
+                                  (d/entity id))))))
 
 (defn user-gists [username]
   (seq (->> (map normalize-doc (d/entities [[:doc.owner/username username]]))

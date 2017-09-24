@@ -16,6 +16,10 @@
   (when (and (string? s) (not (identical? s "")))
     s))
 
+(defn capitalize [s]
+  (str (string/upper-case (first s))
+       (subs s 1)))
+
 (defn spaced-string [the-name]
   (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
 

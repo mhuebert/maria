@@ -111,7 +111,7 @@
                                                                   :label [Label "Home"]}
                                                                  (let [username (d/get :auth-public :username)
                                                                        pattern (re-pattern (str "(?i)\\b" q))]
-                                                                   (for [{:keys [filename local-url]} (distinct (concat (doc/locals-dir :local/recents)
+                                                                   (for [{:keys [filename local-url]} (distinct (concat (doc/locals-docs :local/recents)
                                                                                                                         (doc/user-gists username)
                                                                                                                         (seq doc/curriculum)))
                                                                          :when (and (util/some-str filename) (re-find pattern filename))]

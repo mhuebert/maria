@@ -64,12 +64,17 @@
    (-> doc/curriculum
        (doc-list-section "Learning Modules"))
 
-   (some-> (doc/locals-dir :local/recents)
+   (some-> (doc/locals-docs :local/recents)
            (doc-list-section "Recent"))
 
    (when-let [username (d/get :auth-public :username)]
      (some-> (seq (doc/user-gists username))
-             (doc-list-section "My gists")))])
+             (doc-list-section "My gists")))
+
+   (some-> (doc/locals-docs :local/trash)
+           (doc-list-section "Trash"))
+
+   ])
 
 (defview layout
   [{:keys []}]

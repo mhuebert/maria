@@ -12,6 +12,7 @@
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)
 
+
 (defview file-edit
   {:doc-editor              (fn [{:keys [view/state]}] (:doc-editor @state))
    :init-doc                (fn [this]
@@ -70,12 +71,34 @@
         more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
     [:.flex-auto.overflow-auto.sans-serif.f6
      (for [doc (take limit-n docs)
-           :let [{:keys [db/id description local-url filename]} doc]
+           :let [{:keys [id description persistence/provider local-url filename]} doc
+                 trashed? (contains? (set (doc/locals-dir :local/trash)) id)]
            :when local-url]
-       [:a.db.ph3.pv2.bb.b--near-white.black.no-underline.b.hover-bg-washed-blue.pointer
-        {:href local-url}
-        (doc/strip-clj-ext filename)
-        (some->> description (conj [:.gray.f7.mt1.normal]))])
+
+       [:.flex.bb.b--near-white.items-stretch
+        [:a.db.ph3.pv2.black.no-underline.b.flex-auto
+         {:class (if trashed? "o-50" "hover-bg-washed-blue pointer")
+          :href  (when-not trashed? local-url)}
+         (doc/strip-clj-ext filename)
+         (some->> description (conj [:.gray.f7.mt1.normal]))]
+        #_[:.flex.items-center.silver.f7.ph2 (-> (name provider)
+                                                 (util/capitalize))]
+        (when trashed?
+          [:.silver.black.pa2.flex.items-center.f7.hover-black.pointer.hover-bg-washed-blue
+           {:on-click #(do (doc/locals-push! :local/recents id)
+                           (doc/locals-remove! :local/trash id))}
+           "Restore"])
+        (when (= provider :maria/local)
+          [:.moon-gray.hover-dark-red.hover-bg-washed-red.pa1.flex.items-center.pointer
+           {:on-click #(if trashed?
+                         (do
+                           (doc/locals-remove! :local/trash id)
+                           (doc/locals-remove! :local/recents id)
+                           (d/transact! [[:db/retract-entity id]]))
+                         (do
+                           (doc/locals-push! :local/trash id)
+                           (doc/locals-remove! :local/recents id)))}
+           (icons/size icons/X 20)])])
      (when more? [:.pointer.gray.hover-black.ph3.hover-bg-washed-blue
                   {:on-click #(swap! state update :limit-n (partial + 20))}
                   icons/ExpandMore])]))

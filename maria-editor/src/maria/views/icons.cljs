@@ -14,6 +14,8 @@
    [:path {:d "M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"}]
    [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
+(def X (style Add {:transform "rotate(45deg)"}))
+
 (def ArrowDropDown
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
    [:path {:d "M7 10l5 5 5-5z"}]
@@ -72,6 +74,11 @@
     [:path {:id "curve3", :fill "none", :stroke "#000000", :d "M2.715,3.528C2.19,3.681,1.385,4.312,1.166,4.593\n\t\t\t\tc-0.26,0.336-0.428,0.709-0.537,1.053C0.494,6.068,0.535,6.955,0.535,6.955"}] "\t\t\t"
     [:path {:id "curve2", :fill "none", :stroke "#000000", :d "M13.26,3.494c0.5-0.167,1.269-0.737,1.523-1.107\n\t\t\t\tc0.244-0.35,0.451-0.71,0.558-1.054c0.136-0.421,0.095-1.308,0.095-1.308"}] "\t\t\t"
     [:path {:id "curve1", :fill "none", :stroke "#000000", :d "M13.256,3.528c0.525,0.153,1.329,0.784,1.549,1.065\n\t\t\t\tc0.261,0.336,0.429,0.709,0.537,1.053c0.136,0.422,0.095,1.309,0.095,1.309"}] "\t\t"] "\t"])
+
+(def Delete
+  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
+   [:path {:d "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"}]
+   [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
 (def ExpandMore
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}

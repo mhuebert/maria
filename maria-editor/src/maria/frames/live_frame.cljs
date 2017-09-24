@@ -29,7 +29,8 @@
 
             [maria.live.analyze]
             [re-db.d :as d]
-            [re-db.patterns :as patterns]))
+            [re-db.patterns :as patterns]
+            [maria.util :as util]))
 
 (extend-type cell/Cell
   cell/ICellStore
@@ -53,7 +54,8 @@
                (fn [e]
                  (when-let [a (r/closest (.-target e) r/link?)]
                    (.preventDefault e)
-                   (navigate a))))
+                   (when (util/some-str (.-href a))
+                     (navigate a)))))
 
 (events/listen js/window "mousedown"
                (fn [e]
