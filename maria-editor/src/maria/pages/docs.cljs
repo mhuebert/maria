@@ -65,27 +65,26 @@
                                                          :default-value default-value})))]]))))
 
 (def small-label :.silver.f7.flex.items-stretch.ph2.w4.tl.flex-none)
+(def small-icon :.silver.hover-black.ph2.flex.items-center.pointer)
 
 (defview doc-list
   {:view/initial-state {:limit-n 8}}
-  [{:keys [view/state]} docs]
+  [{:keys [view/state context]} docs]
   (let [{:keys [limit-n]} @state
         more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
     [:.flex-auto.overflow-auto.sans-serif.f6
      (for [doc (take limit-n docs)
            :let [{:keys [id description persistence/provider local-url filename]} doc
-                 trashed? (contains? (set (doc/locals-dir :local/trash)) id)]
+                 trashed? (= context :trash)]
            :when local-url]
 
        [:.flex.bb.b--near-white.items-stretch
         {:class (when-not trashed? "hover-bg-washed-blue")}
         [:a.db.ph3.pv2.black.no-underline.b.flex-auto
-         {:class (when trashed? "o-50" " pointer")
+         {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
          (doc/strip-clj-ext filename)
          (some->> description (conj [:.gray.f7.mt1.normal]))]
-        #_[:.flex.items-center.silver.f7.ph2 (-> (name provider)
-                                                 (util/capitalize))]
 
         (case provider
           :maria/local
@@ -95,20 +94,9 @@
               {:on-click #(do (doc/locals-push! :local/recents id)
                               (doc/locals-remove! :local/trash id))}
               "Restore"]
-             [:.flex.items-center "Unsaved"])
-           [:.silver.hover-dark-red.ph2.flex.items-center.pointer
-            {:data-tooltip (pr-str (if trashed? "Delete Permanently" "Trash"))
-             :on-click     #(if trashed?
-                              (do
-                                (doc/locals-remove! :local/trash id)
-                                (doc/locals-remove! :local/recents id)
-                                (d/transact! [[:db/retract-entity id]]))
-                              (do
-                                (doc/locals-push! :local/trash id)
-                                (doc/locals-remove! :local/recents id)))}
-            (icons/size icons/Delete 16)]]
+             [:.flex.items-center "Unsaved"])]
           :gist [small-label [:.flex.items-center "Gist"]
-                 [:a.silver.hover-black.ph2.flex.items-center.pointer.no-underline.f7
+                 [small-icon
                   {:href         (str "https://gist.github.com/" id)
                    :data-tooltip (pr-str "View on GitHub")
                    :target       "_blank"}
@@ -117,8 +105,30 @@
 
           :maria/curriculum
           [small-label [:.flex.items-center "Curriculum"]]
-          nil)])
-     (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue
+          nil)
+
+        (case context
+          :recents
+          (when (= context :recents)
+            [small-icon
+             {:on-click     #(do (doc/locals-remove! :local/recents id)
+                                 (when (= provider :maria/local)
+                                   (doc/locals-push! :local/trash id)))
+              :data-tooltip (pr-str "Remove")}
+             (icons/size icons/X 16)])
+          :trash
+          [small-icon
+           {:data-tooltip (pr-str "Delete")
+            :class "hover-dark-red"
+            :on-click     #(do
+                             (doc/locals-remove! :local/trash id)
+                             (doc/locals-remove! :local/recents id)
+                             (d/transact! [[:db/retract-entity id]]))}
+           (icons/size icons/Delete 16)]
+          [:.ph2 (icons/size icons/Blank 16)])
+
+        ])
+     (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc
                   {:on-click #(swap! state update :limit-n (partial + 20))}
                   icons/ExpandMore])]))
 

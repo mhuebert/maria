@@ -24,11 +24,11 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
-(defn doc-list-section [docs title]
+(defn doc-list-section [docs context title]
   [:div
    [:.sans-serif.mh3.mv2 title]
    [:.bg-white.ma3
-    (docs/doc-list docs)]])
+    (docs/doc-list {:context context} docs)]])
 
 
 
@@ -63,17 +63,17 @@
    (toolbar/doc-toolbar)
 
    (-> doc/curriculum
-       (doc-list-section "Learning Modules"))
+       (doc-list-section :curriculum "Learning Modules"))
 
    (some-> (doc/locals-docs :local/recents)
-           (doc-list-section "Recent"))
+           (doc-list-section :recents "Recent"))
 
    (when-let [username (d/get :auth-public :username)]
      (some-> (seq (doc/user-gists username))
-             (doc-list-section "My gists")))
+             (doc-list-section :gists "My gists")))
 
    (some-> (doc/locals-docs :local/trash)
-           (doc-list-section "Trash"))
+           (doc-list-section :trash "Trash"))
 
    ])
 

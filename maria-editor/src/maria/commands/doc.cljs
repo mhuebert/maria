@@ -47,20 +47,18 @@
 
 (defn locals-dir
   [store]
-  (let [username (d/get :auth-public :username)]
-    (cond-> (d/get-in ::locals (conj [:local] (locals-path username store)))
-            username (into (d/get-in ::locals (conj [:local] (locals-path nil store)))))))
+  (d/get-in ::locals (conj [:local] (locals-path store))))
 
 (defn locals-push!
   "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
   [store id]
-  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(->> (cons id %)
-                                                                                  (distinct))]]))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(util/log-ret :locals-push (->> (cons id %)
+                                                                                                             (distinct)))]]))
 (defn locals-remove!
   "Remove a locally-stored id from `path`"
   [store id]
-  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(remove (fn [x] (or (nil? x)
-                                                                                                 (= x id))) %)]]))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(util/log-ret :locals-remove (remove (fn [x] (or (nil? x)
+                                                                                                                              (= x id))) %))]]))
 
 (defn normalize-doc
   ([doc] (normalize-doc (:id doc) doc))
@@ -74,7 +72,7 @@
                       (:persistence/provider (:persisted the-doc))
                       (:persistence/provider (:local the-doc)))
          the-id (or doc-id root-id id)
-         the-filename (or filename (get-filename (first files)))]
+         the-filename (get-filename (first files))]
      (cond-> (assoc doc :updated-at updated-at
                         :persistence/provider provider)
              (nil? filename) (assoc :filename the-filename)
