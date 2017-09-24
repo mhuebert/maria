@@ -35,34 +35,27 @@
    :update             (fn [{:keys [view/state view/prev-state]}]
                          (let [{next-active? :which-key/active?
                                 :keys        [modifiers-down]} @state
-                               prev-content (::prev-content @state)
                                next-active? next-active?
-                               start? (and next-active? (not (:which-key/active? prev-state)))
                                finish? (and (not next-active?) (:which-key/active? prev-state))]
-                           (when start?
-                             (v/swap-silently! state assoc ::prev-content prev-content))
-                           (when finish?
-                             (v/swap-silently! state dissoc ::prev-content))
                            (when (or next-active? finish?)
-                             (bottom-bar/set-bottom-bar! (cond next-active?
-                                                               (let [commands (seq (exec/keyset-commands modifiers-down (exec/get-context)))]
-                                                                 [:.bg-white.sans-serif.relative
-                                                                  [:.pb0.f4.absolute.left-0.top-0.inline-flex.items-center.bg-white.b--light-gray.ph3
-                                                                   {:style {:padding-top  10
-                                                                            :border-width 1
-                                                                            :border-style "solid solid none solid"
-                                                                            :height       30
-                                                                            :margin-top   -30}}
+                             (bottom-bar/add-bottom-bar! :eldoc/which-key (when next-active?
+                                                                            (let [commands (seq (exec/keyset-commands modifiers-down (exec/get-context)))]
+                                                                              [:.bg-white.sans-serif.relative
+                                                                               [:.pb0.f4.absolute.left-0.top-0.inline-flex.items-center.bg-white.b--light-gray.ph3
+                                                                                {:style {:padding-top  10
+                                                                                         :border-width 1
+                                                                                         :border-style "solid solid none solid"
+                                                                                         :height       30
+                                                                                         :margin-top   -30}}
 
-                                                                   (registry/keyset-string modifiers-down)
-                                                                   util/space
-                                                                   [:span.gray "-"]]
-                                                                  [:.f7.hint-columns.pv2
-                                                                   (if commands (->> commands
-                                                                                     (group-by :display-namespace)
-                                                                                     (map (partial show-namespace-commands modifiers-down)))
-                                                                                [:.gray.ph2 "No commands"])]])
-                                                               finish? prev-content)))))
+                                                                                (registry/keyset-string modifiers-down)
+                                                                                util/space
+                                                                                [:span.gray "-"]]
+                                                                               [:.f7.hint-columns.pv2
+                                                                                (if commands (->> commands
+                                                                                                  (group-by :display-namespace)
+                                                                                                  (map (partial show-namespace-commands modifiers-down)))
+                                                                                             [:.gray.ph2 "No commands"])]]))))))
    :view/did-mount     #(.update %)
    :view/should-update (constantly true)
    :view/did-update    #(.update %)}

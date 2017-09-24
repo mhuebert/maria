@@ -70,7 +70,8 @@
         more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
     [:.flex-auto.overflow-auto.sans-serif.f6
      (for [doc (take limit-n docs)
-           :let [{:keys [db/id description local-url filename]} doc]]
+           :let [{:keys [db/id description local-url filename]} doc]
+           :when local-url]
        [:a.db.ph3.pv2.bb.b--near-white.black.no-underline.b.hover-bg-washed-blue.pointer
         {:href local-url}
         (doc/strip-clj-ext filename)

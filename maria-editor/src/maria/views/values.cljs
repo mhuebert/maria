@@ -13,7 +13,8 @@
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
             [re-view-hiccup.core :as hiccup]
-            [maria.util :refer [space]])
+            [maria.util :refer [space]]
+            [maria.eval :as e])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -215,7 +216,8 @@
            show-source?
            block-id
            source] :as result}]
-  (error-view/error-boundary {:block-id block-id}
+  (error-view/error-boundary {:on-error (fn [{:keys [error]}]
+                                          (e/handle-block-error block-id error))}
                              (let [warnings (sequence (comp (distinct)
                                                             (map messages/reformat-warning)
                                                             (keep identity)) warnings)

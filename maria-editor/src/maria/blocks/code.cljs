@@ -32,7 +32,8 @@
                  (Editor/focus! (.getEditor this)))}
    [:.w-50.flex-none
     (error/error-boundary
-      {:block-id (:id block)}
+      {:on-error (fn [{:keys [error info]}]
+                   (e/handle-block-error (:id block) error))}
       (code/CodeView {:class                 "pa3 bg-white"
                       :ref                   #(v/swap-silently! state assoc :editor-view %)
                       :value                 (Block/emit (:block this))

@@ -381,9 +381,14 @@
   (when (= :symbol (:tag node))
     (tree/sexp node)))
 
-(defn eldoc-symbol [loc]
-  (some->> loc
-           (tree/closest #(= :list (:tag (z/node %))))
-           (z/children)
-           (first)
-           (sym-node)))
+(defn eldoc-symbol
+  ([loc pos]
+   (eldoc-symbol (cond-> loc
+                         (= (tree/bounds pos :left)
+                            (some-> loc (z/node) (tree/bounds :left))) (z/up))))
+  ([loc]
+   (some->> loc
+            (tree/closest #(#{:list :fn} (:tag (z/node %))))
+            (z/children)
+            (first)
+            (sym-node))))

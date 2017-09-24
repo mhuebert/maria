@@ -4,7 +4,8 @@
             [lark.commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
             [re-db.d :as d]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            [maria.views.error :as error]))
 
 (defcommand :dropdown/up
   {:bindings ["Up"]
@@ -44,7 +45,14 @@
   (.ceil js/Math (/ item-count page-size)))
 
 (defview numbered-list
-  {:view/initial-state      (fn [{:keys [ui/max-height default-selection] :as this}]
+  {:view/initial-state      (fn [{:keys [ui/max-height on-selection default-selection items] :as this}]
+                              (when (and default-selection
+                                         (not (neg? default-selection))
+                                         (>= (bounded-count (inc default-selection) items)
+                                             (inc default-selection)))
+                                (some-> (nth items default-selection)
+                                        :value
+                                        (on-selection)))
                               {:selection (or default-selection -1)
                                :PAGE_SIZE (if max-height (-> (.floor js/Math (-> max-height
                                                                                  (- 32)
@@ -118,33 +126,35 @@
         offset (* page PAGE_SIZE)
         page-count (page-count (count items) PAGE_SIZE)
         items (drop offset items)]
-    [:div.bg-white.br1
-     {:class (str class " " (when waiting? "o-50"))}
-     (when waiting? [:.progress-indeterminate])
-     (->> (take PAGE_SIZE items)
-          (map-indexed (fn [i {:keys [value label]}]
-                         [:.nowrap.flex.items-center.pointer.items-stretch
-                          {:key            (+ offset i)
-                           :on-mouse-enter #(swap! state assoc :selection i)
-                           :class          (when (= i selection) "bg-darken-lightly")
-                           :style          {:border-bottom "1px solid rgba(0,0,0,0.05)"}
-                           trigger-event   #(do (on-select! value)
-                                                (util/stop! %))}
-                          (when-not mobile? (legend (if (< i 9) (inc i) " ")))
-                          label])))
-     (when (> page-count 1)
-       [:.tc.items-center.flex.items-stretch
-        [:.flex-auto]
-        (map (fn [i]
-               (let [active? (= i page)
-                     action (when-not active?
-                              #(swap! state assoc :page i))]
-                 [:.pa1.dib.pointer
-                  {:on-mouse-over action
-                   :on-click      action}
-                  [:.br-100.mv1
-                   {:style {:width 10 :height 10}
-                    :class (if active?
-                             "bg-light-silver"
-                             "bg-light-gray")}]])) (range page-count))
-        [:.flex-auto]])]))
+    (error/error-boundary {:on-error #(do (prn "View error: numbered-list")
+                                          [:fixed])}
+                          [:div.bg-white.br1
+                           {:class (str class " " (when waiting? "o-50"))}
+                           (when waiting? [:.progress-indeterminate])
+                           (->> (take PAGE_SIZE items)
+                                (map-indexed (fn [i {:keys [value label]}]
+                                               [:.nowrap.flex.items-center.pointer.items-stretch
+                                                {:key            (+ offset i)
+                                                 :on-mouse-enter #(swap! state assoc :selection i)
+                                                 :class          (when (= i selection) "bg-darken-lightly")
+                                                 :style          {:border-bottom "1px solid rgba(0,0,0,0.05)"}
+                                                 trigger-event   #(do (on-select! value)
+                                                                      (util/stop! %))}
+                                                (when-not mobile? (legend (if (< i 9) (inc i) " ")))
+                                                label])))
+                           (when (> page-count 1)
+                             [:.tc.items-center.flex.items-stretch
+                              [:.flex-auto]
+                              (map (fn [i]
+                                     (let [active? (= i page)
+                                           action (when-not active?
+                                                    #(swap! state assoc :page i))]
+                                       [:.pa1.dib.pointer
+                                        {:on-mouse-over action
+                                         :on-click      action}
+                                        [:.br-100.mv1
+                                         {:style {:width 10 :height 10}
+                                          :class (if active?
+                                                   "bg-light-silver"
+                                                   "bg-light-gray")}]])) (range page-count))
+                              [:.flex-auto]])])))

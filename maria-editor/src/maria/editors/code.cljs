@@ -17,9 +17,10 @@
     [structure.edit :as edit]
     [goog.functions :as gf]))
 
-(defn show-eldoc! [the-sym]
-  (bottom-bar/show-var! (some-> the-sym
-                                (ns-utils/resolve-var-or-special))))
+(defn eldoc-view [sym]
+  (some->> sym
+           (ns-utils/resolve-var-or-special)
+           (bottom-bar/ShowVar)))
 
 (def update-completions!
   (fn [{{node :bracket-node
@@ -28,24 +29,26 @@
              (= :symbol (:tag node))
              (= (tree/bounds node :right)
                 (tree/bounds pos :left)))
-      (hint/floating-hint! {:component     dropdown/numbered-list
-                            :props         {:on-selection (fn [[alias completion full-name]]
-                                                            (show-eldoc! full-name))
-                                            :class        "shadow-4 bg-white"
-                                            :on-select!   (fn [[alias completion full-name]]
-                                                            (hint/clear-hint!)
-                                                            (cm/replace-range! editor completion node))
-                                            :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
-                                                            {:value [alias completion full-name]
-                                                             :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
-                                                                     alias
-                                                                     [:.flex-auto]
-                                                                     [:.gray.pl3 (str (or (namespace full-name)
-                                                                                          full-name))]]})}
-                            :float/pos     (util/rect->abs-pos (Editor/cursor-coords editor)
-                                                               [:right :bottom])
-                            :float/offset  [0 10]})
-      (hint/clear-hint!))))
+      (hint/floating-hint! {:component    dropdown/numbered-list
+                            :props        {:on-selection (fn [[alias completion full-name]]
+                                                           (some->> (eldoc-view full-name)
+                                                                    (bottom-bar/add-bottom-bar! :eldoc/completion)))
+                                           :class        "shadow-4 bg-white"
+                                           :on-select!   (fn [[alias completion full-name]]
+                                                           (hint/clear-hint!)
+                                                           (cm/replace-range! editor completion node))
+                                           :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
+                                                           {:value [alias completion full-name]
+                                                            :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
+                                                                    alias
+                                                                    [:.flex-auto]
+                                                                    [:.gray.pl3 (str (or (namespace full-name)
+                                                                                         full-name))]]})}
+                            :float/pos    (util/rect->abs-pos (Editor/cursor-coords editor)
+                                                              [:right :bottom])
+                            :float/offset [0 10]})
+      (do (hint/clear-hint!)
+          (bottom-bar/retract-bottom-bar! :eldoc/completion)))))
 
 (def options
   {:theme              "maria-light"
@@ -91,12 +94,16 @@
                                 (add-watch editor :maria
                                            (fn [editor
                                                 {{prev-loc :loc :as prev-cursor} :magic/cursor}
-                                                {{loc :loc :as cursor} :magic/cursor}]
+                                                {{loc :loc pos :pos :as cursor} :magic/cursor}]
                                              (when (.hasFocus editor)
                                                (when (not= prev-loc loc)
-                                                 (show-eldoc! (edit/eldoc-symbol loc)))
+                                                 (some->> (edit/eldoc-symbol loc pos)
+                                                          (eldoc-view)
+                                                          (bottom-bar/add-bottom-bar! :eldoc/cursor)))
                                                (when-not (= cursor prev-cursor)
                                                  (update-completions! editor)))))
+
+                                (.on editor "blur" #(bottom-bar/retract-bottom-bar! :eldoc/cursor))
 
                                 (set! (.-view editor) this)
                                 (swap! editor assoc :view this)

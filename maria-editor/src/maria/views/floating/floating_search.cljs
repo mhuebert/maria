@@ -65,11 +65,12 @@
                                 :items             (items q)})]]]))
 
 (defview CommandSearch
-  {:view/initial-state #(do {:context (exec/get-context)})}
+  {:view/initial-state #(do {:context (exec/get-context)})
+   :view/will-unmount #(bottom-bar/retract-bottom-bar! :eldoc/command-search)}
   [{:keys [view/state]}]
   (let [{:keys [context]} @state
         commands (exec/contextual-commands context)]
-    (FloatingSearch {:on-selection #(bottom-bar/show-var! (exec/get-command context %))
+    (FloatingSearch {:on-selection #(bottom-bar/add-bottom-bar! :eldoc/command-search (bottom-bar/ShowVar (exec/get-command context %)))
                      :placeholder  "Search commands..."
                      :on-select!   (fn [value]
                                      (exec/exec-command-name value context))
