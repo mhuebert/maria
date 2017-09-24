@@ -12,9 +12,9 @@
 
 "puppy"
 
-;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate means
-;; something special. It's what happens when you tell the computer
-;; to "run" your code and tell you what it thinks it means.
+;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate
+;; means to tell the computer to "run" your code and tell you the
+;; result.
 
 ;; Clojure is a language full of things called expressions, and
 ;; "puppy" is one of them. All expressions can be evaluated, as you
@@ -23,18 +23,20 @@
 
 (what-is "puppy")
 
-;; It's a _string_, which is a funny way of saying "some text". You
+;; It's a *string*, which is a funny way of saying "some text". You
 ;; can tell it's a string because it's wrapped in double-quotes. There
 ;; are several other kinds of things in Clojure that we'll get to know
 ;; later, but in the meantime let's talk about those parentheses.
 
 ;; Whenever you see an expression in parentheses, it's kind of like a
-;; sentence where the first thing after the `(` is treated as the
-;; verb. We call these verbs "functions", and when we evaluate a form
-;; in parens it _calls_ the function at the beginning of the
-;; expression on the _arguments_ that follow. (These arguments don't
-;; have anything to do with arguing, it's just a word from maths for
-;; what's given to a function).
+;; sentence. In Clojure, sentences start with an open-parenthesis:
+;; `(`. Next in the Clojure sentence is the verb, in this case,
+;; `what-is`. We call these verbs "functions". Whatever comes after
+;; the function "verb" are the *arguments* we want to give to the
+;; function. When we evaluate an expression in parens it *calls* the
+;; function at the beginning of the expression on the arguments that
+;; follow. (These arguments don't have anything to do with arguing,
+;; it's just a word from maths for what's given to a function).
 
 ;; What do you think evaluating this next function might do? Say your
 ;; guess out loud before trying it–it's fun and helpful to try to
@@ -52,15 +54,15 @@
 ;; 😱 Don't worry, errors happens to every programmer. Stay positive ✌️
 ;; and track down the misunderstanding between you and the
 ;; computer. In this case, we gave `circle` one too many
-;; arguments. Notice that when we write code that Clojure can't
+;; arguments. Notice that when we wrote code that Clojure couldn’t
 ;; understand, Maria told us. Maria will even try to tell us how to
 ;; fix our code. Thanks, invisible robot helper.
 
 ;; What if we hadn't already known that `circle` needed to be given
 ;; just one radius argument? How would we find out the arguments to a
 ;; function? Well, our friend Maria knows, and will tell us. Put your
-;; cursor on the `color` expression. At the bottom left of your
-;; browser you should see a short description of the `color`
+;; cursor on the `circle` expression. At the bottom left of your
+;; browser you should see a short description of the `circle`
 ;; function. The part in square brackets, "`[radius]`", tells us what
 ;; arguments the `circle` function takes: one argument called
 ;; `radius`. The last part of Maria’s hints are a description of what
@@ -103,7 +105,7 @@
 ;; Try creating your own expression to use some other numbers with
 ;; `circle`.
 
-;; ⬇ your code goes here 😀
+;; ⬇ your code goes here 😀 (press "return" or "enter" twice with the cursor there)
 
 ;; ⬆ your code goes here
 
@@ -136,7 +138,7 @@
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another
 ;; color. (For a list of colors that Maria understands, try evaluating
-;; `color-names`.)
+;; `color-names`, without parentheses around it.)
 
 ;; We can also combine expressions to create a layer of shapes, by
 ;; using the `layer` function:
@@ -223,7 +225,7 @@
 ;; Evaluating that doesn't return anything that's like what we've seen
 ;; before. This expression doesn’t return a shape or value. It returns
 ;; a funny "f" that shows our code when you click on it. Let’s inspect
-;; it b wrapping the expression in a `what-is` call. Go ahead.
+;; it by wrapping the expression in a `what-is` call. Go ahead.
 
 ;; ... it's a function! What does this mean?
 
@@ -316,9 +318,12 @@
 ;; The second argument to `let` is an expression that uses the names
 ;; from the first argument. Here, we use the name `palette` to paint
 ;; some shapes using the `rand-nth` function. Use all the techniques
-;; you've learned to explore what `rand-nth` does: Maria’s parameter
-;; hints, `what-is`, `doc`, and evaluating the function with different
-;; input.
+;; you've learned to explore what `rand-nth` does: Maria’s argument
+;; list hints, `what-is`, `doc`, and evaluating the function with
+;; different input.
+
+;; ⬇ explore here (press "return" or "enter" twice to create a code block)
+;; ⬆ explore here
 
 ;; (The "rand" in `rand-nth` comes from random; the "nth" comes from
 ;; maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3,
@@ -366,24 +371,57 @@ rainbow
 (map (fn [color] (colorize color (rectangle 20 20))) (reverse rainbow))
 
 ;; Did you notice we’re repeating ourselves AGAIN with that function?
-;; Let’s `def` it, too!
+;; Let’s `def` it, too! We can call it "swatch", like the swatches of
+;; color samples you get when choosing paint at the hardware store.
 
 (def swatch (fn [color] (colorize color (rectangle 20 20))))
 
+;; Now that the colors have been moved to `rainbow` and the
+;; square-making function has been moved to `swatch`, our code to see
+;; all our rainbow colors is shorter and more clear:
+
 (map swatch rainbow)
 
-;; Cool. But it gets better. We programmers define functions so often
-;; that Clojure has a special shorthand, `defn`, that is like a
-;; combined `def` and `fn`. It takes a name like `def`, then a vector
-;; of arguments like `fn`, then an expression using those arguments,
-;; like both. Let’s use `defn` to make labeled swatches (like
-;; `color-names` uses) so we know what color we’re looking at.
+;; Notice that this short three-word function call is the same as
+;; this more verbose expression:
+
+(map (fn [color] (colorize color (rectangle 20 20))) ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
+
+;; It gets better. We programmers define functions so often that
+;; Clojure has a special shorthand, `defn`, that is like a combined
+;; `def` and `fn`. It takes a name (like `def`), then a vector of
+;; arguments (like `fn`), then an expression using those arguments
+;; (like both `def` and `fn`).
+
+;; Here’s another giant expression. It explains `defn` with a diagram:
+
+(layer
+ (position 50 60 (text "(defn labeled-swatch [color] [color (colorize color (square 25))])"))
+ (colorize "grey" (position 60 70 (triangle 10)))
+ (position 0 102 (text "defines a function"))
+ (position 105 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 90 20 (text "name"))
+ (position 240 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 200 20 (text "argument(s)"))
+ (colorize "grey" (position 310 70 (triangle 10)))
+ (position 300 102 (text "expression")))
+
+;; OK. Let’s try it. Let’s use `defn` to make labeled swatches (like
+;; `color-names` uses) so we know what color we’re looking at. Our
+;; function will take a color and return a vector that has the color
+;; name (the label) and then a square showing the color (the swatch):
 
 (defn labeled-swatch [color]
   [color (colorize color (square 25))])
 
-;; This will be super-useful for distinguishing all the shades of blue
-;; that we have:
+;; Just like with `fn`, evaluating that `defn` doesn't return a shape
+;; or a value or anything else tangible. It returns the function
+;; itself. Now the name `labeled-swatch` is defined, so we can call
+;; it:
+
+(labeled-swatch "red")
+
+;; We can use it to help make sense of what shades of blue there are.
 
 (map labeled-swatch ["blue" "lightskyblue" "darkslateblue"
                      "midnightblue" "powderblue" "steelblue"
@@ -402,10 +440,16 @@ rainbow
 
 (doc labeled-swatch)
 
-;; ...but if you go back to our `defn` and add a string between the
-;; function name and the argument vector, it will show up when you
-;; call `doc`. Try writing a docstring describing what
+;; ...but if we add a string to our `defn` between the function name
+;; and the argument vector, that string will show up when you call
+;; `doc`. We call those "docstrings", short for "documentation
+;; string". Let’s write our own docstring describing what
 ;; `labeled-swatch` does, and then re-evaluate `(doc swatch)`.
+
+(defn labeled-swatch
+  "HI I’M A DOCSTRING PLEASE TURN ME INTO SOMETHING HELPFUL"
+  [color]
+  [color (colorize color (square 25))])
 
 ;; Hey–nice work! 🎉 💯 👏🏾 You created a function. That’s the only
 ;; requirement to being a True Programmer. Give yourself a
