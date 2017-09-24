@@ -389,12 +389,27 @@ rainbow
 
 ;; It gets better. We programmers define functions so often that
 ;; Clojure has a special shorthand, `defn`, that is like a combined
-;; `def` and `fn`. It takes a name like `def`, then a vector of
-;; arguments like `fn`, then an expression using those arguments, like
-;; both. Let’s use `defn` to make labeled swatches (like `color-names`
-;; uses) so we know what color we’re looking at. Our function will
-;; take a color and return a vector that has the color name (the
-;; label) and then a square showing the color (the swatch):
+;; `def` and `fn`. It takes a name (like `def`), then a vector of
+;; arguments (like `fn`), then an expression using those arguments
+;; (like both `def` and `fn`).
+
+;; Here’s another giant expression. It explains `defn` with a diagram:
+
+(layer
+ (position 50 60 (text "(defn labeled-swatch [color] [color (colorize color (square 25))])"))
+ (colorize "grey" (position 60 70 (triangle 10)))
+ (position 0 102 (text "defines a function"))
+ (position 105 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 90 20 (text "name"))
+ (position 240 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 200 20 (text "argument(s)"))
+ (colorize "grey" (position 310 70 (triangle 10)))
+ (position 300 102 (text "expression")))
+
+;; OK. Let’s try it. Let’s use `defn` to make labeled swatches (like
+;; `color-names` uses) so we know what color we’re looking at. Our
+;; function will take a color and return a vector that has the color
+;; name (the label) and then a square showing the color (the swatch):
 
 (defn labeled-swatch [color]
   [color (colorize color (square 25))])
