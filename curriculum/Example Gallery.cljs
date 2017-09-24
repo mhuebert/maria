@@ -69,6 +69,12 @@
 (let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
   (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
 
+;; Labeled color swatches:
+(take 10 color-names)
+
+;; And see how color swatches are made by digging into the source:
+(source color-names)
+
 ;;;; Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
