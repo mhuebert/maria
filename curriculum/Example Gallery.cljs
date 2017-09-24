@@ -65,6 +65,10 @@
  (position 33 82 (colorize "orange" (rectangle 10 5)))
  (position 35 2  (colorize "black"  (rectangle 10 20))))
 
+;; Sample from a palette every quarter-second
+(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
+  (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
+
 ;;;; Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
