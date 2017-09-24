@@ -31,7 +31,7 @@
 
 (defn command-button
   [context command-name {:keys [icon else-icon tooltip text]}]
-  (let [tooltip (registry/spaced-name (name command-name))
+  (let [tooltip (or tooltip (registry/spaced-name (name command-name)))
         {:keys [exec? parsed-bindings]} (exec/get-command context command-name)
         key-string (some-> (ffirst parsed-bindings) (registry/keyset-string))]
     (if exec?
@@ -58,9 +58,11 @@
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
                               (.updateWindowTitle this)
-                              (exec/set-context! {:current-doc this})
                               (some->> (:id this) (doc/locals-push! :local/recents)))
-   :view/will-unmount       #(exec/set-context! {:current-doc nil})
+   :view/will-unmount       (fn [this]
+                              (when (= (:current-doc @exec/context) this)
+                                (exec/set-context! {:current-doc nil})))
+   :view/will-mount         (fn [this] (exec/set-context! {:current-doc this}))
    :view/will-receive-props (fn [{filename                                 :filename
                                   props                                    :view/props
                                   {prev-filename :filename :as prev-props} :view/prev-props
@@ -76,11 +78,11 @@
                               (let [filename (.getFilename this)]
 
                                 #_(when (= filename "Untitled.cljs")
-                                  (js/setTimeout #(some-> (:title-input @state)
-                                                          :view/state
-                                                          (deref)
-                                                          :input-element
-                                                          (.select)) 50))
+                                    (js/setTimeout #(some-> (:title-input @state)
+                                                            :view/state
+                                                            (deref)
+                                                            :input-element
+                                                            (.select)) 50))
                                 (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)])))}
   [{{:keys [persisted local]} :project
     :keys                     [filename id view/state left-content] :as this}]
@@ -93,7 +95,8 @@
         update-filename #(d/transact! [[:db/update-attr id :local (fn [local]
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
-        command-context (exec/get-context)]
+        command-context (exec/get-context)
+        {:keys [persistence/provider remote-url]} persisted]
     [:div
      (fixed-top
        {:when-scrolled {:style {:background-color "#e7e7e7"
@@ -123,22 +126,27 @@
                                                             :else nil)
                                         :placeholder "Enter a title..."
                                         :on-change   #(update-filename (doc/add-clj-ext (.-value (.-target %))))})]
-                  (command-button command-context :doc/save {:icon      icons/Backup
-                                                             :else-icon (when signed-in? (icons/class icons/Backup "o-30"))})
-                  (command-button command-context :doc/save-a-copy {:icon icons/ContentDuplicate})
-
-                  (command-button command-context :doc/revert {:icon (update-in icons/Replay [1 :style] assoc
-                                                                                :transform "scaleX(-1) rotate(-90deg)")
-                                                               :text "Reset"}))))
+                  )))
           (conj [:.flex.items-stretch.bg-darken-lightly]))
+
+
+        (command-button command-context :doc/save {:text    "Save"
+                                                   :tooltip (str (if persisted "Saves Gist"
+                                                                               "Publishes a new gist"))})
+        (command-button command-context :doc/duplicate {:text "Duplicate"})
+
+        (command-button command-context :doc/revert-to-saved-version {:text "Revert"})
+        (when (= provider :gist)
+          (toolbar-button [{:href   remote-url
+                            :target "_blank"} icons/OpenInNew nil "View on GitHub"]))
 
         [:.flex-auto]
 
-        (command-button command-context :commands/command-search {:icon icons/Search :text "Commands..."})
+        (command-button command-context :commands/command-search {:text "Commands..."})
 
         (toolbar-button [{:href      "https://www.github.com/mhuebert/maria/issues"
                           :tab-index -1
-                          :target    "_blank"} icons/Bug "Bug Report"])
+                          :target    "_blank"} nil "Bug Report"])
         (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
                        (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
         [:.ph1]])

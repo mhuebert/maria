@@ -40,7 +40,7 @@
          :persisted          {:description          description
                               :id                   id
                               :owner                owner
-                              :html-url             html_url
+                              :remote-url           html_url
                               :persistence/provider :gist
                               :files                files}}))))
 

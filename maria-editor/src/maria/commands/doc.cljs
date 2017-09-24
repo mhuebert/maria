@@ -49,7 +49,7 @@
   [store]
   (let [username (d/get :auth-public :username)]
     (cond-> (d/get-in ::locals (conj [:local] (locals-path username store)))
-            username (into  (d/get-in ::locals (conj [:local] (locals-path nil store)))))))
+            username (into (d/get-in ::locals (conj [:local] (locals-path nil store)))))))
 
 (defn locals-push!
   "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
@@ -191,7 +191,7 @@
   (persist! current-doc)
   true)
 
-(defcommand :doc/save-a-copy
+(defcommand :doc/duplicate
   "Save a new copy of a project"
   {:bindings       ["M1-Shift-S"]
    :intercept-when true
@@ -203,7 +203,7 @@
   (make-a-copy! current-doc)
   true)
 
-(defcommand :doc/revert
+(defcommand :doc/revert-to-saved-version
   {:when (fn [{:keys [current-doc]}]
            (and (get-in current-doc [:project :persisted])
                 (unsaved-changes? current-doc)))}

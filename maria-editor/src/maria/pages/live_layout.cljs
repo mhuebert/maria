@@ -60,7 +60,7 @@
 (defview home
   [this]
   [:div
-   (toolbar/doc-toolbar {})
+   (toolbar/doc-toolbar)
 
    (-> doc/curriculum
        (doc-list-section "Learning Modules"))
