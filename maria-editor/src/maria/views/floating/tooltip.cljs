@@ -13,8 +13,10 @@
                         (let [the-events #js ["mouseover" "mouseout" "mousedown" "mouseenter" "mouseleave"]
                               body (.-body js/document)
                               callback (fn [e]
-                                         (let [target (.-target e)]
-                                           (if (#{"mouseenter" "mouseleave" "mousedown"} (.-type e))
+                                         (let [target (.-target e)
+                                               body-event (#{"mouseenter" "mouseleave" "mousedown"} (.-type e))]
+                                           (if body-event
+
                                              (swap! state dissoc :tooltip)
                                              (when (data/has target "tooltip")
                                                (swap! state assoc :tooltip
@@ -23,7 +25,6 @@
                                                                 (some-> (.-relatedTarget e)
                                                                         (r/closest #(and (not= % js/document)
                                                                                          (data/has % "tooltip")))))
-
                                                         {:float/pos    (util/rect->abs-pos (.getBoundingClientRect target)
                                                                                            [:center :bottom])
                                                          :float/offset [0 5]
@@ -38,5 +39,5 @@
                            :element      [:.absolute.tc
                                           {:style {:width 150
                                                    :left  -75}}
-                                          [:.pa1.br1.bg-white.f7.sans-serif.dib content]]})))
+                                          [:.pa1.br1.bg-black.white.f7.sans-serif.dib content]]})))
 

@@ -29,7 +29,7 @@
                          (when-not @-prev-selection
                            (vreset! -prev-selection (history/get-selections))))
    :return-selections  (fn [_]
-                         (when (not= (some-> (:kind (ui/current-hint))
+                         (when (not= (some-> (:kind (ui/current-view))
                                              (namespace))
                                      (namespace ::this))
                            (when-let [selections @-prev-selection]
@@ -57,7 +57,7 @@
                                     :on-change   #(swap! state assoc :q (.. % -target -value))}]
        (dropdown/numbered-list {:on-select!        (fn [value]
                                                      (.returnSelections this)
-                                                     (ui/clear-hint!)
+                                                     (ui/clear!)
                                                      (on-select! value))
                                 :ui/max-height     max-height
                                 :default-selection 0
@@ -97,9 +97,9 @@
             {:bindings ["M1-O"]}
             []
             (let [Label :.sans-serif.f7.pv2.half-b]
-              (if (= ::open (:kind (ui/current-hint)))
-                (ui/clear-hint!)
-                (ui/floating-hint! {:component FloatingSearch
+              (if (= ::open (:kind (ui/current-view)))
+                (ui/clear!)
+                (ui/floating-view! {:component FloatingSearch
                                     :kind      ::open
 
                                     :props     {:placeholder "Open..."
@@ -134,9 +134,9 @@
                         "M1-Shift-P"]
              :icon     icons/Search}
             [context]
-            (if (= ::search (:kind (ui/current-hint)))
-              (ui/clear-hint!)
-              (ui/floating-hint! {:component CommandSearch
+            (if (= ::search (:kind (ui/current-view)))
+              (ui/clear!)
+              (ui/floating-view! {:component CommandSearch
                                   :kind      ::search
                                   :props     nil
                                   :float/pos [(/ (.-innerWidth js/window) 2)

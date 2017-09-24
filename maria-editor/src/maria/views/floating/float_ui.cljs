@@ -3,7 +3,8 @@
             [lark.commands.registry :refer-macros [defcommand]]
             [re-db.d :as d]
             [re-view-routing.core :as r]
-            [goog.events :as events])
+            [goog.events :as events]
+            [maria.views.error :as error])
   (:import [goog.events EventType]))
 
 (defview FloatingContainer
@@ -33,32 +34,34 @@
   [{:keys [component props element float/offset]
     [left top] :float/pos
     :or   {offset [0 0]}}]
-  (let [left (+ left (first offset))
-        top (+ top (second offset))
-        BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
-                               (.-width)) 0)
-        max-height (-> (.-innerHeight js/window)
-                       (- (- top (.-scrollY js/window)))
-                       (- BOTTOM_PADDING))]
-    [:.absolute.z-9999
-     {:style {:top  top
-              :left left}}
-     (or element
-         (component (merge props
-                           #:ui {:top        top
-                                 :left       left
-                                 :max-height max-height})))]))
+  (error/error-boundary
+    {:on-error (fn [error info])}
+    (let [left (+ left (first offset))
+          top (+ top (second offset))
+          BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
+                                 (.-width)) 0)
+          max-height (-> (.-innerHeight js/window)
+                         (- (- top (.-scrollY js/window)))
+                         (- BOTTOM_PADDING))]
+      [:.absolute.z-9999
+       {:style {:top  top
+                :left left}}
+       (or element
+           (component (merge props
+                             #:ui {:top        top
+                                   :left       left
+                                   :max-height max-height})))])))
 
-(defn display-hint []
+(defn show-floating-view []
   (some-> (d/get :ui/globals :floating-hint)
           (FloatingContainer)))
 
-(defn floating-hint! [data]
+(defn floating-view! [data]
   (d/transact! [[:db/add :ui/globals :floating-hint data]]))
 
-(defn current-hint [] (d/get :ui/globals :floating-hint))
+(defn current-view [] (d/get :ui/globals :floating-hint))
 
-(defn clear-hint! []
+(defn clear! []
   (d/transact! [[:db/retract-attr :ui/globals :floating-hint]]))
 
 (defcommand :floating-ui/exit
@@ -66,4 +69,4 @@
    :private  true
    :when     #(d/contains? :ui/globals :floating-hint)}
   [context]
-  (clear-hint!))
+  (clear!))

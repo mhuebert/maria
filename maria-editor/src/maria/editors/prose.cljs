@@ -25,7 +25,7 @@
                       (.preventDefault e)
                       (.stopPropagation e)
                       (commands/apply-command editor (partial commands/open-link true))
-                      (hint/clear-hint!))}
+                      (hint/clear!))}
     (-> icons/ModeEdit
         (icons/size 16)
         (icons/class "o-50"))]
@@ -138,7 +138,7 @@
                                   (when-let [a (r/closest (.-target e) r/link?)]
                                     (when-not (classes/has a "pm-link")
                                       (do (.stopPropagation e)
-                                          (hint/floating-hint! {:float/pos    (util/rect->abs-pos (.getBoundingClientRect a)
+                                          (hint/floating-view! {:float/pos    (util/rect->abs-pos (.getBoundingClientRect a)
                                                                                                   [:left :bottom])
                                                                 :float/offset [0 10]
                                                                 :component    link-dropdown

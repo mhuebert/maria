@@ -47,6 +47,7 @@
 (defview numbered-list
   {:view/initial-state      (fn [{:keys [ui/max-height on-selection default-selection items] :as this}]
                               (when (and default-selection
+                                         on-selection
                                          (not (neg? default-selection))
                                          (>= (bounded-count (inc default-selection) items)
                                              (inc default-selection)))

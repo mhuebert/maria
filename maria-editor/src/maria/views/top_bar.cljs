@@ -38,7 +38,7 @@
       (toolbar-button [#(do (util/stop! %)
                             (exec/exec-command-name command-name)) icon text (if key-string
                                                                                [:.flex.items-center tooltip
-                                                                                [:.gray.o-70.ml1 key-string]]
+                                                                                [:.o-80.ml1 key-string]]
                                                                                tooltip)])
       (when else-icon
         (toolbar-button [nil else-icon nil tooltip])))))

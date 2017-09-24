@@ -29,13 +29,13 @@
              (= :symbol (:tag node))
              (= (tree/bounds node :right)
                 (tree/bounds pos :left)))
-      (hint/floating-hint! {:component    dropdown/numbered-list
+      (hint/floating-view! {:component    dropdown/numbered-list
                             :props        {:on-selection (fn [[alias completion full-name]]
                                                            (some->> (eldoc-view full-name)
                                                                     (bottom-bar/add-bottom-bar! :eldoc/completion)))
                                            :class        "shadow-4 bg-white"
                                            :on-select!   (fn [[alias completion full-name]]
-                                                           (hint/clear-hint!)
+                                                           (hint/clear!)
                                                            (cm/replace-range! editor completion node))
                                            :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
                                                            {:value [alias completion full-name]
@@ -47,7 +47,7 @@
                             :float/pos    (util/rect->abs-pos (Editor/cursor-coords editor)
                                                               [:right :bottom])
                             :float/offset [0 10]})
-      (do (hint/clear-hint!)
+      (do (hint/clear!)
           (bottom-bar/retract-bottom-bar! :eldoc/completion)))))
 
 (def options
