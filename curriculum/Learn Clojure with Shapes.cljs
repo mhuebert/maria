@@ -33,8 +33,8 @@
 ;; `(`. Next in the Clojure sentence is the verb, in this case,
 ;; `what-is`. We call these verbs "functions". Whatever comes after
 ;; the function "verb" are the *arguments* we want to give to the
-;; function. When we evaluate a form in parens it *calls* the function
-;; at the beginning of the expression on the arguments that
+;; function. When we evaluate an expression in parens it *calls* the
+;; function at the beginning of the expression on the arguments that
 ;; follow. (These arguments don't have anything to do with arguing,
 ;; it's just a word from maths for what's given to a function).
 
