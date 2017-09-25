@@ -25,7 +25,8 @@
 (def update-completions!
   (fn [{{node :bracket-node
          pos  :pos :as cursor} :magic/cursor :as editor}]
-    (if (and node
+    (if (and (not (.somethingSelected editor))
+             node
              (= :symbol (:tag node))
              (= (tree/bounds node :right)
                 (tree/bounds pos :left)))
@@ -59,7 +60,13 @@
    :keyMap             "default"
    :styleSelectedText  true
    :magicBrackets      true
-   :magicEdit          true})
+   :magicEdit          true
+   :configureMouse     (fn [cm repeat e]
+
+                         (prn :configure-mouse!)
+                         #js {:moveOnDrag (if (.-shiftKey e)
+                                            false
+                                            true)})})
 
 (defview CodeView
   {:view/spec               {:props {:event/mousedown :Function

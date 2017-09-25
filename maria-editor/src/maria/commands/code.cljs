@@ -11,7 +11,8 @@
             [maria.editors.editor :as Editor]
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            [goog.events :as events]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -50,12 +51,51 @@
     (.setCursor editor pos))
   false)
 
+(defn init-select-by-click [editor]
+  (let [in-progress? (volatile! true)
+        last-sel (volatile! {:pos nil
+                             :loc nil})
+        listeners (volatile! [])
+        clear-listeners! #(do (doseq [key @listeners]
+                                (events/unlistenByKey key))
+                              (when @in-progress?
+                                (vreset! in-progress? false)))]
+    (vswap! listeners into [(events/listen js/window "mousemove"
+                                           (fn [e]
+                                             (let [cm-pos (Editor/coords-cursor editor (.-clientX e) (.-clientY e))]
+                                               (when-not (.-outside cm-pos)
+                                                 (let [pos (cm/pos->boundary cm-pos)]
+                                                   (when-not (= pos (:pos @last-sel))
+                                                     (let [loc (some-> (:zipper editor)
+                                                                       (tree/node-at pos))
+                                                           loc (some->> loc
+                                                                        (cm/cursor-loc pos))]
+                                                       (when (and loc (not (= loc (:loc @last-sel))))
+                                                         (cm/temp-select-node! editor (z/node loc))
+                                                         (vreset! last-sel {:pos pos
+                                                                            :loc loc})))))))))
+                            (events/listen js/window "mouseup" #(when @in-progress?
+                                                                  (when-let [node (some-> (:loc @last-sel)
+                                                                                          (z/node))]
+
+                                                                    (cm/unset-cursor-root! editor)
+                                                                    (.preventDefault %)
+                                                                    (.stopPropagation %)
+                                                                    (cm/select-range editor node))) true)
+                            (events/listen js/window "keyup" #(when-not (registry/M1-down? %)
+                                                                (clear-listeners!)))
+                            (events/listen js/window "blur" #(clear-listeners!))
+                            (events/listen js/window "focus" #(clear-listeners!))])
+
+    (events/listenOnce js/window "keydown" clear-listeners! true)))
+
 (defcommand :select/form-at-cursor
   {:bindings ["M1"]
    :when     :block/code}
   [context]
   (when-not (cm/selection? (:editor context))
-    (cm/select-at-cursor (:editor context) false)))
+    (cm/select-at-cursor (:editor context) false))
+  (init-select-by-click (:editor context)))
 
 (defcommand :select/top-level-form
   {:bindings ["M1-Shift"]
@@ -349,3 +389,5 @@
 
 (def select-up edit/expand-selection)
 (def select-reverse edit/shrink-selection)
+
+

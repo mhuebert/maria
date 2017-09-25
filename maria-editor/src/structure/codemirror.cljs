@@ -164,7 +164,7 @@
                   (Pos line column)
                   (Pos (or end-line line) (or end-column column)))))
 
-(defn select-node! [cm node]
+(defn temp-select-node! [cm node]
   (when (not (tree/whitespace? node))
     (when (and (not (:cursor-root/marker cm))
                (not (:selection-root/marker cm)))
@@ -203,7 +203,7 @@
           node (if top-loc? (z/node (tree/top-loc bracket-loc))
                             (highlight-range pos (z/node bracket-loc)))]
       (some->> node
-               (select-node! cm)))))
+               (temp-select-node! cm)))))
 
 (defn keyup-selection-update! [cm e]
   (let [key-code (KeyCodes/normalizeKeyCode (.-keyCode e))
@@ -345,7 +345,9 @@
   (get-cursor [this]
     (when-not (.somethingSelected this)
       (get-cursor this)))
-
+  (coords-cursor [this client-x client-y]
+    (.coordsChar this #js {:left client-x
+                           :top  client-y} "window"))
   (cursor-coords [this]
     (let [coords (.cursorCoords this)]
       ;; TODO
