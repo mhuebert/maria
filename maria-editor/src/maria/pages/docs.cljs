@@ -65,7 +65,7 @@
                                                          :default-value default-value})))]]))))
 
 (def small-label :.silver.f7.flex.items-stretch.ph2.w4.tl.flex-none)
-(def small-icon :.silver.hover-black.ph2.flex.items-center.pointer)
+(def small-icon-classes " silver hover-black ph2 flex items-center pointer")
 
 (defview doc-list
   {:view/initial-state {:limit-n 8}}
@@ -96,8 +96,9 @@
               "Restore"]
              [:.flex.items-center "Unsaved"])]
           :gist [small-label [:.flex.items-center "Gist"]
-                 [small-icon
-                  {:href         (str "https://gist.github.com/" id)
+                 [:a
+                  {:class        small-icon-classes
+                   :href         (str "https://gist.github.com/" id)
                    :data-tooltip (pr-str "View on GitHub")
                    :target       "_blank"}
                   (-> icons/OpenInNew
@@ -110,16 +111,17 @@
         (case context
           :recents
           (when (= context :recents)
-            [small-icon
-             {:on-click     #(do (doc/locals-remove! :local/recents id)
+            [:div
+             {:class        small-icon-classes
+              :on-click     #(do (doc/locals-remove! :local/recents id)
                                  (when (= provider :maria/local)
                                    (doc/locals-push! :local/trash id)))
               :data-tooltip (pr-str "Remove")}
              (icons/size icons/X 16)])
           :trash
-          [small-icon
+          [:div
            {:data-tooltip (pr-str "Delete")
-            :class "hover-dark-red"
+            :class        (str small-icon-classes " hover-dark-red")
             :on-click     #(do
                              (doc/locals-remove! :local/trash id)
                              (doc/locals-remove! :local/recents id)

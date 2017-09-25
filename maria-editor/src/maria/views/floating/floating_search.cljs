@@ -66,7 +66,7 @@
 
 (defview CommandSearch
   {:view/initial-state #(do {:context (exec/get-context)})
-   :view/will-unmount #(bottom-bar/retract-bottom-bar! :eldoc/command-search)}
+   :view/will-unmount  #(bottom-bar/retract-bottom-bar! :eldoc/command-search)}
   [{:keys [view/state]}]
   (let [{:keys [context]} @state
         commands (exec/contextual-commands context)]
@@ -75,51 +75,54 @@
                      :on-select!   (fn [value]
                                      (exec/exec-command-name value context))
                      :items        (fn [q]
-                                     (for [{:keys [name private parsed-bindings icon] :as command} commands
-                                           :when (and (string/includes? (str name) q)
-                                                      (not private))]
-                                       {:value name
-                                        :label [:.h2.mr2.sans-serif.f7.flex.items-center.flex-auto
-
-                                                ;; Icons may add too much visual clutter
-                                                #_[:.gray.pr2 (-> (or icon icons/Blank)
-                                                                  (icons/size 16))]
-                                                [:.gray (some-> (:display-namespace command)
-                                                                (str "/"))]
-                                                [:div {:style {:font-weight 500}} (:display-name command)]
-                                                [:.flex-auto]
-                                                [:.gray
-                                                 (some->> (ffirst parsed-bindings)
-                                                          (registry/keyset-string))]]}))})))
+                                     (let [pattern (re-pattern (str "(?i)\\b" q))]
+                                       (->> commands
+                                            (sequence (comp
+                                                        (filter #(and (not (:private %))
+                                                                      (re-find pattern (str (:name %)))))
+                                                        (map (fn [{:keys [name parsed-bindings exec?] :as command}]
+                                                               {:value name
+                                                                :score (if exec? 0 1)
+                                                                :label [:.h2.mr2.sans-serif.f7.flex.items-center.flex-auto
+                                                                        [:.gray {:class (when-not exec? "o-50")}
+                                                                         (some-> (:display-namespace command)
+                                                                                 (str "/"))]
+                                                                        [:div {:style {:font-weight 500}
+                                                                               :class (when-not exec? "o-50")} (:display-name command)]
+                                                                        [:.flex-auto]
+                                                                        [:.gray
+                                                                         (some->> (ffirst parsed-bindings)
+                                                                                  (registry/keyset-string))]]}))))
+                                            (sort-by :score))))})))
 
 
 (defcommand :doc/open
-            {:bindings ["M1-O"]}
-            []
-            (let [Label :.sans-serif.f7.pv2.half-b]
-              (if (= ::open (:kind (ui/current-view)))
-                (ui/clear!)
-                (ui/floating-view! {:component FloatingSearch
-                                    :kind      ::open
+  {:bindings ["M1-O"]}
+  []
+  (let [Label :.sans-serif.f7.pv2.half-b]
+    (if (= ::open (:kind (ui/current-view)))
+      (ui/clear!)
+      (ui/floating-view! {:component FloatingSearch
+                          :kind      ::open
 
-                                    :props     {:placeholder "Open..."
-                                                :on-select!  (fn [value]
-                                                               (frame/send frame/trusted-frame [:window/navigate value {}]))
-                                                :items       (fn [q]
-                                                               (cons
-                                                                 {:value "/"
-                                                                  :label [Label "Home"]}
-                                                                 (let [username (d/get :auth-public :username)
-                                                                       pattern (re-pattern (str "(?i)\\b" q))]
-                                                                   (for [{:keys [filename local-url]} (distinct (concat (doc/locals-docs :local/recents)
-                                                                                                                        (doc/user-gists username)
-                                                                                                                        (seq doc/curriculum)))
-                                                                         :when (and (util/some-str filename) (re-find pattern filename))]
-                                                                     {:value local-url
-                                                                      :label [Label (doc/strip-clj-ext filename)]}))))}
-                                    ;:cancel-events ["scroll" "mousedown"]
-                                    :float/pos [(/ (.-innerWidth js/window) 2)
-                                                (+ (.-scrollY js/window) 100)]}))))
+                          :props     {:placeholder "Open..."
+                                      :on-select!  (fn [value]
+                                                     (frame/send frame/trusted-frame [:window/navigate value {}]))
+                                      :items       (fn [q]
+                                                     (cons
+                                                       {:value "/"
+                                                        :label [Label "Home"]}
+                                                       (let [username (d/get :auth-public :username)
+                                                             pattern (re-pattern (str "(?i)\\b" q))]
+                                                         (for [{:keys [filename local-url]} (distinct (concat (doc/locals-docs :local/recents)
+                                                                                                              (doc/user-gists username)
+                                                                                                              (seq doc/curriculum)))
+                                                               :when (and (util/some-str filename) (re-find pattern filename))]
+                                                           {:value local-url
+                                                            :label [Label (doc/strip-clj-ext filename)]}))))}
+                          ;:cancel-events ["scroll" "mousedown"]
+                          :float/pos [(/ (.-innerWidth js/window) 2)
+                                      (+ (.-scrollY js/window) 100)]}))))
 
 ;; input for text...
 ;; - auto-focus
@@ -130,15 +133,15 @@
 ;; store stack of previous/common commands
 
 (defcommand :commands/command-search
-            {:bindings ["M1-P"
-                        "M1-Shift-P"]
-             :icon     icons/Search}
-            [context]
-            (if (= ::search (:kind (ui/current-view)))
-              (ui/clear!)
-              (ui/floating-view! {:component CommandSearch
-                                  :kind      ::search
-                                  :props     nil
-                                  :float/pos [(/ (.-innerWidth js/window) 2)
-                                              (+ (.-scrollY js/window) 100)]}))
-            true)
+  {:bindings ["M1-P"
+              "M1-Shift-P"]
+   :icon     icons/Search}
+  [context]
+  (if (= ::search (:kind (ui/current-view)))
+    (ui/clear!)
+    (ui/floating-view! {:component CommandSearch
+                        :kind      ::search
+                        :props     nil
+                        :float/pos [(/ (.-innerWidth js/window) 2)
+                                    (+ (.-scrollY js/window) 100)]}))
+  true)

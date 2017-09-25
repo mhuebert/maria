@@ -24,7 +24,7 @@
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 
-                 [lark/commands "0.1.0"]
+                 [lark/commands "0.1.1-SNAPSHOT"]
                  [cells "0.1.1"]
 
 
