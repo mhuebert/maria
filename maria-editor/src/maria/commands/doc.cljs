@@ -13,6 +13,7 @@
 (def send (partial frame/send frame/trusted-frame))
 (local/init-storage ::locals)
 
+
 (defn add-clj-ext [s]
   (when s
     (cond-> s
@@ -52,31 +53,36 @@
 (defn locals-push!
   "Add a locally-stored ids to `path` (if doc exists locally and has a filename)"
   [store id]
-  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(util/log-ret :locals-push (->> (cons id %)
-                                                                                                             (distinct)))]]))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(->> (cons id %)
+                                                                                  (distinct))]]))
 (defn locals-remove!
   "Remove a locally-stored id from `path`"
   [store id]
-  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(util/log-ret :locals-remove (remove (fn [x] (or (nil? x)
-                                                                                                                              (= x id))) %))]]))
+  (d/transact! [[:db/update-attr ::locals :local update (locals-path store) #(remove (fn [x] (or (nil? x)
+                                                                                                 (= x id))) %)]]))
 
 (defn normalize-doc
   ([doc] (normalize-doc (:id doc) doc))
   ([doc-id {updated-at :updated-at
-            root-id    :db/id :as the-doc}]
-   (let [{:keys [filename files local-url id]
+            root-id    :db/id
+            :keys [persisted local]
+            :as the-doc}]
+   (let [{:keys [filename files local-url id owner]
           :as   doc} (merge (:persisted the-doc)
                             (:local the-doc)
                             (select-keys the-doc [:owner]))
          provider (or (:persistence/provider the-doc)
-                      (:persistence/provider (:persisted the-doc))
-                      (:persistence/provider (:local the-doc)))
+                      (:persistence/provider persisted)
+                      (:persistence/provider local))
          the-id (or doc-id root-id id)
          the-filename (get-filename (first files))]
+
      (cond-> (assoc doc :updated-at updated-at
                         :persistence/provider provider)
              (nil? filename) (assoc :filename the-filename)
              (nil? id) (assoc :id the-id)
+             (nil? owner) (assoc :owner (or (:owner persisted)
+                                            (:owner local)))
              (nil? local-url) (assoc :local-url (local-url* provider the-id))))))
 
 (defn sort-projects [projects]
@@ -89,8 +95,11 @@
   [store]
   (seq (for [id (locals-dir store)
              :when id]
-         (normalize-doc id (merge {:local (local/local-get id)}
-                                  (d/entity id))))))
+         ;; init local storage for docs with localStorage pointers.
+         ;; memoized, so ok to repeat
+         (do (local/init-storage id)
+             (normalize-doc id (merge {:local (local/local-get id)}
+                                      (d/entity id)))))))
 
 (defn user-gists [username]
   (seq (->> (map normalize-doc (d/entities [[:doc.owner/username username]]))

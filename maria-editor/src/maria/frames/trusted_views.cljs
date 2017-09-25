@@ -43,12 +43,12 @@
     :or   {queries []}}]
   (let [username (d/get :auth-public :username)
         queries (cond-> queries
-                        username (conj [:doc.owner/username username]))]
+                        username (conj [[:doc.owner/username username]]))]
     (frame-view {:db/transactions (cond-> (into [(d/entity :auth-public)
                                                  [:db/add :window/location :origin (.. js/window -location -origin)]
                                                  (some-> current-entity (d/entity))
                                                  (some-> username (d/entity))]
                                                 transactions)
-                                          (seq queries) (into (d/entities queries)))
+                                          (seq queries) (into (mapcat d/entities queries)))
                  :on-message      (actions/handle-message current-entity)})))
 

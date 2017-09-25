@@ -54,7 +54,9 @@
 
              ["gists" username]
              (do (some-> username (github/load-user-gists))
-                 (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
+                 (trusted-views/editor-frame-view {:db/transactions [route-tx]
+                                                   :db/queries      (cond-> []
+                                                                            username (conj [[:doc.owner/username username]]))}))
 
 
              (:or

@@ -15,9 +15,21 @@
 
 (defview file-edit
   {:doc-editor              (fn [{:keys [view/state]}] (:doc-editor @state))
-   :init-doc                (fn [this]
-                              (doc/locals-push! :local/recents (:id this))
-                              (local/init-storage (:id this)))
+   :init-doc                (fn [{:keys [id] :as this}]
+                              (doc/locals-push! :local/recents id)
+                              (local/init-storage id)
+                              (let [the-doc (d/entity id)]
+                                ;; add persisted version of doc to localStorage
+                                ;; (this should be done somewhere else)
+                                (when-let [provider (or (:persistence/provider the-doc)
+                                                        (:persistence/provider (:persisted the-doc))
+                                                        (:persistence/provider (:local the-doc)))]
+                                  (d/transact! [[:db/update-attr id :local merge
+                                                 {:persistence/provider provider}
+                                                 {:files (or (:files (:local the-doc))
+                                                             (:files (:persisted the-doc)))
+                                                  :owner (or (:owner (:local the-doc))
+                                                             (:owner (:persisted the-doc)))}]]))))
    :view/will-receive-props (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
                               (when-not (= id prev-id)
                                 (.initDoc this)))
@@ -74,39 +86,44 @@
         more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
     [:.flex-auto.overflow-auto.sans-serif.f6
      (for [doc (take limit-n docs)
-           :let [{:keys [id description persistence/provider local-url filename]} doc
+           :let [{:keys [id description persistence/provider remote-url local-url filename]} doc
                  trashed? (= context :trash)]
            :when local-url]
-
        [:.flex.bb.b--near-white.items-stretch
         {:class (when-not trashed? "hover-bg-washed-blue")}
         [:a.db.ph3.pv2.black.no-underline.b.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
          (doc/strip-clj-ext filename)
-         (some->> description (conj [:.gray.f7.mt1.normal]))]
+         #_(some->> description (conj [:.gray.f7.mt1.normal]))]
 
-        (case provider
-          :maria/local
-          [small-label
+        [small-label
+         (when (= provider :gist)
+           [:a
+            {:class        (str small-icon-classes " nl2")
+             :href         (str "https://gist.github.com/" id)
+             :data-tooltip (pr-str "View Gist")
+             :target       "_blank"}
+            (-> icons/OpenInNew
+                (icons/size 16))])
+
+         (case provider
+           :maria/local
            (if trashed?
              [:.blue.hover-underline.hover-dark-blue.f7.pointer.flex.items-center
               {:on-click #(do (doc/locals-push! :local/recents id)
                               (doc/locals-remove! :local/trash id))}
               "Restore"]
-             [:.flex.items-center "Unsaved"])]
-          :gist [small-label [:.flex.items-center "Gist"]
-                 [:a
-                  {:class        small-icon-classes
-                   :href         (str "https://gist.github.com/" id)
-                   :data-tooltip (pr-str "View on GitHub")
-                   :target       "_blank"}
-                  (-> icons/OpenInNew
-                      (icons/size 16))]]
+             [:.flex.items-center "Unsaved"])
+           :gist [:.flex.items-center (or (when-let [gist-username (and (= provider :gist)
+                                                                        (:username (:owner doc)))]
+                                            gist-username)
+                                          "Gist")]
 
-          :maria/curriculum
-          [small-label [:.flex.items-center "Curriculum"]]
-          nil)
+           :maria/curriculum
+           [:.flex.items-center "Curriculum"]
+           nil)
+         ]
 
         (case context
           :recents
@@ -142,4 +159,4 @@
                                           [:a.hover-underline.gray.no-underline.flex.items-center {:href (str "/gists/" username)} username]
                                           util/space "/"]})
      [:.ma3.bg-white
-      (doc-list nil gists)]]))
+      (doc-list {} gists)]]))

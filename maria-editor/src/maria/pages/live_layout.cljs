@@ -87,6 +87,7 @@
    (hint/show-floating-view)
    [:.relative.border-box.flex.flex-column.w-100
     (when-let [segments (d/get :router/location :segments)]
+
       (match segments
              [] (if (d/get :auth-public :signed-in?)
                   (home)
