@@ -130,11 +130,14 @@
                    (some-> (Editor/of-block after) (Editor/focus! :start)))
         true))))
 
-(defn clear-previous-empty [{:keys [blocks block-list block editor]}]
+(defn handle-cursor-at-start [{:keys [blocks block-list block editor]}]
   (fn [_ _]
-    (when (and (Editor/at-start? editor)
-               (some-> (Block/left blocks block) (Block/empty?)))
-      (.splice block-list (Block/left blocks block) block [block])
+    (when-let [immediately-prev-block (and (Editor/at-start? editor)
+                                           (Block/left blocks block))]
+      (if (Block/empty? immediately-prev-block)
+        (.splice block-list (Block/left blocks block) block [block])
+        (-> (Editor/of-block immediately-prev-block)
+            (Editor/focus! :end)))
       true)))
 
 (defn join-with-prev [{:keys [blocks block-list block editor]}]
@@ -171,7 +174,7 @@
                    commands/open-image
                    (join-with-prev context)
                    (remove-empty-block context)
-                   (clear-previous-empty context)
+                   (handle-cursor-at-start context)
                    commands/backspace)))
 
 (defcommand :prose/space

@@ -101,7 +101,7 @@
      (fixed-top
        {:when-scrolled {:style {:background-color "#e7e7e7"
                                 :border-bottom    "2px solid #e2e2e2"}}}
-       [:.flex.sans-serif.items-stretch.br.f7.flex-none.overflow-hidden.pl2
+       [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
         (toolbar-button [{:href "/"} icons/Home nil "Home"])
         (command-button command-context :doc/new {:icon icons/Add})
 
