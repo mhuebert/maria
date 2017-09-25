@@ -340,25 +340,48 @@
                  (.setCursor cm (cm/Pos (inc line-n) column-n))))
     true))
 
-(def slurp
+(defn slurp-parent? [node pos]
+  (and (or (= :string (:tag node))
+           (tree/may-contain-children? node))
+       (tree/inside? node pos)))
+
+(def slurp-forward
   (fn [{{:keys [loc pos]} :magic/cursor
         :as               cm}]
     (let [node (z/node loc)
-          end-loc (cond-> loc
-                      (and (not (= :string (:tag node)))
-                           (or (not (tree/may-contain-children? node))
-                               (not (tree/inside? node pos)))) z/up)
-          start-loc (tree/include-prefix-parents end-loc)
-          {:keys [tag] :as node} (z/node start-loc)]
+          end-edge-loc (cond-> loc
+                               (not (slurp-parent? node pos)) z/up)
+          start-edge-loc (tree/include-prefix-parents end-edge-loc)
+          {:keys [tag] :as node} (z/node start-edge-loc)]
       (when (and node (not= :base tag))
-        (when-let [next-form (some->> (tree/right-locs start-loc)
+        (when-let [next-form (some->> (tree/right-locs start-edge-loc)
                                       (filter (comp tree/sexp? z/node))
                                       first
                                       (z/node))]
-          (operation cm (let [right-bracket (second (tree/edges (z/node end-loc)))]
+          (operation cm (let [right-bracket (second (tree/edges (z/node end-edge-loc)))]
                           (cm/replace-range! cm (or right-bracket "") (tree/bounds next-form :right))
                           (cm/replace-range! cm "" (-> (tree/bounds node :right)
                                                        (assoc :end-column (dec (:end-column node))))))))))
+    true))
+
+(def unslurp-forward
+  (fn [{{:keys [loc pos]} :magic/cursor
+        :as               cm}]
+    (let [node (z/node loc)
+          end-edge-loc (cond-> loc
+                               (or (= :string (:tag node))
+                                   (not (slurp-parent? node pos))) z/up)
+          end-edge-node (some-> end-edge-loc z/node)]
+      (when (and end-edge-node (not= :base (:tag end-edge-node)))
+        (when-let [last-inner-form (some->> (tree/child-locs end-edge-loc)
+                                            (filter (comp tree/sexp? z/node))
+                                            (last)
+                                            (z/node))]
+          (operation cm (let [right-bracket (second (tree/edges end-edge-node))]
+                          (cm/replace-range! cm (str right-bracket " " (tree/string last-inner-form) " ")
+                                             (merge (tree/bounds last-inner-form :left)
+                                                    (select-keys end-edge-node [:end-line :end-column])))
+                          (cm/set-cursor! cm pos))))))
     true))
 
 

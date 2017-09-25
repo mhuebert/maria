@@ -68,12 +68,12 @@
     edit/expand-selection-left "c (<b a>)" "c <(b a)>"
     edit/expand-selection-left "c <(b a)>" "<c (b a)>"
 
-    edit/slurp "(|) a" "(| a)"
-    edit/slurp "`(|) a" "`(| a)"
-    edit/slurp "@(|) a" "@(| a)"
-    edit/slurp "`@(|) a" "`@(| a)"
-    edit/slurp "~@(|) a" "~@(| a)"
-    edit/slurp "~@[|]a" "~@[|a]"
+    edit/slurp-forward "(|) a" "(| a)"
+    edit/slurp-forward "`(|) a" "`(| a)"
+    edit/slurp-forward "@(|) a" "@(| a)"
+    edit/slurp-forward "`@(|) a" "`@(| a)"
+    edit/slurp-forward "~@(|) a" "~@(| a)"
+    edit/slurp-forward "~@[|]a" "~@[|a]"
 
     ))
 

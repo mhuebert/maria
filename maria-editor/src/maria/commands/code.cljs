@@ -270,11 +270,19 @@
   (edit/uneval! (:editor context)))
 
 (defcommand :edit/slurp
-  "Expands the current form to include the form to the right."
-  {:bindings ["M1-Shift-K"]
+  "Expand current form to include the form to the right."
+  {:bindings ["M3-Right"
+              "M1-Shift-K"]
    :when     :block/code}
   [context]
-  (edit/slurp (:editor context)))
+  (edit/slurp-forward (:editor context)))
+
+(defcommand :edit/barf
+  "Pushes last child of current form out to the right."
+  {:bindings ["M3-Left"]
+   :when     :block/code}
+  [context]
+  (edit/unslurp-forward (:editor context)))
 
 (defcommand :edit/kill
   "Cuts to end of current form or line, whichever comes first."
