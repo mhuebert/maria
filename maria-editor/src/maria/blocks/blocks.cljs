@@ -63,11 +63,14 @@
 
 (defn from-ast
   "Returns a block, given a magic-tree AST node."
-  [{:keys [tag] :as node}]
+  [{:keys [tag value] :as node}]
   (case tag
     :comment-block (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
     (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
-    (->CodeBlock (d/unique-id) node)))
+    ;; annoying special case to allow insertion of blank code block
+    (->CodeBlock (d/unique-id) (if (= [tag value] [:keyword :maria/blank-code-block])
+                                 {:tag :base :value []}
+                                 node))))
 
 (defn create
   "Returns a block, given a kind (:code or :prose) and optional value."
