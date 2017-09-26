@@ -7,7 +7,8 @@
 (def modules
   [["intro" "Learn Clojure with Shapes" (repo-path "curriculum/Learn Clojure with Shapes.cljs")]
    ["quickstart" "Editor Quickstart" (repo-path "curriculum/Editor Quickstart.cljs")]
-   ["gallery" "Example Gallery" (repo-path "curriculum/Example Gallery.cljs")]])
+   ["gallery" "Example Gallery" (repo-path "curriculum/Example Gallery.cljs")]
+   ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]])
 
 (def owner {:username  "curriculum"
             :local-url "/curriculum"})
