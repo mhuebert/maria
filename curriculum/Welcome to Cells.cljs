@@ -10,38 +10,45 @@
 ;; * can change over time,
 ;; * wraps a bit of code, which tells the cell what to do every time it runs.
 ;;
-;; Here is a 'cell' that counts upward to infinity, one second at a time:
+
+;; ## Your First Cell
+
+;; Consider `interval`, a special function that resets the value of a
+;; cell repeatedly, on a timer. Given `interval`, here is a 'cell' that
+;; counts upward to infinity, one second at a time:
 
 (cell (interval 1000 inc))
 
-
-;; \(`interval` is a special function that resets the value of a cell repeatedly, on a timer.)
-;;
-;; Cells can have names, which we define using `defcell`:
+;; Cells can have names, which we define using `defcell`. Let's
+;; re-make that timer cell, but this time we'll define a name for it.
 
 (defcell counter (interval 1000 inc))
 
-
-;; By giving a cell a name, we can re-use it in other cells. A special thing happens when we do that:
+;; By giving a cell a name, we can re-use it in other cells. This
+;; gives us tremendous power. Watch:
 
 (defcell bigger-counter (* @counter 10))
 
+;; Do you see how `bigger-counter` is changing every second, even
+;; though it doesn't use `interval`? That's because `bigger-counter`
+;; automatically refreshes whenever `@counter` changes, multiplying
+;; that value by 10 to create its own value.
 
-;; Do you see how `bigger-counter` is changing every second, even though it doesn't use `interval`? That's because `bigger-counter` automatically refreshes whenever `@counter` changes, multiplying that value by 10 to create its own value.
+;; This kind of cell-to-cell awareness makes cells special. It means
+;; they can be formed into a giant web, each cell ready to act
+;; together with the others. Each cell in the web stays in sync with
+;; whatever other cells it is connected to.
 
-;; This kind of cell-to-cell awareness makes cells special. They form
-;; a big web when you connect them. Each cell in the web stays in sync
-;; with whatever other cells it is connected to.
-;;
-;; You may be wondering what that **@** (the "at sign") is doing. We use the @ symbol to ‘dereference’ a cell, so that we can read its value.
+;; You may be wondering what that **@** (the "at sign") is doing. We
+;; use the @ symbol to ‘dereference’ a cell, so that we can read its
+;; value.
 
 @counter
-
 
 ;; Note how `@counter` doesn’t change: it is frozen in time. When you
 ;; @dereference a cell, you don’t have the whole ‘cell’ anymore - you
 ;; get a snapshot of its value, at one point in time.
-;;
+
 ;; If we wrap `@counter` in another cell, we’ll see it change again:
 
 (cell @counter)
@@ -49,10 +56,11 @@
 ;; Every cell in your program dutifully keeps track of which other
 ;; cells it depends on, and updates when they change. Only *cells*
 ;; know how to react to other cells automatically: ordinary Clojure
-;; code doesn’t change like that.
+;; code doesn’t update like that.
 
 ;; ## Interconnected Cells 🌎️🌍️🌏️
-;; Let's make a more tangled web of cells, to see this
+
+;; Let's make a more tangled web of cells, to better see this
 ;; interconnectedness in action.
 
 ;; We'll start with a cell that is a random number generator:
@@ -122,8 +130,7 @@
 ;; plain old `true` value on its own. As a cell it can be changed, and
 ;; notifies all the cells that depend on it when it has changed.
 
-;; Let's see that in action by making two cells that depend on the
-;; `toggle` cell.
+;; Let's see that in action FIXME
 (with-view toggle
   (->> (if @self (circle 40) (square 80))
        (listen :click #(swap! self not))))
