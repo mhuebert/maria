@@ -59,11 +59,23 @@
 (defcell random-number []
   (interval 200 #(rand-int 20)))
 
-;; Those numbers go by so fast. Change the cell to slow it down. (Or,
-;; if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
+;; The `#` ("hash" or "pound sign") immediately before an
+;; open-parenthesis might be new to you. Go ahead an evaluate that
+;; subform, `#(rand-int 20)`, and you'll see it returns a
+;; function. That's all the `#` does: it's a quick way to define an
+;; anonymous function. This
+;; [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function)
+;; is no different from `(fn [] ...)` except none of the arguments get
+;; names.
 
-;; Next we'll create a cell that keeps track of the last 10 random
-;; numbers generated, using the `random-number` cell:
+;; Now we have a cell that updates itself every fifth of a
+;; second. Let's tinker with it a bit. Those numbers go by so
+;; fast--change the cell to slow it down. (Or, if you're a jet-pilot
+;; kind of programmer, speed it up! ⚡️ 😀)
+
+;; That `random-number` cell is the first part of our cell chain. Next
+;; we'll create a cell that keeps track of the last 10 random numbers
+;; generated, using the `random-number` cell:
 (defcell last-ten [self]
   (take 10 (cons @random-number @self)))
 
@@ -92,17 +104,26 @@
 ;; color? What would you have to do to assign each number a color that
 ;; sticks with its shape? Experiment.
 
-;; ## What else can we do with cells?
-;;
+;; ## Back and Forth 🤝 🤼‍♂️ Cells also **interact** with us. Just like
+;; we used cells to track time using `interval`, we can use cells to
+;; detect user activity, like mouse clicks. We do this by "listening"
+;; for specific browser "events". To explore interactions with cells,
+;; let's first create a cell that we'll store `true` or `false`
+;; in. Those are special values in Clojure, used when we need a clear
+;; [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth
+;; value. Both `true` and `false` are [literal
+;; values](https://clojure.org/reference/reader#_literals), and don't
+;; need to be wrapped in double-quotes.
 
-;; ## Interactivity TODO finish
-;;
-;; Just like `interval`, there is another special function called...
+(defcell toggle true)
 
-;; TODO explain
-(def toggle (cell true))
+;; This cell doesn't do much: it's just a container. But because it's
+;; a cell, we can use it for so much more than if we defined it as a
+;; plain old `true` value on its own. As a cell it can be changed, and
+;; notifies all the cells that depend on it when it has changed.
 
-;; TODO explain
+;; Let's see that in action by making two cells that depend on the
+;; `toggle` cell.
 (with-view toggle
   (->> (if @self (circle 40) (square 80))
        (listen :click #(swap! self not))))
@@ -165,6 +186,8 @@
                     (image 100)))))
 
 (cell (image (find-image "berlin")))
+
+;; XXX for more on fetching, see https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71
 
 
 ;; TODO Loop example
