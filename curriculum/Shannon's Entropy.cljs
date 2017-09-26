@@ -27,7 +27,7 @@
   (if (= x 0) 0 (/ (Math/log x) (Math/log 2))))
 
 (defn entropy
-
+  "Entropy(S) = -p + log2(p+) - p- log2(p-)"
   [p-pos p-neg]
   (+ (* (- p-pos) (log2 p-pos))
      (* (- p-neg) (log2 p-neg))))
@@ -79,11 +79,11 @@
 
 (seq-entropy '(1 0 1 0 1 1 1 1 1))
 
-;; => 0.7642045065086203
-;;
+;; This should evaluate to 0.7642045065086203
+
 ;; ## The Law of Large Numbers
 ;;
-;; Write a function: `(defn random-bit-sequence \[len odds\] …)` that
+;; Write a function: `(defn random-bit-sequence [len odds] ...)` that
 ;; returns a random bit sequence with each bit having `odds`
 ;; probability of being a 1. Use that function to explore how the
 ;; random sequences converge to the entropy expected from `odds` as
@@ -95,9 +95,8 @@
   ;; when you've worked out the problem, your code goes here
   )
 
-;;
 ;; ## The Trick Question?
-
+;; Consider:
 (defn string-to-bits
   "Returns a list containing 1s and 0s for the bits that make up the
   bytes of string 's'."
@@ -107,14 +106,10 @@
           (goog.crypt/stringToUtf8ByteArray s)))
 
 (seq-entropy (string-to-bits "    "))
-
 ;; This should evaluate to 0.5435644431995964.
 
 (seq-entropy (string-to-bits "abcd"))
-
-
-
 ;; This should evaluate to 0.9744894033980523.
-;;
+
 ;; Have a play with the function above and figure out why these
 ;; strings have these entropy values. This might be a trick question.
