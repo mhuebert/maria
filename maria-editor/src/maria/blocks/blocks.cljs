@@ -10,7 +10,7 @@
             [maria.util :as util]
             [cells.eval-context :as eval-context]
             [maria.eval :as e]
-            [maria.editors.editor :as Editor]
+            [lark.editors.editor :as Editor]
             [fast-zip.core :as z]))
 
 (defprotocol IBlock
@@ -67,10 +67,7 @@
   (case tag
     :comment-block (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
     (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
-    ;; annoying special case to allow insertion of blank code block
-    (->CodeBlock (d/unique-id) (if (= [tag value] [:keyword :maria/blank-code-block])
-                                 {:tag :base :value []}
-                                 node))))
+    (->CodeBlock (d/unique-id) node)))
 
 (defn create
   "Returns a block, given a kind (:code or :prose) and optional value."

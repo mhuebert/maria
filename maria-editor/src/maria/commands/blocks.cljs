@@ -1,13 +1,13 @@
 (ns maria.commands.blocks
   (:require [lark.commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
-            [maria.editors.editor :as Editor]
+            [lark.editors.editor :as Editor]
             [maria.blocks.history :as history]
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
             [re-view-prosemirror.commands :as commands]
             [maria.views.icons :as icons]
-            [structure.codemirror :as cm]))
+            [lark.structure.codemirror :as cm]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"

@@ -3,18 +3,18 @@
 
     [codemirror.addon.markselection]
     [codemirror.mode.clojure]
-    [structure.codemirror :as cm]
+    [lark.structure.codemirror :as cm]
 
     [re-view.core :as v :refer [defview]]
 
     [maria.util :as util]
     [maria.views.floating.float-ui :as hint]
-    [maria.editors.editor :as Editor]
+    [lark.editors.editor :as Editor]
     [magic-tree.core :as tree]
     [maria.live.ns-utils :as ns-utils]
     [maria.views.dropdown :as dropdown]
     [maria.views.bottom-bar :as bottom-bar]
-    [structure.edit :as edit]
+    [lark.structure.edit :as edit]
     [goog.functions :as gf]))
 
 (defn eldoc-view [sym]

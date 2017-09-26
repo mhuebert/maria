@@ -24,6 +24,9 @@
 
 
                  [lark/commands "0.1.1-SNAPSHOT"]
+                 [lark/structure "0.1.0-SNAPSHOT"]
+                 [lark/editors "0.1.0-SNAPSHOT"]
+
                  [magic-tree "0.0.14-SNAPSHOT"]
 
                  [cells "0.1.1"]
@@ -59,7 +62,9 @@
                  "checkouts/cljs_live/src"
                  "checkouts/shapes"
                  "checkouts/cells"
-                 "../../lark/commands/src"]
+                 "../../lark/commands/src"
+                 "../../lark/structure/src"
+                 "../../lark/editors/src"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

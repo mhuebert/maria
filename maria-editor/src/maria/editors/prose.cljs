@@ -9,10 +9,13 @@
             [goog.object :as gobj]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
-            [lark.commands.exec :as exec]
+
             [maria.commands.prose :as prose-commands]
             [re-view-routing.core :as r]
-            [maria.editors.editor :as Editor]
+
+
+            [lark.commands.exec :as exec]
+            [lark.editors.editor :as Editor]
     #_[re-view-prosemirror.example-toolbar :as toolbar]
     #_[maria.views.bottom-bar :as bottom-bar]
             [maria.util :as util]))

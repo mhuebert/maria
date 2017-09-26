@@ -1,6 +1,10 @@
 (ns maria.blocks.code
   (:require [re-view.core :as v :refer [defview]]
-            [structure.codemirror :as cm]
+
+            [lark.structure.codemirror :as cm]
+            [lark.editors.editor :as Editor]
+            [lark.commands.exec :as exec]
+
             [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
             [magic-tree.core :as tree]
@@ -8,11 +12,10 @@
             [cells.eval-context :as eval-context]
             [maria.editors.code :as code]
             [goog.dom.classes :as classes]
-            [maria.editors.editor :as Editor]
             [maria.editors.code :as code]
-            [lark.commands.exec :as exec]
             [maria.views.error :as error]
-            [maria.views.values :as value-views]))
+            [maria.views.values :as value-views]
+            [maria.util :as util]))
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)

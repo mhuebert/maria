@@ -3,7 +3,15 @@
             [cells.eval-context :as eval-context]
             [re-view.core :as v]
             [maria.blocks.blocks :as Block]
-            [maria.editors.editor :as Editor]))
+            [lark.editors.editor :as Editor]
+            [lark.commands.exec :as exec]))
+
+
+(defn focused-block-view []
+  (:block-view @exec/context))
+
+(defn focused-block []
+  (get (focused-block-view) :block))
 
 (def ^:dynamic *ignored-op* false)
 
@@ -18,13 +26,14 @@
          timestamp :timestamp} (meta prev-blocks)]
     (and (< (- (.now js/Date) timestamp)
             300)
-         (= (:id block) (:id (Editor/focused-block))))))
+         (= (:id block) (:id (focused-block))))))
 
 (defn get-selections []
-  (when-let [block-view (Editor/focused-block-view)]
+  (when-let [block-view (focused-block-view)]
     [(:block block-view) (Editor/get-selections (.getEditor block-view))]))
 
 (defn put-selections! [[block selections]]
+  (v/flush!)
   (when-let [editor (some-> block (Editor/of-block))]
     (Editor/focus! editor)
     (Editor/put-selections! editor selections)))
@@ -32,6 +41,7 @@
 (defn apply-selections
   "Applies selections for given version to doc."
   [key version]
+  (v/flush!)
   (some-> (get (meta version) key)
           (put-selections!)))
 

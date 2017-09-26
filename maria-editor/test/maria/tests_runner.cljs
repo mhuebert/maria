@@ -1,6 +1,6 @@
 (ns ^:figwheel-always maria.tests-runner
-  (:require [structure.bracket-tests]
-            [structure.edit-tests]
+  (:require [lark.structure.bracket-tests]
+            [lark.structure.edit-tests]
             [goog.events :as events]
             [cljs.test :refer-macros [run-all-tests]]))
 
