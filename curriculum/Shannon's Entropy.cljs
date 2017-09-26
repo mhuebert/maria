@@ -87,9 +87,9 @@
 ;; returns a random bit sequence with each bit having `odds`
 ;; probability of being a 1. Use that function to explore how the
 ;; random sequences converge to the entropy expected from `odds` as
-;; `len` increases (i.e. the Law of Large Numbers). Show your work.
+;; `len` increases (i.e. the Law of Large Numbers).
 
-;; show your work here
+;; Show your work.
 
 (defn random-bit-sequence [len odds]
   ;; when you've worked out the problem, your code goes here
