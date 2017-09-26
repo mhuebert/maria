@@ -11,7 +11,7 @@
 ;; * wraps a bit of code, which tells the cell what to do every time it runs.
 ;;
 
-;; ## Your First Cell
+;; ## Your First Cell 🤠
 
 ;; Consider `interval`, a special function that resets the value of a
 ;; cell repeatedly, on a timer. Given `interval`, here is a 'cell' that
@@ -114,7 +114,7 @@
 ;; color? What would you have to do to assign each number a color that
 ;; sticks with its shape? Experiment.
 
-;; ## Back and Forth 🤝 🤼‍♂️
+;; ## Talking to Cells 📢 🗣️
 
 ;; Cells also **interact** with us. Just like we used cells to track
 ;; time using `interval`, we can use cells to detect user activity,
@@ -154,7 +154,7 @@
          {:class (if @self "bg-black" "bg-pink")}]))
 
 ;; FIXME
-;; ## Fetch things from the internet
+;; ## Data From Space 🚀
 ;;
 ;; Just like `interval`, there is another special function called `fetch` which only works inside cells. Given a URL, `fetch` can download data from the internet:
 
