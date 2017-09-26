@@ -41,7 +41,9 @@
 
 ;; You may be wondering what that **@** (the "at sign") is doing. We
 ;; use the @ symbol to ‘dereference’ a cell, so that we can read its
-;; value.
+;; value. Evaluate this, wait a few seconds, then evaluate it
+;; again. (Make sure you evaluate the *whole* expression by using
+;; `Shift-Command-Enter`.)
 
 @counter
 
@@ -112,12 +114,14 @@
 ;; color? What would you have to do to assign each number a color that
 ;; sticks with its shape? Experiment.
 
-;; ## Back and Forth 🤝 🤼‍♂️ Cells also **interact** with us. Just like
-;; we used cells to track time using `interval`, we can use cells to
-;; detect user activity, like mouse clicks. We do this by "listening"
-;; for specific browser "events". To explore interactions with cells,
-;; let's first create a cell that we'll store `true` or `false`
-;; in. Those are special values in Clojure, used when we need a clear
+;; ## Back and Forth 🤝 🤼‍♂️
+
+;; Cells also **interact** with us. Just like we used cells to track
+;; time using `interval`, we can use cells to detect user activity,
+;; like mouse clicks. We do this by "listening" for specific browser
+;; "events". To explore interactions with cells, let's first create a
+;; cell that we'll store `true` or `false` in. Those are special
+;; values in Clojure, used when we need a clear
 ;; [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth
 ;; value. Both `true` and `false` are [literal
 ;; values](https://clojure.org/reference/reader#_literals), and don't
