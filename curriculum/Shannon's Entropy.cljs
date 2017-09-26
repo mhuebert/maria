@@ -1,4 +1,3 @@
-
 ;; # Shannon's entropy calculation
 ;;
 ;; Shannon's measure of entropy is essentially a measure of the
