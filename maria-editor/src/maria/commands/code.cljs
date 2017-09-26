@@ -12,7 +12,8 @@
             [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
             [maria.views.icons :as icons]
-            [goog.events :as events]))
+            [goog.events :as events]
+            [lark.commands.exec :as exec]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -71,6 +72,9 @@
                                                            loc (some->> loc
                                                                         (cm/cursor-loc pos))]
                                                        (when (and loc (not (= loc (:loc @last-sel))))
+
+                                                         (exec/clear-whichkey!)
+
                                                          (cm/temp-select-node! editor (z/node loc))
                                                          (vreset! last-sel {:pos pos
                                                                             :loc loc})))))))))
