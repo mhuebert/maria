@@ -94,7 +94,6 @@
 
 (what-is what-is)
 
-
 ;; ## Shapes 🔺 and Colors 🌈
 
 ;; Now that you've seen the basics of evaluating expressions, calling
@@ -175,7 +174,6 @@
 ;; If you have some time, take a minute and play around a little. Make
 ;; your own shape combinations, evaluating inner expressions to make
 ;; sure you know how they fit into the expression containing them. 🕸️
-
 
 ;; ## 🖳 Computing Superpowers 💪🏽
 
@@ -281,7 +279,6 @@
 ;; 💜 💜 💜 💜 Instead of a "circle" function, we wrote a "purple
 ;; circle" function. The power to create our own functions is the
 ;; heart of the power of programming.
-
 
 ;; ## 👨🏾‍🚀 Names 👩🏻‍🚀
 
@@ -455,7 +452,6 @@ rainbow
 ;; requirement to being a True Programmer. Give yourself a
 ;; high-five. I am right now giving you a high-five. Maria is giving
 ;; you a high-five.
-
 
 ;; # Where to Go From Here
 
