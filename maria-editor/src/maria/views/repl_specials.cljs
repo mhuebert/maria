@@ -25,7 +25,7 @@
            view/props
            standalone?] :as this}]
   (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
-    [:.ph3.bt.b--near-white.ws-normal
+    [:.ph3.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
      [:.code.flex.items-center.pointer.mv1
       {:on-click #(swap! state not)}

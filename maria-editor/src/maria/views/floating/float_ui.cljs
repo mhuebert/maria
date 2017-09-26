@@ -35,7 +35,7 @@
     [left top] :float/pos
     :or   {offset [0 0]}}]
   (error/error-boundary
-    {:on-error (fn [error info])}
+    {:on-error (fn [result])}
     (let [left (+ left (first offset))
           top (+ top (second offset))
           BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")

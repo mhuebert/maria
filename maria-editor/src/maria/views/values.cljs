@@ -206,7 +206,21 @@
    {:style {:max-height 200}}
    (code/viewer {:error-ranges (cond-> []
                                        position (conj (magic/highlights-for-position source position))
-                                       (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))} source)])
+                                       (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))}
+                source)])
+
+(defn render-error-result [{:keys [error source show-source? warnings] :as result}]
+  [:div
+   {:class "bg-darken-red cf"}
+   (when source
+     (display-source result))
+   [:.ws-prewrap.relative      ;.mv3.pv1
+    [:.ph3.overflow-auto
+     (->> (for [message (concat warnings
+                                (messages/reformat-error result))
+                :when message]
+            [:.mv2 message])
+          (interpose [:.bb.b--red.o-20.bw2]))]]])
 
 (defview display-result
   {:key :id}
@@ -215,29 +229,30 @@
            warnings
            show-source?
            block-id
-           source] :as result}]
+           source]
+    result :view/props
+    :as this}]
   (error-view/error-boundary {:on-error (fn [{:keys [error]}]
-                                          (e/handle-block-error block-id error))}
+                                          (e/handle-block-error block-id error))
+                              :error-content (fn [{:keys [error info]}]
+                                               (-> result
+                                                   (assoc :error (or error (js/Error. "Unknown error"))
+                                                          :error/kind :eval)
+                                                   (e/add-error-position)
+                                                   (render-error-result)))}
                              (let [warnings (sequence (comp (distinct)
                                                             (map messages/reformat-warning)
                                                             (keep identity)) warnings)
                                    error? (or error (seq warnings))]
                                (when error
                                  (.error js/console error))
-                               [:div
-                                {:class (when error? "bg-darken-red cf")}
-                                (when (and source (or show-source? error (seq warnings)))
-                                  (display-source result))
-                                [:.ws-prewrap.relative      ;.mv3.pv1
-                                 (if error?
-                                   [:.ph3.overflow-auto
-                                    (->> (for [message (concat warnings
-                                                               (messages/reformat-error result))
-                                               :when message]
-                                           [:.mv2 message])
-                                         (interpose [:.bb.b--red.o-20.bw2]))]
-
-                                   [:.ph3 (format-value value)])]])))
+                               (if error?
+                                 (render-error-result result)
+                                 [:div
+                                  (when (and source show-source?)
+                                    (display-source result))
+                                  [:.ws-prewrap.relative
+                                   [:.ph3 (format-value value)]]]))))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

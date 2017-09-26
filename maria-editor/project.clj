@@ -22,9 +22,10 @@
                  [re-view-prosemirror "0.1.9-SNAPSHOT"]
                  [cljs-live "0.2.6"]
 
-                 [magic-tree "0.0.14-SNAPSHOT"]
 
                  [lark/commands "0.1.1-SNAPSHOT"]
+                 [magic-tree "0.0.14-SNAPSHOT"]
+
                  [cells "0.1.1"]
 
 

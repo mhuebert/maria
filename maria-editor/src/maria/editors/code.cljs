@@ -62,8 +62,6 @@
    :magicBrackets      true
    :magicEdit          true
    :configureMouse     (fn [cm repeat e]
-
-                         (prn :configure-mouse!)
                          #js {:moveOnDrag (if (.-shiftKey e)
                                             false
                                             true)})})
