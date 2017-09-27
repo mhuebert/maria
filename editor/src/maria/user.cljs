@@ -19,5 +19,4 @@
                                             ;; are these internal only? -jar
                                             assure-shape-seq shape-bounds bounds shape->vector]]
             [re-view.core :include-macros true])
-  (:require-macros [maria.user :refer [user-macro]]
-                   [cells.cell :refer [defcell cell]]))
+  (:require-macros [cells.cell :refer [defcell cell]]))

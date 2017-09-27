@@ -125,7 +125,7 @@
 
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
-  {:bindings ["M1-Shift-Left"]
+  {:bindings ["M1-Shift-Up"]
    :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
@@ -133,7 +133,7 @@
 
 (defcommand :navigate/form-end
   "Move cursor to end of top-level form."
-  {:bindings ["M1-Shift-Right"]
+  {:bindings ["M1-Shift-Down"]
    :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
@@ -366,8 +366,7 @@
 
 (defcommand :info/doc
   "Show documentation for current form."
-  {:bindings ["M1-I"
-              "M1-Shift-I"]
+  {:bindings ["M1-I"]
    :when     :block/code}
   [{:keys [block-view editor block]}]
   (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
