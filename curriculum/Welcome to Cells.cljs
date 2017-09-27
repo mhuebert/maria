@@ -136,33 +136,36 @@
 
 ;; Let's see that in action FIXME
 (with-view toggle
-  (->> (if @self (circle 40) (square 80))
-       (listen :click #(swap! self not))))
+  (fn [self]
+      (->> (if @self (circle 40) (square 80))
+           (listen :click #(swap! self not)))))
 
 ;; XXX aside
 (with-view counter
-  (if (odd? @self)
-    (triangle 20)
-    (square 20)))
+  (fn [self] (if (odd? @self)
+               (triangle 20)
+               (square 20))))
 
 ;; XXX also aside
 (with-view random-number
-  (triangle (* 3 @self)))
+  (fn [self] (triangle (* 3 @self))))
 
 
 ;; TODO explain
 (with-view toggle
-  (html [:div
-         [:div.f2.pa3.white.pointer.mb2
-          {:on-click #(swap! self not)
-           :class (if @self "bg-pink" "bg-black")}
-          (if @self "YAAA" "NOOO")]
-         "(^^click me)"]))
+  (fn [self]
+      (html ([:div
+              [:div.f2.pa3.white.pointer.mb2
+               {:on-click #(swap! self not)
+                :class    (if @self "bg-pink" "bg-black")}
+               (if @self "YAAA" "NOOO")]
+              "(^^click me)"]))))
 
 ;; TODO explain
 (with-view toggle
-  (html [:.pa5.br-100.dib
-         {:class (if @self "bg-black" "bg-pink")}]))
+  (fn [self]
+      (html [:.pa5.br-100.dib
+             {:class (if @self "bg-black" "bg-pink")}])))
 
 ;; FIXME
 ;; ## Data From Space 🚀

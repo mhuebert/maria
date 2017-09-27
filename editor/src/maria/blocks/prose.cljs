@@ -12,7 +12,6 @@
   (.serialize markdown/serializer (Block/state this)))
 
 (extend-type Block/ProseBlock
-
   IFn
   (-invoke
     ([this props]

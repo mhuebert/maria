@@ -19,7 +19,7 @@
 
                  [re-view "0.3.29"]
                  [re-view-routing "0.1.3"]
-                 [re-view-prosemirror "0.1.9-SNAPSHOT"]
+                 [re-view-prosemirror "0.1.10-SNAPSHOT"]
                  [cljs-live "0.2.6"]
 
 
@@ -29,7 +29,7 @@
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 
-                 [cells "0.1.1"]
+                 [cells "0.1.2"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]

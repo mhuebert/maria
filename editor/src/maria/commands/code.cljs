@@ -9,9 +9,7 @@
             [maria.blocks.blocks :as Block]
             [maria.blocks.prose :as Prose]
             [lark.editors.editor :as Editor]
-            [maria.util :as util]
             [maria.live.ns-utils :as ns-utils]
-            [maria.views.icons :as icons]
             [goog.events :as events]
             [lark.commands.exec :as exec]))
 
@@ -24,8 +22,7 @@
 
 (defcommand :clipboard/copy
   {:bindings ["M1-c"]
-   :private  true
-   :icon     icons/ContentCopy}
+   :private  true}
   [{:keys [editor block/code block/prose]}]
   (when code
     (edit/copy (.getSelection editor))
@@ -34,8 +31,7 @@
 (defcommand :clipboard/cut
   {:bindings ["M1-x"]
    :private  true
-   :when     :block/code
-   :icon     icons/ContentCopy}
+   :when     :block/code}
   [{:keys [editor block/code block/prose]}]
   (edit/copy (.getSelection editor))
   (.replaceSelection editor "")
@@ -43,8 +39,7 @@
 
 (defcommand :clipboard/paste
   {:bindings ["M1-v"]
-   :private  true
-   :icon     icons/ContentPaste}
+   :private  true}
   [{:keys [editor block/code]}]
   (when-let [pos (and code (cm/cursor-root editor))]
     (.setCursor editor pos))
@@ -108,23 +103,20 @@
 (defcommand :select/left
   "Expand selection to include form to the left."
   {:bindings ["M1-Left"]
-   :when     :block/code
-   :icon     icons/Select}
+   :when     :block/code}
   [context]
   (edit/expand-selection-left (:editor context)))
 
 (defcommand :select/right
   "Expand selection to include form to the right."
   {:bindings ["M1-Right"]
-   :when     :block/code
-   :icon     icons/Select}
+   :when     :block/code}
   [context]
   (edit/expand-selection-right (:editor context)))
 
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
   {:bindings ["M1-Shift-Up"]
-   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :left))
@@ -132,7 +124,6 @@
 (defcommand :navigate/form-end
   "Move cursor to end of top-level form."
   {:bindings ["M1-Shift-Down"]
-   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-selection-edge editor :right))
@@ -140,7 +131,6 @@
 (defcommand :navigate/line-start
   "Move cursor to beginning of line."
   {:bindings ["M1-Shift-Left"]
-   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :left))
@@ -148,15 +138,15 @@
 (defcommand :navigate/line-end
   "Move cursor to end of line."
   {:bindings ["M1-Shift-Right"]
-   :icon     icons/CursorText
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :right))
 
 (defn enter [{:keys [block-view editor block-list block blocks]}]
   (let [last-line (.lastLine editor)
-        {cursor-line :line
-         cursor-ch   :ch} (util/js-lookup (.getCursor editor))
+        cursor (.getCursor editor)
+        cursor-line (.-line cursor)
+        cursor-ch (.-ch cursor)
         empty-block (Block/empty? block)]
     (when-let [edge-position (cond empty-block :empty
                                    (and (= cursor-line last-line)
@@ -272,7 +262,6 @@
 (defcommand :navigate/hop-left
   "Move cursor left one form"
   {:bindings ["M2-Left"]
-   :icon     icons/CursorText
    :when     :block/code}
   [context]
   (edit/hop-left (:editor context)))
@@ -280,7 +269,6 @@
 (defcommand :navigate/hop-right
   "Move cursor right one form"
   {:bindings ["M2-Right"]
-   :icon     icons/CursorText
    :when     :block/code}
   [context]
   (edit/hop-right (:editor context)))

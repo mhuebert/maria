@@ -7,8 +7,8 @@
             maria.show
             [cells.cell]
             [cells.lib :as cell
-             :refer [interval timeout fetch geo-location]
-             :refer-macros [with-view wait]]
+             :refer [interval timeout fetch geo-location with-view]
+             :refer-macros [wait]]
             [shapes.core :as shapes :refer [listen
                                             circle square rectangle triangle path text image
                                             position opacity rotate scale

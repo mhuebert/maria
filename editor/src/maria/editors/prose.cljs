@@ -129,10 +129,10 @@
   [{:keys [view/state block-list block before-change] :as this}]
   [:div
    (ProseEditor {:doc           (Block/state block)
-                 :editor-props  {:onFocus #(exec/set-context! {:block/prose true
-                                                               :block-view  this})
-                                 :onBlur  #(exec/set-context! {:block/prose nil
-                                                               :block-view  nil})}
+                 :editor-props  {:handleDOMEvents #js {:focus #(exec/set-context! {:block/prose true
+                                                                                   :block-view  this})
+                                                       :blur  #(exec/set-context! {:block/prose nil
+                                                                                   :block-view  nil})}}
                  :block         block
                  :class         " serif f4 ph3 cb"
                  :input-rules   (prose-commands/input-rules this)
