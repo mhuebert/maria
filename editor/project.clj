@@ -29,7 +29,7 @@
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 
-                 [cells "0.1.2"]
+                 [cells "0.1.3-SNAPSHOT"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]

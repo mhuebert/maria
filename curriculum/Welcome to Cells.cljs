@@ -248,12 +248,12 @@
 ;; TODO explain
 (with-view toggle
   (fn [self]
-      (html ([:div
-              [:div.f2.pa3.white.pointer.mb2
-               {:on-click #(swap! self not)
-                :class    (if @self "bg-pink" "bg-black")}
-               (if @self "YAAA" "NOOO")]
-              "(^^click me)"]))))
+      (html [:div
+             [:div.f2.pa3.white.pointer.mb2
+              {:on-click #(swap! self not)
+               :class    (if @self "bg-pink" "bg-black")}
+              (if @self "YAAA" "NOOO")]
+             "(^^click me)"])))
 
 ;; TODO explain
 (with-view toggle
