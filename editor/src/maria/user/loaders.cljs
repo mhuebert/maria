@@ -28,7 +28,7 @@
                   :on-click #(swap! state not)})
     status
     [:.flex-auto]
-    (when source (if @state icons/ArrowDropUp icons/ArrowDropDown))]
+    (when source (if @state icons/ArrowPointingUp icons/ArrowPointingDown))]
 
    (when (and @state source)
      [:.overflow-scroll.ph3.nl3.nr3.bt.bb.b--darken.pv2

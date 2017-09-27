@@ -144,8 +144,8 @@
        (if (and fn-name (not= "" fn-name))
          (some-> (source-lookups/fn-name value) (symbol) (name))
          [:span.o-50.mr1 "ƒ"])
-       (-> (if expanded? icons/ArrowDropUp
-                         icons/ArrowDropDown)
+       (-> (if expanded? icons/ArrowPointingUp
+                         icons/ArrowPointingDown)
            (icons/size 20)
            (icons/class "mln1 mrn1 o-50"))]
       (when expanded?

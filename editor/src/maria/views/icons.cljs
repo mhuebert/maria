@@ -16,15 +16,22 @@
 
 (def X (style Add {:transform "rotate(45deg)"}))
 
-(def ArrowDropDown
+(def ArrowPointingDown
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
    [:path {:d "M7 10l5 5 5-5z"}]
    [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
-(def ArrowDropUp
-  [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}
-   [:path {:d "M7 14l5-5 5 5z"}]
-   [:path {:d "M0 0h24v24H0z", :fill "none"}]])
+(def ArrowPointingUp
+  (-> ArrowPointingDown
+      (style {:transform "rotate(180deg)"})))
+
+(def ArrowPointingLeft
+  (-> ArrowPointingDown
+      (style {:transform "rotate(90deg)"})))
+
+(def ArrowPointingRight
+  (-> ArrowPointingDown
+      (style {:transform "rotate(-90deg)"})))
 
 (def Backup
   [:svg {:fill "currentColor", :height "24", :view-box "0 0 24 24", :width "24", :xmlns "http://www.w3.org/2000/svg"}

@@ -24,7 +24,10 @@
            view/state
            view/props
            standalone?] :as this}]
-  (let [[namespace name] [(namespace (:name this)) (name (:name this))]]
+  (let [[namespace name] [(namespace (:name this)) (name (:name this))]
+        arglists (ns-utils/elide-quote (or forms
+                                           (:arglists meta)
+                                           arglists))]
     [:.ph3.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
      [:.code.flex.items-center.pointer.mv1
@@ -34,13 +37,12 @@
       name
       [:.flex-auto]
       [:span.o-50
-       (if @state icons/ArrowDropUp
-                  icons/ArrowDropDown)]]
+       (when (or doc (seq arglists))
+         (if @state icons/ArrowPointingDown
+                    icons/ArrowPointingLeft))]]
      (when @state
        (list
-         [:.mv1.blue.f6 (string/join ", " (map str (ns-utils/elide-quote (or forms
-                                                                             (:arglists meta)
-                                                                             arglists))))]
+         [:.mv1.blue.f6 (string/join ", " (map str arglists))]
          [:.gray.mv2.f6 doc]
          (docs-link namespace name)))]))
 

@@ -22,8 +22,6 @@
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
 
-
-
 (defcommand :clipboard/copy
   {:bindings ["M1-c"]
    :private  true
@@ -313,7 +311,7 @@
   [context]
   (edit/uneval! (:editor context)))
 
-(defcommand :edit/slurp
+(defcommand :edit/slurp-forward
   "Expand current form to include the form to the right."
   {:bindings ["M1-Shift-Right"
               "M3-Right"
@@ -323,7 +321,7 @@
   (cm/return-cursor-to-root! editor)
   (edit/slurp-forward editor))
 
-(defcommand :edit/barf
+(defcommand :edit/barf-forward
   "Pushes last child of current form out to the right."
   {:bindings ["M1-Shift-Left"
               "M3-Left"]
