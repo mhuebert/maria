@@ -300,7 +300,7 @@
 
 (defcommand :edit/comment-line
   "Comment the current line"
-  {:bindings ["M1-/"]
+  {:bindings ["M1-Shift-/"]
    :when     :block/code}
   [context]
   (edit/comment-line (:editor context)))
@@ -308,25 +308,29 @@
 (defcommand :edit/ignore-form
   "Ignore the current form using the `#_` reader macro ('uneval')"
   {:bindings ["M1-;"
-              "M1-Shift-;"]
+              "M1-/"]
    :when     :block/code}
   [context]
   (edit/uneval! (:editor context)))
 
 (defcommand :edit/slurp
   "Expand current form to include the form to the right."
-  {:bindings ["M3-Right"
+  {:bindings ["M1-Shift-Right"
+              "M3-Right"
               "M1-Shift-K"]
    :when     :block/code}
-  [context]
-  (edit/slurp-forward (:editor context)))
+  [{:keys [editor]}]
+  (cm/return-cursor-to-root! editor)
+  (edit/slurp-forward editor))
 
 (defcommand :edit/barf
   "Pushes last child of current form out to the right."
-  {:bindings ["M3-Left"]
+  {:bindings ["M1-Shift-Left"
+              "M3-Left"]
    :when     :block/code}
-  [context]
-  (edit/unslurp-forward (:editor context)))
+  [{:keys [editor]}]
+  (cm/return-cursor-to-root! editor)
+  (edit/unslurp-forward editor))
 
 (defcommand :edit/kill
   "Cuts to end of current form or line, whichever comes first."
@@ -356,6 +360,16 @@
    :when     :block/code}
   [{:keys [editor block-view block]}]
   (Block/eval! block))
+
+(defcommand :eval/top-level
+  "Evaluate the current top-level form"
+  {:bindings ["Shift-Enter"]
+   :when     :block/code}
+  [{:keys [editor block-view block]}]
+  (some->> (:loc (:magic/cursor editor))
+           (tree/top-loc)
+           (tree/string)
+           (Block/eval! block :string)))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"

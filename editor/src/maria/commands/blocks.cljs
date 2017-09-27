@@ -86,7 +86,9 @@
         code
         (do
           (cm/unset-cursor-root! editor)
-          (.execCommand editor "selectAll"))
+          (if (.somethingSelected editor)
+            (.execCommand editor "selectAll")
+            (cm/select-at-cursor editor true)))
         :else nil))
 
 (defcommand :history/undo
