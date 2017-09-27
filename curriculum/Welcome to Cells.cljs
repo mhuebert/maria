@@ -139,6 +139,17 @@
   (->> (if @self (circle 40) (square 80))
        (listen :click #(swap! self not))))
 
+;; XXX aside
+(with-view counter
+  (if (odd? @self)
+    (triangle 20)
+    (square 20)))
+
+;; XXX also aside
+(with-view random-number
+  (triangle (* 3 @self)))
+
+
 ;; TODO explain
 (with-view toggle
   (html [:div
