@@ -345,7 +345,8 @@ palette
 ;; look at the whole thing:
 
 (let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
-  (map (fn [color] (colorize color (rectangle 20 20))) palette))
+  (map (fn [color] (colorize color (rectangle 20 20)))
+       palette))
 
 ;; Wait. We’re repeating ourselves. If we’re going to use that rainbow
 ;; palette everywhere, it’s silly to make the same `let` every time.
@@ -356,7 +357,8 @@ palette
 
 rainbow
 
-(map (fn [color] (colorize color (rectangle 20 20))) rainbow)
+(map (fn [color] (colorize color (rectangle 20 20)))
+     rainbow)
 
 ;; 🏳️‍🌈 😺
 
@@ -365,7 +367,8 @@ rainbow
 ;; except we can invent whatever blocks we need, and use them as many
 ;; times as we like.
 
-(map (fn [color] (colorize color (rectangle 20 20))) (reverse rainbow))
+(map (fn [color] (colorize color (rectangle 20 20)))
+     (reverse rainbow))
 
 ;; Did you notice we’re repeating ourselves AGAIN with that function?
 ;; Let’s `def` it, too! We can call it "swatch", like the swatches of
@@ -382,7 +385,8 @@ rainbow
 ;; Notice that this short three-word function call is the same as
 ;; this more verbose expression:
 
-(map (fn [color] (colorize color (rectangle 20 20))) ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
+(map (fn [color] (colorize color (rectangle 20 20)))
+     ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
 
 ;; It gets better. We programmers define functions so often that
 ;; Clojure has a special shorthand, `defn`, that is like a combined
@@ -420,13 +424,14 @@ rainbow
 
 ;; We can use it to help make sense of what shades of blue there are.
 
-(map labeled-swatch ["blue" "lightskyblue" "darkslateblue"
-                     "midnightblue" "powderblue" "steelblue"
-                     "cornflowerblue" "aliceblue" "deepskyblue"
-                     "skyblue" "dodgerblue" "mediumblue"
-                     "darkblue" "blueviolet" "cadetblue"
-                     "slateblue" "royalblue" "lightblue"
-                     "lightsteelblue" "mediumslateblue"])
+(map labeled-swatch
+     ["blue" "lightskyblue" "darkslateblue"
+      "midnightblue" "powderblue" "steelblue"
+      "cornflowerblue" "aliceblue" "deepskyblue"
+      "skyblue" "dodgerblue" "mediumblue"
+      "darkblue" "blueviolet" "cadetblue"
+      "slateblue" "royalblue" "lightblue"
+      "lightsteelblue" "mediumslateblue"])
 
 ;; Or:
 (labeled-swatch (rand-nth rainbow))

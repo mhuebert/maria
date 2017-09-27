@@ -116,29 +116,123 @@
 
 ;; ## Talking to Cells 📢 🗣️
 
-;; Cells also **interact** with us. Just like we used cells to track
-;; time using `interval`, we can use cells to detect user activity,
-;; like mouse clicks. We do this by "listening" for specific browser
-;; "events". To explore interactions with cells, let's first create a
-;; cell that we'll store `true` or `false` in. Those are special
-;; values in Clojure, used when we need a clear
+;; We can also **interact** with cells. Just like we used cells to
+;; track time using `interval`, we can use cells to detect user
+;; activity. We do this by "listening" for specific browser "events",
+;; such as a mouse cick.
+
+;; Let's talk to some cells. To do that, we'll first want a cell to
+;; store `true` or `false` in. Those are special values in Clojure,
+;; used when we need a clear
 ;; [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth
 ;; value. Both `true` and `false` are [literal
 ;; values](https://clojure.org/reference/reader#_literals), and don't
-;; need to be wrapped in double-quotes.
+;; need to be wrapped in double-quotes. We're just storing a Boolean
+;; value in this cell so it's a nice clear toggle, just like a light
+;; switch.
 
 (defcell toggle true)
 
-;; This cell doesn't do much: it's just a container. But because it's
-;; a cell, we can use it for so much more than if we defined it as a
-;; plain old `true` value on its own. As a cell it can be changed, and
-;; notifies all the cells that depend on it when it has changed.
+;; This cell doesn't do much: it's just a container for `true`. But
+;; because it's a cell, we can use it for so much more than if we
+;; defined it as a plain old `true` value on its own. As a cell it can
+;; be changed, and notifies everything that depends on it when it has
+;; changed.
 
-;; Let's see that in action FIXME
+;; First, let's see how it would work without using cells. What we'll
+;; do is check the value of `toggle`, and draw a circle if it's
+;; positive, and a square if it's negative. For this we'll use `if`,
+;; which is [special](https://clojure.org/reference/special_forms#if)
+;; and weird but fairly simple to use. What you do is give `if` three
+;; things, in this order:
+
+;; 1. a test,
+;; 2. what to do if the test is positive
+;; 3. what to do if the test is negative
+
+;; We read it like this: "if <test> then <first expression>, else
+;; <second expression>". For instance, using something that won’t
+;; evaluate:
+
+(if (tired? child)
+  (put-to-sleep child)
+  (bring-to-park child))
+
+;; Let’s get a feel for `if` by trying out some examples that we can
+;; evaluate:
+
+(if true
+  "a"
+  "b")
+
+(if false
+  "a"
+  "b")
+
+(if "xyz"
+  "a"
+  "b")
+
+(if 5
+  "a"
+  "b")
+
+(if ["Bert" "Ernie"]
+  "a"
+  "b")
+
+(if []
+  "a"
+  "b")
+
+;; Notice that nearly every value for the `test` in `if` is considered
+;; "logically true". The *only* thing that is considered "logical
+;; false", returning the "else" condition (so "b" in those examples),
+;; is `false`. There is one other special value that `if` tests
+;; consider logical false, called `nil`, which means "nothing":
+
+(if nil
+  "a"
+  "b")
+
+;; But strings, numbers, any sort of collection–these are all
+;; considered "truthy" and return the "then" condition ("a", for our
+;; examples). This might seem weird (OK, it is weird!) but this broad
+;; definition of "truthiness" is handy.
+
+;; Anyway, we brought up `if` to look at how a toggle would look with
+;; and without cells. First we’ll write an `if` that draws a circle if
+;; `toggle` is true–actually, if it’s "truthy"–and a square if it’s
+;; not.
+
+(if @toggle (circle 40) (square 80))
+
+;; Straightforward: we defined `toggle` as `true`, so we get a
+;; circle. And here’s the thing: if we change `toggle` to `false`, our
+;; circle stays a circle. It has no idea what’s going on with `toggle`
+;; because it was already evaluated. Our `if` stopped paying attention
+;; to `toggle`.
+
+;; Let’s try the same thing with cells.
+
+;; To see our "light switch" style toggle in action, we wrap `toggle`
+;; in `with-view`, which does two things. First, it keeps track of
+;; when `toggle` changes. Two, it lets us display the value in the
+;; `toggle` cell as a shape.
+(with-view toggle
+  (fn [self]
+      (if @self (circle 40) (square 80))))
+
+
+
+;; XXX transition
 (with-view toggle
   (fn [self]
       (->> (if @self (circle 40) (square 80))
            (listen :click #(swap! self not)))))
+;; TODO remember to remind them of recently-introduced anonymous fn syntax
+;; TODO intro keywords
+;; TODO thread macro? or not?
 
 ;; XXX aside
 (with-view counter
