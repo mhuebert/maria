@@ -352,6 +352,8 @@ $lighten: rgba(255, 255, 255, 0.25);
 
 .prosemirror-content {
   line-height: 1.4;
+
+  white-space: pre-wrap; // REQUIRED for space insertion to work in Firefox
   h1, h2 {
     margin-top: 3rem;
   }

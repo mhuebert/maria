@@ -153,6 +153,7 @@
                                   #_(when (not= (.-selection (.-state pm-view))
                                                 (.-selection prev-state))
                                       (bottom-bar/set-bottom-bar! (Toolbar pm-view)))
+
                                   (when (not= (.-doc (.-state pm-view))
                                               (.-doc prev-state))
                                     (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
