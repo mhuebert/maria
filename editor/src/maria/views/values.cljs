@@ -209,14 +209,20 @@
                                        (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))}
                 source)])
 
-(defn render-error-result [{:keys [error source show-source? warnings] :as result}]
+(defn format-warnings [warnings]
+  (sequence (comp (map messages/reformat-warning)
+                  (distinct)
+                  (keep identity)) warnings))
+
+(defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
   [:div
    {:class "bg-darken-red cf"}
    (when source
      (display-source result))
    [:.ws-prewrap.relative      ;.mv3.pv1
     [:.ph3.overflow-auto
-     (->> (for [message (concat warnings
+     (->> (for [message (concat (or formatted-warnings
+                                    (format-warnings warnings))
                                 (messages/reformat-error result))
                 :when message]
             [:.mv2 message])
@@ -240,14 +246,12 @@
                                                           :error/kind :eval)
                                                    (e/add-error-position)
                                                    (render-error-result)))}
-                             (let [warnings (sequence (comp (distinct)
-                                                            (map messages/reformat-warning)
-                                                            (keep identity)) warnings)
+                             (let [warnings (format-warnings warnings)
                                    error? (or error (seq warnings))]
                                (when error
                                  (.error js/console error))
                                (if error?
-                                 (render-error-result result)
+                                 (render-error-result (assoc result :formatted-warnings warnings))
                                  [:div
                                   (when (and source show-source?)
                                     (display-source result))

@@ -18,6 +18,9 @@
        (filter (complement builtin-ns?))))
 
 (defn add-$macros-suffix [sym]
+  (if-not (string/ends-with? (str sym) "$macros")
+    (symbol (str sym "$macros"))
+    sym)
   (symbol (str sym "$macros")))
 
 (defn elide-quote [x]
@@ -30,6 +33,42 @@
   (let [n (:name (e/resolve-var c-state c-env sym))]
     (mapv symbol [(namespace n) (name n)])))
 
+(defn get-ns
+  ([] (get-ns (:ns @e/c-env)))
+  ([ns-name] (get-in @e/c-state [:cljs.analyzer/namespaces ns-name])))
+
+;; copied from cljs.analyzer
+(defn resolve-macro-var
+  "Given env, an analysis environment, and sym, a symbol, resolve a macro."
+  [c-state c-env sym]
+  (binding [cljs.env/*compiler* c-state]
+    (let [ns (:ns @c-env)
+          namespaces (get @c-state :cljs.analyzer/namespaces)
+          env {:ns (get-ns)}]
+      (cond
+        (some? (namespace sym))
+        (let [ns (namespace sym)
+              ns (if (= "clojure.core" ns) "cljs.core" ns)
+              full-ns (add-$macros-suffix (ana/resolve-macro-ns-alias env ns))]
+          (get-in namespaces [full-ns :defs (symbol (name sym))]))
+
+        (some? (get-in namespaces [ns :use-macros sym]))
+        (let [full-ns (add-$macros-suffix (get-in namespaces [ns :use-macros sym]))]
+          (get-in namespaces [full-ns :defs sym]))
+
+        (some? (get-in namespaces [ns :rename-macros sym]))
+        (let [qualified-symbol (get-in namespaces [ns :rename-macros sym])
+              full-ns (add-$macros-suffix (symbol (namespace qualified-symbol)))
+              sym (symbol (name qualified-symbol))]
+          (get-in namespaces [full-ns :defs sym]))
+
+        :else
+        (let [ns (cond
+                   (some? (get-in namespaces [ns :macros sym])) ns
+                   (ana/core-name? env sym) ana/CLJS_CORE_MACROS_SYM)]
+          (when (some? ns)
+            (get-in namespaces [(add-$macros-suffix ns) :defs sym])))))))
+
 (defn resolve-var
   "Simplified resolve-var fn, looks up `def` in compiler state."
   ([sym] (resolve-var e/c-state e/c-env sym))
@@ -37,10 +76,6 @@
    (let [[namespace name] (resolve-sym c-state c-env sym)]
      (or (get-in @c-state [:cljs.analyzer/namespaces namespace :defs name])
          (get-in @c-state [:cljs.analyzer/namespaces (add-$macros-suffix namespace) :defs name])))))
-
-(defn get-ns
-  ([] (get-ns (:ns @e/c-env)))
-  ([ns-name] (get-in @e/c-state [:cljs.analyzer/namespaces ns-name])))
 
 (defn ns-publics*
   ([the-ns only-doc?] (ns-publics* the-ns only-doc? nil))
@@ -156,6 +191,7 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
          (when-let [repl-special (get c-e/repl-specials name)]
            (merge (meta repl-special)
                   (resolve-var c-state c-env (:name (meta repl-special)))))
+         (resolve-macro-var c-state c-env name)
          (special-doc name)))))
 
 

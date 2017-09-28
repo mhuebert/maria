@@ -24,12 +24,13 @@
 
 
                  [lark/commands "0.1.1-SNAPSHOT"]
-                 [lark/structure "0.1.0-SNAPSHOT"]
+                 [lark/structure "0.1.1-SNAPSHOT"]
                  [lark/editors "0.1.0-SNAPSHOT"]
+                 [lark/cells "0.1.0-SNAPSHOT"]
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 
-                 [cells "0.1.3-SNAPSHOT"]
+
 
 
                  [cljsjs/codemirror "5.19.0-0"]
@@ -61,7 +62,7 @@
                  "checkouts/re_db/src"
                  "checkouts/cljs_live/src"
                  "checkouts/shapes"
-                 "checkouts/cells"
+                 "../../lark/cells/src"
                  "../../lark/commands/src"
                  "../../lark/structure/src"
                  "../../lark/editors/src"]
