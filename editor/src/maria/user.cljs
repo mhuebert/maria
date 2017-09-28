@@ -5,7 +5,7 @@
             maria.user.loaders
             maria.repl-specials
             maria.show
-            [cells.cell]
+            [cells.cell :refer [cell]]
             [cells.lib :as cell
              :refer [interval timeout fetch geo-location with-view]
              :refer-macros [wait]]
