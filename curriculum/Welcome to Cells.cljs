@@ -70,25 +70,15 @@
 
 ;; We can also **interact** with cells. Just like we used cells to track time using `interval`, we can use cells to detect user activity. We do this by "listening" for specific browser "events", such as a mouse cick.
 
-;; Let's talk to some cells. To do that, we'll first want a cell to store `true` or `false` in. Those are special values in Clojure, used when we need a clear
-;; [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth
-;; value. Both `true` and `false` are [literal
-;; values](https://clojure.org/reference/reader#_literals), and don't
-;; need to be wrapped in double-quotes. We're just storing a Boolean
-;; value in this cell so it's a nice clear toggle, just like a light
-;; switch.
+;; Let's build some cells that talk to each other. How about this: one cell will act as our light switch, controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. OK?
 
-(defcell toggle true)
-
-;; This cell doesn't do much: it's just a container for `true`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell it can be changed, and notifies everything that depends on it when it has changed.
-
-;; First, let's see how it would work without using cells. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative. For this we'll use `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
+;; To do all that, we first need to go over how to evaluate different code based on certain conditions. We’ll start with `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
 
 ;; 1. a test
 ;; 2. what to do if the test evaluates to "logical true"
 ;; 3. what to do if the test evaluates to "logical false"
 
-;; For instance:
+;; That’s it. For instance:
 (if true
   "a"
   "b")
@@ -96,6 +86,8 @@
 (if false
   "a"
   "b")
+
+;; (`true` and `false` are special values in Clojure, used when we need a clear [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth value. Both `true` and `false` are [literal values](https://clojure.org/reference/reader#_literals), and don't need to be wrapped in double-quotes.)
 
 ;; Here’s a diagram to explain the pieces of those `if` expressions:
 
@@ -148,22 +140,31 @@
   "logical true"
   "logical false")
 
-;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird!) but this broad definition of "truthiness" is handy.
+;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird! 🤡) but this broad definition of "truthiness" is handy.
 
-;; Anyway, we brought up `if` to look at how a toggle would look with and without cells. First we’ll write an `if` that draws a circle if `toggle` is true–actually, if it’s "truthy"–and a square if it’s not.
+;; Anyway, we brought up `if` to make some cells that talk to each other. The idea was to make "light switch" cell, and some other cells that do different things based on that "light switch" cell’s value. With `if` in our toolbox that will be simple. First, we make the "light switch" cell, which we’ll call `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
 
+(defcell toggle false)
+
+;; This cell doesn't do much: it's just a container for `false`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell, when it changes it notifies other cells that depend on it.
+
+;; Now we build an `if` expression that draws a circle if our cell is true–actually, if it’s "truthy"–and a square if it’s not. First, let's see how works **without** cells talking to each other. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative.
 (if @toggle
   (circle 40)
   (square 80))
 
-;; Straightforward: we defined `toggle` as `true`, so we get a circle. But here’s the thing: if we scroll back up and change `toggle` to `false`, our circle stays a circle. To make `if` draw a square, we have to re-evaluate it. Our `if` has no idea what’s going on with `toggle` because it was already evaluated. Our `if` stopped paying attention to `toggle`.
+;; We defined `toggle` as `false`, our `if` makes a square when `toggle` is false, so we get a square. Fine enough.
 
-;; Let’s try the same thing with cells.
+;; But here’s the thing: go back and change `toggle` to `false` and re-evaluate it. Our square stays a square! Our `if` stopped paying attention to `toggle`. We want our `if` to draw a circle whenever `toggle` is `true`, but for that to happen we have to re-evaluate our `if`. (Try it.) Our `if` has no idea what’s going on with `toggle` because it was evaluated in the past. That’s a bummer. ☹️
 
-;; To see our "light switch" style toggle in action, we wrap `toggle` in `with-view`, which does two things. First, it keeps track of when `toggle` changes. Two, it lets us display the value in the `toggle` cell as a shape.
-(with-view toggle
-  (fn [self]
-    (if @self (circle 40) (square 80))))
+;; Let’s try the same thing, but now inside a cell. Remember, cells keep track of each other.
+(cell (if @toggle
+        (circle 40)
+        (square 80)))
+
+;; Whatever `toggle` is right now, we should get the right shape. Here’s the difference: go and change `toggle` again. Our shape changes in the *other* cell! 🤗 😎
+
+
 
 
 
