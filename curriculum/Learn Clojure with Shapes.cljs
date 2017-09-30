@@ -61,7 +61,7 @@
 
 ;; ⬆ your code goes here
 
-;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around!  This is *your* playground.
+;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go way off-script with lots of your own code blocks, you should consider opening a fresh page with the "New" button (shaped like a plus sign) at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
 
 ;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
