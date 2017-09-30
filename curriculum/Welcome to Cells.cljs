@@ -170,47 +170,78 @@
 
 ;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw.
 
-;; The first argument to `listen`, the event to listen for, needs to be a "keyword" that matches a [known event](https://reactjs.org/docs/events.html#supported-events) like XXX "onClick". Keywords are symbolic identifiers that we use in our programs to represent something. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things. We’ll make a listener called `light-switch` that will listen for the `:click` event:
+;; The first argument to `listen`, the event to listen for, needs to be a "keyword" that matches a [known event](https://reactjs.org/docs/events.html#supported-events) like FIXME "onClick". Keywords are symbolic identifiers that we use in our programs to represent something. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things. We’ll make a listener called `light-switch` that will listen for the `:click` event.
+
+;; This part is cool enough that we should define a new `toggle` so you can see them side-by-side.
+
+(defcell toggle2 false)
 
 (defcell light-switch
   (listen :click
-          (fn [] (swap! toggle not))
-          (if @toggle
+          (fn [] (swap! toggle2 not))
+          (if @toggle2
             (circle 40)
             (square 80))))
+
+;; Here's the magic: click on the result. Look at the value of `toggle2`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
 
 ;; Notice the second argument to `light-switch` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
 
 ;; This function argument uses a function we haven’t seen before: `swap!`. The `swap!` function is how we update the value of a cell from outside its original definition. (If you’ve worked with Clojure atoms, it’s the same thing here. Cells aren’t atoms but they work the same in this respect.) The oh-so-energetic exclamation point is a warning. Normally, functions are very direct: you give them something, they give you something back, that’s it. The only thing that happens is you get a return value based on the function you called and the arguments you called it with. Everything happens in plain sight.
 
-;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects" and they can fast make things hard to think about. When something happens in a program with side effects, you’ll have to ask, "Who touched my stuff?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
+;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects". Things get harder to think about with side effects. When something happens in a program with side effects, you’ll have to ask, "How did this value get this way?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
+
+;; In this case, the side effect is cell interaction itself. Each cell has a value, and when another cell needs to change that value, `swap!` is how they do it. The `swap!` function takes a cell name and a function, and instead of merely returning something based on those values, it reaches over into the named cell, gets its value, applies the given function to that value, and does two things with the result: sets the value of the cell to that, and returns it too.
+
+;; Now, we have cells that aren't just connected to each other, but that we can click and change whenever we want. 👍🏼
+
+
+
+;; ## Making Web Pages
+
+
+(-> % (.-currentTarget) (.-value) int)
+
+
+;; TODO
+
+(defcell circle-size 16)
+
+;; XXX `html`
+;; XXX hiccup
+;; XXX JS interop
+;; XXX threading
+(cell (html [:div
+             [:h2 "Adjustable Circle"]
+             [:input {:type "range"
+                      :on-input #(reset! circle-size (-> % (.-currentTarget) (.-value) int))}]
+             [:div (colorize "aqua" (circle @circle-size))]]))
+
+;; Note that both the `circle-size` cell's reported value and the circle itself change when you move the slider. This happens because the function attached to on-input is `reset!`ing the `circle-size`, which then communicates that change to every cell that depends on it.
+
+;; We can use this same mechanism to store reactive state for an application, for example by placing a map with multiple entries in a cell:
+
+
+(defcell some-state
+  {:size 20
+   :colors ["magenta" "cyan" "yellow"]})
+
+;; ... then assigning some behavior that updates what's in the state map. For example, when you click on this circle it will change its size and color:
+
+(cell (->> (colorize (first (@some-state :colors))
+                     (circle (@some-state :size)))
+           (listen :click #(swap! some-state assoc :size (+ 20 (rand-int 10))
+                                  :colors (shuffle (@some-state :colors))))))
 
 
 
 
 
 
-
-;; TODO explain
-(with-view toggle
-  (fn [self]
-    (html [:div
-           [:div.f2.pa3.white.pointer.mb2
-            {:on-click #(swap! self not)
-             :class    (if @self "bg-pink" "bg-black")}
-            (if @self "YAAA" "NOOO")]
-           "(^^click me)"])))
-
-;; TODO explain
-(with-view toggle
-  (fn [self]
-    (html [:.pa5.br-100.dib
-           {:class (if @self "bg-black" "bg-pink")}])))
 
 ;; FIXME ## Data From Space 🚀
 ;;
 ;; Just like `interval`, there is another special function called `fetch` which only works inside cells. Given a URL, `fetch` can download data from the internet:
-
 
 (defcell location (geo-location))
 
