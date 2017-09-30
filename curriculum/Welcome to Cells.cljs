@@ -84,9 +84,9 @@
 
 ;; First, let's see how it would work without using cells. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative. For this we'll use `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
 
-;; 1. a test,
-;; 2. what to do if the test is positive
-;; 3. what to do if the test is negative
+;; 1. a test
+;; 2. what to do if the test evaluates to "logical true"
+;; 3. what to do if the test evaluates to "logical false"
 
 ;; For instance:
 (if true
@@ -108,39 +108,55 @@
  (position 130 25 (rotate 60 (colorize "grey" (triangle 10))))
  (position 115 20 (text "test"))
  (colorize "grey" (position 200 110 (triangle 10)))
- (position 60 140 (text "if test is false or nil, evaluate this")))
+ (position 50 140 (text "if test is false or nil, evaluate this")))
 
-;; Now let’s get a feel for `if` by trying out some examples that we can evaluate:
+;; Now let’s get a feel for `if` by evaluating some examples. We’ll use some new functions, so if you’re not sure what something is, use your Utility Belt (`what-is`, `doc` (and `Command-i`), and experimentation) to find out.
 
-(if "xyz"
-  "a"
-  "b")
+(if (= 1 1)
+  "equal"
+  "not equal")
 
-(if 5
-  "a"
-  "b")
+(if (= 1 2)
+  "equal"
+  "not equal")
 
-(if ["Bert" "Ernie"]
-  "a"
-  "b")
+(if (vector? ["Bert" "Ernie"])
+  "vector (of Sesame Street characters)"
+  "not a vector")
+
+(if (string? "Catherine the Great")
+  "yes the royal is a string"
+  "not a string")
+
+;; Notice that nearly every value for the `test` in `if` is considered "logically true". That means `if` considers collections and other values "truthy", even if they’re empty:
+
+(if 1968
+  "any number counts as true"
+  "try another number–trust me, I won’t get evaluated")
+
+(if "Fela Kuti"
+  "strings are truthy too"
+  "logical false")
 
 (if []
-  "a"
-  "b")
+  "empty vectors count as logical true"
+  "I don’t get evaluated :(")
 
-;; Notice that nearly every value for the `test` in `if` is considered "logically true". The *only* thing that is considered "logical false", returning the "else" condition (so "b" in those examples), is `false` and one other special value called `nil`, which means "nothing":
+;; So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT truthy? It’s very specific: the *only* thing that is considered "logical false" is `false` and one other special value called `nil`, which means "nothing". Everything else `if` evaluates the `then` expression.
 
 (if nil
-  "a"
-  "b")
+  "logical true"
+  "logical false")
 
-;; Everything else–strings, numbers, any sort of collection–are all considered "truthy" and return the "then" condition ("a", for our examples). This might seem weird (OK, it is weird!) but this broad definition of "truthiness" is handy.
+;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird!) but this broad definition of "truthiness" is handy.
 
 ;; Anyway, we brought up `if` to look at how a toggle would look with and without cells. First we’ll write an `if` that draws a circle if `toggle` is true–actually, if it’s "truthy"–and a square if it’s not.
 
-(if @toggle (circle 40) (square 80))
+(if @toggle
+  (circle 40)
+  (square 80))
 
-;; Straightforward: we defined `toggle` as `true`, so we get a circle. And here’s the thing: if we change `toggle` to `false`, our circle stays a circle. It has no idea what’s going on with `toggle` because it was already evaluated. Our `if` stopped paying attention to `toggle`.
+;; Straightforward: we defined `toggle` as `true`, so we get a circle. But here’s the thing: if we scroll back up and change `toggle` to `false`, our circle stays a circle. To make `if` draw a square, we have to re-evaluate it. Our `if` has no idea what’s going on with `toggle` because it was already evaluated. Our `if` stopped paying attention to `toggle`.
 
 ;; Let’s try the same thing with cells.
 
