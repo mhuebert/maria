@@ -1,13 +1,12 @@
 ;; # Say Hello to Cells
-;;
+
 ;; Welcome! On this page, we are going to introduce something called a ‘cell’, which will help you make code come alive.
-;;
+
 ;; What is a cell, you may ask? Well, at the most basic level, a `cell` is a thing that:
-;;
+
 ;; * has a value,
 ;; * can change over time,
 ;; * wraps a bit of code, which tells the cell what to do every time it runs.
-;;
 
 ;; ## Your First Cell 🤠
 
@@ -85,16 +84,11 @@
 
 ;; First, let's see how it would work without using cells. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative. For this we'll use `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
 
-;; 1. a test, 2. what to do if the test is positive 3. what to do if the test is negative
+;; 1. a test,
+;; 2. what to do if the test is positive
+;; 3. what to do if the test is negative
 
-;; We read it like this: "if <test> then <first expression>, else <second expression>". For instance, using something that won’t evaluate:
-
-(if (tired? child)
-  (put-to-sleep child)
-  (bring-to-park child))
-
-;; Let’s get a feel for `if` by trying out some examples that we can evaluate:
-
+;; For instance:
 (if true
   "a"
   "b")
@@ -102,6 +96,21 @@
 (if false
   "a"
   "b")
+
+;; Here’s a diagram to explain the pieces of those `if` expressions:
+
+(layer
+ (position 40 60 (text "(if (tired? you)"))
+ (position 80 80 (text "(nap \"20 minutes\" you)"))
+ (position 80 100 (text "(code-something-fun you))"))
+ (colorize "grey" (rotate -90 (position 310 70 (triangle 10))))
+ (position 330 80 (text "if test passes, evaluate this"))
+ (position 130 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 115 20 (text "test"))
+ (colorize "grey" (position 200 110 (triangle 10)))
+ (position 60 140 (text "if test is false or nil, evaluate this")))
+
+;; Now let’s get a feel for `if` by trying out some examples that we can evaluate:
 
 (if "xyz"
   "a"
@@ -119,13 +128,13 @@
   "a"
   "b")
 
-;; Notice that nearly every value for the `test` in `if` is considered "logically true". The *only* thing that is considered "logical false", returning the "else" condition (so "b" in those examples), is `false`. There is one other special value that `if` tests consider logical false, called `nil`, which means "nothing":
+;; Notice that nearly every value for the `test` in `if` is considered "logically true". The *only* thing that is considered "logical false", returning the "else" condition (so "b" in those examples), is `false` and one other special value called `nil`, which means "nothing":
 
 (if nil
   "a"
   "b")
 
-;; But strings, numbers, any sort of collection–these are all considered "truthy" and return the "then" condition ("a", for our examples). This might seem weird (OK, it is weird!) but this broad definition of "truthiness" is handy.
+;; Everything else–strings, numbers, any sort of collection–are all considered "truthy" and return the "then" condition ("a", for our examples). This might seem weird (OK, it is weird!) but this broad definition of "truthiness" is handy.
 
 ;; Anyway, we brought up `if` to look at how a toggle would look with and without cells. First we’ll write an `if` that draws a circle if `toggle` is true–actually, if it’s "truthy"–and a square if it’s not.
 
