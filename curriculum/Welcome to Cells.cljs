@@ -56,7 +56,7 @@
 
 ;; The `last-ten` cell works by building up a list one at a time with `cons`. (If you're not familiar with `cons`, take a minute using `doc` (press `Command-i`) to get to know it.) The value that `cons` adds to the list comes from looking at the *current* value of the `random-number` cell, which we get by dereferencing it.
 
-;; (Bonus 'how it works' puzzle: what would happen if we didn't `take 10` from the list? Think about it, then experiment.)
+;; (Bonus 'how it works' puzzle: what would happen if we `take` a different number from the list, or if we didn't `take 10` at all? Think about it, then experiment.)
 
 ;; Often it's easier to think about numbers if we can make them more real. Let's do that by visualizing our last ten random numbers into shapes:
 (defcell squares []
@@ -68,9 +68,9 @@
 
 ;; ## Talking to Cells 📢 🗣️
 
-;; We can also **interact** with cells. Just like we used cells to track time using `interval`, we can use cells to detect user activity. We do this by "listening" for specific browser "events", such as a mouse cick.
+;; We can also **interact** with cells. Just like we used cells to track time using `interval`, we can use cells to detect user activity. We do this by "listening" for specific browser "events", such as a mouse click.
 
-;; Let's build some cells that talk to each other. How about this: one cell will act as our light switch, controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. OK?
+;; Let's build some cells that we can make do things. How about this: one cell will act as our "light switch", controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. Then we'll make our "light switch" cell *clickable* so we can interact with it.
 
 ;; To do all that, we first need to go over how to evaluate different code based on certain conditions. We’ll start with `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
 
@@ -124,7 +124,7 @@
 
 (if 1968
   "any number counts as true"
-  "try another number–trust me, I won’t get evaluated")
+  "try another number, but trust me, I won't get evaluated!")
 
 (if "Fela Kuti"
   "strings are truthy too"
@@ -132,7 +132,7 @@
 
 (if []
   "empty vectors count as logical true"
-  "I don’t get evaluated :(")
+  "I never get evaluated :(")
 
 ;; So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT truthy? It’s very specific: the *only* thing that is considered "logical false" is `false` and one other special value called `nil`, which means "nothing". Everything else `if` evaluates the `then` expression.
 
@@ -162,30 +162,33 @@
         (circle 40)
         (square 80)))
 
-;; Whatever `toggle` is right now, we should get the right shape. Here’s the difference: go and change `toggle` again. Our shape changes in the *other* cell! 🤗 😎
+;; Whatever `toggle` is right now, we should get the right shape. Here’s the difference: go and change `toggle` again. Our shape changes in the *other* cell! 🤗 😎 This is powerful. All we need to do now is add some interaction with the user–that’s you! This requires three new ideas at once: event listeners, [keywords](https://clojure.org/reference/data_structures#Keywords), and swapping values. These three are all super helpful tools, and we’ll explain each one in turn, so get ready.
+
+;; The way we detect mouse clicks and other users actions in a browser like Safari, Firefox, Internet Explorer, or Chrome is to listen for them as [events](https://developer.mozilla.org/en-US/docs/Web/Events). We have a ready-made function to do that called `listen`:
+
+(doc listen)
+
+;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw.
+
+;; The first argument to `listen`, the event to listen for, needs to be a "keyword" that matches a [known event](https://reactjs.org/docs/events.html#supported-events) like XXX "onClick". Keywords are symbolic identifiers that we use in our programs to represent something. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things. We’ll make a listener called `light-switch` that will listen for the `:click` event:
+
+(defcell light-switch
+  (listen :click
+          (fn [] (swap! toggle not))
+          (if @toggle
+            (circle 40)
+            (square 80))))
+
+;; Notice the second argument to `light-switch` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
+
+;; This function argument uses a function we haven’t seen before: `swap!`. The `swap!` function is how we update the value of a cell from outside its original definition. (If you’ve worked with Clojure atoms, it’s the same thing here. Cells aren’t atoms but they work the same in this respect.) The oh-so-energetic exclamation point is a warning. Normally, functions are very direct: you give them something, they give you something back, that’s it. The only thing that happens is you get a return value based on the function you called and the arguments you called it with. Everything happens in plain sight.
+
+;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects" and they can fast make things hard to think about. When something happens in a program with side effects, you’ll have to ask, "Who touched my stuff?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
 
 
 
 
 
-;; XXX transition
-(with-view toggle
-  (fn [self]
-    (->> (if @self (circle 40) (square 80))
-         (listen :click #(swap! self not)))))
-;; TODO remember to remind them of recently-introduced anonymous fn syntax
-;; TODO intro keywords
-;; TODO thread macro? or not?
-
-;; XXX aside
-(with-view counter
-  (fn [self] (if (odd? @self)
-              (triangle 20)
-              (square 20))))
-
-;; XXX also aside
-(with-view random-number
-  (fn [self] (triangle (* 3 @self))))
 
 
 ;; TODO explain
