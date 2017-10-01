@@ -72,16 +72,13 @@
 
 ;; Let's build some cells that we can make do things. How about this: one cell will act as our "light switch", controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. Then we'll make our "light switch" cell *clickable* so we can interact with it.
 
+;; (The next part relies on the `if` expression. If you're unfamiliar with `if`, `true`, and `false`–for instance if you're a beginner reading this right after [Learn Clojure with Shapes](/intro)–then you probably want to go read [What If?](/what-if?) before proceeding.)
 
-
- ;;; FIXME
-
-
-;; Anyway, we brought up `if` to make some cells that talk to each other. The idea was to make "light switch" cell, and some other cells that do different things based on that "light switch" cell’s value. With `if` in our toolbox that will be simple. First, we make the "light switch" cell, which we’ll call `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
+;; To build our "light switch", we'll first make a "light switch" cell. We’ll call it `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
 
 (defcell toggle false)
 
-;; This cell doesn't do much: it's just a container for `false`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell, when it changes it notifies other cells that depend on it.
+;; This `toggle` cell doesn't do much: it's just a container for `false`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell, when it changes it notifies other cells that depend on it.
 
 ;; Now we build an `if` expression that draws a circle if our cell is true–actually, if it’s "truthy"–and a square if it’s not. First, let's see how works **without** cells talking to each other. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative.
 (if @toggle
