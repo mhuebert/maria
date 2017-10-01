@@ -1,3 +1,9 @@
+;; # Gallery
+
+;; Here are some ways to use shapes in Maria. They’re here for you to browse and play with.
+
+;; Most (but not all!) of the Clojure programming techniques used here are explained in [Learn Clojure with Shapes](https://dev.maria.cloud/intro) and [Welcome to Cells](https://dev.maria.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
+
 ;; Colorization functions, demonstrated with ranges
 (map #(colorize % (square 50))
      (map #(hsl % 100 50) (range 0 250 25)))
