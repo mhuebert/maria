@@ -56,12 +56,18 @@
             (range 0 375 15))))
 
 ;; #### Confetti
-;; Run this one a couple times!
-(let [palette (cycle ["aqua" "springgreen" "magenta"])]
-  (->> (repeat 20 (triangle 20))
-       (map #(position (rand-int 500) (rand-int 500) %))
-       (map colorize palette)
-       (apply layer)))
+(defn confetti []
+  (let [palette (cycle ["aqua" "springgreen" "magenta"])]
+    (->> (repeat 20 (triangle 20))
+     (map #(position (rand-int 500) (rand-int 500) %))
+     (map colorize palette)
+     (apply layer))))
+
+;; try it–more than once!
+(confetti)
+
+;; now let’s have the computer do it for us every 1/10 of a second!
+(cell (interval 100 confetti))
 
 ;; #### User interfaces and Adjustible shapes
 
@@ -116,52 +122,9 @@
      (filter #(clojure.string/includes? % "blue")
              (map first color-names)))
 
-;; ### Data From Space 🚀
+;; #### Data From Space 🚀
 
-;; This is multi-part demonstration of how to grab data from the web and do fun stuff with it, using [cells](/cells).
-
-;; Just like `interval`, there is another special function called `fetch` which only works inside cells. Given a URL, `fetch` can download data from the internet:
-
-(defcell location (geo-location))
-
-(defcell birds
-  "An options map including :query params may be passed
-  as the second arg to fetch."
-  (fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
-         {:query {:lat (:latitude @location "52.4821146")
-                  :lng (:longitude @location "13.4121388")
-                  :maxResults 10
-                  :fmt "json"}}))
-
-(cell (map :comName @birds))
-
-(defn find-image [term]
-  (let [result (cell term (fetch "https://commons.wikimedia.org/w/api.php"
-                                 {:query {:action "query"
-                                          :origin "*"
-                                          :generator "images"
-                                          :prop "imageinfo"
-                                          :iiprop "url"
-                                          :gimlimit 5
-                                          :format "json"
-                                          :redirects 1
-                                          :titles term}}))]
-    (some->> @result
-             :query
-             :pages
-             vals
-             (keep (comp :url first :imageinfo))
-             first)))
-
-(defcell bird-pics
-  (doall (for [bird @birds]
-           (some->> (:sciName bird)
-                    (find-image)
-                    (image 100)))))
-
-(cell (image (find-image "berlin")))
-
-;; For more on fetching data from across the Web, see [this gist](https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71)
+;; You should really check out [this gist](https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web, play with it, grab some more, and so on.
 
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
