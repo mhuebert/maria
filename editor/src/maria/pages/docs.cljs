@@ -95,7 +95,7 @@
         [:a.db.ph3.pv2.black.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
-         [:.b.mb1
+         [:.b.mb1.truncate
           (doc/strip-clj-ext filename)]
          #_(some->> description (conj [:.gray.f7.mt1.normal]))
 
@@ -154,7 +154,7 @@
            nil)]
 
         ])
-     (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc
+     (when more? [:.pointer.black.hover-black.ph2.hover-bg-washed-blue.tc
                   {:on-click #(swap! state update :limit-n (partial + 20))}
                   icons/ExpandMore])]))
 
