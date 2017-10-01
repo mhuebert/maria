@@ -9,8 +9,9 @@
    ["quickstart" "Editor Quickstart" (repo-path "curriculum/Editor Quickstart.cljs")]
    ["gallery" "Example Gallery" (repo-path "curriculum/Example Gallery.cljs")]
    ["what-if" "What if?" (repo-path "curriculum/What If.cljs")]
-   ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]
-   ["cells" "Welcome to Cells" (repo-path "curriculum/Welcome to Cells.cljs")]])
+   ["cells" "Welcome to Cells" (repo-path "curriculum/Welcome to Cells.cljs")]
+   ["data-flow" "Data Flow" (repo-path "curriculum/Data Flow.cljs")]
+   ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]])
 
 (def owner {:username  "curriculum"
             :local-url "/curriculum"})

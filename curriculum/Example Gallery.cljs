@@ -124,7 +124,7 @@
 
 ;; #### Data From Space 🚀
 
-;; You should really check out [this gist](https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web, play with it, grab some more, and so on.
+;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web and play with it.
 
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
