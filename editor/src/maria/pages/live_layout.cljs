@@ -15,7 +15,8 @@
             [maria.views.top-bar :as toolbar]
             [maria.curriculum :as curriculum]
             [lark.commands.exec :as exec]
-            [maria.commands.doc :as doc]))
+            [maria.commands.doc :as doc]
+            [maria.views.icons :as icons]))
 
 (defonce _
          (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
@@ -25,18 +26,16 @@
   (subvec v (max 0 (- (count v) n))))
 
 (defn doc-list-section [docs context title]
-  [:div
-   [:.sans-serif.mh3.mv2 title]
-   [:.bg-white.ma3
-    (docs/doc-list {:context context} docs)]])
-
-
+  (when-let [docs (seq (filter :local-url docs))]
+    [:div
+     [:.sans-serif.ph3.pt3.pb2.ttu.b title]
+     (docs/doc-list {:context context} docs)]))
 
 (defn landing []
-  [:div
+  [:.w-100
    (toolbar/doc-toolbar {})
    [:.tc.serif.center
-    {:style {:max-width 550}}
+    {:style {:max-width 600}}
     [:.f1.mb3.pt5 "Welcome to Maria,"]
     [:.f3.mv3 "a coding environment for beginners."]
 
@@ -48,7 +47,7 @@
 
     [:.tc.i.f3.mv3 "More reading:"]
 
-    [:ul.f4.tl.lh-copy
+    [:ul.f-body.tl.lh-copy
      [:li "The " [:a {:href "/quickstart"} "Editor Quickstart"] ", if you're already familiar with Clojure."]
      [:li "An " [:a {:href "/gallery?eval=true"} "Example Gallery"] " of user creations."]
      [:li "Understand the " [:a {:target "_blank"
@@ -57,50 +56,66 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
-(defview home
+(defview sidebar
   [this]
-  [:div
-   (toolbar/doc-toolbar)
+  [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-ddd
+   {:style {:width  300}}
+   [:.flex.items-stretch.ph2.flex-none
+    [:.pa2.pointer.hover-bg-darken {:on-click #(d/transact! [[:db/add :ui/globals :sidebar? false]])}
+     (-> icons/ExpandMore
+         (icons/style {:transform "rotate(90deg)"})
+         (icons/size 20))]
+    [:.flex-auto]
+    (let [classes " pa2 pointer hover-bg-darken flex items-center black no-underline"]
+      (list
+        [:a {:class classes
+             :href  "/"} "Home"]
+        [:div {:class    classes
+               :on-click #(exec/exec-command-name :doc/new)} "New Doc"])
+      )]
 
-   (-> doc/curriculum
-       (doc-list-section :curriculum "Learning Modules"))
+   [:.overflow-y-auto.pr2
 
-   (some-> (doc/locals-docs :local/recents)
-           (doc-list-section :recents "Recent"))
+    (some-> (doc/locals-docs :local/recents)
+            (doc-list-section :recents "Recent"))
 
-   (when-let [username (d/get :auth-public :username)]
-     (some-> (seq (doc/user-gists username))
-             (doc-list-section :gists "My gists")))
+    (-> doc/curriculum
+        (doc-list-section :curriculum "Learning Modules"))
 
-   (some-> (doc/locals-docs :local/trash)
-           (doc-list-section :trash "Trash"))
+
+
+    (when-let [username (d/get :auth-public :username)]
+      (some-> (seq (doc/user-gists username))
+              (doc-list-section :gists "My gists")))
+
+    (some-> (doc/locals-docs :local/trash)
+            (doc-list-section :trash "Trash"))]
 
    ])
 
 (defview layout
   [{:keys []}]
-  [:.w-100.relative.sans-serif
-   {:on-click #(when (= (.-target %) (.-currentTarget %))
-                 (exec/exec-command-name :navigate/focus-end))
-    :style    {:min-height     "100%"
-               :padding-bottom 40}}
-   (hint/show-floating-view)
-   [:.relative.border-box.flex.flex-column.w-100
-    (when-let [segments (d/get :router/location :segments)]
+  (let [sidebar? (d/get :ui/globals :sidebar?)]
+    [:.w-100.relative.sans-serif
+     {:on-click #(when (= (.-target %) (.-currentTarget %))
+                   (exec/exec-command-name :navigate/focus-end))
+      :style    {:min-height     "100%"
+                 :padding-bottom 40
+                 :padding-left   (when sidebar? 300)}}
+     (hint/show-floating-view)
+     (when sidebar? (sidebar))
+     [:.relative.w-100
+      (when-let [segments (d/get :router/location :segments)]
+        (match segments
+               (:or [] ["home"]) (landing)
+               ["landing"] (landing)
+               ["doc" id] (docs/file-edit {:id id})
+               ["gists" username] (docs/gists-list username)
 
-      (match segments
-             [] (if (d/get :auth-public :signed-in?)
-                  (home)
-                  (landing))
-             ["home"] (home)
-             ["landing"] (landing)
-             ["doc" id] (docs/file-edit {:id id})
-             ["gists" username] (docs/gists-list username)
+               ["local"] (docs/gists-list "local")
+               ["local" id] (docs/file-edit {:id     id
+                                             :local? true})))]
 
-             ["local"] (docs/gists-list "local")
-             ["local" id] (docs/file-edit {:id     id
-                                           :local? true})))]
-
-   (which-key/show-commands)
-   (dock/BottomBar {})
-   (tooltip/Tooltip)])
+     (which-key/show-commands)
+     (dock/BottomBar {})
+     (tooltip/Tooltip)]))

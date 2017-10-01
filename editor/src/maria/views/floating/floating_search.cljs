@@ -44,11 +44,12 @@
                       35                                    ;; bottom bar
                       )]
     [:.fixed
-     {:style {:width       300
-              :margin-left -150
-              :left        "50%"
-              :top         50}}
-     [:.bg-darken.br2.pa2
+     {:style {:width 300
+              ;:margin-left -150
+              ;:left        "50%"
+              :right 5
+              :top   5}}
+     [:.bg-darken.br2.pa1
       [:.shadow-4.flex.flex-column.items-stretch
        [:input.outline-0.pa2.bn.f6 {:placeholder placeholder
                                     :style       {:border-bottom "1px solid #eee"}

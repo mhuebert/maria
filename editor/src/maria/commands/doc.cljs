@@ -13,6 +13,8 @@
 (def send (partial frame/send frame/trusted-frame))
 (local/init-storage ::locals)
 
+(defn can-persist? []
+  (boolean (d/get :auth-public :username)))
 
 (defn add-clj-ext [s]
   (when s
@@ -65,8 +67,8 @@
   ([doc] (normalize-doc (:id doc) doc))
   ([doc-id {updated-at :updated-at
             root-id    :db/id
-            :keys [persisted local]
-            :as the-doc}]
+            :keys      [persisted local]
+            :as        the-doc}]
    (let [{:keys [filename files local-url id owner]
           :as   doc} (merge (:persisted the-doc)
                             (:local the-doc)
@@ -134,7 +136,8 @@
 (defn persistence-mode [{{:keys [persisted]} :project :as toolbar}]
   (when (valid-content? toolbar)
     (let [owned-by-current-user? (or (nil? persisted)
-                                     (= (str (:id (:owner persisted))) (d/get :auth-public :id)))
+                                     (let [id (d/get :auth-public :id)]
+                                       (and id (= (str (:id (:owner persisted))) id))))
           unsaved-changes (unsaved-changes? toolbar)]
       (match [(boolean persisted) owned-by-current-user? unsaved-changes]
              [false _ true] :create
@@ -150,13 +153,25 @@
       (update :files dissoc old-name)
       (assoc-in [:files new-name :content] (get-in version [:files old-name :content]))))
 
+(defn init-new!
+  ([] (init-new! "Untitled" ""))
+  ([filename content]
+   (let [id (d/unique-id)]
+     (local/init-storage id {:persistence/provider :maria/local
+                             :files                {(add-clj-ext filename) {:content (or content "")}}})
+     (frame/send frame/trusted-frame [:window/navigate (str "/local/" id) {}])
+     id)))
+
 (defn make-a-copy! [{{local-version :local} :project
                      filename               :filename}]
-  (let [local-filename (or (get-in local-version [:files filename :filename])
-                           filename)]
-    (create! (-> local-version
-                 (rename-file filename (str "Copy of " local-filename)))
-             false)))
+  (let [new-filename (str "Copy of "
+                          (or (get-in local-version [:files filename :filename])
+                              filename))]
+    (if (can-persist?)
+      (create! (-> local-version
+                   (rename-file filename new-filename))
+               false)
+      (init-new! new-filename (get-in local-version [:files filename :content])))))
 
 (defn save! [{filename                                      :filename
               {{persisted-id :id :as persisted} :persisted} :project
@@ -171,27 +186,20 @@
     :save (save! toolbar)
     :create (create! (d/get (:id toolbar) :local) (:id toolbar))))
 
-(defn init-new! []
-  (let [id (d/unique-id)]
-    (local/init-storage id {:persistence/provider :maria/local
-                            :files                {"Untitled.cljs" {:content ""}}})
-    id))
-
 (defcommand :doc/new
   "Create a blank doc"
   {:bindings       ["M1-Shift-B"]
    :intercept-when true
    :icon           icons/Add}
   [{{:keys [view/state doc-editor id]} :current-doc}]
-  (let [id (init-new!)]
-    (frame/send frame/trusted-frame [:window/navigate (str "/local/" id) {}]))
+  (init-new!)
   true)
 
 (defcommand :doc/save
   "Save the current doc"
   {:bindings       ["M1-S"]
    :intercept-when true
-   :when           #(and (:signed-in? %)
+   :when           #(and (can-persist?)
                          (#{:create :save} (persistence-mode (:current-doc %))))
    :icon           icons/Backup}
   [{:keys [current-doc]}]
@@ -203,9 +211,7 @@
   {:bindings       ["M1-Shift-S"]
    :intercept-when true
    :icon           icons/ContentDuplicate
-   :when           #(and (:signed-in? %)
-                         (get-in % [:current-doc :project :persisted])
-                         (valid-content? (:current-doc %)))}
+   :when           #(valid-content? (:current-doc %))}
   [{:keys [current-doc]}]
   (make-a-copy! current-doc)
   true)

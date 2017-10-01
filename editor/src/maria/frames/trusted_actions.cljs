@@ -49,7 +49,8 @@
 
                       [:auth/sign-in] (remote/sign-in "github.com")
 
-                      [:auth/sign-out] (remote/sign-out)
+                      [:auth/sign-out] (do (remote/sign-out)
+                                           (frame/send frame-id [:auth/sign-out]))
 
                       [:window/navigate url opts] (navigate! url opts)
                       [:window/set-title title] (d/transact! [[:db/add :window :title title]])
