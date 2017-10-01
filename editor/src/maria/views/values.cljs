@@ -1,6 +1,5 @@
 (ns maria.views.values
-  (:require [maria.show :as show]
-            [goog.object :as gobj]
+  (:require [goog.object :as gobj]
             [shapes.core :as shapes]
             [cells.cell :as cell]
             [maria.messages :as messages]
@@ -39,13 +38,11 @@
   (render-hiccup [this] (hiccup/element this)))
 
 
-
 (declare format-value)
 
-
-(extend-protocol show/IShow
+(extend-protocol views/IView
   cell/Cell
-  (show [this] (cell/view this)
+  (view [this] (cell/view this)
     #_(hiccup/element (format-value (cell/view this))
                       #_[:.br1.bg-darken.dib.inline-flex {:style {:margin 1 :padding 4}}
                          (format-value (cell/view this))])))

@@ -6,7 +6,10 @@
             [maria.live.ns-utils :as ns-utils]
             [clojure.string :as string]
             [maria.editors.code :as code]
-            [maria.views.cards :as repl-ui]))
+            [maria.views.cards :as repl-ui]
+            [maria.util :as util]
+            [re-view-hiccup.core :as hiccup]
+            [re-view.core :as v]))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -43,7 +46,9 @@
   "Show source code for given symbol"
   [c-state c-env name]
   (if-let [the-var (and (symbol? name) (ns-utils/resolve-var-or-special c-state c-env name))]
-    {:value (repl-ui/card [:.ph3.pv2 (code/viewer (special-views/var-source the-var))]) }
+    {:value (hiccup/element [:div {:classes [repl-ui/card-classes
+                                             "ph3"]}
+                             (special-views/var-source the-var)])}
     {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))
 
 (defspecial inject

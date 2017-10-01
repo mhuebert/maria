@@ -18,10 +18,6 @@
             [maria.commands.doc :as doc]
             [maria.views.icons :as icons]))
 
-(defonce _
-         (e/on-load #(d/transact! [[:db/add :repl/state :eval-log [{:id    (d/unique-id)
-                                                                    :value (repl-ui/plain [:span.gray "Ready."])}]]])))
-
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
