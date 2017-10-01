@@ -122,6 +122,24 @@
      (filter #(clojure.string/includes? % "blue")
              (map first color-names)))
 
+;; #### RGB color picker
+(defcell app-state {:red 0 :green 0 :blue 0})
+
+(defn update-state [color]
+  #(swap! app-state assoc color
+          (int (* 2.55 (-> % (.-currentTarget) (.-value) js/parseInt)))))
+
+(cell
+  (html [:div
+	  [:p "red"]
+          [:input {:type "range" :default-value "0" :on-input (update-state :red)}]
+   	  [:p "green"]
+          [:input {:type "range" :default-value "0" :on-input (update-state :green)}]
+   	  [:p "blue"]
+          [:input {:type "range" :default-value "0" :on-input (update-state :blue)}]
+          [:div (colorize (rgb (:red @app-state) (:green @app-state) (:blue @app-state))
+                          (square 200))]]))
+
 ;; #### Data From Space 🚀
 
 ;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web and play with it.
