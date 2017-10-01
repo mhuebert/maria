@@ -46,9 +46,9 @@
 (defcell random-number []
   (interval 200 #(rand-int 20)))
 
-;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead an evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
+;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead and evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
 
-;; Now we have a cell that updates itself every fifth of a second. Let's tinker with it a bit. Those numbers go by so fast--change the cell to slow it down. (Or, if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
+;; Now we have a cell that updates itself every fifth of a second (every 200 milliseconds). Let's tinker with it a bit. Those numbers go by so fast–change the cell to slow it down. (Or, if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
 
 ;; That `random-number` cell is the first part of our cell chain. Next we'll create a cell that keeps track of the last 10 random numbers generated, using the `random-number` cell:
 (defcell last-ten [self]
@@ -74,7 +74,7 @@
 
 ;; (The next part relies on the `if` expression. If you're unfamiliar with `if`, `true`, and `false`–for instance if you're a beginner reading this right after [Learn Clojure with Shapes](/intro)–then you probably want to go read [What If?](/what-if?) before proceeding.)
 
-;; To build our "light switch", we'll first make a "light switch" cell. We’ll call it `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
+;; To build our "light switch", we'll first make a cell for the switch itself. We’ll call it `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
 
 (defcell toggle false)
 
@@ -87,7 +87,7 @@
 
 ;; We defined `toggle` as `false`, our `if` makes a square when `toggle` is false, so we get a square. Fine enough.
 
-;; But here’s the thing: go back and change `toggle` to `false` and re-evaluate it. Our square stays a square! Our `if` stopped paying attention to `toggle`. We want our `if` to draw a circle whenever `toggle` is `true`, but for that to happen we have to re-evaluate our `if`. (Try it.) Our `if` has no idea what’s going on with `toggle` because it was evaluated in the past. That’s a bummer. ☹️
+;; But here’s the thing: go back and change `toggle` to `true` and re-evaluate it. Our square stays a square! Our `if` stopped paying attention to `toggle`. We want our `if` to draw a circle whenever `toggle` is `true`, but for that to happen we have to re-evaluate our `if`. (See for yourself!) Our `if` has no idea what’s going on with `toggle` because it was evaluated in the past. That’s a bummer. ☹️
 
 ;; Let’s try the same thing, but now inside a cell. Remember, cells keep track of each other.
 (cell (if @toggle
@@ -100,30 +100,32 @@
 
 (doc listen)
 
-;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw.
+;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw. (The second argument list vector in its documentation tells us that we could also call it so that it listens for more than one event.)
 
 ;; The first argument to `listen`, the event to listen for, needs to be a "keyword" that matches a [known event](https://reactjs.org/docs/events.html#supported-events) like FIXME "onClick". Keywords are symbolic identifiers that we use in our programs to represent something. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things. We’ll make a listener called `light-switch` that will listen for the `:click` event.
 
-;; This part is cool enough that we should define a new `toggle` so you can see them side-by-side.
+;; This part is cool enough that we should define a fresh toggle cell so you can see them side-by-side. We’ll call the new one `switch`, and the cell that depends on it `click-me`:
 
-(defcell toggle2 false)
+(defcell switch false)
 
-(defcell light-switch
+(defcell click-me
   (listen :click
-          (fn [] (swap! toggle2 not))
+          (fn [] (swap! switch not))
           (if @toggle2
             (circle 40)
             (square 80))))
 
-;; Here's the magic: click on the result. Look at the value of `toggle2`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
+;; Here's the magic: go ahead and click on the shape `click-me` draws. Then look at the value of `switch`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
 
-;; Notice the second argument to `light-switch` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
+;; Notice the second argument to `click-me` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
 
 ;; This function argument uses a function we haven’t seen before: `swap!`. The `swap!` function is how we update the value of a cell from outside its original definition. (If you’ve worked with Clojure atoms, it’s the same thing here. Cells aren’t atoms but they work the same in this respect.) The oh-so-energetic exclamation point is a warning. Normally, functions are very direct: you give them something, they give you something back, that’s it. The only thing that happens is you get a return value based on the function you called and the arguments you called it with. Everything happens in plain sight.
 
-;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects". Things get harder to think about with side effects. When something happens in a program with side effects, you’ll have to ask, "How did this value get this way?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
+;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects". Programs get harder to think about with side effects. When something happens in a program with side effects, you’ll have to ask, "How did this value get this way?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
 
-;; In this case, the side effect is cell interaction itself. Each cell has a value, and when another cell needs to change that value, `swap!` is how they do it. The `swap!` function takes a cell name and a function, and instead of merely returning something based on those values, it reaches over into the named cell, gets its value, applies the given function to that value, and does two things with the result: sets the value of the cell to that, and returns it too.
+;; In this case, the side effect is that we’re changing the cell’s value. Each cell has a value, and when another cell needs to change that value, `swap!` is how they do it. (There’s no such thing as using `def` to name the same thing twice, which might seem like the alternative. We don’t do that in Clojure.) The `swap!` function takes a cell name and a function, and instead of merely returning something based on those values, it reaches over into the named cell, gets its value, applies the given function to that value, and does two things with the result: sets the value of the cell to that, and returns the new value too.
+
+;; Try playing with `swap!` a bit. You can evaluate it in place to see it change `switch`. What would happen if you use a function other than `not` to change its value?
 
 ;; Now, we have cells that aren't just connected to each other, but that we can click and change whenever we want. 👍🏼
 
