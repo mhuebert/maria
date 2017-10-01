@@ -27,7 +27,7 @@
 (defn doc-list-section [docs {:keys [title] :as options}]
   (when-let [docs (seq (filter :local-url docs))]
     [:div
-     [:.sans-serif.ph3.pt3.pb2.f4.gray title]
+     [:.sans-serif.ph3.pt3.pb2.f7.b title]
      (docs/doc-list options docs)]))
 
 (defn landing []
@@ -55,26 +55,32 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
-(defn close-sidebar-btn [icon]
-  (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
-                           icon
-                           nil
-                           "Close"]))
-
 (defview sidebar
   [this]
   [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
-   {:style    {:width (d/get :ui/globals :sidebar-width)}}
-   [:.flex.items-stretch.ph2.flex-none
-    (close-sidebar-btn (-> icons/ExpandMore
-                           (icons/style {:transform "rotate(90deg)"})))
+   {:style {:width (d/get :ui/globals :sidebar-width)}}
+   [:.flex.items-stretch.pl2.flex-none
+    #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
+                               icons/Docs
+                               nil
+                               "Docs"])
+
+    #_(toolbar/toolbar-button [{:on-click #(exec/exec-command-name :doc/new)}
+                               nil
+                               "New"
+                               "New Doc"])
 
     (toolbar/toolbar-button [{:href "/"}
-                             icons/Home
+                               icons/Home
+                               nil
+                               "Home"])
+    [:.flex-auto]
+    (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
+                             (-> icons/ExpandMore
+                                 (icons/style {:transform "rotate(90deg)"})
+                                 (icons/class "o-60"))
                              nil
-                             "Home"])
-    #_[:.flex-auto]
-    #_(close-sidebar-btn icons/X)]
+                             "Close"])]
 
    [:.overflow-y-auto.bg-white.pb4
     (some-> (doc/locals-docs :local/recents)
