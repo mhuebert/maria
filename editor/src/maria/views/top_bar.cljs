@@ -106,11 +106,13 @@
                                 :border-bottom    "2px solid #e2e2e2"}}}
        [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
 
+        (when-not sidebar?
+          (list
+            (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
+                             icons/Docs
+                             nil
+                             (if sidebar? "Hide Sidebar" "Docs")])))
 
-        (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
-                         icons/Docs
-                         nil
-                         (if sidebar? "Hide Sidebar" "Docs")])
         (command-button command-context :doc/new {:text    "New"
                                                   :tooltip "New Doc"})
 

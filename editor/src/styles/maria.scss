@@ -138,7 +138,7 @@ div.CodeMirror {
 
 .CodeMirror, .code, code, pre {
   font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
-  font-size: 15px;
+  font-size: 80%;
 }
 
 .CodeMirror {
@@ -359,6 +359,7 @@ $lighten: rgba(255, 255, 255, 0.25);
   white-space: pre-wrap; // REQUIRED for space insertion to work in Firefox
   h1, h2 {
     margin-top: 3rem;
+    font-weight: normal;
   }
   blockquote {
     border-left: 4px solid rgba(0, 0, 0, 0.05);

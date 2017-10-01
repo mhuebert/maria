@@ -24,7 +24,7 @@
   {:bindings ["M1-c"]
    :private  true}
   [{:keys [editor block/code block/prose]}]
-  (when code 
+  (when code
     (edit/copy (.getSelection editor))
     true))
 
