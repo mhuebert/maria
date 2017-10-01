@@ -18,7 +18,7 @@
 
 (defn add-clj-ext [s]
   (when s
-    (cond-> s
+    (cond-> (string/replace s "/" "_")
             (not (re-find #"\.clj[cs]?$" s)) (str ".cljs"))))
 
 (defn strip-clj-ext [s]
@@ -143,6 +143,7 @@
              [false _ true] :create
              [true true true] :save
              [true false _] :copy
+             [true true false] :saved
              :else nil))))
 
 (defn create! [local local-id]
