@@ -8,18 +8,18 @@
 (map #(colorize % (square 50))
      (map #(hsl 120 50 %) (range 0 100 10)))
 
-(map #(colorize % (square 50))
+(map #(colorize % (circle 25))
      (map #(rgb % 0 0) (range 0 250 25)))
 
-(map #(colorize % (square 50))
+(map #(colorize % (circle 25))
      (map #(rgb 0 % 0) (range 0 250 25)))
 
-(map #(colorize % (square 50))
+(map #(colorize % (circle 25))
      (map #(rgb 0 0 %) (range 0 250 25)))
 
 ;; variable opacity
 (map
-  #(opacity % (colorize "blue" (square 10)))
+  #(opacity % (colorize "blue" (triangle 40)))
   (range 0 1 0.1))
 
 ;; color gradient
