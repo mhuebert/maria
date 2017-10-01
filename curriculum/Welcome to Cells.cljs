@@ -111,7 +111,7 @@
 (defcell click-me
   (listen :click
           (fn [] (swap! switch not))
-          (if @toggle2
+          (if @switch
             (circle 40)
             (square 80))))
 
