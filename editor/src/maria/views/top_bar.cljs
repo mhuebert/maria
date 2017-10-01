@@ -26,7 +26,7 @@
    (some-> icon (toolbar-icon))
    (when (and icon text) util/space)
    (cond->>
-     text
+     [:.dib.truncate text]
      icon (conj [:.dn.dib-ns]))])
 
 (defn command-button
@@ -97,7 +97,8 @@
                                                                     (assoc-in local [:files filename] {:filename %
                                                                                                        :content  (or local-content persisted-content)}))]])
         command-context (exec/get-context)
-        {:keys [persistence/provider remote-url]} persisted]
+        {:keys [persistence/provider remote-url]} persisted
+        persistence-mode (doc/persistence-mode this)]
     [:div
      (fixed-top
        {:when-scrolled {:style {:background-color "#e7e7e7"
@@ -133,13 +134,18 @@
                   )))
           (conj [:.flex.items-stretch.bg-darken-lightly]))
 
+        (case persistence-mode
+          :save
+          (command-button command-context :doc/save {:text    "Save"
+                                                     :tooltip (str (if persisted "Saves Gist"
+                                                                                 "Publishes a new gist"))})
+          :saved
+          (toolbar-button [nil nil [:span.o-60 "Saved"] nil])
+          nil)
+        (command-button command-context :doc/revert-to-saved-version {:text "Revert"})
 
-        (command-button command-context :doc/save {:text    "Save"
-                                                   :tooltip (str (if persisted "Saves Gist"
-                                                                               "Publishes a new gist"))})
         (command-button command-context :doc/duplicate {:text "Duplicate"})
 
-        (command-button command-context :doc/revert-to-saved-version {:text "Revert"})
         (when (= provider :gist)
           (toolbar-button [{:href   remote-url
                             :target "_blank"} icons/OpenInNew nil "View on GitHub"]))
@@ -151,7 +157,8 @@
         (toolbar-button [{:href      "https://www.github.com/mhuebert/maria/issues"
                           :tab-index -1
                           :target    "_blank"} nil "Bug Report"])
-        (if signed-in? (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
+        (if (d/get :auth-public :signed-in?)
+          (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
                        (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
         [:.ph1]])
      [:.h2]

@@ -143,6 +143,7 @@
              [false _ true] :create
              [true true true] :save
              [true false _] :copy
+             [true true false] :saved
              :else nil))))
 
 (defn create! [local local-id]
