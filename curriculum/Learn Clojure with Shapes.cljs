@@ -223,7 +223,7 @@ rainbow
 (map (fn [color] (colorize color (rectangle 20 20)))
      rainbow)
 
-;; 🏳️‍🌈 😺
+;; 🌈 😺
 
 ;; Now we’ve got a `rainbow` in our toolbox, ready to use for whatever. Programming like this is like building a LEGO spaceship, except we can invent whatever blocks we need, and use them as many times as we like.
 
