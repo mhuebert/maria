@@ -25,11 +25,11 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
-(defn doc-list-section [docs context title]
+(defn doc-list-section [docs {:keys [title] :as options}]
   (when-let [docs (seq (filter :local-url docs))]
     [:div
-     [:.sans-serif.ph3.pt3.pb2.ttu.b title]
-     (docs/doc-list {:context context} docs)]))
+     [:.sans-serif.ph3.pt3.pb2.f4.gray title]
+     (docs/doc-list options docs)]))
 
 (defn landing []
   [:.w-100
@@ -58,38 +58,41 @@
 
 (defview sidebar
   [this]
-  [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-ddd
-   {:style {:width  300}}
+  [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
+   {:style {:width 300}}
    [:.flex.items-stretch.ph2.flex-none
-    [:.pa2.pointer.hover-bg-darken {:on-click #(d/transact! [[:db/add :ui/globals :sidebar? false]])}
-     (-> icons/ExpandMore
-         (icons/style {:transform "rotate(90deg)"})
-         (icons/size 20))]
-    [:.flex-auto]
-    (let [classes " pa2 pointer hover-bg-darken flex items-center black no-underline"]
-      (list
-        [:a {:class classes
-             :href  "/"} "Home"]
-        [:div {:class    classes
-               :on-click #(exec/exec-command-name :doc/new)} "New Doc"])
-      )]
+    (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? false]])}
+                             (-> icons/ExpandMore
+                                 (icons/style {:transform "rotate(90deg)"}))
+                             nil
+                             "Close"])
 
-   [:.overflow-y-auto.pr2
+    (toolbar/toolbar-button [{:href "/"}
+                             icons/Home
+                             nil
+                             "Home"])]
+
+   [:.overflow-y-auto
 
     (some-> (doc/locals-docs :local/recents)
-            (doc-list-section :recents "Recent"))
+            (doc-list-section {:context :recents
+                               :title   "Recent"}))
 
     (-> doc/curriculum
-        (doc-list-section :curriculum "Learning Modules"))
+        (doc-list-section {:context :curriculum
+                           :title   "Learning Modules"}))
 
 
 
     (when-let [username (d/get :auth-public :username)]
       (some-> (seq (doc/user-gists username))
-              (doc-list-section :gists "My gists")))
+              (doc-list-section {:context :gists
+                                 :title   "My gists"})))
 
     (some-> (doc/locals-docs :local/trash)
-            (doc-list-section :trash "Trash"))]
+            (doc-list-section {:context :trash
+                               :title   "Trash"
+                               :limit   0}))]
 
    ])
 

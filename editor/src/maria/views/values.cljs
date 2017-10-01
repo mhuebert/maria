@@ -14,7 +14,8 @@
             [maria.views.error :as error-view]
             [re-view-hiccup.core :as hiccup]
             [maria.util :refer [space]]
-            [maria.eval :as e])
+            [maria.eval :as e]
+            [lark.value-viewer.core :as views])
   (:import [goog.async Deferred]))
 
 (defn bracket-type [value]
@@ -30,8 +31,6 @@
    [:.flex.items-end.nowrap rb]])
 
 (extend-protocol hiccup/IEmitHiccup
-  Keyword
-  (to-hiccup [this] (str this))
   shapes/Shape
   (to-hiccup [this] (shapes/to-hiccup this)))
 
@@ -42,6 +41,7 @@
 
 
 (declare format-value)
+
 
 (extend-protocol show/IShow
   cell/Cell
@@ -154,52 +154,13 @@
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
-(defn format-value
-  ([value] (format-value 1 value))
-  ([depth value]
+(extend-protocol views/IView
+  function
+  (view [this] (format-function this))
+  cell/Cell
+  (view [this] (cell/view this)))
 
-   (when (> depth 200)
-     (prn value)
-     (throw (js/Error. "Format depth too deep!")))
-   (cond (satisfies? show/IShow value) (format-value depth (show/show value))
-
-         (satisfies? hiccup/IEmitHiccup value) value
-
-         :else
-         (let [kind (messages/kind value)]
-           (if (v/is-react-element? value)
-             value
-             (case kind
-
-               (:maria.kinds/vector
-                 :maria.kinds/sequence
-                 :maria.kinds/set) (format-collection depth value)
-
-               :maria.kinds/map (format-map depth value)
-
-               :maria.kinds/var [:div
-                                 [:.o-50.mb2 (str value)]
-                                 (format-value depth @value)]
-
-               :maria.kinds/nil "nil"
-
-               :maria.kinds/function (format-function value)
-
-               :maria.kinds/atom (wrap-value [[:span.gray.mr1 "#Atom"] nil]
-                                             (format-value depth (gobj/get value "state")))
-
-               (cond
-                 (v/is-react-element? value) value
-                 (instance? cljs.core/Namespace value) (str value)
-                 (instance? Deferred value) (display-deferred {:deferred value})
-                 :else (try (pr-str value)
-                            (catch js/Error e
-                              (do "error printing result"
-                                  (.log js/console e)
-                                  (prn (type value))
-                                  (prn :kind (messages/kind value))
-                                  (.log js/console value)
-                                  (prn value)))))))))))
+(def format-value views/format-value)
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3

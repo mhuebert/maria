@@ -55,7 +55,7 @@
           error [:.ma3 (if special-form
                          (str "Source code is not available. (`" name "` is a special form, not written in Clojure.)")
                          error)]
-          value (repl-ui/card [:.ph3.pv2 (code/viewer value)]))))
+          value (code/viewer value))))
 
 (defview dir
   {:view/initial-state {:expanded? false}}

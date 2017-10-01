@@ -31,7 +31,7 @@
 
 (defn command-button
   [context command-name {:keys [icon else-icon tooltip text]}]
-  (let [tooltip (or tooltip (registry/spaced-name (name command-name)))
+  (let [tooltip (when-not (false? tooltip) (or tooltip (registry/spaced-name (name command-name))))
         {:keys [exec? parsed-bindings]} (exec/get-command context command-name)
         key-string (some-> (ffirst parsed-bindings) (registry/keyset-string))]
     (if exec?
@@ -106,7 +106,8 @@
 
 
         (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])} icons/Docs nil "My Docs"])
-        (command-button command-context :doc/new {:icon icons/Add})
+        (command-button command-context :doc/new {:text    "New"
+                                                  :tooltip "New Doc"})
 
         (some->>
           (or left-content

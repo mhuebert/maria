@@ -80,7 +80,8 @@
 (def small-icon-classes " silver hover-black ph2 flex items-center pointer h-100")
 
 (defview doc-list
-  {:view/initial-state {:limit-n 5}}
+  {:view/initial-state (fn [{:keys [limit]}]
+                         {:limit-n (or limit 5)})}
   [{:keys [view/state context]} docs]
   (let [{:keys [limit-n]} @state
         more? (> (count docs) limit-n)]
