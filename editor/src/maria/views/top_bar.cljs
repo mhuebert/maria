@@ -54,7 +54,7 @@
   [{:keys [when-scrolled view/state]} child]
   [:.fixed.top-0.right-0.left-0.z-5
    (cond-> (when (:scrolled? @state) when-scrolled)
-           (d/get :ui/globals :sidebar?) (assoc-in [:style :left] 300)) child])
+           (d/get :ui/globals :sidebar?) (assoc-in [:style :left] (d/get :ui/globals :sidebar-width))) child])
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
@@ -98,7 +98,8 @@
                                                                                                        :content  (or local-content persisted-content)}))]])
         command-context (exec/get-context)
         {:keys [persistence/provider remote-url]} persisted
-        persistence-mode (doc/persistence-mode this)]
+        persistence-mode (doc/persistence-mode this)
+        sidebar? (d/get :ui/globals :sidebar?)]
     [:div
      (fixed-top
        {:when-scrolled {:style {:background-color "#e7e7e7"
@@ -106,7 +107,10 @@
        [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
 
 
-        (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])} icons/Docs nil "My Docs"])
+        (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
+                         icons/Docs
+                         nil
+                         (if sidebar? "Hide Sidebar" "Docs")])
         (command-button command-context :doc/new {:text    "New"
                                                   :tooltip "New Doc"})
 
@@ -159,7 +163,7 @@
                           :target    "_blank"} nil "Bug Report"])
         (if (d/get :auth-public :signed-in?)
           (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
-                       (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
+          (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
         [:.ph1]])
      [:.h2]
      ]))

@@ -16,7 +16,10 @@
             [maria.curriculum :as curriculum]
             [lark.commands.exec :as exec]
             [maria.commands.doc :as doc]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            [re-view-routing.core :as r]))
+
+(d/transact! [[:db/add :ui/globals :sidebar-width 250]])
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -52,24 +55,28 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
+(defn close-sidebar-btn [icon]
+  (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
+                           icon
+                           nil
+                           "Close"]))
+
 (defview sidebar
   [this]
   [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
-   {:style {:width 300}}
+   {:style    {:width (d/get :ui/globals :sidebar-width)}}
    [:.flex.items-stretch.ph2.flex-none
-    (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? false]])}
-                             (-> icons/ExpandMore
-                                 (icons/style {:transform "rotate(90deg)"}))
-                             nil
-                             "Close"])
+    (close-sidebar-btn (-> icons/ExpandMore
+                           (icons/style {:transform "rotate(90deg)"})))
 
     (toolbar/toolbar-button [{:href "/"}
                              icons/Home
                              nil
-                             "Home"])]
+                             "Home"])
+    #_[:.flex-auto]
+    #_(close-sidebar-btn icons/X)]
 
-   [:.overflow-y-auto
-
+   [:.overflow-y-auto.bg-white.pb4
     (some-> (doc/locals-docs :local/recents)
             (doc-list-section {:context :recents
                                :title   "Recent"}))
@@ -100,7 +107,7 @@
                    (exec/exec-command-name :navigate/focus-end))
       :style    {:min-height     "100%"
                  :padding-bottom 40
-                 :padding-left   (when sidebar? 300)}}
+                 :padding-left   (when sidebar? (d/get :ui/globals :sidebar-width))}}
      (hint/show-floating-view)
      (when sidebar? (sidebar))
      [:.relative.w-100
