@@ -83,7 +83,9 @@
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another color. (For a list of colors that Maria understands, try evaluating `color-names`, without parentheses around it.)
 
-;; We can also combine expressions to create a layer of shapes, by using the `layer` function:
+;; We're going now to start exploring the power of evaluating different parts of expressions. Depending on how comfortable you feel with exploring how Maria commands work, you probably want to check out the  [Editor Quickstart](https://maria.cloud/quickstart), which explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
+
+;; In addition to nesting expressions, we can also combine expressions to create a layer of shapes. We do this by using the `layer` function:
 
 (doc layer)
 
@@ -300,7 +302,7 @@ rainbow
 
 ;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/), or write your own code on a fresh page by using the New button at the top left.
 
-;; If you want to use full powers of the Maria environment, take a look at the [Editor Quickstart](https://maria.cloud/quickstart).
+;; If you want to learn the full powers of the Maria environment, start with a look at the [Editor Quickstart](https://maria.cloud/quickstart).
 
 ;; If you have the patience to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
 
