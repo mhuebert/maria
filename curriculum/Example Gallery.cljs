@@ -63,6 +63,31 @@
        (map colorize palette)
        (apply layer)))
 
+;; #### User interfaces and Adjustible shapes
+
+(defcell shape-size 16)
+
+(cell (html [:div
+             [:h2 "Adjustable Triangle"]
+             [:input {:type "range"
+                      :on-input #(reset! shape-size (-> % (.-currentTarget) (.-value) int))}]
+             [:div (colorize "aqua" (triangle @shape-size))]]))
+
+;; Note that both the `shape-size` cell's reported value and the circle itself change when you move the slider. This happens because the function attached to on-input is `reset!`ing the `shapesize`, which then communicates that change to every cell that depends on it.
+
+;; We can use this same mechanism to store reactive state for an application, for example by placing a map with multiple entries in a cell:
+
+(defcell some-state
+  {:size 20
+   :colors ["magenta" "cyan" "yellow"]})
+
+;; ... then assigning some behavior that updates what's in the state map. For example, when you click on this circle it will change its size and color:
+
+(cell (->> (colorize (first (@some-state :colors))
+                     (circle (@some-state :size)))
+           (listen :click #(swap! some-state assoc :size (+ 20 (rand-int 10))
+                                  :colors (shuffle (@some-state :colors))))))
+
 ;; #### Halloween pumpkin
 (layer
  (position 40 60 (colorize "orange" (circle 40)))
@@ -91,7 +116,54 @@
      (filter #(clojure.string/includes? % "blue")
              (map first color-names)))
 
-;; #### Fernseheturm
+;; ### Data From Space 🚀
+
+;; This is multi-part demonstration of how to grab data from the web and do fun stuff with it, using [cells](/cells).
+
+;; Just like `interval`, there is another special function called `fetch` which only works inside cells. Given a URL, `fetch` can download data from the internet:
+
+(defcell location (geo-location))
+
+(defcell birds
+  "An options map including :query params may be passed
+  as the second arg to fetch."
+  (fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
+         {:query {:lat (:latitude @location "52.4821146")
+                  :lng (:longitude @location "13.4121388")
+                  :maxResults 10
+                  :fmt "json"}}))
+
+(cell (map :comName @birds))
+
+(defn find-image [term]
+  (let [result (cell term (fetch "https://commons.wikimedia.org/w/api.php"
+                                 {:query {:action "query"
+                                          :origin "*"
+                                          :generator "images"
+                                          :prop "imageinfo"
+                                          :iiprop "url"
+                                          :gimlimit 5
+                                          :format "json"
+                                          :redirects 1
+                                          :titles term}}))]
+    (some->> @result
+             :query
+             :pages
+             vals
+             (keep (comp :url first :imageinfo))
+             first)))
+
+(defcell bird-pics
+  (doall (for [bird @birds]
+           (some->> (:sciName bird)
+                    (find-image)
+                    (image 100)))))
+
+(cell (image (find-image "berlin")))
+
+;; For more on fetching data from across the Web, see [this gist](https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71)
+
+;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
                   (position 29 108 (colorize "grey" (rectangle 12 222)))
