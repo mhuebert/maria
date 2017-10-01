@@ -76,75 +76,82 @@
                                                          :value         value
                                                          :default-value default-value})))]]))))
 
-(def small-label :.silver.f7.flex.items-stretch.ph2.w4.tl.flex-none)
-(def small-icon-classes " silver hover-black ph2 flex items-center pointer")
+(def small-label :.silver.f7.flex.items-stretch.pr2)
+(def small-icon-classes " silver hover-black ph2 flex items-center pointer h-100")
 
 (defview doc-list
-  {:view/initial-state {:limit-n 8}}
+  {:view/initial-state (fn [{:keys [limit]}]
+                         {:limit-n (or limit 5)})}
   [{:keys [view/state context]} docs]
   (let [{:keys [limit-n]} @state
-        more? (= (count (take (inc limit-n) docs)) (inc limit-n))]
-    [:.flex-auto.overflow-auto.sans-serif.f6
+        more? (> (count docs) limit-n)]
+    [:.flex-auto.overflow-auto.sans-serif.f6.bg-white
      (for [doc (take limit-n docs)
            :let [{:keys [id description persistence/provider remote-url local-url filename]} doc
                  trashed? (= context :trash)]
            :when local-url]
-       [:.flex.bb.b--near-white.items-stretch
+       [:.bb.b--near-white.flex.items-stretch
         {:class (when-not trashed? "hover-bg-washed-blue")}
-        [:a.db.ph3.pv2.black.no-underline.b.flex-auto
+        [:a.db.ph3.pv2.black.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
-         (doc/strip-clj-ext filename)
-         #_(some->> description (conj [:.gray.f7.mt1.normal]))]
+         [:.b.mb1
+          (doc/strip-clj-ext filename)]
+         #_(some->> description (conj [:.gray.f7.mt1.normal]))
 
-        [small-label
-         (when (= provider :gist)
-           [:a
-            {:class        (str small-icon-classes " nl2")
-             :href         (str "https://gist.github.com/" id)
-             :data-tooltip (pr-str "View Gist")
-             :target       "_blank"}
-            (-> icons/OpenInNew
-                (icons/size 16))])
+         [small-label
+          (when (= provider :gist)
+            [:a
+             {:class        (str small-icon-classes " nl2")
+              :href         (str "https://gist.github.com/" id)
+              :data-tooltip (pr-str "View Gist")
+              :target       "_blank"}
+             (-> icons/OpenInNew
+                 (icons/size 16))])
 
-         (case provider
-           :maria/local
-           (if trashed?
+          (case provider
+            :maria/local
+            [:.flex.items-center "Unsaved"]
+            :gist [:.flex.items-center (or (when-let [gist-username (and (= provider :gist)
+                                                                         (:username (:owner doc)))]
+                                             gist-username)
+                                           "Gist")]
+
+            :maria/curriculum
+            [:.flex.items-center "Curriculum"]
+            nil)
+          ]
+
+         ]
+
+        [:.flex.items-center
+         (case context
+           :recents
+           (when (= context :recents)
+             [:div
+              {:class        small-icon-classes
+               :on-click     #(do (doc/locals-remove! :local/recents id)
+                                  (when (= provider :maria/local)
+                                    (doc/locals-push! :local/trash id)))
+               :data-tooltip (pr-str "Remove")}
+              (icons/size icons/X 16)])
+           :trash
+           (list
              [:.blue.hover-underline.hover-dark-blue.f7.pointer.flex.items-center
               {:on-click #(do (doc/locals-push! :local/recents id)
                               (doc/locals-remove! :local/trash id))}
               "Restore"]
-             [:.flex.items-center "Unsaved"])
-           :gist [:.flex.items-center (or (when-let [gist-username (and (= provider :gist)
-                                                                        (:username (:owner doc)))]
-                                            gist-username)
-                                          "Gist")]
 
-           :maria/curriculum
-           [:.flex.items-center "Curriculum"]
-           nil)
-         ]
 
-        (case context
-          :recents
-          (when (= context :recents)
-            [:div
-             {:class        small-icon-classes
-              :on-click     #(do (doc/locals-remove! :local/recents id)
-                                 (when (= provider :maria/local)
-                                   (doc/locals-push! :local/trash id)))
-              :data-tooltip (pr-str "Remove")}
-             (icons/size icons/X 16)])
-          :trash
-          [:div
-           {:data-tooltip (pr-str "Delete")
-            :class        (str small-icon-classes " hover-dark-red")
-            :on-click     #(do
-                             (doc/locals-remove! :local/trash id)
-                             (doc/locals-remove! :local/recents id)
-                             (d/transact! [[:db/retract-entity id]]))}
-           (icons/size icons/Delete 16)]
-          [:.ph2 (icons/size icons/Blank 16)])
+             [:div
+              {:data-tooltip (pr-str "Delete")
+               :class        (str small-icon-classes " hover-dark-red ")
+               :on-click     #(do
+                                (doc/locals-remove! :local/trash id)
+                                (doc/locals-remove! :local/recents id)
+                                (d/transact! [[:db/retract-entity id]]))}
+              (icons/size icons/Delete 16)])
+           nil)]
 
         ])
      (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc

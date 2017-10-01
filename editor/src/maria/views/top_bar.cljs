@@ -31,7 +31,7 @@
 
 (defn command-button
   [context command-name {:keys [icon else-icon tooltip text]}]
-  (let [tooltip (or tooltip (registry/spaced-name (name command-name)))
+  (let [tooltip (when-not (false? tooltip) (or tooltip (registry/spaced-name (name command-name))))
         {:keys [exec? parsed-bindings]} (exec/get-command context command-name)
         key-string (some-> (ffirst parsed-bindings) (registry/keyset-string))]
     (if exec?
@@ -52,8 +52,9 @@
                              (v/swap-silently! state assoc :listener-key)))
    :view/will-unmount #(events/unlistenByKey (:listener-key @(:view/state %)))}
   [{:keys [when-scrolled view/state]} child]
-  [:.fixed.top-0.left-0.right-0.z-5
-   (when (:scrolled? @state) when-scrolled) child])
+  [:.fixed.top-0.right-0.left-0.z-5
+   (cond-> (when (:scrolled? @state) when-scrolled)
+           (d/get :ui/globals :sidebar?) (assoc-in [:style :left] 300)) child])
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]
@@ -102,8 +103,11 @@
        {:when-scrolled {:style {:background-color "#e7e7e7"
                                 :border-bottom    "2px solid #e2e2e2"}}}
        [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
-        (toolbar-button [{:href "/"} icons/Home nil "Home"])
-        (command-button command-context :doc/new {:icon icons/Add})
+
+
+        (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])} icons/Docs nil "My Docs"])
+        (command-button command-context :doc/new {:text    "New"
+                                                  :tooltip "New Doc"})
 
         (some->>
           (or left-content

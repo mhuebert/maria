@@ -27,6 +27,7 @@
                  [lark/structure "0.1.1-SNAPSHOT"]
                  [lark/editors "0.1.0-SNAPSHOT"]
                  [lark/cells "0.1.3-SNAPSHOT"]
+                 [lark/value-viewer "0.1.0-SNAPSHOT"]
 
                  [magic-tree "0.0.14-SNAPSHOT"]
 

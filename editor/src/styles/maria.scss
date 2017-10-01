@@ -1,5 +1,3 @@
-@import "vendor/et-book";
-@import "vendor/fira-code";
 @import '../../node_modules/tachyons/css/tachyons.min.css';
 @import 'vendor/codemirror';
 
@@ -12,6 +10,7 @@ $selection-color: #f4f4d6;
   background: #f9f8f4;
   color: #3f4245;
 }
+
 
 
 
@@ -100,10 +99,6 @@ html, body, #maria-main {
   height: 100%;
 }
 
-.serif {
-  font-family: "et-book", Georgia, Times New Roman, serif;
-}
-
 div.CodeMirror pre {
   padding: 0;
 }
@@ -124,9 +119,13 @@ div.CodeMirror {
   }
 
   .cm-comment {
-    font-family: 'et book', Georgia, Times New Roman, serif;
+    font-family: Georgia, Times New Roman, serif;
     font-size: 15px;
   }
+}
+
+.f-body {
+  font-size: 1.25rem;
 }
 
 .pre-wrap {
@@ -134,13 +133,12 @@ div.CodeMirror {
 }
 
 .monospace {
-  font-family: 'Fira Code', monospace;
+  font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
 }
 
 .CodeMirror, .code, code, pre {
-  font-family: 'Fira Code', monospace;
+  font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
   font-size: 15px;
-  line-height: 155%;
 }
 
 .CodeMirror {
@@ -148,6 +146,7 @@ div.CodeMirror {
   box-shadow: none !important;
   text-shadow: none !important;
   height: auto;
+  line-height: 155%;
 }
 
 .cm-ph3 .CodeMirror {
@@ -182,6 +181,10 @@ $darken-more: rgba(0, 0, 0, 0.075);
 $lighten: rgba(255, 255, 255, 0.25);
 .b--darken {
   border-color: $darken;
+}
+
+.bg-ddd {
+  background: #ddd;
 }
 
 .bg-darken {

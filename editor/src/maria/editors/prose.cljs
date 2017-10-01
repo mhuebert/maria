@@ -50,7 +50,7 @@
   (pm/EditorView. (v/dom-node component) (->> (merge editor-props
                                                      {:state                   editor-state
                                                       :spellcheck              false
-                                                      :attributes              {:class "outline-0 cf"}
+                                                      :attributes              {:class "outline-0"}
                                                       :handleScrollToSelection (fn [view] true)
                                                       :dispatchTransaction     (fn [tr]
                                                                                  (let [^js/pm.EditorView pm-view (get @state :pm-view)
@@ -134,7 +134,7 @@
                                                        :blur  #(exec/set-context! {:block/prose nil
                                                                                    :block-view  nil})}}
                  :block         block
-                 :class         " serif f4 ph3 cb"
+                 :class         " serif f-body ph3 cb"
                  :input-rules   (prose-commands/input-rules this)
 
                  :on-click      (fn [e]

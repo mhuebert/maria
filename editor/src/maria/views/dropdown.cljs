@@ -39,7 +39,7 @@
   [{:keys [modal/dropdown key]}]
   (.selectN dropdown (dec (js/parseInt key))))
 
-(def DEFAULT_PAGE_SIZE 9)
+(def DEFAULT_PAGE_SIZE 99)
 
 (defn page-count [item-count page-size]
   (.ceil js/Math (/ item-count page-size)))
@@ -55,7 +55,8 @@
                                         :value
                                         (on-selection)))
                               {:selection (or default-selection -1)
-                               :PAGE_SIZE (if max-height (-> (.floor js/Math (-> max-height
+                               :PAGE_SIZE DEFAULT_PAGE_SIZE
+                               #_(if max-height (-> (.floor js/Math (-> max-height
                                                                                  (- 32)
                                                                                  (/ 30)))
                                                              (min 9)
@@ -116,7 +117,7 @@
                                 (swap! (:view/state this) assoc :last-items items)))
    :view/did-mount          #(exec/set-context! {:modal/dropdown %})
    :view/will-unmount       #(exec/set-context! {:modal/dropdown nil})}
-  [{:keys [view/state on-select! items class]}]
+  [{:keys [view/state on-select! items class ui/max-height]}]
   (let [{:keys [selection page PAGE_SIZE]} @state
         waiting? (nil? items)
         mobile? (d/get :UI :mobile-width?)
@@ -129,8 +130,10 @@
         items (drop offset items)]
     (error/error-boundary {:on-error #(do (prn "View error: numbered-list")
                                           [:fixed])}
-                          [:div.bg-white.br1
-                           {:class (str class " " (when waiting? "o-50"))}
+                          [:div.bg-white.br1.overflow-y-auto
+                           {:class (str class " " (when waiting? "o-50"))
+                            :style {:max-height (min (- max-height 32)
+                                                     300)}}
                            (when waiting? [:.progress-indeterminate])
                            (->> (take PAGE_SIZE items)
                                 (map-indexed (fn [i {:keys [value label]}]
