@@ -1,6 +1,6 @@
 ;; # Hi!
 
-;; This environment is called Maria. We're going to learn to programg with Maria. 😃 Don't worry if anything's new or a little confusing at first–we'll explain everything as we go.
+;; This environment is called Maria. We're going to learn to program with Maria. 😃 Don't worry if anything's new or a little confusing at first–we'll explain everything as we go.
 
 ;; First, let's ask the computer some questions. We'll ask our questions in a programming language called Clojure. Here we go!
 
