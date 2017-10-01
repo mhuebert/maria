@@ -47,7 +47,7 @@
                   (fill (hsl % 90 45)))
             (range 0 375 15))))
 
-;; confetti
+;; confetti (run this one a couple times!)
 (let [palette (cycle ["aqua" "springgreen" "magenta"])]
   (->> (repeat 20 (triangle 20))
        (map #(position (rand-int 500) (rand-int 500) %))

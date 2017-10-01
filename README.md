@@ -49,7 +49,7 @@ lein dev
 (uses `:optimizations :simple`)
 
 ```shell
-lein build-web
+lein build
 ```
 
 ### build fresh dependency bundles
@@ -59,7 +59,7 @@ lein build-web
 _Note - this step can be problematic and is unnecessary for a lot of local development._
 
 ```shell
-lein build-bundles
+lein bundles
 ```
 
 ### cursive/IntelliJ figwheel+repl
