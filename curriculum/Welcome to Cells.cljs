@@ -72,75 +72,10 @@
 
 ;; Let's build some cells that we can make do things. How about this: one cell will act as our "light switch", controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. Then we'll make our "light switch" cell *clickable* so we can interact with it.
 
-;; To do all that, we first need to go over how to evaluate different code based on certain conditions. We’ll start with `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
 
-;; 1. a test
-;; 2. what to do if the test evaluates to "logical true"
-;; 3. what to do if the test evaluates to "logical false"
 
-;; That’s it. For instance:
-(if true
-  "a"
-  "b")
+ ;;; FIXME
 
-(if false
-  "a"
-  "b")
-
-;; (`true` and `false` are special values in Clojure, used when we need a clear [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth value. Both `true` and `false` are [literal values](https://clojure.org/reference/reader#_literals), and don't need to be wrapped in double-quotes.)
-
-;; Here’s a diagram to explain the pieces of those `if` expressions:
-
-(layer
- (position 40 60 (text "(if (tired? you)"))
- (position 80 80 (text "(nap \"20 minutes\" you)"))
- (position 80 100 (text "(code-something-fun you))"))
- (colorize "grey" (rotate -90 (position 310 70 (triangle 10))))
- (position 330 80 (text "if test passes, evaluate this"))
- (position 130 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 115 20 (text "test"))
- (colorize "grey" (position 200 110 (triangle 10)))
- (position 50 140 (text "if test is false or nil, evaluate this")))
-
-;; Now let’s get a feel for `if` by evaluating some examples. We’ll use some new functions, so if you’re not sure what something is, use your Utility Belt (`what-is`, `doc` (and `Command-i`), and experimentation) to find out.
-
-(if (= 1 1)
-  "equal"
-  "not equal")
-
-(if (= 1 2)
-  "equal"
-  "not equal")
-
-(if (vector? ["Bert" "Ernie"])
-  "vector (of Sesame Street characters)"
-  "not a vector")
-
-(if (string? "Catherine the Great")
-  "yes the royal is a string"
-  "not a string")
-
-;; Notice that nearly every value for the `test` in `if` is considered "logically true". That means `if` considers collections and other values "truthy", even if they’re empty:
-
-(if 1968
-  "any number counts as true"
-  "try another number, but trust me, I won't get evaluated!")
-
-(if "Fela Kuti"
-  "strings are truthy too"
-  "logical false")
-
-(if []
-  "empty vectors count as logical true"
-  "I never get evaluated :(")
-
-;; So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT truthy? It’s very specific: the *only* thing that is considered "logical false" is `false` and one other special value called `nil`, which means "nothing". Everything else `if` evaluates the `then` expression.
-
-(if nil
-  "logical true"
-  "logical false")
-
-;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird! 🤡) but this broad definition of "truthiness" is handy.
 
 ;; Anyway, we brought up `if` to make some cells that talk to each other. The idea was to make "light switch" cell, and some other cells that do different things based on that "light switch" cell’s value. With `if` in our toolbox that will be simple. First, we make the "light switch" cell, which we’ll call `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
 
