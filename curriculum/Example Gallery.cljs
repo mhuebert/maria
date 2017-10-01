@@ -56,12 +56,43 @@
             (range 0 375 15))))
 
 ;; #### Confetti
-;; Run this one a couple times!
-(let [palette (cycle ["aqua" "springgreen" "magenta"])]
-  (->> (repeat 20 (triangle 20))
-       (map #(position (rand-int 500) (rand-int 500) %))
-       (map colorize palette)
-       (apply layer)))
+(defn confetti []
+  (let [palette (cycle ["aqua" "springgreen" "magenta"])]
+    (->> (repeat 20 (triangle 20))
+     (map #(position (rand-int 500) (rand-int 500) %))
+     (map colorize palette)
+     (apply layer))))
+
+;; try it–more than once!
+(confetti)
+
+;; now let’s have the computer do it for us every 1/10 of a second!
+(cell (interval 100 confetti))
+
+;; #### User interfaces and Adjustible shapes
+
+(defcell shape-size 16)
+
+(cell (html [:div
+             [:h2 "Adjustable Triangle"]
+             [:input {:type "range"
+                      :on-input #(reset! shape-size (-> % (.-currentTarget) (.-value) int))}]
+             [:div (colorize "aqua" (triangle @shape-size))]]))
+
+;; Note that both the `shape-size` cell's reported value and the circle itself change when you move the slider. This happens because the function attached to on-input is `reset!`ing the `shapesize`, which then communicates that change to every cell that depends on it.
+
+;; We can use this same mechanism to store reactive state for an application, for example by placing a map with multiple entries in a cell:
+
+(defcell some-state
+  {:size 20
+   :colors ["magenta" "cyan" "yellow"]})
+
+;; ... then assigning some behavior that updates what's in the state map. For example, when you click on this circle it will change its size and color:
+
+(cell (->> (colorize (first (@some-state :colors))
+                     (circle (@some-state :size)))
+           (listen :click #(swap! some-state assoc :size (+ 20 (rand-int 10))
+                                  :colors (shuffle (@some-state :colors))))))
 
 ;; #### Halloween pumpkin
 (layer
@@ -91,7 +122,11 @@
      (filter #(clojure.string/includes? % "blue")
              (map first color-names)))
 
-;; #### Fernseheturm
+;; #### Data From Space 🚀
+
+;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web and play with it.
+
+;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
                   (position 29 108 (colorize "grey" (rectangle 12 222)))

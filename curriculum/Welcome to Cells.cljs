@@ -46,9 +46,9 @@
 (defcell random-number []
   (interval 200 #(rand-int 20)))
 
-;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead an evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
+;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead and evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
 
-;; Now we have a cell that updates itself every fifth of a second. Let's tinker with it a bit. Those numbers go by so fast--change the cell to slow it down. (Or, if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
+;; Now we have a cell that updates itself every fifth of a second (every 200 milliseconds). Let's tinker with it a bit. Those numbers go by so fast–change the cell to slow it down. (Or, if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
 
 ;; That `random-number` cell is the first part of our cell chain. Next we'll create a cell that keeps track of the last 10 random numbers generated, using the `random-number` cell:
 (defcell last-ten [self]
@@ -72,81 +72,13 @@
 
 ;; Let's build some cells that we can make do things. How about this: one cell will act as our "light switch", controlling whether or not the other cells get "power" (which for us will be color). The other cells will check that "light switch" cell and do different things based on its value. Then we'll make our "light switch" cell *clickable* so we can interact with it.
 
-;; To do all that, we first need to go over how to evaluate different code based on certain conditions. We’ll start with `if`, which is [special](https://clojure.org/reference/special_forms#if) and weird but fairly simple to use. What you do is give `if` three things, in this order:
+;; (The next part relies on the `if` expression. If you're unfamiliar with `if`, `true`, and `false`–for instance if you're a beginner reading this right after [Learn Clojure with Shapes](/intro)–then you probably want to go read [What If?](/what-if?) before proceeding.)
 
-;; 1. a test
-;; 2. what to do if the test evaluates to "logical true"
-;; 3. what to do if the test evaluates to "logical false"
-
-;; That’s it. For instance:
-(if true
-  "a"
-  "b")
-
-(if false
-  "a"
-  "b")
-
-;; (`true` and `false` are special values in Clojure, used when we need a clear [Boolean](https://en.wikipedia.org/wiki/Boolean_data_type) truth value. Both `true` and `false` are [literal values](https://clojure.org/reference/reader#_literals), and don't need to be wrapped in double-quotes.)
-
-;; Here’s a diagram to explain the pieces of those `if` expressions:
-
-(layer
- (position 40 60 (text "(if (tired? you)"))
- (position 80 80 (text "(nap \"20 minutes\" you)"))
- (position 80 100 (text "(code-something-fun you))"))
- (colorize "grey" (rotate -90 (position 310 70 (triangle 10))))
- (position 330 80 (text "if test passes, evaluate this"))
- (position 130 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 115 20 (text "test"))
- (colorize "grey" (position 200 110 (triangle 10)))
- (position 50 140 (text "if test is false or nil, evaluate this")))
-
-;; Now let’s get a feel for `if` by evaluating some examples. We’ll use some new functions, so if you’re not sure what something is, use your Utility Belt (`what-is`, `doc` (and `Command-i`), and experimentation) to find out.
-
-(if (= 1 1)
-  "equal"
-  "not equal")
-
-(if (= 1 2)
-  "equal"
-  "not equal")
-
-(if (vector? ["Bert" "Ernie"])
-  "vector (of Sesame Street characters)"
-  "not a vector")
-
-(if (string? "Catherine the Great")
-  "yes the royal is a string"
-  "not a string")
-
-;; Notice that nearly every value for the `test` in `if` is considered "logically true". That means `if` considers collections and other values "truthy", even if they’re empty:
-
-(if 1968
-  "any number counts as true"
-  "try another number, but trust me, I won't get evaluated!")
-
-(if "Fela Kuti"
-  "strings are truthy too"
-  "logical false")
-
-(if []
-  "empty vectors count as logical true"
-  "I never get evaluated :(")
-
-;; So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT truthy? It’s very specific: the *only* thing that is considered "logical false" is `false` and one other special value called `nil`, which means "nothing". Everything else `if` evaluates the `then` expression.
-
-(if nil
-  "logical true"
-  "logical false")
-
-;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird! 🤡) but this broad definition of "truthiness" is handy.
-
-;; Anyway, we brought up `if` to make some cells that talk to each other. The idea was to make "light switch" cell, and some other cells that do different things based on that "light switch" cell’s value. With `if` in our toolbox that will be simple. First, we make the "light switch" cell, which we’ll call `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
+;; To build our "light switch", we'll first make a cell for the switch itself. We’ll call it `toggle` because it toggles back and forth between two values, `true` and `false`, for "off" and "on". It will start "off":
 
 (defcell toggle false)
 
-;; This cell doesn't do much: it's just a container for `false`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell, when it changes it notifies other cells that depend on it.
+;; This `toggle` cell doesn't do much: it's just a container for `false`. But because it's a cell, we can use it for so much more than if we defined it as a plain old `true` value on its own. As a cell, when it changes it notifies other cells that depend on it.
 
 ;; Now we build an `if` expression that draws a circle if our cell is true–actually, if it’s "truthy"–and a square if it’s not. First, let's see how works **without** cells talking to each other. What we'll do is check the value of `toggle`, and draw a circle if it's positive, and a square if it's negative.
 (if @toggle
@@ -155,7 +87,7 @@
 
 ;; We defined `toggle` as `false`, our `if` makes a square when `toggle` is false, so we get a square. Fine enough.
 
-;; But here’s the thing: go back and change `toggle` to `false` and re-evaluate it. Our square stays a square! Our `if` stopped paying attention to `toggle`. We want our `if` to draw a circle whenever `toggle` is `true`, but for that to happen we have to re-evaluate our `if`. (Try it.) Our `if` has no idea what’s going on with `toggle` because it was evaluated in the past. That’s a bummer. ☹️
+;; But here’s the thing: go back and change `toggle` to `true` and re-evaluate it. Our square stays a square! Our `if` stopped paying attention to `toggle`. We want our `if` to draw a circle whenever `toggle` is `true`, but for that to happen we have to re-evaluate our `if`. (See for yourself!) Our `if` has no idea what’s going on with `toggle` because it was evaluated in the past. That’s a bummer. ☹️
 
 ;; Let’s try the same thing, but now inside a cell. Remember, cells keep track of each other.
 (cell (if @toggle
@@ -168,124 +100,35 @@
 
 (doc listen)
 
-;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw.
+;; The documentation for `listen` tells us it takes three arguments: the `event` to listen for, a `listener` function that gets called when the event is "heard", and a `shape` to draw. (The second argument list vector in its documentation tells us that we could also call it so that it listens for more than one event.)
 
 ;; The first argument to `listen`, the event to listen for, needs to be a "keyword" that matches a [known event](https://reactjs.org/docs/events.html#supported-events) like FIXME "onClick". Keywords are symbolic identifiers that we use in our programs to represent something. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things. We’ll make a listener called `light-switch` that will listen for the `:click` event.
 
-;; This part is cool enough that we should define a new `toggle` so you can see them side-by-side.
+;; This part is cool enough that we should define a fresh toggle cell so you can see them side-by-side. We’ll call the new one `switch`, and the cell that depends on it `click-me`:
 
-(defcell toggle2 false)
+(defcell switch false)
 
-(defcell light-switch
+(defcell click-me
   (listen :click
-          (fn [] (swap! toggle2 not))
-          (if @toggle2
+          (fn [] (swap! switch not))
+          (if @switch
             (circle 40)
             (square 80))))
 
-;; Here's the magic: click on the result. Look at the value of `toggle2`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
+;; Here's the magic: go ahead and click on the shape `click-me` draws. Then look at the value of `switch`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
 
-;; Notice the second argument to `light-switch` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
+;; Notice the second argument to `click-me` is an anonymous function with no arguments. (If you want some extra practice, take a minute and change this line from the `(fn [] ...)` style to the `#(...)` style for writing anonymous functions.)
 
 ;; This function argument uses a function we haven’t seen before: `swap!`. The `swap!` function is how we update the value of a cell from outside its original definition. (If you’ve worked with Clojure atoms, it’s the same thing here. Cells aren’t atoms but they work the same in this respect.) The oh-so-energetic exclamation point is a warning. Normally, functions are very direct: you give them something, they give you something back, that’s it. The only thing that happens is you get a return value based on the function you called and the arguments you called it with. Everything happens in plain sight.
 
-;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects". Things get harder to think about with side effects. When something happens in a program with side effects, you’ll have to ask, "How did this value get this way?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
+;; But functions with exclamation points–they break that pattern. They’re not so simple. The exclamation point is a warning from whoever wrote the function that you call it with arguments, and you don’t just get a return value, *something changes somewhere else*. 😱 These are called "side effects". Programs get harder to think about with side effects. When something happens in a program with side effects, you’ll have to ask, "How did this value get this way?", or "What changed? Where?", and it can be hard to track down the answer. Side effects are powerful, but they require great care, and they should be used only when absolutely necessary. I entrust you now with their power.
 
-;; In this case, the side effect is cell interaction itself. Each cell has a value, and when another cell needs to change that value, `swap!` is how they do it. The `swap!` function takes a cell name and a function, and instead of merely returning something based on those values, it reaches over into the named cell, gets its value, applies the given function to that value, and does two things with the result: sets the value of the cell to that, and returns it too.
+;; In this case, the side effect is that we’re changing the cell’s value. Each cell has a value, and when another cell needs to change that value, `swap!` is how they do it. (There’s no such thing as using `def` to name the same thing twice, which might seem like the alternative. We don’t do that in Clojure.) The `swap!` function takes a cell name and a function, and instead of merely returning something based on those values, it reaches over into the named cell, gets its value, applies the given function to that value, and does two things with the result: sets the value of the cell to that, and returns the new value too.
+
+;; Try playing with `swap!` a bit. You can evaluate it in place to see it change `switch`. What would happen if you use a function other than `not` to change its value?
 
 ;; Now, we have cells that aren't just connected to each other, but that we can click and change whenever we want. 👍🏼
 
+;; ## ...and Beyond!
 
-
-;; ## Making Web Pages
-
-
-(-> % (.-currentTarget) (.-value) int)
-
-
-;; TODO
-
-(defcell circle-size 16)
-
-;; XXX `html`
-;; XXX hiccup
-;; XXX JS interop
-;; XXX threading
-(cell (html [:div
-             [:h2 "Adjustable Circle"]
-             [:input {:type "range"
-                      :on-input #(reset! circle-size (-> % (.-currentTarget) (.-value) int))}]
-             [:div (colorize "aqua" (circle @circle-size))]]))
-
-;; Note that both the `circle-size` cell's reported value and the circle itself change when you move the slider. This happens because the function attached to on-input is `reset!`ing the `circle-size`, which then communicates that change to every cell that depends on it.
-
-;; We can use this same mechanism to store reactive state for an application, for example by placing a map with multiple entries in a cell:
-
-
-(defcell some-state
-  {:size 20
-   :colors ["magenta" "cyan" "yellow"]})
-
-;; ... then assigning some behavior that updates what's in the state map. For example, when you click on this circle it will change its size and color:
-
-(cell (->> (colorize (first (@some-state :colors))
-                     (circle (@some-state :size)))
-           (listen :click #(swap! some-state assoc :size (+ 20 (rand-int 10))
-                                  :colors (shuffle (@some-state :colors))))))
-
-
-
-
-
-
-
-;; FIXME ## Data From Space 🚀
-;;
-;; Just like `interval`, there is another special function called `fetch` which only works inside cells. Given a URL, `fetch` can download data from the internet:
-
-(defcell location (geo-location))
-
-(defcell birds
-  "An options map including :query params may be passed
-  as the second arg to fetch."
-  (fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
-         {:query {:lat (:latitude @location "52.4821146")
-                  :lng (:longitude @location "13.4121388")
-                  :maxResults 10
-                  :fmt "json"}}))
-
-(cell (map :comName @birds))
-
-(defn find-image [term]
-  (let [result (cell term (fetch "https://commons.wikimedia.org/w/api.php"
-                                 {:query {:action "query"
-                                          :origin "*"
-                                          :generator "images"
-                                          :prop "imageinfo"
-                                          :iiprop "url"
-                                          :gimlimit 5
-                                          :format "json"
-                                          :redirects 1
-                                          :titles term}}))]
-    (some->> @result
-             :query
-             :pages
-             vals
-             (keep (comp :url first :imageinfo))
-             first)))
-
-(defcell bird-pics
-  (doall (for [bird @birds]
-           (some->> (:sciName bird)
-                    (find-image)
-                    (image 100)))))
-
-(cell (image (find-image "berlin")))
-
-;; XXX for more on fetching, see https://maria.cloud/gist/f958a24f0ece6d673bce574ec2d3cd71
-
-
-;; TODO Loop example
-
-
-;; TODO wrap up with conclusion
+;; There’s a lot that can be done with cells, and we’re a little pressed for time here. For more amazing demonstrations of what cells can do, I highly recommend playing around with the demonstration functions in the [Gallery](/gallery).
