@@ -18,7 +18,7 @@
 
 (defn add-clj-ext [s]
   (when s
-    (cond-> s
+    (cond-> (string/replace s "/" "_")
             (not (re-find #"\.clj[cs]?$" s)) (str ".cljs"))))
 
 (defn strip-clj-ext [s]
