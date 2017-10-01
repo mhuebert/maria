@@ -4,7 +4,9 @@
 
 ;; Most (but not all!) of the Clojure programming techniques used here are explained in [Learn Clojure with Shapes](https://dev.maria.cloud/intro) and [Welcome to Cells](https://dev.maria.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
 
-;; Colorization functions, demonstrated with ranges
+;; #### Colorization functions
+
+;; Demonstrated with ranges
 (map #(colorize % (square 50))
      (map #(hsl % 100 50) (range 0 250 25)))
 
@@ -34,7 +36,7 @@
                 (rectangle 500 5))
      (range 0 1000 5)))
 
-;; rolling triangle rainbow
+;; #### Rolling triangle rainbow
 (apply layer
   (concat [(colorize "white" (rectangle 750 75))]
           (map #(->> (triangle 25)
@@ -43,7 +45,7 @@
    	                 (colorize (hsl % 90 75)))
                (range 0 360 15))))
 
-;; cartwheel rectangles
+;; #### Cartwheel rectangles
 (layer
   (fill "white" (rectangle 750 70))
   (apply beside
@@ -53,14 +55,15 @@
                   (fill (hsl % 90 45)))
             (range 0 375 15))))
 
-;; confetti (run this one a couple times!)
+;; #### Confetti
+;; Run this one a couple times!
 (let [palette (cycle ["aqua" "springgreen" "magenta"])]
   (->> (repeat 20 (triangle 20))
        (map #(position (rand-int 500) (rand-int 500) %))
        (map colorize palette)
        (apply layer)))
 
-;; Halloween pumpkin
+;; #### Halloween pumpkin
 (layer
  (position 40 60 (colorize "orange" (circle 40)))
  (position 10 30 (colorize "black"  (triangle 24)))
@@ -71,11 +74,11 @@
  (position 33 82 (colorize "orange" (rectangle 10 5)))
  (position 35 2  (colorize "black"  (rectangle 10 20))))
 
-;; Sample from a palette every quarter-second
+;; #### Sample from a palette every quarter-second
 (let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
   (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
 
-;; Labeled color swatches:
+;; #### Labeled color swatches:
 (take 10 color-names)
 
 ;; And see how color swatches are made by digging into the source:
@@ -88,7 +91,7 @@
      (filter #(clojure.string/includes? % "blue")
              (map first color-names)))
 
-;;;; Fernseheturm
+;; #### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
                   (position 29 108 (colorize "grey" (rectangle 12 222)))
