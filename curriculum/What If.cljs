@@ -58,35 +58,65 @@
   "yes the royal is a string"
   "not a string")
 
-;; ## "Logical Truth"
+;; ## Truthiness
 
-;; Notice that nearly every value for the `test` in `if` is considered "logically true". That means `if` considers collections and other values "truthy", even if they’re empty:
+;; One funny thing you might notice about `if` is that it treats nearly every value for `test` as logically true:
 
 (if 1968
-  "any number counts as true"
-  "try another number, but trust me, I won't get evaluated!")
+  "logical true"
+  "logical false")
 
 (if "Fela Kuti"
-  "strings are truthy too"
+  "logical true"
   "logical false")
 
 (if []
-  "empty vectors count as logical true"
-  "I never get evaluated :(")
+  "logical true"
+  "logical false")
 
-;; So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT truthy? It’s very specific: the *only* thing that is considered "logical false" is `false` and one other special value called `nil`, which means "nothing". Everything else `if` evaluates the `then` expression.
+(if 0
+  "logical true"
+  "logical false")
+
+;; Zero, empty collections, strings–they all count as "logical true"! So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT logical true?
+
+;; It’s very specific: the *only* thing considered "logical false" is `false` and one other special value `nil`, which means "nothing":
+
+(if false
+  "logical true"
+  "logical false")
 
 (if nil
   "logical true"
   "logical false")
 
-;; Everything else–strings, numbers, any sort of collection–are all considered "truthy". This might seem weird (OK, it is weird! 🤡) but this broad definition of "truthiness" is handy.
+;; Everything else evaluates to "logical true". The way we Clojure programmers usually talk about this is best explained by [The Joy of Clojure](http://www.joyofclojure.com/), a book about how to think "the Clojure way":
+
+;; >In Clojure `nil` and `false` are considered "false" and therefore we say they are both "falsey"... All non-falsey values are considered "truthy" and evaluate as such.
+
+;; Calling things "truthy" and "falsey" is super helpful. They’re a clear, quick way to make sure we remember the difference between the *value** `true` and how `if` and its friends treat values. This comes up when we read code to ourselves or other people: we’ll say something like "then we check such-and-such expression, and if it’s truthy, we do so-and-so". This is better than saying "we check if such-and-such expression is true", because the expression isn’t just checking for `true`, but all sorts of other "truthy" values. This might seem weird (OK, it is weird! 🤡) but it’s handy to have this broad definition of "truthiness". Give it some practice by reading these expressions. Really read them out loud, with your voice, to get used to truthy and falsey:
+
+(if (+ 10 -10)
+  "truthy"
+  "falsey")
+
+(if ""
+  "truthy"
+  "falsey")
+
+(if (- 5 6)
+  "truthy"
+  "falsey")
+
+(if "false"
+  "truthy"
+  "falsey")
 
 ;; ## Other species of `if`
 
 ;; There are lots of ways we might want to choose different paths for our code. `if` is the most basic, and everything else is based on it, but the others are useful specializations. They can be more concise, cover more situations, and they’re especially helpful for clearly communicating what you expect and what you want to happen.
 
-;; (There's one trick to be aware of with these: none of them are functions. They're not special forms, either. See, special forms are fundamental building blocks for creating Clojure from scratch. These don't need to be made from scratch because they're all based on `if`. But they can't be functions, either, because they *rearrange your code* behind the scenes, and functions can't work like that. Because these tools provide ways to branch your code that only evaluates functions under certain conditions, they need to be [macros](https://clojure.org/reference/macros), which are an topic for another day. But, like the `if` special form, the way we use them still looks like calling a function.)
+;; (You should be aware of one strange property of these tools we’re about to cover: none of them are functions. They're not special forms, either. They're all [macros](https://clojure.org/reference/macros), which are a topic for another day. The way we use macros for now isn’t any different from calling a function.)
 
 ;; #### `when`
 
