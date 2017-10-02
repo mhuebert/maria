@@ -196,7 +196,6 @@
     5000        "Writing didn't exist yet"
     500         "Computers didn't exist yet"
     50          "Clojure didn't exist yet"
-
     "Sounds pretty recent"))
 
-;; Don’t forget to check out the `:>>` technique, described in the documentation.
+;; Don’t forget to check out the `:>>` technique, described in the `condp` documentation.
