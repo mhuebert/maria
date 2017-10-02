@@ -36,9 +36,9 @@
 
 (what-is if)
 
-;; Functions are the building blocks of using Clojure. Special forms are the building blocks used to make Clojure itself. This doesn't change how we use special forms–we still call them like functions–but it’s important to at least be aware of how our tools work "under the hood". (If you want some advanced reading, you can check out the actual source where `if` is built in [Clojure](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/Compiler.java#L2703) and [ClojureScript](https://github.com/clojure/clojurescript/blob/998933f5090254611b46a2b86626fb17cabc994a/src/main/clojure/cljs/compiler.cljc#L491).)
+;; Functions are the building blocks of using Clojure, but special forms are the building blocks used to make *Clojure itself*. This doesn't change how we use special forms–we still call them like functions–but it’s important to at least be aware of how our tools work "under the hood". (If you want some advanced reading, you can check out the actual source where `if` is built in [Clojure](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/Compiler.java#L2703) and [ClojureScript](https://github.com/clojure/clojurescript/blob/998933f5090254611b46a2b86626fb17cabc994a/src/main/clojure/cljs/compiler.cljc#L491).)
 
-;; ## `if` Sandbox
+;; ## Playing in the Sandbox
 
 ;; Now let’s get a feel for `if` by evaluating some examples. We’ll use some functions that might be new, so if you’re not sure what something is, use your Utility Belt (`what-is`, `doc` (and `Command-i`), experimentation, and slow careful research) to find out.
 
@@ -57,6 +57,8 @@
 (if (string? "Catherine the Great")
   "yes the royal is a string"
   "not a string")
+
+;; Try building one or two of your own `if` statements.
 
 ;; ## Truthiness
 
@@ -94,7 +96,9 @@
 
 ;; >In Clojure `nil` and `false` are considered "false" and therefore we say they are both "falsey"... All non-falsey values are considered "truthy" and evaluate as such.
 
-;; Calling things "truthy" and "falsey" is super helpful. They’re a clear, quick way to make sure we remember the difference between the *value* `true` and how `if` and its friends treat values. This comes up when we read code to ourselves or other people: we’ll say something like "then we check such-and-such expression, and if it’s truthy, we do so-and-so". This is better than saying "we check if such-and-such expression is true", because the expression isn’t just checking for `true`, but all sorts of other "truthy" values. This might seem weird (OK, it is weird! 🤡) but it’s handy to have this broad definition of "truthiness". Give it some practice by reading these expressions. Really read them out loud, with your voice, to get used to truthy and falsey:
+;; Truthy, falsey, almost everything being logically true–this might all seem weird (OK, it is weird! 🤡) but it’s handy for things to work this way. A broad definition of "truthiness" makes it simple to build tests, and calling things "truthy" and "falsey" is super helpful. They’re a clear, quick way to make sure we remember the difference between the *value* `true` and how `if` and its friends treat values. This comes up when we read code to ourselves or other people: we’ll say something like "then we check such-and-such expression, and if it’s truthy, we do so-and-so". This is better than saying "we check if such-and-such expression is true", because the expression isn’t just checking for `true`, but all sorts of other "truthy" values.
+
+;; Give it some practice by reading these expressions. Really read them out loud, with your voice, to get used to truthy and falsey:
 
 (if (+ 10 -10)
   "truthy"
@@ -122,7 +126,7 @@
 
 ;; (You should be aware of one strange property of these tools we’re about to cover: none of them are functions. They're not special forms, either. They're all [macros](https://clojure.org/reference/macros), which are a topic for another day. The way we use macros for now isn’t any different from calling a function.)
 
-;; ### `when`
+;; #### Only evaluate in case of fire: `when`
 
 ;; Sometimes we have situations where we want an `if`, but nothing needs to happen if the `test` evaluates to falsey. Technically it’s possible to write that as an `if` without an `else` expression, but it’s not considered good form:
 
@@ -140,7 +144,7 @@
 
 ;; Sometimes you need to choose between more than two different paths for your code. Again, it's technically possible to handle that with a bunch of nested, intermingled `if`s, but that is inelegant. Clojure provides us with ways to cleanly handle multiple possibilities: `cond`, `case`, and `condp`.
 
-;; #### `cond`
+;; #### Infinite possibilities with `cond`
 
 ;; The most general is `cond`, the conditional expression. which takes a bunch of pairs. Each pair has a test expression and a result expression that gets evaluated if the test is truthy.
 
@@ -167,7 +171,7 @@
 
 ;; (If you haven’t seen them before, keywords are symbolic identifiers that we use in our programs to represent things. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things.)
 
-;; #### `case`
+;; #### Different strokes for different folks with `case`
 
 ;; If all the branches of your code depend on just checking if an expression is equal to some known values, `case` is perfect. For example, say we wanted to write a generic where-to-put-your-new-pet function. Before we would define it `defn`, we would play around with the code first:
 
@@ -180,7 +184,7 @@
 
 ;; What happens when we put in a value that we don’t handle, like `:spider`? How could we prevent that? Research and experiment.
 
-;; #### `condp`
+;; #### Check yourself with `condp`
 
 ;; If all your outcomes depend on comparing a value to some possibilities, and the comparison isn’t just equality, use `condp` (named for "conditional predicate"). For instance, play with the years-ago value here, and read the docs for `condp` to figure out how it works:
 
