@@ -78,7 +78,7 @@
   "logical true"
   "logical false")
 
-;; Zero, empty collections, strings–they all count as "logical true"! So what do we have to do to get `if` to evaluate the `else` expression? What’s NOT logical true?
+;; Zero, empty collections, strings–they all count as "logical true"! So what do we have to do to get `if` to evaluate the `else` expression? What’s *not* logical true?
 
 ;; It’s very specific: the *only* thing considered "logical false" is `false` and one other special value `nil`, which means "nothing":
 
@@ -94,13 +94,17 @@
 
 ;; >In Clojure `nil` and `false` are considered "false" and therefore we say they are both "falsey"... All non-falsey values are considered "truthy" and evaluate as such.
 
-;; Calling things "truthy" and "falsey" is super helpful. They’re a clear, quick way to make sure we remember the difference between the *value** `true` and how `if` and its friends treat values. This comes up when we read code to ourselves or other people: we’ll say something like "then we check such-and-such expression, and if it’s truthy, we do so-and-so". This is better than saying "we check if such-and-such expression is true", because the expression isn’t just checking for `true`, but all sorts of other "truthy" values. This might seem weird (OK, it is weird! 🤡) but it’s handy to have this broad definition of "truthiness". Give it some practice by reading these expressions. Really read them out loud, with your voice, to get used to truthy and falsey:
+;; Calling things "truthy" and "falsey" is super helpful. They’re a clear, quick way to make sure we remember the difference between the *value* `true` and how `if` and its friends treat values. This comes up when we read code to ourselves or other people: we’ll say something like "then we check such-and-such expression, and if it’s truthy, we do so-and-so". This is better than saying "we check if such-and-such expression is true", because the expression isn’t just checking for `true`, but all sorts of other "truthy" values. This might seem weird (OK, it is weird! 🤡) but it’s handy to have this broad definition of "truthiness". Give it some practice by reading these expressions. Really read them out loud, with your voice, to get used to truthy and falsey:
 
 (if (+ 10 -10)
   "truthy"
   "falsey")
 
 (if ""
+  "truthy"
+  "falsey")
+
+(if (number? "5")
   "truthy"
   "falsey")
 
@@ -118,32 +122,52 @@
 
 ;; (You should be aware of one strange property of these tools we’re about to cover: none of them are functions. They're not special forms, either. They're all [macros](https://clojure.org/reference/macros), which are a topic for another day. The way we use macros for now isn’t any different from calling a function.)
 
-;; #### `when`
+;; ### `when`
 
-;; Sometimes we have situations where we want an `if`, but nothing needs to happen in the `else` condition. Technically it’s possible to write that as an `if` without the `else`, but it’s not considered good form:
+;; Sometimes we have situations where we want an `if`, but nothing needs to happen if the `test` evaluates to falsey. Technically it’s possible to write that as an `if` without an `else` expression, but it’s not considered good form:
 
 (if (number? 1.8)
   "do some stuff with this number")
 
-;; The accepted practice of writing Clojure for this situation is to use `when`, which is like a single-branch `if`. This makes it more clear that you don’t expect to do anything if the test is falsey.
+;; The accepted practice for writing Clojure in these situations is to use `when`, which is like a single-branch `if`. This makes it more clear that you don’t expect to do anything if the test evaluates to falsey:
 
 (when (number? 1.8)
   "do some stuff with this number, and don’t worry if it's not a number")
 
 ;; There are other reasons to use `when` covered in the [Clojure Style Guide](https://github.com/bbatsov/clojure-style-guide#when-instead-of-single-branch-if).
 
-;; Notice
-
-;; #### "*Twenty* roads diverged in a yellow wood..."
+;; ### "*Twenty* roads diverged in a yellow wood..."
 
 ;; Sometimes you need to choose between more than two different paths for your code. Again, it's technically possible to handle that with a bunch of nested, intermingled `if`s, but that is inelegant. Clojure provides us with ways to cleanly handle multiple possibilities: `cond`, `case`, and `condp`.
 
-;; The most general is `cond`. It takes a bunch of pairs. Each pair has a test expression and a result expression. This handles the most complex hairballs of branching possibilities.
+;; #### `cond`
 
-;; FIXME
-(cond
-  (raining? my-city))
+;; The most general is `cond`, the conditional expression. which takes a bunch of pairs. Each pair has a test expression and a result expression that gets evaluated if the test is truthy.
 
+(doc cond)
+
+;; `cond` handles the most complex hairballs of branching possibilities, like this decision-maker that returns a [keyword](https://clojure.org/reference/data_structures#Keywords) describing how to spend your day depending on four separate conditions that interact. Play with the `true`/`false` values in the `let` to make sure the logic is correct:
+
+(let [raining? true
+      weekday? true
+      holiday? false
+      sick?    true]
+  (cond
+    (and weekday?
+         (not holiday?)
+         (not sick?))              :go-to-work
+    (and (or (not weekday?)
+             holiday?)
+         (not sick?)
+         (not raining?))           :play-outside
+    (or sick?
+        (and raining?
+             (or holiday?
+                 (not weekday?)))) :read-a-book))
+
+;; (If you haven’t seen them before, keywords are symbolic identifiers that we use in our programs to represent things. They always start with a colon, like `:i-am-a-keyword`, and they’re a great data type to use for cross-referencing things.)
+
+;; #### `case`
 
 ;; If all the branches of your code depend on just checking if an expression is equal to some known values, `case` is perfect. For example, say we wanted to write a generic where-to-put-your-new-pet function. Before we would define it `defn`, we would play around with the code first:
 
@@ -156,7 +180,9 @@
 
 ;; What happens when we put in a value that we don’t handle, like `:spider`? How could we prevent that? Research and experiment.
 
-;; If all your outcomes depend on comparing a value to some possibilities, and the comparison isn’t just equality, use `condp`. For instance, play with the years-ago value here, and read the docs for `condp` to figure out how it works:
+;; #### `condp`
+
+;; If all your outcomes depend on comparing a value to some possibilities, and the comparison isn’t just equality, use `condp` (named for "conditional predicate"). For instance, play with the years-ago value here, and read the docs for `condp` to figure out how it works:
 
 (let [years-ago 600]
   (condp < years-ago
