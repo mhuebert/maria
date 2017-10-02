@@ -36,7 +36,7 @@
 
 (what-is if)
 
-;; Functions are the building blocks of using Clojure. Special forms are the building blocks used to make Clojure itself. This doesn't change how we use special forms–we still call them like functions–but it’s important to at least be aware of how our tools work "under the hood". (If you want some advanced reading, you can check out the actual source where `if` is built in [Clojure](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/Compiler.java#L2703) and [ClojureScript](https://github.com/clojure/clojurescript/blob/r1.9.908-12-g998933f/src/main/clojure/cljs/analyzer.cljc#L1347-L1359).)
+;; Functions are the building blocks of using Clojure. Special forms are the building blocks used to make Clojure itself. This doesn't change how we use special forms–we still call them like functions–but it’s important to at least be aware of how our tools work "under the hood". (If you want some advanced reading, you can check out the actual source where `if` is built in [Clojure](https://github.com/clojure/clojure/blob/master/src/jvm/clojure/lang/Compiler.java#L2703) and [ClojureScript](https://github.com/clojure/clojurescript/blob/998933f5090254611b46a2b86626fb17cabc994a/src/main/clojure/cljs/compiler.cljc#L491).)
 
 ;; ## `if` Sandbox
 
