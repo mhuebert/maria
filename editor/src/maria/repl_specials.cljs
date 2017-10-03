@@ -2,7 +2,7 @@
   "Special forms that exist only in the REPL."
   (:require [cljs-live.eval :as e :refer [defspecial]]
             [maria.views.repl-specials :as special-views]
-            [maria.messages :as messages]
+            [maria.friendly.kinds :as kinds]
             [maria.live.ns-utils :as ns-utils]
             [clojure.string :as string]
             [maria.editors.code :as code]
@@ -20,16 +20,16 @@
 (defspecial what-is
   "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
   [c-state c-env thing]
-  (e/eval-str c-state c-env (str `(maria.messages/what-is ~(cond (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
-                                                                 :maria.kinds/macro
+  (e/eval-str c-state c-env (str `(maria.friendly.kinds/what-is ~(cond (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
+                                                                       :maria.kinds/macro
 
-                                                                 (and (symbol? thing) (ns-utils/special-doc-map thing))
-                                                                 :maria.kinds/special-form
+                                                                       (and (symbol? thing) (ns-utils/special-doc-map thing))
+                                                                       :maria.kinds/special-form
 
-                                                                 (contains? e/repl-specials thing)
-                                                                 :maria.kinds/function
+                                                                       (contains? e/repl-specials thing)
+                                                                       :maria.kinds/function
 
-                                                                 :else thing)))))
+                                                                       :else thing)))))
 
 (defspecial doc
   "Show documentation for given symbol"
@@ -39,7 +39,7 @@
                                        :standalone? true}
                                       the-var))}
     {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
-                                          (str (str "`doc` requires a symbol, but a " (cljs.core/name (messages/kind name)) " was passed."))))}))
+                                          (str (str "`doc` requires a symbol, but a " (cljs.core/name (kinds/kind name)) " was passed."))))}))
 
 
 (defspecial source

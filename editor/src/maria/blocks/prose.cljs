@@ -3,7 +3,7 @@
             [re-view-prosemirror.core :as pm]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
-            [magic-tree.core :as tree]
+            [lark.tree.core :as tree]
             [re-view-prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
             [lark.editors.editor :as Editor]))

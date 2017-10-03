@@ -1,7 +1,7 @@
 (ns maria.live.source-lookups
   (:require [cljs.tools.reader.reader-types :as rt]
-            [magic-tree.parse :as parse]
-            [magic-tree.core :as tree]
+            [lark.tree.parse :as parse]
+            [lark.tree.core :as tree]
             [clojure.string :as string]
             [maria.eval :as e]
             [cljs-live.eval :as live-eval]

@@ -1,10 +1,9 @@
 (ns maria.user
   (:require re-view-hiccup.core
-            maria.messages
+            [maria.friendly.kinds :refer [what-is]]
             goog.net.jsloader
             maria.user.loaders
             maria.repl-specials
-            maria.show
             [cells.cell :refer [cell]]
             [cells.lib :as cell
              :refer [interval timeout fetch geo-location with-view]

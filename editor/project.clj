@@ -1,4 +1,4 @@
-(defproject maria-editor "0.1.0-SNAPSHOT"
+(defproject maria/editor "0.1.0-SNAPSHOT"
   :description "A ClojureScript editor for beginners"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -7,9 +7,8 @@
   :min-lein-version "2.7.1"
 
   :dependencies [[org.clojure/clojure "1.9.0-alpha17"]
-                 [org.clojure/clojurescript "1.9.854"]
+                 [org.clojure/clojurescript "1.9.946"]
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [org.clojure/tools.reader "1.0.5"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [com.cognitect/transit-clj "0.8.300"]
                  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
@@ -17,21 +16,21 @@
 
                  [fast-zip "0.7.0"]
 
+                 [maria/friendly "0.1.0-SNAPSHOT"]
+                 [maria/shapes "0.1.0-SNAPSHOT"]
+
                  [re-view "0.3.29"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.10-SNAPSHOT"]
-                 [cljs-live "0.2.6"]
+                 [cljs-live "0.2.8-SNAPSHOT"]
 
 
-                 [lark/commands "0.1.1-SNAPSHOT"]
-                 [lark/structure "0.1.1-SNAPSHOT"]
-                 [lark/editors "0.1.0-SNAPSHOT"]
-                 [lark/cells "0.1.3-SNAPSHOT"]
-                 [lark/value-viewer "0.1.0-SNAPSHOT"]
-
-                 [magic-tree "0.0.14-SNAPSHOT"]
-
-
+                 [lark/commands "0.1.2-SNAPSHOT"]
+                 [lark/structure "0.1.2-SNAPSHOT"]
+                 [lark/editors "0.1.2-SNAPSHOT"]
+                 [lark/value-viewer "0.1.2-SNAPSHOT"]
+                 [lark/tree "0.1.2-SNAPSHOT"]
+                 [lark/cells "0.1.5-SNAPSHOT"]
 
 
                  [cljsjs/codemirror "5.19.0-0"]
@@ -41,10 +40,9 @@
                  [cljsjs/firebase "4.0.0-0"]
 
                  ;; just for bundles
-                 [reagent "0.7.0" :exclusions [cljsjs/react]]
-                 [leipzig "0.10.0"]
-                 [cljs-bach "0.2.0"]
-                 [thheller/shadow-cljs "1.0.20170802"]
+                 ;[reagent "0.7.0" :exclusions [cljsjs/react]]
+                 ;[leipzig "0.10.0"]
+                 ;[cljs-bach "0.2.0"]
                  ]
 
   :plugins [[lein-figwheel "0.5.13"]
@@ -59,14 +57,15 @@
                  "checkouts/re_view_hiccup/src"
                  "checkouts/re_view_routing/src"
                  "checkouts/re_view_prosemirror/src"
-                 "checkouts/magic_tree/src"
                  "checkouts/re_db/src"
                  "checkouts/cljs_live/src"
                  "checkouts/shapes"
+                 "checkouts/friendly"
                  "../../lark/cells/src"
                  "../../lark/commands/src"
                  "../../lark/structure/src"
-                 "../../lark/editors/src"]
+                 "../../lark/editors/src"
+                 "../../lark/tree/src"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

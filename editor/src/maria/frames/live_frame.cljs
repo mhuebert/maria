@@ -1,12 +1,12 @@
 (ns maria.frames.live-frame
   (:require [maria.pages.live-layout :as repl]
             [maria.eval :as e]
-
+            [maria.friendly.kinds :as kinds]
+            [shapes.core :as shapes]
 
             [cells.cell :as cell]
 
             [lark.commands.exec]
-            [maria.show :as show]
 
             [clojure.set]
             [clojure.string]
@@ -40,6 +40,10 @@
     (d/get :cells (name this)))
   (invalidate! [this]
     (patterns/invalidate! d/*db* :ea_ [:cells (name this)])))
+
+(extend-protocol kinds/IDoc
+  shapes/Shape
+  (doc [this] "a shape: some geometry that Maria can draw"))
 
 (enable-console-print!)
 
