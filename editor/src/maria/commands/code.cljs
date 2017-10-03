@@ -377,7 +377,7 @@
 
 (defcommand :info/source
   "Show source code for the current var"
-  {:when #(and (:block/code %)
+  {:when #(and (:block/code %) 
                (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
   [{:keys [block editor]}]
   (Block/eval! block :form (list 'source
