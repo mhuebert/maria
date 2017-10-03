@@ -1,16 +1,21 @@
 (ns maria.blocks.blocks
   (:refer-clojure :exclude [empty?])
-  (:require [magic-tree.core :as tree]
+  (:require [clojure.string :as string]
+
+            [lark.tree.core :as tree]
             [lark.commands.registry :refer-macros [defcommand]]
+            [lark.editors.editor :as Editor]
+
             [re-view.core :as v]
-            [clojure.string :as string]
             [re-db.d :as d]
+
             [re-view-prosemirror.markdown :as markdown]
+
             [cells.cell :as cell]
             [maria.util :as util]
-            [cells.eval-context :as eval-context]
             [maria.eval :as e]
-            [lark.editors.editor :as Editor]
+
+            [cells.eval-context :as eval-context]
             [fast-zip.core :as z]))
 
 (defprotocol IBlock
@@ -62,7 +67,7 @@
                             (= (state this) (state other)))))
 
 (defn from-ast
-  "Returns a block, given a magic-tree AST node."
+  "Returns a block, given a lark.tree AST node."
   [{:keys [tag value] :as node}]
   (case tag
     :comment-block (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
@@ -102,6 +107,7 @@
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
   (->> (tree/ast (:ns @e/c-env) source)
+       (tree/group-comment-blocks)
        (:value)
        (mapv from-ast)
        (ensure-blocks)

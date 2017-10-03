@@ -1,11 +1,11 @@
 {:cljsbuild-out "resources/public/js/compiled/out-cljs-live"
  :bundle-out    "resources/public/js/cljs_live_bundles"
  :source-paths  ["src"]
- :bundles       [#_{:name     cljs.spec.alpha
+ :bundles       [{:name     cljs.spec.alpha
                   :entry    [cljs.spec.alpha
                              cljs.spec.alpha$macros]
                   :provided [maria.frames.live-frame]}
-                 {:name            maria.user
+                 #_{:name            maria.user
                   :entry           #{maria.user}
                   :provided        #{maria.frames.live-frame}
                   :entry/no-follow #{maria.eval

@@ -2,11 +2,10 @@
   (:require [goog.object :as gobj]
             [shapes.core :as shapes]
             [cells.cell :as cell]
-            [maria.messages :as messages]
+            [maria.friendly.messages :as messages]
             [maria.views.icons :as icons]
             [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
-            [maria.live.magic-tree :as magic]
             [maria.editors.code :as code]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
@@ -14,8 +13,25 @@
             [re-view-hiccup.core :as hiccup]
             [maria.util :refer [space]]
             [maria.eval :as e]
-            [lark.value-viewer.core :as views])
+            [lark.value-viewer.core :as views]
+            [lark.tree.core :as tree]
+            [lark.tree.range :as range]
+            [fast-zip.core :as z])
   (:import [goog.async Deferred]))
+
+(defn highlights-for-position
+  "Return ranges for appropriate highlights for a position within given Clojure source."
+  [source position]
+  (when-let [highlights (some-> (tree/ast (:ns @e/c-env) source)
+                                (tree/ast-zip)
+                                (tree/node-at position)
+                                (z/node)
+                                (tree/node-highlights))]
+    (case (count highlights)
+      0 nil
+      1 (first highlights)
+      2 (merge (second highlights)
+               (range/bounds (first highlights) :left)))))
 
 (defn bracket-type [value]
   (cond (vector? value) ["[" "]"]
@@ -37,15 +53,14 @@
   object
   (render-hiccup [this] (hiccup/element this)))
 
-
-(declare format-value)
-
+(declare format-function)
 (extend-protocol views/IView
   cell/Cell
-  (view [this] (cell/view this)
-    #_(hiccup/element (format-value (cell/view this))
-                      #_[:.br1.bg-darken.dib.inline-flex {:style {:margin 1 :padding 4}}
-                         (format-value (cell/view this))])))
+  (view [this] (cell/view this))
+  function
+  (view [this] (format-function this)))
+
+(declare format-value)
 
 (defview display-deferred
   {:view/will-mount (fn [{:keys [deferred view/state]}]
@@ -151,20 +166,14 @@
             (some-> (source-lookups/fn-var value)
                     (special-views/var-source))))]]))
 
-(extend-protocol views/IView
-  function
-  (view [this] (format-function this))
-  cell/Cell
-  (view [this] (cell/view this)))
-
 (def format-value views/format-value)
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
    {:style {:max-height 200}}
    (code/viewer {:error-ranges (cond-> []
-                                       position (conj (magic/highlights-for-position source position))
-                                       (seq warnings) (into (map #(magic/highlights-for-position source (:warning-position %)) warnings)))}
+                                       position (conj (highlights-for-position source position))
+                                       (seq warnings) (into (map #(highlights-for-position source (:warning-position %)) warnings)))}
                 source)])
 
 (defn format-warnings [warnings]

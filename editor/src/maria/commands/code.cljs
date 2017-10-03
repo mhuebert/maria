@@ -1,7 +1,8 @@
 (ns maria.commands.code
   (:require [lark.commands.registry :as registry :refer-macros [defcommand]]
             [maria.eval :as e]
-            [magic-tree.core :as tree]
+            [lark.tree.core :as tree]
+            [lark.tree.emit :as emit]
             [lark.structure.edit :as edit :include-macros true]
             [lark.structure.codemirror :as cm]
             [fast-zip.core :as z]
@@ -372,7 +373,7 @@
   (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
     (if (and (symbol? form) (ns-utils/resolve-var-or-special e/c-state e/c-env form))
       (Block/eval! block :form (list 'doc form))
-      (Block/eval! block :form (list 'maria.messages/what-is (list 'quote form))))))
+      (Block/eval! block :form (list 'maria.friendly.kinds/what-is (list 'quote form))))))
 
 (defcommand :info/source
   "Show source code for the current var"
@@ -392,5 +393,13 @@
 
 (def select-up edit/expand-selection)
 (def select-reverse edit/shrink-selection)
+
+(defcommand :edit/format-code
+  {:bindings ["M2-Tab"]
+   :when :block/code}
+  [{:keys [block editor]}]
+  (binding [lark.tree.emit/*prettify* true]
+    (cm/set-preserve-cursor! editor (Block/emit block))
+    true))
 
 

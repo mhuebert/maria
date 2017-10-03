@@ -2,7 +2,7 @@
   (:require [maria.eval :as e]
             [cljs-live.eval :as c-e]
             [clojure.string :as string]
-            [magic-tree.core :as tree]
+            [lark.tree.core :as tree]
             [cljs.analyzer :as ana]))
 
 

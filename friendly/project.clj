@@ -1,5 +1,5 @@
-(defproject maria/shapes "0.1.0-SNAPSHOT"
-  :description "A shapes library"
+(defproject maria/friendly "0.1.0-SNAPSHOT"
+  :description "Code to soften a few rough edges in Clojure(Script)."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}

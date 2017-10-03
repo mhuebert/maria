@@ -65,7 +65,7 @@
                      (fn []
                        (eval-form* '(require '[cljs.core :include-macros true]))
                        (eval-form* '(require '[maria.user :include-macros true]))
-                       (eval-form* '(inject 'cljs.core '{what-is   maria.messages/what-is
+                       (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
                                                          load-gist maria.user.loaders/load-gist
                                                          load-js   maria.user.loaders/load-js
                                                          load-npm  maria.user.loaders/load-npm

@@ -157,7 +157,7 @@
      (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc
                   {:on-click #(swap! state update :limit-n (partial + 20))}
                   (-> icons/ExpandMore
-                      (icons/class "br-pill bg-darken ma1"))])]))
+                      (icons/class "ma1"))])]))
 
 (defn gists-list
   [username]

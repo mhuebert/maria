@@ -28,8 +28,7 @@
 
 (defcommand :navigate/forward
   {:bindings ["Down"
-              "Right"
-              "M2-Tab"]
+              "Right"]
    :when     :block-list}
   [context]
   (if (and (#{"ArrowDown"
@@ -42,8 +41,7 @@
 
 (defcommand :navigate/backward
   {:bindings ["Up"
-              "Left"
-              "M2-Shift-Tab"]
+              "Left"]
    :when     :block-list}
   [context]
   (if (and (#{"ArrowUp"

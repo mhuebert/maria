@@ -7,7 +7,7 @@
 
             [cells.cell :as cell]
             [maria.blocks.blocks :as Block]
-            [magic-tree.core :as tree]
+            [lark.tree.core :as tree]
             [maria.eval :as e]
             [cells.eval-context :as eval-context]
             [maria.editors.code :as code]
@@ -49,7 +49,7 @@
                       :capture-event/blur    #(exec/set-context! {:block/code nil
                                                                   :block-view nil})}))]
 
-   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto
+   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto.f6
     (some-> (first (Block/eval-log block))
             (assoc :block-id (:id block))
             (value-views/display-result))]])

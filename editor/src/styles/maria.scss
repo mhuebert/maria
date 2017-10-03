@@ -9,6 +9,7 @@ $selection-color: #f4f4d6;
 .cm-s-maria-light.CodeMirror {
   background: #f9f8f4;
   color: #3f4245;
+  font-size: 14px;
 }
 
 
@@ -132,15 +133,18 @@ div.CodeMirror {
   white-space: pre-wrap;
 }
 
-.monospace {
+.monospace, .code, code, pre, .CodeMirror {
   font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
 }
 
-.CodeMirror, .code, code, pre {
-  font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
-  font-size: 80%;
+.prosemirror-content {
+  .code, code {
+    font-size: 80%;
+  }
 }
-
+.CodeMirror, pre {
+  font-size: 15px;
+}
 .CodeMirror {
   background: transparent !important;
   box-shadow: none !important;
