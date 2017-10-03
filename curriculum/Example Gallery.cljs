@@ -144,6 +144,10 @@
 
 ;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web and play with it.
 
+;; #### Snake!
+
+;; [Move the snake with your arrow keys! 🐍](https://www.maria.cloud/gist/bba60540e714b31dcac02eb7cdf02fbc?eval=true)
+
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
