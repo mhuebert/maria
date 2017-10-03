@@ -101,26 +101,26 @@
 (def error-message-trie
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-    [["cannot read property call of %"
-      "It looks like you're trying to call a function that has not been defined yet. 🙀"]
-     ["invalid arity %"
-      "%1 is too many arguments!"]
-     ["no protocol method icollection conj defined for type % %"
-      "The %1 `%2` can't be used as a collection. Sorry!"]
-     ["% is not iseqable"
-      "The value `%1` can't be used as a sequence or collection."]
-     ["% call is not a function"
-      "The value `%1` isn't a function, but it's being called like one."]
-     ["Parameter declaration missing"
-      "This function is missing its 'parameter declaration', the vector of arguments that comes after its name or docstring."]
-     ["Could not compile"
-      "Compile error: we were unable to turn this code into JavaScript. 😰"] ;; FIXME
-     ["let requires an even number"
-      "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
-     ["Index out of bounds"
-      "Somehow you're trying to get a non-existent part of a collection.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
-     ["nth not supported on this type %"
-      "It looks like you're trying to iterate over something that isn't a sequence. Perhaps you're trying to destructure something that is not a sequence? 🤔"]]))
+   [["cannot read property call of %"
+     "It looks like you're trying to call a function that has not been defined yet. 🙀"]
+    ["invalid arity %"
+     "%1 is too many arguments!"]
+    ["no protocol method icollection conj defined for type % %"
+     "The %1 `%2` can't be used as a collection. Sorry!"]
+    ["% is not iseqable"
+     "The value `%1` can't be used as a sequence or collection."]
+    ["% call is not a function"
+     "The value `%1` isn't a function, but it's being called like one."]
+    ["Parameter declaration missing"
+     "This function is missing its 'parameter declaration', the vector of arguments that comes after its name or docstring."]
+    ["Could not compile"
+     "Compile error: we were unable to turn this code into JavaScript. 😰"] ;; FIXME
+    ["let requires an even number"
+     "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
+    ["Index out of bounds"
+     "Somehow you're trying to get a non-existent part of a collection.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
+    ["nth not supported on this type %"
+     "It looks like you're trying to iterate over something that isn't sequential. This could be a couple things, but probably involves trying to treat something like a map, set, or keyword as if it were a vector, list, or string. Double-check that you're passing the arguments you think you are. 🤔 Are you passing a map or set parameter to a function expecting a vector or list? Or perhaps you're trying to destructure something that is not a sequence?"]]))
 ;;"It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"
 
 (defn prettify-error-message
