@@ -83,7 +83,7 @@
 
 ;; Maybe, if you feel like it, change "blue" to "purple" or another color. (For a list of colors that Maria understands, try evaluating `color-names`, without parentheses around it.)
 
-;; We're going now to start exploring the power of evaluating different parts of expressions. Depending on how comfortable you feel with exploring how Maria commands work, you probably want to check out the [Editor Quickstart](https://maria.cloud/quickstart), which explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
+;; We're going now to start exploring the power of evaluating different parts of expressions. Before doing that, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
 
 ;; In addition to nesting expressions, we can also combine expressions to create a layer of shapes. We do this by using the `layer` function:
 

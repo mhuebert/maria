@@ -1,19 +1,33 @@
+;; # Data Flow
 
-;; # ‘Cells’ for asynchronous dataflow
+;; Howdy there. We're going to use Clojure to grab some data from across the Web so we can play with it a bit. We'll rely heavily on Maria-powered [cells](/cells), so if you're not familiar with those yet you'll have to either go read that link or figure it out on your own as we go.
+
+;; Ready? Hold on to your hat because we're going to fly across The Internet.
+
+;; The first thing we'll do is use [open data](https://en.wikipedia.org/wiki/Open_data) to find out which birds are common where you are.
+
+;; Evaluating this next cell will make your browser confirm that you're OK with Maria tracking your location through your browser. We won't use that data for anything except to customize the results in this exercise, which you can see in the code below. If you decline, the exercise will still work.
 
 (defcell location (geo-location))
 
+;; With your location, or using the defaults 52.4821146 by 13.4121388, we'll query a data source with an [HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) request. Through some prior digging, we know that the URL in the `fetch` below is a resource for [eBird](http://ebird.org/ebird/explore) data. We'll tell it our latitude and longitude, what format we want the results in, and that 10 results is just plenty, thanks. We'll see a "waiting" icon when we first evaluate it, and then a few seconds later the data will come back. (Give it a few seconds. Our request might have to go through an undersea cable.)
+
+;; TODO brief rehash (HAHAHAHA) of hash-maps, keywords, keywords as fns with defaults
 (defcell birds
-  "An options map including :query params may be passed
-  as the second arg to fetch."
   (fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
          {:query {:lat (:latitude @location "52.4821146")
                   :lng (:longitude @location "13.4121388")
                   :maxResults 10
                   :fmt "json"}}))
 
+;; Once that comes back, let's poke at it a bit. That's the best way to get to know some new data.
+
+;; TODO `first`, `rest`, `keys`?
+
 (cell (map :comName @birds))
 
+;; ## Go out and harvest more data for our data
+;; TODO EXPLAIN
 (defn find-image [term]
   (let [result (cell term (fetch "https://commons.wikimedia.org/w/api.php"
                                  {:query {:action "query"
