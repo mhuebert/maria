@@ -21,12 +21,11 @@ So...please go to [maria.cloud](https://maria.cloud) and play around with it liv
 
 ## Contributing
 
-Areas where we could especially benefit from community effort include:
+Please contribute your efforts! We could use your help to make the beginner's path to Clojure smoother.
 
- - playing around! 😸
- - reporting any bugs you find while playing as GitHub issues
- - reporting any un-wrapped Clojure errors you find in our list in [the Error Handling wiki page](https://github.com/mhuebert/maria/wiki/Error-Handling), so we can protect users from jargon-filled error messages
- - writing a curriculum module in a gist! See step 2 of our [Curriculum Overview](https://github.com/mhuebert/maria/blob/master/doc/pedagogy.md#curriculum-overview) for an idea of what we're looking to build out.
+ - play around! 😸 and report bugs as GitHub issues
+ - send us every un-wrapped Clojure error you find! We have a list at the [Error Handling wiki](https://github.com/mhuebert/maria/wiki/Error-Handling). Please edit it directly to add your experience. Or, file a GitHub issue explaining what you were doing and what error came up. We want to protect users from jargon-filled error messages, and this requires lots of eyes pointing out all the ways a particular error could cause trouble.
+ - write a curriculum module in a gist! See step 2 of our [Curriculum Overview](https://github.com/mhuebert/maria/blob/master/doc/pedagogy.md#curriculum-overview) for an idea of what we're looking to create.
 
 
 ## Development
