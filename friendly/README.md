@@ -1,3 +1,4 @@
 # maria/friendly
 
-Tools for friendly docstrings and `what-is` information in Clojure(Script).
+Tools for friendly error messages, docstrings, and REPL specials --
+for example, `what-is` information -- in Clojure(Script).
