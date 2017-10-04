@@ -30,7 +30,7 @@
     :gist (str "/gist/" id)
     :maria/local (str "/local/" id)
     :maria/curriculum (str "/" (get-in curriculum/by-id [id :slug]))
-    (do (prn "NO LOCAL URL" provider id)
+    (do #_(prn "NO LOCAL URL" provider id)
         #_(throw (js/Error. (str "no local url" provider id))))))
 
 (defn locals-path

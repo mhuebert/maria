@@ -5,7 +5,7 @@
                   :entry    [cljs.spec.alpha
                              cljs.spec.alpha$macros]
                   :provided [maria.frames.live-frame]}
-                 #_{:name            maria.user
+                 {:name            maria.user
                   :entry           #{maria.user}
                   :provided        #{maria.frames.live-frame}
                   :entry/no-follow #{maria.eval
