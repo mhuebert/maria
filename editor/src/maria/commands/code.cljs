@@ -12,7 +12,8 @@
             [lark.editors.editor :as Editor]
             [maria.live.ns-utils :as ns-utils]
             [goog.events :as events]
-            [lark.commands.exec :as exec]))
+            [lark.commands.exec :as exec]
+            [maria.util :as util]))
 
 (def pass #(.-Pass js/CodeMirror))
 
@@ -20,6 +21,11 @@
                       (some-> (:editor %) (.somethingSelected))))
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
+
+(defn format-code [{:keys [editor block]}]
+  (binding [lark.tree.emit/*prettify* true]
+    (cm/set-preserve-cursor! editor (Block/emit block))
+    true))
 
 (defcommand :clipboard/copy
   {:bindings ["M1-c"]
@@ -47,10 +53,10 @@
   false)
 
 (defn init-select-by-click [editor]
-  (let [in-progress? (volatile! true)
-        last-sel (volatile! {:pos nil
-                             :loc nil})
-        listeners (volatile! [])
+  (let [in-progress?     (volatile! true)
+        last-sel         (volatile! {:pos nil
+                                     :loc nil})
+        listeners        (volatile! [])
         clear-listeners! #(do (doseq [key @listeners]
                                 (events/unlistenByKey key))
                               (when @in-progress?
@@ -144,10 +150,10 @@
   (edit/cursor-line-edge editor :right))
 
 (defn enter [{:keys [block-view editor block-list block blocks]}]
-  (let [last-line (.lastLine editor)
-        cursor (.getCursor editor)
+  (let [last-line   (.lastLine editor)
+        cursor      (.getCursor editor)
         cursor-line (.-line cursor)
-        cursor-ch (.-ch cursor)
+        cursor-ch   (.-ch cursor)
         empty-block (Block/empty? block)]
     (when-let [edge-position (cond empty-block :empty
                                    (and (= cursor-line last-line)
@@ -162,8 +168,8 @@
                               (:empty :start) Block/left) blocks block)
             adjacent-prose (when (= :prose (some-> adjacent-block (Block/kind)))
                              adjacent-block)
-            new-block (when-not adjacent-prose
-                        (Block/create :prose))]
+            new-block      (when-not adjacent-prose
+                             (Block/create :prose))]
         (case edge-position
           :end (do
                  (.splice block-list block adjacent-prose
@@ -201,7 +207,7 @@
     true))
 
 (defn clear-empty-code-block [block-list blocks block]
-  (let [before (Block/left blocks block)
+  (let [before      (Block/left blocks block)
         replacement (when-not before (Block/create :prose))]
     (.splice block-list block (if replacement [replacement] []))
     (-> (or before replacement)
@@ -236,8 +242,8 @@
    :private  true
    :when     :block/code}
   [{:keys [block-list block blocks editor]}]
-  (let [before (Block/left blocks block)
-        pointer (edit/pointer editor)
+  (let [before    (Block/left blocks block)
+        pointer   (edit/pointer editor)
         prev-char (edit/get-range pointer -1)]
     (cond
       (and before
@@ -256,6 +262,12 @@
       (#{\( \[ \{ \"} prev-char) (do (edit/operation editor
                                                      (edit/unwrap! editor)
                                                      (edit/backspace! editor)) true)
+
+      (util/whitespace-string? (edit/get-range pointer (- (.-ch (:pos pointer)))))
+      (edit/operation editor
+                      (.replaceRange editor ""
+                                     (:pos pointer)
+                                     (edit/move-while pointer -1 #(#{\space \newline \tab} %))))
 
       :else false)))
 
@@ -396,10 +408,8 @@
 
 (defcommand :edit/format-code
   {:bindings ["M2-Tab"]
-   :when :block/code}
-  [{:keys [block editor]}]
-  (binding [lark.tree.emit/*prettify* true]
-    (cm/set-preserve-cursor! editor (Block/emit block))
-    true))
+   :when     :block/code}
+  [context]
+  (format-code context))
 
 

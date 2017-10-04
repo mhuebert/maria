@@ -19,19 +19,19 @@
                  [maria/friendly "0.1.0-SNAPSHOT"]
                  [maria/shapes "0.1.0-SNAPSHOT"]
 
-                 [re-view "0.3.29"]
+                 [re-view "0.3.31"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.10-SNAPSHOT"]
                  [cljs-live "0.2.8-SNAPSHOT"]
 
 
                  [lark/commands "0.1.2-SNAPSHOT"]
-                 [lark/structure "0.1.2-SNAPSHOT"]
-                 [lark/editors "0.1.2-SNAPSHOT"]
                  [lark/value-viewer "0.1.2-SNAPSHOT"]
-                 [lark/tree "0.1.2-SNAPSHOT"]
                  [lark/cells "0.1.5-SNAPSHOT"]
 
+                 [lark/structure "0.1.3-SNAPSHOT"]
+                 [lark/editors "0.1.3-SNAPSHOT"]
+                 [lark/tree "0.1.3-SNAPSHOT"]
 
                  [cljsjs/codemirror "5.19.0-0"]
                  [cljsjs/react "16.0.0-beta.2-0"]

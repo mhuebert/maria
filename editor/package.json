@@ -6,7 +6,6 @@
     "extract-text-webpack-plugin": "^2.1.0",
     "firebase-tools": "^3.9.0",
     "konan": "^1.1.0",
-    "markdown-it": "^8.4.0",
     "material-components-web": "^0.14.0",
     "module-deps": "^4.1.1",
     "node-sass": "^4.5.3",

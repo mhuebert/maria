@@ -186,7 +186,7 @@
    [:path {:d "M0 0h24v24H0z", :fill "none"}]])
 
 (def SignOut
-  [:svg {:fill "currentColor", :xmlns "http://www.w3.org/2000/svg", :xmlns:xlink "http://www.w3.org/1999/xlink", :version "1.1", :width "24", :height "24", :view-box "0 0 24 24"}
+  [:svg {:fill "currentColor", :xmlns "http://www.w3.org/2000/svg", :version "1.1", :width "24", :height "24", :view-box "0 0 24 24"}
    [:path {:d "M17,17.25V14H10V10H17V6.75L22.25,12L17,17.25M13,2A2,2 0 0,1 15,4V8H13V4H4V20H13V16H15V20A2,2 0 0,1 13,22H4A2,2 0 0,1 2,20V4A2,2 0 0,1 4,2H13Z"}]])
 
 (def Blank

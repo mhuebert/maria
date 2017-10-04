@@ -5,28 +5,30 @@
                 [org.clojure/data.json "0.2.6"]
 
                 [fast-zip "0.7.0"]
-
                 [maria/friendly "0.1.0-SNAPSHOT"]
                 [maria/shapes "0.1.0-SNAPSHOT"]
 
-                [re-view "0.3.29"]
+                [re-view "0.3.32-SNAPSHOT"]
                 [re-view-routing "0.1.3"]
                 [re-view-prosemirror "0.1.10-SNAPSHOT"]
-                [cljs-live "0.2.6"]
+                [cljs-live "0.2.8-SNAPSHOT"]
 
 
-                [lark/commands "0.1.1-SNAPSHOT"]
-                [lark/structure "0.1.1-SNAPSHOT"]
-                [lark/editors "0.1.0-SNAPSHOT"]
-                [lark/cells "0.1.3-SNAPSHOT"]
-                [lark/value-viewer "0.1.0"]
-                [lark/tree "0.1.0-SNAPSHOT"]
+                [lark/commands "0.1.2-SNAPSHOT"]
+                [lark/value-viewer "0.1.2-SNAPSHOT"]
+                [lark/cells "0.1.5-SNAPSHOT"]
+
+                [lark/structure "0.1.3-SNAPSHOT"]
+                [lark/editors "0.1.3-SNAPSHOT"]
+                [lark/tree "0.1.3-SNAPSHOT"]
+
                 [org.clojure/tools.reader "1.1.0"]
                 [thheller/shadow-cljs "2.0.7"]
                 ]
 
  :source-paths ["src"
                 "test"
+                "shadow_src"
                 ]
  :builds
                {:tests
@@ -40,12 +42,21 @@
                  :compiler-options {:optimizations :simple}
                  :output-dir       "resources/public/js/compiled"
                  :asset-path       "/js/compiled"
-                 :modules          {:live {:entries [maria.frames.live-frame]}}
-                 :devtools         {:autoload true}}
+                 :modules          {:slive {:entries [shadow.js
+                                                      maria.frames.live-frame]}}
+                 :devtools         {:autoload true}
+                 :js-options       {:resolve {"react"       {:target :global
+                                                             :global "React"}
+                                              "react-dom"   {:target :global
+                                                             :global "ReactDOM"}
+                                              "codemirror"  {:target :global
+                                                             :global "CodeMirror"}
+                                              "markdown-it" {:target :global
+                                                             :global "markdownit"}}}}
                 :trusted
                 {:target        :browser
                  :output-dir    "resources/public/js/compiled"
                  :asset-path    "/js/compiled"
                  :optimizations :simple
-                 :modules       {:live {:entries [maria.frames.trusted-frame]}}
+                 :modules       {:strusted {:entries [maria.frames.trusted-frame]}}
                  :devtools      {:autoload true}}}}

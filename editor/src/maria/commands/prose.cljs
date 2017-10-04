@@ -1,6 +1,6 @@
 (ns maria.commands.prose
   (:require [lark.commands.registry :refer-macros [defcommand]]
-            [cljsjs.codemirror :as CM]
+            [codemirror :as CM]
             [lark.structure.edit :as edit]
             [re-view-prosemirror.commands :as commands :refer [apply-command]]
             [re-view-prosemirror.markdown :as prose]

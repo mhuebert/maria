@@ -1,8 +1,8 @@
 (ns maria.editors.code
   (:require
 
-    [codemirror.addon.markselection]
-    [codemirror.mode.clojure]
+    #_["codemirror/addon/selection/mark-selection"]
+    #_["codemirror/mode/clojure/clojure"]
     [lark.structure.codemirror :as cm]
 
     [re-view.core :as v :refer [defview]]
