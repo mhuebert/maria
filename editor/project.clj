@@ -19,7 +19,7 @@
                  [maria/friendly "0.1.0-SNAPSHOT"]
                  [maria/shapes "0.1.0-SNAPSHOT"]
 
-                 [re-view "0.3.31"]
+                 [re-view "0.3.32-SNAPSHOT"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.10-SNAPSHOT"]
                  [cljs-live "0.2.8-SNAPSHOT"]

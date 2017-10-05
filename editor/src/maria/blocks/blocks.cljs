@@ -109,12 +109,13 @@
   (->> (tree/ast (:ns @e/c-env) source)
        (tree/group-comment-blocks)
        (:value)
-       (mapv from-ast)
-       (ensure-blocks)
-       #_(reduce (fn [out node]
-                   (cond-> out
-                           (not (tree/whitespace? node))
-                           (conj (from-ast node)))) [])))
+       (reduce (fn [out node]
+                 (cond-> out
+                         (not (or (tree/whitespace? node)
+                                  (and (= :comment-block (:tag node))
+                                       (util/whitespace-string? (:value node)))))
+                         (conj (from-ast node)))) [])
+       (ensure-blocks)))
 
 (defn id-index
   ([blocks id] (id-index blocks id 0))

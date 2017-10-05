@@ -22,9 +22,11 @@
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
 
-(defn format-code [{:keys [editor block]}]
+(defn format-code [editor]
   (binding [lark.tree.emit/*prettify* true]
-    (cm/set-preserve-cursor! editor (Block/emit block))
+    (cm/set-preserve-cursor! editor (-> (.getValue editor)
+                                        (tree/ast)
+                                        (tree/string)))
     true))
 
 (defcommand :clipboard/copy
@@ -264,10 +266,10 @@
                                                      (edit/backspace! editor)) true)
 
       (util/whitespace-string? (edit/get-range pointer (- (.-ch (:pos pointer)))))
-      (edit/operation editor
+      (edit/operation editor 
                       (.replaceRange editor ""
                                      (:pos pointer)
-                                     (edit/move-while pointer -1 #(#{\space \newline \tab} %))))
+                                     (:pos (edit/move-while pointer -1 #(#{\space \newline \tab} %)))))
 
       :else false)))
 
@@ -318,9 +320,10 @@
               "M3-Right"
               "M1-Shift-K"]
    :when     :block/code}
-  [{:keys [editor]}]
+  [{:keys [editor] :as context}]
   (cm/return-cursor-to-root! editor)
-  (edit/slurp-forward editor))
+  (edit/slurp-forward editor)
+  (format-code editor))
 
 (defcommand :edit/barf-forward
   "Pushes last child of current form out to the right."
@@ -409,7 +412,7 @@
 (defcommand :edit/format-code
   {:bindings ["M2-Tab"]
    :when     :block/code}
-  [context]
-  (format-code context))
+  [{:keys [editor]}]
+  (format-code editor))
 
 

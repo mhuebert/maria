@@ -5,5 +5,5 @@
                                   "react-dom"]
                  :global-exports {react       React
                                   react-dom   ReactDOM
-                                  codemirror CodeMirror
+                                  codemirror  CodeMirror
                                   markdown-it markdownit}}]}

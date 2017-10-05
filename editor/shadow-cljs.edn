@@ -37,26 +37,33 @@
                  :asset-path "js"
                  :modules    {:tests {:entries [maria-tests.runner]}}
                  :devtools   {:after-load maria-tests.runner/run-tests}}
+
                 :live
-                {:target           :browser
-                 :compiler-options {:optimizations :simple}
-                 :output-dir       "resources/public/js/compiled"
-                 :asset-path       "/js/compiled"
-                 :modules          {:slive {:entries [shadow.js
-                                                      maria.frames.live-frame]}}
-                 :devtools         {:autoload true}
-                 :js-options       {:resolve {"react"       {:target :global
-                                                             :global "React"}
-                                              "react-dom"   {:target :global
-                                                             :global "ReactDOM"}
-                                              "codemirror"  {:target :global
-                                                             :global "CodeMirror"}
-                                              "markdown-it" {:target :global
-                                                             :global "markdownit"}}}}
+                {:target            :browser
+                 :compiler-options  {:optimizations :simple}
+                 :output-dir        "resources/public/js/compiled"
+                 :asset-path        "/js/compiled"
+                 :modules           {:shadow-live {:entries [shadow-init.init
+                                                             maria.frames.live-frame]}}
+                 :devtools          {:autoload true}
+                 :bootstrap-options {:entries []}
+                 :js-options        {:resolve {"react"       {:target :global
+                                                              :global "React"}
+                                               "react-dom"   {:target :global
+                                                              :global "ReactDOM"}
+                                               "codemirror"  {:target :global
+                                                              :global "CodeMirror"}
+                                               "markdown-it" {:target :global
+                                                              :global "markdownit"}}}}
                 :trusted
                 {:target        :browser
                  :output-dir    "resources/public/js/compiled"
                  :asset-path    "/js/compiled"
                  :optimizations :simple
-                 :modules       {:strusted {:entries [maria.frames.trusted-frame]}}
-                 :devtools      {:autoload true}}}}
+                 :modules       {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
+                 :devtools      {:autoload true}
+                 :compiler-options
+                                {:externs ["externs/react.ext.js"
+                                           "externs/reactDom.ext.js"
+                                           "externs/firebase-app-externs.js"
+                                           "externs/firebase-auth-externs.js"]}}}}
