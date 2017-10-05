@@ -148,6 +148,10 @@
 
 ;; [Move the snake with your arrow keys! 🐍](https://www.maria.cloud/gist/bba60540e714b31dcac02eb7cdf02fbc?eval=true)
 
+;; #### Music!
+
+;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can right in your browser!
+
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
