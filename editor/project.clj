@@ -144,7 +144,9 @@
                                        :dump-core      false
                                        ;:pseudo-names true
                                        :infer-externs  true
-                                       :parallel-build true}}
+                                       :parallel-build true
+                                       :externs ["src/js/react.ext.js"
+                                                 "src/js/reactDom.ext.js"]}}
                        {:id           "tests"
                         :source-paths ["src"
                                        "test"]
