@@ -25,12 +25,12 @@
  (position 40 60 (text "(if (tired? you)"))
  (position 80 80 (text "(nap \"20 minutes\" you)"))
  (position 80 100 (text "(code-something-fun you))"))
- (colorize "grey" (rotate -90 (position 310 70 (triangle 10))))
- (position 330 80 (text "if test passes, evaluate this"))
- (position 130 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 115 20 (text "test"))
- (colorize "grey" (position 200 110 (triangle 10)))
- (position 50 140 (text "if test is false or nil, evaluate this")))
+ (colorize "grey" (rotate -90 (position 250 70 (triangle 10))))
+ (position 265 80 (text "if test passes, evaluate this"))
+ (position 90 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 82 20 (text "test"))
+ (colorize "grey" (position 160 110 (triangle 10)))
+ (position 65 140 (text "if test is false or nil, evaluate this")))
 
 ;; Before we go any further, there's a trick about `if` that you should know: it's not like those other expressions you use. It's special. That's not just bravado: it's *literally* a "[special form](https://cljs.github.io/api/cljs.core/if)", not a function like almost everything else we use. See for yourself:
 
