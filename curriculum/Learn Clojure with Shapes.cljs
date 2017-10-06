@@ -61,7 +61,7 @@
 
 ;; ⬆ your code goes here
 
-;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go way off-script with lots of your own code blocks, you should consider opening a fresh page with the "New" button (shaped like a plus sign) at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
+;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go way off-script with lots of your own code blocks, you should consider opening a fresh page with the "New" button at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
 
 ;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
@@ -149,12 +149,12 @@
 
 (layer
  (position 50 60 (text "(fn [radius] (circle radius))"))
- (colorize "grey" (position 60 70 (triangle 10)))
- (position 0 102 (text "function"))
- (position 95 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 90 20 (text "argument(s)"))
- (colorize "grey" (position 170 70 (triangle 10)))
- (position 170 102 (text "expression")))
+ (colorize "grey" (position 55 70 (triangle 10)))
+ (position 35 102 (text "function"))
+ (position 90 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 60 20 (text "argument(s)"))
+ (colorize "grey" (position 160 70 (triangle 10)))
+ (position 135 102 (text "expression")))
 
 ;; Take a look at the diagram Maria just drew for us.
 
