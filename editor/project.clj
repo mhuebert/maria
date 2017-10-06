@@ -34,8 +34,8 @@
                  [lark/tree "0.1.3-SNAPSHOT"]
 
                  #_[cljsjs/codemirror "5.19.0-0"]
-                 [cljsjs/react "16.0.0-0"]
-                 [cljsjs/react-dom "16.0.0-0"]
+                 ;[cljsjs/react "16.0.0-0"]
+                 ;[cljsjs/react-dom "16.0.0-0"]
                  #_[cljsjs/tinycolor "1.3.0-0"]
                  [cljsjs/firebase "4.0.0-0"]
 
