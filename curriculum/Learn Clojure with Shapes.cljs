@@ -149,12 +149,12 @@
 
 (layer
  (position 50 60 (text "(fn [radius] (circle radius))"))
- (colorize "grey" (position 60 70 (triangle 10)))
- (position 0 102 (text "function"))
- (position 95 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 90 20 (text "argument(s)"))
- (colorize "grey" (position 170 70 (triangle 10)))
- (position 170 102 (text "expression")))
+ (colorize "grey" (position 55 70 (triangle 10)))
+ (position 35 102 (text "function"))
+ (position 90 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 60 20 (text "argument(s)"))
+ (colorize "grey" (position 160 70 (triangle 10)))
+ (position 135 102 (text "expression")))
 
 ;; Take a look at the diagram Maria just drew for us.
 
