@@ -45,9 +45,23 @@
   (-pr-writer [this writer _]
     (write-all writer (pr-str attrs))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; helpers for param checks
+
+(defn assert-number [message x]
+  (if (js/isNaN x)
+    (throw (js/Error. message))
+    (js/parseFloat x)))
+
+(defn assert-number-range [message x-min x-max x]
+  (let [x-parsed (assert-number message x)]
+    (if (<= x-min x-parsed x-max)
+      x-parsed
+      (throw (js/Error. message)))))
+
 (defn circle
   "Returns a circle of `radius`."
   [radius]
+  (assert-number "radius must be a number!" radius)
   (->Shape {:is-a   :shape
             :kind   :circle
             :r      radius
@@ -59,6 +73,8 @@
 (defn rectangle
   "Returns a rectangle of `width` and `height`. If given a single parameter, returns a square of dimension `side`."
   [width height]
+  (assert-number "width must be a number!" width)
+  (assert-number "height must be a number!" height)  
   (->Shape {:is-a   :shape
             :kind   :rect
             :x      0
@@ -71,11 +87,13 @@
 (defn square
   "Returns a square of dimension `side`."
   [side]
+  (assert-number "side must be a number!" side)
   (rectangle side side))
 
 (defn triangle
   "Returns an equilateral triangle with sides of `size`."
   [size]
+  (assert-number "size must be a number!" size)
   (->Shape (let [h (* 0.8660259 size)]
              {:is-a   :shape
               :kind   :polygon
@@ -92,8 +110,12 @@
 (defn image
   "Add an image to the drawing"
   ([src] (image 200 200 src))
-  ([size src] (image size size src))
+  ([size src]
+   (assert-number "size must be a number!" size)
+   (image size size src))
   ([width height src]
+  (assert-number "width must be a number!" width)
+  (assert-number "height must be a number!" height)  
    (->Shape {:kind   :image
              :href   src
              :width  width
@@ -114,6 +136,7 @@
             :height      18
             :fill        "#3f4245"}))
 
+;; XXX no verification yet, too complicated for the moment
 (defn path
   "Create an arbitrary path from a set of points."
   [& points]
@@ -261,6 +284,7 @@
 (defn scale
   "Return `shape` with rotated by `amount`."
   [amount shape]
+  (assert-number "amount must be a number!" amount)
   (case (:kind shape)
     :path (update shape :d scale-points amount)
     (assoc shape :scale amount)))
@@ -269,6 +293,7 @@
 (defn rotate
   "Return `shape` with rotated by `amount`."
   [amount shape]
+  (assert-number "amount must be a number!" amount)
   (if (not= :circle (:kind shape))
     (assoc shape :rotate amount)))
 
@@ -283,6 +308,8 @@
 (defn position
   "Return `shape` with its x and y positions set to `x` and `y`."
   [x y shape]
+  (assert-number "x must be a number!" x)
+  (assert-number "y must be a number!" y)
   (case (:kind shape)
     :circle (-> shape
                 (assoc :cx x)
@@ -359,20 +386,51 @@
 ;; color helpers and scaling fn
 
 (defn opacity
-  "Set the opacity of the shape to `opa`, which should be a decimal number between 0 and 1.0"
+  "Set the opacity of the shape to `o`, which should be a decimal number between 0 and 1.0"
   [o shape]
+  (assert-number-range "opacity must be a number between 0 and 1.0!" 0 1.0 o)
   (assoc shape :opacity (str o)))
 
 (defn rgb [red green blue]
+  "Returns a color of `red`, `green`, `blue`, each represented as a number from (0-255)."
+  (assert-number-range "red must be a number between 0 and 255!" 0 255 red)
+  (assert-number-range "green must be a number between 0 and 255!" 0 255 green)
+  (assert-number-range "blue must be a number between 0 and 255!" 0 255 blue)
   (apply str "rgb(" red "," green "," blue ")"))
+
+(defn rgba [red green blue alpha]
+  "Returns a color of `red`, `green`, `blue`, each represented as a number from (0-255), with an opacity of `alpha` (0.0-1.0)."
+  (assert-number-range "red must be a number between 0 and 255!" 0 255 red)
+  (assert-number-range "green must be a number between 0 and 255!" 0 255 green)
+  (assert-number-range "blue must be a number between 0 and 255!" 0 255 blue)
+  (assert-number-range "alpha must be a number between 0 and 1.0!" 0 1.0 alpha)
+  (apply str "rgba(" red "," green "," blue "," alpha ")"))
 
 (defn hsl
   "Returns a color of `hue` (a number between 0-359 representing an angle on the color wheel), `saturation` percentage and `lightness` percentage."
   [hue saturation lightness]
+  (assert-number-range "hue must be a number between 0 and 359!" 0 359 hue)
+  (assert-number-range "saturation must be a number between 0 and 100!" 0 100 saturation)
+  (assert-number-range "lightness must be a number between 0 and 100!" 0 100 lightness)
   (apply str "hsl(" hue "," saturation "%," lightness "%)"))
 
-(defn rescale [value old-min old-max new-min new-max]
+(defn hsla
+  "Returns a color of `hue` (a number between 0-359 representing an angle on the color wheel)/`saturation` (percentage)/`lightness` (percentage)/`alpha` (0.0-1.0)."
+  [hue saturation lightness alpha]
+  (assert-number-range "hue must be a number between 0 and 359!" 0 359 hue)
+  (assert-number-range "saturation must be a number between 0 and 100!" 0 100 saturation)
+  (assert-number-range "lightness must be a number between 0 and 100!" 0 100 lightness)
+  (assert-number-range "alpha must be a number between 0 and 1.0!" 0 1.0 alpha)
+  (apply str "hsla(" hue "," saturation "%," lightness "%, " alpha ")"))
+
+(defn rescale 
   "Rescales value from range [old-min, old-max] to [new-min, new-max]"
+  [value old-min old-max new-min new-max]
+  (assert-number "value must be a number!" value)
+  (assert-number "old-min must be a number!" old-min)
+  (assert-number "old-max must be a number!" old-max)
+  (assert-number "new-min must be a number!" new-min)
+  (assert-number "new-max must be a number!" new-max)
   (let [old-spread (- old-max old-min)
         new-spread (- new-max new-min)]
     (+ (* (- value old-min) (/ new-spread old-spread))
@@ -542,12 +600,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; pre-cooked SVG shapes
 
-(def fish
-  "An Escher-style fish."
-  {:is-a   :shape
-   :kind   :path
-   :width  100
-   :height 100
-   :d      [:M 9.67 40.17 :C 6.86 37.67 4.49 35.56 2.63 32.93 :c 0 -0.12 0.17 -0.54 0.37 -0.94 :c 1.15 -2.28 2.17 -3.75 4.73 -6.83 :l 1.37 -1.64 :l -0.07 -0.7 :C 8.65 18.39 8.87 15.11 9.97 10.9 :C 10.11 9.63 10.41 10.28 12.04 11.5 :C 13.89 12.99 15.6 13.84 17.34 16.64 :l 2.17 0.09 :c 2.46 0.11 3.46 0.27 4.87 0.72 :l 1.06 0.34 :c 0.01 1.38 0.02 2.76 0.03 4.15 :c 0.01 1.19 0.02 2.38 0.03 3.57 :c -1.23 1.23 -2.53 2.71 -3.76 3.94 :c 1.65 2.68 6.11 4.18 9.99 4.57 :l 1.6 0.14 :l 1.12 1.32 :c 1.26 1.48 2.04 2.15 4.23 3.65 :l 1.52 1.04 :c 0.16 0.09 0.97 0.57 -0.18 0.46 :l -2.26 -0.43 :c -3.09 -0.59 -4.51 -0.78 -5.89 -0.78 :c -1.1 -0 -3.28 0.14 -4.34 0.29 :c -0.45 0.06 -0.52 0.03 -1.64 -0.91 :c -3.5 -2.93 -4.67 -3.77 -6.86 -4.93 :l -1.23 -0.66 :c -2.44 2.44 -4.88 4.88 -7.32 7.32 :c -0.26 0.37 -0.82 -0.35 -0.82 -0.35 :z :M 17.41 33.02 :C 16.08 32.32 14.9 31.64 13.36 30.72 :l -0.79 0.76 :c -0.41 0.4 -1.24 0.97 -1.7 1.43 :c -0.74 0.73 -0.93 1.02 -1.58 2.38 :c -0.68 1.41 -1.04 1.88 -1.03 1.34 :c 0 -0.35 1.35 -2.99 1.85 -3.62 :C 10.36 32.68 11.14 32.01 11.81 31.49 :l 1.26 -0.97 :c -0.49 -0.45 -0.94 -0.85 -1.33 -1.29 :c -0.15 -0.06 -2 1.44 -2.65 2.15 :c -0.34 0.37 -1.01 1.32 -1.51 2.12 :c -0.83 1.34 -1.21 1.74 -1.21 1.27 :c 0 -0.24 1.41 -2.49 2.13 -3.41 :c 0.31 -0.39 0.99 -1.05 1.52 -1.47 :c 0.53 -0.41 1.34 -0.98 1.48 -1.09 :C 10.33 26.87 9.96 25.63 9.24 24.03 :l -1.64 2 :c -2.16 2.63 -2.79 3.52 -3.79 5.35 :l -0.83 1.52 :c 0.7 0.58 4.85 5.64 7.26 7.21 :C 12.8 37.65 14.7 35.72 17.41 33.02 :z :M 9.31 38.59 :C 10.54 36.67 13.23 32.93 14.9 31.91 :c -1.08 1.8 -3.52 3.88 -4.84 6.19 :c -0.21 0.37 -0.42 0.61 -0.55 0.61 :c -0.11 0 -0.21 -0.05 -0.21 -0.12 :z :M 4.85 33.31 :c 0 -0.24 1.31 -2.7 1.75 -3.28 :c 0.74 -0.92 3.91 -4.13 4.01 -3.17 :c -1.95 1.23 -4.25 3.78 -5.05 5.85 :c -0.2 0.4 -0.45 0.73 -0.54 0.73 :c -0.1 0 -0.17 -0.06 -0.17 -0.13 :z :m 32.97 5.78 :c -1.94 -1.35 -3.1 -2.45 -4.44 -4.17 :c -0.25 -0.32 -0.31 -0.33 -2.4 -0.55 :c -4.84 -0.43 -9.35 -2.98 -10.59 -6.68 :c -2.28 -5.68 -0.94 -9.92 -6.21 -14.17 :c -0.45 -0.37 -1.49 -1.13 -2.3 -1.69 :L 10.39 10.81 :C 9.03 15.59 8.84 20.53 9.71 23.84 :c 0.58 2.22 1.63 4.4 3.24 5.81 :c 2.36 2.07 8.78 4.31 14.24 9.65 :l 0.64 -0.06 :c 4.11 -0.38 5.35 -0.34 8.91 0.34 :c 1.13 0.21 2.13 0.4 2.22 0.4 :c 0.09 0.01 -0.42 -0.39 -1.14 -0.89 :z :m -6.77 -2.06 :C 23.62 34.03 21.59 33.07 19.55 31.02 :C 16.84 27.84 15.3 24.33 13.75 20.48 :c -0.78 -2.92 0.56 0.34 0.97 1.38 :c 0.96 2.41 2.05 4.09 2.89 5.63 :c 2.35 4.33 5.52 5.98 14.71 9.58 :c 1.52 0.6 2.43 1.03 2.43 1.13 :c 0 0.09 -0.09 0.16 -0.21 0.16 :c -0.11 -0 -1.68 -0.6 -3.49 -1.33 :z :M 10.68 20.22 :C 10.61 19.64 10.41 15.52 11.2 15.35 :c 0.18 -0.03 0.37 0.24 0.55 0.63 :c 0.35 0.75 0.66 1.92 0.74 2.18 :l 0.25 1.01 :C 11.86 19.74 11.2 20.55 10.95 20.52 :C 10.81 20.53 10.73 20.43 10.68 20.22 :z :M 10.97 20.02 :C 11.43 19.57 12.15 19.2 12.4 18.97 :C 11.85 16.61 11.44 15.7 11.24 15.8 :C 10.92 16.97 10.89 18.45 10.97 20.02 :z :M 12.82 14.72 :c 0.33 -0.29 3.16 2.32 3.16 2.63 :c 0 0.06 -0.51 0.36 -1.08 0.63 :c -0.41 0.19 -1 0.47 -1.1 0.47 :c -0.28 -0.27 -1.11 -3.56 -0.98 -3.73 :z :m 0.39 0.5 :c -0.22 -0.15 0.41 2.12 0.67 2.84 :c 0.94 -0.27 1.68 -0.82 1.67 -0.86 :C 14.96 16.6 13.62 15.41 13.2 15.22 :z :m 7.37 10.36 :c -0.29 0 -0.08 -0.36 0.57 -0.98 :c 0.27 -0.25 0.5 -0.46 0.73 -0.61 :c 0.59 -0.4 1.13 -0.53 2.08 -0.55 :l 1.06 -0.02 :c -0.01 -0.49 0.04 -1.15 -0.09 -1.54 :c -0.05 0.03 -0.65 -0.17 -1.07 -0.25 :c -1.23 -0.26 -1.58 -0.14 -2.54 0.32 :c -0.92 0.44 -1.11 0.57 -1.11 0.33 :c 0 -0.08 0.43 -0.36 0.95 -0.62 :c 0.86 -0.42 1.03 -0.46 1.79 -0.44 :c 0.46 0.01 1.11 0.13 1.45 0.19 :l 0.68 0.12 :c 0.01 -0.14 0.02 -0.4 0.04 -0.67 :c 0.02 -0.42 0.03 -0.87 -0 -1 :c -0.99 -0.46 -2.15 -0.84 -3.07 -0.85 :c -0.97 -0.01 -1.86 0 -2.58 0.3 :c -0.32 0.13 -0.5 0.35 -0.75 0.62 :c 0.41 1.7 1.43 7.99 2.76 9.21 :c 1.16 -1.16 2.37 -2.56 3.53 -3.72 :c 0.23 -0.8 0.08 -1.62 -0.06 -1.65 :c -2.29 -0.53 -3.69 0.99 -4.39 1.82 :z :m 4.44 -7.47 :m -0.63 -0.22 :m -1.18 -0.42 :C 22.66 17.28 22.13 17.18 21.55 17.12 :C 20.88 17.06 20.14 17.04 19.22 16.96 :C 18.7 16.92 17.65 16.91 17.5 16.88 :c 0.15 0.31 0.32 0.65 0.49 1.01 :c 0.26 0.54 0.51 1.11 0.62 1.62 :c 0.81 -0.55 1.58 -0.71 2.31 -0.77 :c 0.87 -0.08 1.89 0.1 2.69 0.3 :c 0.69 0.17 1.21 0.35 1.32 0.38 :c 0.13 0.04 0.15 -0.14 0.14 -0.42 :c -0.01 -0.25 -0.05 -0.59 -0.05 -0.89 :z :m 1.48 13.43 :c -0.34 -0.09 -0.81 -0.37 -1.21 -0.71 :c -0.22 -0.19 -0.43 -0.41 -0.57 -0.62 :c -0.12 -0.18 -0.2 -0.35 -0.21 -0.51 :c -0.03 -0.38 0.5 0.46 0.88 0.85 :c 0.13 0.13 0.3 0.25 0.48 0.36 :c 0.36 0.21 0.77 0.39 0.98 0.58 :c -0.01 0.09 -0.14 0.15 -0.36 0.05 :z :m -0.18 -2.17 :c -0.12 -0.08 -0.23 -0.13 -0.33 -0.27 :c -0.13 -0.16 -0.23 -0.36 -0.31 -0.55 :c -0.17 -0.42 -0.28 -0.79 -0.05 -0.79 :c 0.06 0 0.15 0.23 0.24 0.46 :c 0.06 0.16 0.12 0.31 0.16 0.39 :c 0.1 0.19 0.34 0.43 0.53 0.53 :c 0.09 0.46 -0.16 0.28 -0.24 0.23 :z]
-   :stroke "black"
-   :fill   "none"})
+;; (def fish
+;;   "An Escher-style fish."
+;;   {:is-a   :shape
+;;    :kind   :path
+;;    :width  100
+;;    :height 100
+;;    :d      [:M 9.67 40.17 :C 6.86 37.67 4.49 35.56 2.63 32.93 :c 0 -0.12 0.17 -0.54 0.37 -0.94 :c 1.15 -2.28 2.17 -3.75 4.73 -6.83 :l 1.37 -1.64 :l -0.07 -0.7 :C 8.65 18.39 8.87 15.11 9.97 10.9 :C 10.11 9.63 10.41 10.28 12.04 11.5 :C 13.89 12.99 15.6 13.84 17.34 16.64 :l 2.17 0.09 :c 2.46 0.11 3.46 0.27 4.87 0.72 :l 1.06 0.34 :c 0.01 1.38 0.02 2.76 0.03 4.15 :c 0.01 1.19 0.02 2.38 0.03 3.57 :c -1.23 1.23 -2.53 2.71 -3.76 3.94 :c 1.65 2.68 6.11 4.18 9.99 4.57 :l 1.6 0.14 :l 1.12 1.32 :c 1.26 1.48 2.04 2.15 4.23 3.65 :l 1.52 1.04 :c 0.16 0.09 0.97 0.57 -0.18 0.46 :l -2.26 -0.43 :c -3.09 -0.59 -4.51 -0.78 -5.89 -0.78 :c -1.1 -0 -3.28 0.14 -4.34 0.29 :c -0.45 0.06 -0.52 0.03 -1.64 -0.91 :c -3.5 -2.93 -4.67 -3.77 -6.86 -4.93 :l -1.23 -0.66 :c -2.44 2.44 -4.88 4.88 -7.32 7.32 :c -0.26 0.37 -0.82 -0.35 -0.82 -0.35 :z :M 17.41 33.02 :C 16.08 32.32 14.9 31.64 13.36 30.72 :l -0.79 0.76 :c -0.41 0.4 -1.24 0.97 -1.7 1.43 :c -0.74 0.73 -0.93 1.02 -1.58 2.38 :c -0.68 1.41 -1.04 1.88 -1.03 1.34 :c 0 -0.35 1.35 -2.99 1.85 -3.62 :C 10.36 32.68 11.14 32.01 11.81 31.49 :l 1.26 -0.97 :c -0.49 -0.45 -0.94 -0.85 -1.33 -1.29 :c -0.15 -0.06 -2 1.44 -2.65 2.15 :c -0.34 0.37 -1.01 1.32 -1.51 2.12 :c -0.83 1.34 -1.21 1.74 -1.21 1.27 :c 0 -0.24 1.41 -2.49 2.13 -3.41 :c 0.31 -0.39 0.99 -1.05 1.52 -1.47 :c 0.53 -0.41 1.34 -0.98 1.48 -1.09 :C 10.33 26.87 9.96 25.63 9.24 24.03 :l -1.64 2 :c -2.16 2.63 -2.79 3.52 -3.79 5.35 :l -0.83 1.52 :c 0.7 0.58 4.85 5.64 7.26 7.21 :C 12.8 37.65 14.7 35.72 17.41 33.02 :z :M 9.31 38.59 :C 10.54 36.67 13.23 32.93 14.9 31.91 :c -1.08 1.8 -3.52 3.88 -4.84 6.19 :c -0.21 0.37 -0.42 0.61 -0.55 0.61 :c -0.11 0 -0.21 -0.05 -0.21 -0.12 :z :M 4.85 33.31 :c 0 -0.24 1.31 -2.7 1.75 -3.28 :c 0.74 -0.92 3.91 -4.13 4.01 -3.17 :c -1.95 1.23 -4.25 3.78 -5.05 5.85 :c -0.2 0.4 -0.45 0.73 -0.54 0.73 :c -0.1 0 -0.17 -0.06 -0.17 -0.13 :z :m 32.97 5.78 :c -1.94 -1.35 -3.1 -2.45 -4.44 -4.17 :c -0.25 -0.32 -0.31 -0.33 -2.4 -0.55 :c -4.84 -0.43 -9.35 -2.98 -10.59 -6.68 :c -2.28 -5.68 -0.94 -9.92 -6.21 -14.17 :c -0.45 -0.37 -1.49 -1.13 -2.3 -1.69 :L 10.39 10.81 :C 9.03 15.59 8.84 20.53 9.71 23.84 :c 0.58 2.22 1.63 4.4 3.24 5.81 :c 2.36 2.07 8.78 4.31 14.24 9.65 :l 0.64 -0.06 :c 4.11 -0.38 5.35 -0.34 8.91 0.34 :c 1.13 0.21 2.13 0.4 2.22 0.4 :c 0.09 0.01 -0.42 -0.39 -1.14 -0.89 :z :m -6.77 -2.06 :C 23.62 34.03 21.59 33.07 19.55 31.02 :C 16.84 27.84 15.3 24.33 13.75 20.48 :c -0.78 -2.92 0.56 0.34 0.97 1.38 :c 0.96 2.41 2.05 4.09 2.89 5.63 :c 2.35 4.33 5.52 5.98 14.71 9.58 :c 1.52 0.6 2.43 1.03 2.43 1.13 :c 0 0.09 -0.09 0.16 -0.21 0.16 :c -0.11 -0 -1.68 -0.6 -3.49 -1.33 :z :M 10.68 20.22 :C 10.61 19.64 10.41 15.52 11.2 15.35 :c 0.18 -0.03 0.37 0.24 0.55 0.63 :c 0.35 0.75 0.66 1.92 0.74 2.18 :l 0.25 1.01 :C 11.86 19.74 11.2 20.55 10.95 20.52 :C 10.81 20.53 10.73 20.43 10.68 20.22 :z :M 10.97 20.02 :C 11.43 19.57 12.15 19.2 12.4 18.97 :C 11.85 16.61 11.44 15.7 11.24 15.8 :C 10.92 16.97 10.89 18.45 10.97 20.02 :z :M 12.82 14.72 :c 0.33 -0.29 3.16 2.32 3.16 2.63 :c 0 0.06 -0.51 0.36 -1.08 0.63 :c -0.41 0.19 -1 0.47 -1.1 0.47 :c -0.28 -0.27 -1.11 -3.56 -0.98 -3.73 :z :m 0.39 0.5 :c -0.22 -0.15 0.41 2.12 0.67 2.84 :c 0.94 -0.27 1.68 -0.82 1.67 -0.86 :C 14.96 16.6 13.62 15.41 13.2 15.22 :z :m 7.37 10.36 :c -0.29 0 -0.08 -0.36 0.57 -0.98 :c 0.27 -0.25 0.5 -0.46 0.73 -0.61 :c 0.59 -0.4 1.13 -0.53 2.08 -0.55 :l 1.06 -0.02 :c -0.01 -0.49 0.04 -1.15 -0.09 -1.54 :c -0.05 0.03 -0.65 -0.17 -1.07 -0.25 :c -1.23 -0.26 -1.58 -0.14 -2.54 0.32 :c -0.92 0.44 -1.11 0.57 -1.11 0.33 :c 0 -0.08 0.43 -0.36 0.95 -0.62 :c 0.86 -0.42 1.03 -0.46 1.79 -0.44 :c 0.46 0.01 1.11 0.13 1.45 0.19 :l 0.68 0.12 :c 0.01 -0.14 0.02 -0.4 0.04 -0.67 :c 0.02 -0.42 0.03 -0.87 -0 -1 :c -0.99 -0.46 -2.15 -0.84 -3.07 -0.85 :c -0.97 -0.01 -1.86 0 -2.58 0.3 :c -0.32 0.13 -0.5 0.35 -0.75 0.62 :c 0.41 1.7 1.43 7.99 2.76 9.21 :c 1.16 -1.16 2.37 -2.56 3.53 -3.72 :c 0.23 -0.8 0.08 -1.62 -0.06 -1.65 :c -2.29 -0.53 -3.69 0.99 -4.39 1.82 :z :m 4.44 -7.47 :m -0.63 -0.22 :m -1.18 -0.42 :C 22.66 17.28 22.13 17.18 21.55 17.12 :C 20.88 17.06 20.14 17.04 19.22 16.96 :C 18.7 16.92 17.65 16.91 17.5 16.88 :c 0.15 0.31 0.32 0.65 0.49 1.01 :c 0.26 0.54 0.51 1.11 0.62 1.62 :c 0.81 -0.55 1.58 -0.71 2.31 -0.77 :c 0.87 -0.08 1.89 0.1 2.69 0.3 :c 0.69 0.17 1.21 0.35 1.32 0.38 :c 0.13 0.04 0.15 -0.14 0.14 -0.42 :c -0.01 -0.25 -0.05 -0.59 -0.05 -0.89 :z :m 1.48 13.43 :c -0.34 -0.09 -0.81 -0.37 -1.21 -0.71 :c -0.22 -0.19 -0.43 -0.41 -0.57 -0.62 :c -0.12 -0.18 -0.2 -0.35 -0.21 -0.51 :c -0.03 -0.38 0.5 0.46 0.88 0.85 :c 0.13 0.13 0.3 0.25 0.48 0.36 :c 0.36 0.21 0.77 0.39 0.98 0.58 :c -0.01 0.09 -0.14 0.15 -0.36 0.05 :z :m -0.18 -2.17 :c -0.12 -0.08 -0.23 -0.13 -0.33 -0.27 :c -0.13 -0.16 -0.23 -0.36 -0.31 -0.55 :c -0.17 -0.42 -0.28 -0.79 -0.05 -0.79 :c 0.06 0 0.15 0.23 0.24 0.46 :c 0.06 0.16 0.12 0.31 0.16 0.39 :c 0.1 0.19 0.34 0.43 0.53 0.53 :c 0.09 0.46 -0.16 0.28 -0.24 0.23 :z]
+;;    :stroke "black"
+;;    :fill   "none"})
