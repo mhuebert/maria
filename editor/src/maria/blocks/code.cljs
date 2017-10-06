@@ -15,13 +15,46 @@
             [maria.editors.code :as code]
             [maria.views.error :as error]
             [maria.views.values :as value-views]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.frames.frame-communication :as frame]
+            [maria.commands.doc :as doc]))
+
+
 
 (defn vec-take [coll n]
   (cond-> coll (> (count coll) n)
           (subvec (- (count coll) n) (count coll))))
 
 (def -dispose-callbacks (volatile! {}))
+
+(defview ShareLink
+  [{:keys [view/state doc block block-list]}]
+  (let [{:keys [hovered]} @state
+        unsaved-changes (and (:hovered @state) (doc/unsaved-changes? doc))]
+    [:.share.absolute.top-0.right-0.bg-darken.pa1.hover-bg-darken-more.f7.z-5
+     {:on-mouse-enter #(swap! state assoc :hovered true :disabled (doc/unsaved-changes? doc))
+      :on-mouse-leave #(swap! state dissoc :hovered)
+      :class          (if unsaved-changes "o-50" "pointer")
+      :on-click       (fn []
+                        (let [{node-tag   :tag
+                               node-value :value} (cond-> (:node block)
+                                                          (= :base (:tag (:node block))) (-> :value first))
+                              ast   (->> (Block/emit-list (.getBlocks block-list))
+                                         (tree/ast)
+                                         (:value)
+                                         (remove #(or (tree/whitespace? %)
+                                                      (tree/comment? %))))
+                              index (->> ast
+                                         (take-while (fn [{:keys [tag value]}]
+                                                       (or (not= value node-value)
+                                                           (not= tag node-tag))))
+                                         (count))
+                              {:keys [id version]} (get-in doc [:project :persisted])]
+                          (frame/send frame/trusted-frame [:window/navigate
+                                                           (str "http://share.maria.cloud/gist/" id "/" version "/" index) {:popup? true}])))}
+     (if unsaved-changes
+       "unsaved changes"
+       "share")]))
 
 (defview CodeRow
   {:key                :id
@@ -30,29 +63,33 @@
    :view/will-unmount  Editor/unmount
    :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
-  [:.flex.pv2.cursor-text
-   {:on-click #(when (= (.-target %) (.-currentTarget %))
-                 (Editor/focus! (.getEditor this)))}
-   [:.w-50.flex-none
-    (error/error-boundary
-      {:on-error (fn [{:keys [error info]}]
-                   (e/handle-block-error (:id block) error))}
-      (code/CodeView {:class                 "pa3 bg-white"
-                      :ref                   #(v/swap-silently! state assoc :editor-view %)
-                      :value                 (Block/emit (:block this))
-                      :on-ast                (fn [node]
-                                               (.splice block-list block [(assoc block :node node)]))
-                      :before-change         before-change
-                      :on-selection-activity on-selection-activity
-                      :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                  :block-view this})
-                      :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                  :block-view nil})}))]
+  (let [doc (:current-doc @exec/context)]
+    [:.flex.pv2.cursor-text
+     {:on-click #(when (= (.-target %) (.-currentTarget %))
+                   (Editor/focus! (.getEditor this)))}
+     [:.w-50.flex-none
+      (error/error-boundary
+        {:on-error (fn [{:keys [error info]}]
+                     (e/handle-block-error (:id block) error))}
+        (code/CodeView {:class                 "pa3 bg-white"
+                        :ref                   #(v/swap-silently! state assoc :editor-view %)
+                        :value                 (Block/emit (:block this))
+                        :on-ast                (fn [node]
+                                                 (.splice block-list block [(assoc block :node node)]))
+                        :before-change         before-change
+                        :on-selection-activity on-selection-activity
+                        :capture-event/focus   #(exec/set-context! {:block/code true
+                                                                    :block-view this})
+                        :capture-event/blur    #(exec/set-context! {:block/code nil
+                                                                    :block-view nil})}))]
 
-   [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto.f6
-    (some-> (first (Block/eval-log block))
-            (assoc :block-id (:id block))
-            (value-views/display-result))]])
+     [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result
+      (ShareLink {:doc        doc
+                  :block      block
+                  :block-list block-list})
+      (some-> (first (Block/eval-log block))
+              (assoc :block-id (:id block))
+              (value-views/display-result))]]))
 
 (extend-type Block/CodeBlock
 

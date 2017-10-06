@@ -12,9 +12,6 @@ $selection-color: #f4f4d6;
   font-size: 14px;
 }
 
-
-
-
 .cm-s-maria-light {
   &.post-eval {
     .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection, div.CodeMirror-selected, .CodeMirror-selectedtext {
@@ -51,7 +48,6 @@ $selection-color: #f4f4d6;
     color: #a78938;
   }
 
-
   span.cm-variable {
     color: #98a14b;
   }
@@ -81,8 +77,6 @@ $selection-color: #f4f4d6;
     color: #987aa0;
   }
 }
-
-
 
 /* I don't think we're using these */
 .cm-s-maria-light .CodeMirror-gutters {
@@ -142,9 +136,11 @@ div.CodeMirror {
     font-size: 80%;
   }
 }
+
 .CodeMirror, pre {
   font-size: 15px;
 }
+
 .CodeMirror {
   background: transparent !important;
   box-shadow: none !important;
@@ -507,4 +503,13 @@ svg {
 
 .half-b {
   font-weight: 500;
+}
+
+.code-block-result {
+  .share {
+    display: none;
+  }
+  &:hover .share {
+    display: inline-block
+  }
 }
