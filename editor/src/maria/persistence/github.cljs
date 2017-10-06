@@ -23,7 +23,7 @@
 
 (defn gist->project
   "Convert a gist to local project format"
-  [{:keys [description files updated_at owner html_url id] :as gist-data}]
+  [{:keys [description files updated_at owner html_url id history] :as gist-data}]
   (let [{:keys [username] :as owner} (if (contains? curriculum/by-id id)
                                        curriculum/owner
                                        (gist-person owner))]
@@ -38,6 +38,7 @@
          :updated-at         updated_at
          :doc.owner/username username
          :persisted          {:description          description
+                              :version              (:version (first history))
                               :id                   id
                               :owner                owner
                               :remote-url           html_url

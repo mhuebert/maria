@@ -266,7 +266,7 @@
                                                      (edit/backspace! editor)) true)
 
       (util/whitespace-string? (edit/get-range pointer (- (.-ch (:pos pointer)))))
-      (edit/operation editor 
+      (edit/operation editor
                       (.replaceRange editor ""
                                      (:pos pointer)
                                      (:pos (edit/move-while pointer -1 #(#{\space \newline \tab} %)))))

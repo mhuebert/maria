@@ -33,10 +33,10 @@
                  [lark/editors "0.1.3-SNAPSHOT"]
                  [lark/tree "0.1.3-SNAPSHOT"]
 
-                 [cljsjs/codemirror "5.19.0-0"]
-                 [cljsjs/react "16.0.0-beta.2-0"]
-                 [cljsjs/react-dom "16.0.0-beta.2-0"]
-                 [cljsjs/tinycolor "1.3.0-0"]
+                 #_[cljsjs/codemirror "5.19.0-0"]
+                 [cljsjs/react "16.0.0-0"]
+                 [cljsjs/react-dom "16.0.0-0"]
+                 #_[cljsjs/tinycolor "1.3.0-0"]
                  [cljsjs/firebase "4.0.0-0"]
 
                  ;; just for bundles
