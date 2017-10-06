@@ -50,8 +50,10 @@
                                    :status [:.dark-red "Error:"]
                                    :error error)
                             (let [project (:persisted value)
-                                  [_ {source :content}] (first (:files project))]
+                                  [_ {source :content}] (first (:files project))
+                                  c-env @eval/c-env]
                               (eval/eval-str* source)
+                              (reset! eval/c-env c-env)
                               (swap! status assoc
                                      :status "Gist loaded."
                                      :source source)))))
