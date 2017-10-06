@@ -139,7 +139,7 @@
                                      (let [id (d/get :auth-public :id)]
                                        (and id (= (str (:id (:owner persisted))) id))))
           unsaved-changes (unsaved-changes? toolbar)]
-      (match [(boolean persisted) owned-by-current-user? unsaved-changes]
+      (match [(boolean persisted) (boolean owned-by-current-user?) (boolean unsaved-changes)]
              [false _ true] :create
              [true true true] :save
              [true false _] :copy

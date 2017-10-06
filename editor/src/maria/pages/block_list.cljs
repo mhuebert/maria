@@ -1,7 +1,6 @@
 (ns maria.pages.block_list
   (:require [re-view.core :as v :refer [defview]]
             [maria.blocks.history :as history]
-            [markdown-it :as markdownit]
             [re-db.d :as d]
             [maria.blocks.code]
             [maria.blocks.prose]
