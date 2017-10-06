@@ -30,7 +30,8 @@
 
 (defn get-selections []
   (when-let [block-view (focused-block-view)]
-    [(:block block-view) (Editor/get-selections (.getEditor block-view))]))
+    (when-let [editor (.getEditor block-view)]
+      [(:block block-view) (Editor/get-selections editor)])))
 
 (defn put-selections! [[block selections]]
   (v/flush!)

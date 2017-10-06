@@ -58,12 +58,3 @@
     (doseq [[inject-as sym] (seq (ns-utils/elide-quote mappings))]
       (e/eval c-state c-env `(def ~inject-as ~sym) {:ns ns})
       (swap! c-state update-in [:cljs.analyzer/namespaces ns :defs inject-as] merge (e/resolve-var c-state c-env sym)))))
-
-(defspecial in-ns
-  "Switch to namespace"
-  [c-state c-env namespace]
-  (let [namespace (ns-utils/elide-quote namespace)]
-    (when-not (symbol? namespace) (throw (js/Error. "`in-ns` must be passed a symbol.")))
-    (if (contains? (get @c-state :cljs.analyzer/namespaces) namespace)
-      {:ns namespace}
-      (e/eval c-state c-env `(~'ns ~namespace)))))
