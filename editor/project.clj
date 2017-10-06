@@ -25,7 +25,7 @@
                  [cljs-live "0.2.8-SNAPSHOT"]
 
 
-                 [lark/commands "0.1.2-SNAPSHOT"]
+                 [lark/commands "0.1.3-SNAPSHOT"]
                  [lark/value-viewer "0.1.2-SNAPSHOT"]
                  [lark/cells "0.1.5-SNAPSHOT"]
 
