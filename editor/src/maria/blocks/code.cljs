@@ -123,6 +123,7 @@
   Block/IEval
   (eval-log! [this value]
     (vswap! e/-eval-logs update (:id this) #(take 2 (cons value %)))
+    (Block/update-view this)
     value)
   (eval-log [this]
     (get @e/-eval-logs (:id this)))
@@ -140,5 +141,4 @@
      (eval-context/dispose! this)
      (binding [cell/*eval-context* this]
        (Block/eval-log! this ((case mode :form e/eval-form
-                                         :string e/eval-str) form))
-       (Block/update-view this)))))
+                                         :string e/eval-str) form))))))
