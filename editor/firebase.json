@@ -3,8 +3,9 @@
     "public": "resources/public",
     "ignore": [
       "js/compiled/out**",
-      "js/compiled/cljs-runtime**",
-      "js/compiled/node_modules**"
+      "js/compiled/cljs-runtime/**",
+      "js/compiled/node_modules/**",
+      "js/compiled/bootstrap/**"
     ],
     "rewrites": [
       {
