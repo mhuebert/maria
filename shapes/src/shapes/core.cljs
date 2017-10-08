@@ -74,7 +74,7 @@
   "Returns a rectangle of `width` and `height`."
   [width height]
   (assert-number "width must be a number!" width)
-  (assert-number "height must be a number!" height)  
+  (assert-number "height must be a number!" height)
   (->Shape {:is-a   :shape
             :kind   :rect
             :x      0
