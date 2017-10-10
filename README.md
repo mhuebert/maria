@@ -24,7 +24,7 @@ So...please go to [maria.cloud](https://maria.cloud) and play around with it liv
 We welcome your effort to make the beginner's path to Clojure smoother. Here's how:
 
 #### Contributing to fixing bugs
-The most helpful thing you can do is simply play around! 😸 and report bugs as GitHub issues.
+The most helpful thing you can do is simply play around! 😸 and [report bugs as GitHub issues](http://github.com/mhuebert/maria/issues/new).
 
 #### Contributing to better error messages
 While you play around, **please send us any un-wrapped Clojure error you find**. We track these in the [Error Handling wiki](https://github.com/mhuebert/maria/wiki/Error-Handling). This is so helpful for making errors easier for new people!
@@ -41,6 +41,7 @@ Like Clojure itself, the Maria curriculum is open-source, but is not primarily a
    - be familiar with [Quick: An Introduction to Racket with Pictures](http://docs.racket-lang.org/quick/)
    - be familiar with our existing curriculum: [Learn Clojure with Shapes](http://www.maria.cloud/intro), [Welcome to Cells](http://www.maria.cloud/cells), the [Gallery](http://www.maria.cloud/cells), and all the rest
    - be at least passingly familiar with at least some of the [Secondary Resources](https://github.com/mhuebert/maria/wiki/Curriculum#secondary-resources) listed on our Pedagogy wiki
+
    With that shared understanding attained, please get in touch with us by email so we can discuss ideas in depth.
 
 
