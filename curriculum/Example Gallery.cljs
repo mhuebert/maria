@@ -153,6 +153,26 @@
 
 ;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can right in your browser!
 
+;; ### Flower by ClojureBridge Berlin attendee
+
+(defn flower []
+  (let [leaves ["hotpink" "blue" "red" "darkturquoise" "mediumvioletred"]]
+    (layer
+     (position 300 60 (colorize (rand-nth leaves) (circle 60)))
+     (position 150 200 (colorize (rand-nth leaves) (circle 60)))
+     (position 450 200 (colorize (rand-nth leaves) (circle 60)))
+     (position 300 350 (colorize (rand-nth leaves) (circle 60)))
+     (position 200 100 (colorize (rand-nth leaves) (circle 60)))
+     (position 400 100 (colorize (rand-nth leaves) (circle 60)))
+     (position 200 300 (colorize (rand-nth leaves) (circle 60)))
+     (position 400 300 (colorize (rand-nth leaves) (circle 60)))
+     (position 290 410 (colorize "forestgreen" (rectangle 25 270)))
+     (position 215 500 (colorize "forestgreen" (circle 80)))
+     (position 390 500 (colorize "forestgreen" (circle 80)))
+     (position 300 200 (colorize "yellow" (circle 115))))))
+
+(cell (interval 250 flower))
+
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
