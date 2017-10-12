@@ -64,7 +64,7 @@ yarn global add firebase-tools;
 npm i -g firebase-tools;
 ```
 
-### start a server
+### start a server, and note the URL that is printed:
 
 ```
 yarn run server;
