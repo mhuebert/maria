@@ -1,14 +1,15 @@
 {
   "scripts": {
     "watch": "shadow-cljs watch live bootstrap trusted",
-    "build": "shadow-cljs release live bootstrap trusted"
+    "build": "shadow-cljs release live bootstrap trusted",
+    "server": "firebase serve"
   },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
     "autoprefixer": "^7.1.1",
     "css-loader": "^0.28.2",
     "extract-text-webpack-plugin": "^2.1.0",
-    "firebase-tools": "^3.9.0",
+    "firebase-tools": "^3.13.1",
     "konan": "^1.1.0",
     "material-components-web": "^0.14.0",
     "module-deps": "^4.1.1",

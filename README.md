@@ -30,6 +30,8 @@ Please contribute your efforts! We could use your help to make the beginner's pa
 
 ## Development
 
+From the `/editor` directory:
+
 First, install javascript dependencies and compile stylesheets:
 
 ```
@@ -37,17 +39,33 @@ yarn install;
 webpack -p;
 ```
 
-### standard figwheel
+To run a development server that supports our pushstate routes, install `firebase-tools` globally:
 
-```shell
-yarn run dev;
+```
+yarn global add firebase-tools;
+// or
+npm i -g firebase-tools;
 ```
 
-### production build
+### start a server
+
+```
+yarn run server;
+```
+
+### build Maria and watch for changes:
+
+```shell
+yarn run watch;
+```
+
+### make a production build:
 
 ```shell
 yarn run build;
 ```
+
+;; TODO: update the following docs for shadow-cljs
 
 ### cursive/IntelliJ figwheel+repl
 
