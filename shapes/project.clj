@@ -1,4 +1,4 @@
-(defproject maria/shapes "0.1.0-SNAPSHOT"
+(defproject maria/shapes "0.1.1-SNAPSHOT"
   :description "A shapes library"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -11,4 +11,6 @@
 
   :source-paths ["src"]
   :cljsbuild {:builds []}
-  :deploy-via :clojars)
+  :deploy-via :clojars
+  :lein-release {:deploy-via :clojars
+                 :scm        :git})
