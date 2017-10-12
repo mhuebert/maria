@@ -74,11 +74,14 @@
 (defview not-found []
   [:div "We couldn't find this page!"])
 
+(defn render []
+  (v/render-to-dom (repl/layout {}) "maria-env"))
+
 (defn main []
 
   (e/init)
 
-  (v/render-to-dom (repl/layout {}) "maria-env")
+  (render)
 
   (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))

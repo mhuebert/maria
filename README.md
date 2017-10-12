@@ -40,25 +40,13 @@ webpack -p;
 ### standard figwheel
 
 ```shell
-lein dev
+yarn run dev;
 ```
 
 ### production build
 
-(uses `:optimizations :simple`)
-
 ```shell
-lein build
-```
-
-### build fresh dependency bundles
-
-(uses [cljs-live](/braintripping/cljs-live)  - requires Planck 2.5.0 to be installed)
-
-_Note - this step can be problematic and is unnecessary for a lot of local development._
-
-```shell
-lein bundles
+yarn run build;
 ```
 
 ### cursive/IntelliJ figwheel+repl

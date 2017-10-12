@@ -5,7 +5,6 @@
             [clojure.string :as string]
             [maria.eval :as e]
             [cljs-live.eval :as live-eval]
-            [cljs-live.compiler :as c]
             [goog.net.XhrIo :as xhr]
             [maria.util :as util])
   (:import goog.string.StringBuffer))
@@ -107,7 +106,7 @@
                                (string/join "/" path)
                                (string/replace path "$macros" ""))
           file (re-find (re-pattern (str namespace-path ".*")) file)]
-      (if-let [source (get @c/cljs-cache file)]
+      (if-let [source (get @live-eval/cljs-cache file)]
         (cb {:value (source-of-top-level-form source the-var)})
         (xhr/send (str source-path "/" file)
                   (fn [e]

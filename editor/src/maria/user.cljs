@@ -14,7 +14,6 @@
                                             colorize stroke no-stroke fill no-fill
                                             color-names rgb hsl rescale
                                             layer beside above
-                                            fish            ; for functional geometry demo
                                             ;; are these internal only? -jar
                                             assure-shape-seq shape-bounds bounds shape->vector]]
             [re-view.core :include-macros true])

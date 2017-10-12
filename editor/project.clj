@@ -19,10 +19,10 @@
                  [maria/friendly "0.1.0-SNAPSHOT"]
                  [maria/shapes "0.1.0-SNAPSHOT"]
 
-                 [re-view "0.3.32-SNAPSHOT"]
+                 [re-view "0.3.33"]
                  [re-view-routing "0.1.3"]
                  [re-view-prosemirror "0.1.10-SNAPSHOT"]
-                 [cljs-live "0.2.8-SNAPSHOT"]
+                 [cljs-live "0.2.9-SNAPSHOT"]
 
 
                  [lark/commands "0.1.3-SNAPSHOT"]
@@ -37,7 +37,9 @@
                  ;[cljsjs/react "16.0.0-0"]
                  ;[cljsjs/react-dom "16.0.0-0"]
                  #_[cljsjs/tinycolor "1.3.0-0"]
-                 [cljsjs/firebase "4.0.0-0"]
+                 #_[cljsjs/firebase "4.0.0-0"]
+
+                 [thheller/shadow-cljs "2.0.9"]
 
                  ;; just for bundles
                  ;[reagent "0.7.0" :exclusions [cljsjs/react]]
@@ -45,14 +47,13 @@
                  ;[cljs-bach "0.2.0"]
                  ]
 
-  :plugins [[lein-figwheel "0.5.13"]
-            [lein-cljsbuild "1.1.7"]]
+  :plugins [#_[lein-figwheel "0.5.13"]
+            #_[lein-cljsbuild "1.1.7"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
   :source-paths ["src"
-                 "test"
                  "checkouts/re_view/src"
                  "checkouts/re_view_hiccup/src"
                  "checkouts/re_view_routing/src"
@@ -60,12 +61,7 @@
                  "checkouts/re_db/src"
                  "checkouts/cljs_live/src"
                  "checkouts/shapes"
-                 "checkouts/friendly"
-                 "../../lark/cells/src"
-                 "../../lark/commands/src"
-                 "../../lark/structure/src"
-                 "../../lark/editors/src"
-                 "../../lark/tree/src"]
+                 "checkouts/friendly"]
 
   :cljsbuild {:builds [{:id           "live-dev"
                         :source-paths ["src"]

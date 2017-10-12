@@ -1,7 +1,7 @@
 (ns maria.eval
   (:require [cljs.js :as cljs]
-            [cljs-live.compiler :as c]
             [cljs-live.eval :as e :refer [defspecial]]
+            [shadow.cljs.bootstrap.browser :as boot]
             [re-db.d :as d]))
 
 (defonce c-state (cljs/empty-state))
@@ -55,8 +55,18 @@
     (f)))
 
 (defn init []
-  ;(set! cljs-live.compiler/debug? true)
-  (let [bundles ["cljs.core"
+  (boot/init c-state
+             {:path         "/js/bootstrap"
+              :load-on-init '#{maria.user cljs.spec.alpha}}
+             (fn []
+               (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
+                                                 load-gist maria.user.loaders/load-gist
+                                                 load-js   maria.user.loaders/load-js
+                                                 load-npm  maria.user.loaders/load-npm
+                                                 html      re-view-hiccup.core/element}))
+               (eval-form* '(in-ns maria.user))
+               (loaded!)))
+  #_(let [bundles ["cljs.core"
                  "maria.user"
                  "cljs.spec.alpha"
                  #_"reagent.core"

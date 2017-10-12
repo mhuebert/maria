@@ -1,7 +1,7 @@
 target
 *.log
 *.iml
-pom.xml
+pom.xml**
 .idea
 .lein-repl-history
 .nrepl-port
@@ -13,6 +13,7 @@ cljs-runtime
 node_modules
 **/resources/public/js/cljs_live_bundles
 **/resources/public/js/compiled
+**/bootstrap/**
 **/resources/public/css
 **/checkouts
 **/.cljs_live_planck_cache

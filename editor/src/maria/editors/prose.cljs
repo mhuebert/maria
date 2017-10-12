@@ -54,7 +54,7 @@
                                                       :handleScrollToSelection (fn [view] true)
                                                       :dispatchTransaction     (fn [tr]
                                                                                  (let [^js/pm.EditorView pm-view (get @state :pm-view)
-                                                                                       prev-state (.-state pm-view)]
+                                                                                       prev-state                (.-state pm-view)]
                                                                                    (when before-change (before-change))
                                                                                    (pm/transact! pm-view tr)
                                                                                    (when-not (nil? on-dispatch)
@@ -66,9 +66,10 @@
                                               (clj->js))))
 
 (defview ProseEditor
-  {:spec/props              {:on-dispatch :Function
-                             :input-rules :Object
-                             :doc         :Object}
+  {:spec/props              {:on-dispatch   :Function
+                             :before-change :Function
+                             :input-rules   :Object
+                             :doc           :Object}
    :view/did-mount          (fn [{:keys [view/state
                                          input-rules
                                          doc] :as this}]
@@ -185,7 +186,7 @@
   (-focus! [this coords]
     (v/flush!)
     (let [state (.-state this)
-          doc (.-doc state)]
+          doc   (.-doc state)]
       (.focus this)
       (when-let [selection (cond (keyword? coords)
                                  (case coords :start (.atStart pm/Selection doc)
