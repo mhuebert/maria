@@ -2,7 +2,7 @@
 
 ;; Here are some ways to use shapes in Maria. They’re here for you to browse and play with.
 
-;; Most (but not all!) of the Clojure programming techniques used here are explained in [Learn Clojure with Shapes](https://dev.maria.cloud/intro) and [Welcome to Cells](https://dev.maria.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
+;; Some of these were made by first-day programmers after working through [Learn Clojure with Shapes](http://www.maria.cloud/intro), where most (but not all!) of the Clojure programming techniques used are explained. See also [Welcome to Cells](https://dev.maria.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
 
 ;; #### Colorization functions
 
@@ -59,9 +59,10 @@
 (defn confetti []
   (let [palette (cycle ["aqua" "springgreen" "magenta"])]
     (->> (repeat 20 (triangle 20))
-     (map #(position (rand-int 500) (rand-int 500) %))
-     (map colorize palette)
-     (apply layer))))
+         (map #(position (rand-int 500) (rand-int 500) %))
+         (map colorize palette)
+         (cons (colorize "#eeeeee" (rectangle 550 550)))
+         (apply layer))))
 
 ;; try it–more than once!
 (confetti)
@@ -151,6 +152,26 @@
 ;; #### Music!
 
 ;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can right in your browser!
+
+;; ### Flower by ClojureBridge Berlin attendee
+
+(defn flower []
+  (let [leaves ["hotpink" "blue" "red" "darkturquoise" "mediumvioletred"]]
+    (layer
+     (position 300 60 (colorize (rand-nth leaves) (circle 60)))
+     (position 150 200 (colorize (rand-nth leaves) (circle 60)))
+     (position 450 200 (colorize (rand-nth leaves) (circle 60)))
+     (position 300 350 (colorize (rand-nth leaves) (circle 60)))
+     (position 200 100 (colorize (rand-nth leaves) (circle 60)))
+     (position 400 100 (colorize (rand-nth leaves) (circle 60)))
+     (position 200 300 (colorize (rand-nth leaves) (circle 60)))
+     (position 400 300 (colorize (rand-nth leaves) (circle 60)))
+     (position 290 410 (colorize "forestgreen" (rectangle 25 270)))
+     (position 215 500 (colorize "forestgreen" (circle 80)))
+     (position 390 500 (colorize "forestgreen" (circle 80)))
+     (position 300 200 (colorize "yellow" (circle 115))))))
+
+(cell (interval 250 flower))
 
 ;; ### Fernseheturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
