@@ -9,6 +9,7 @@
   :dependencies [[thheller/shadow-cljs "2.0.18"]
                  [org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.946"]
+
                  [org.clojure/core.match "0.3.0-alpha4"]
                  [com.cognitect/transit-cljs "0.8.239"]
                  [com.cognitect/transit-clj "0.8.300"]
@@ -18,7 +19,7 @@
                  [fast-zip "0.7.0"]
 
                  [maria/friendly "0.1.0-SNAPSHOT"]
-                 [maria/shapes "0.1.0-SNAPSHOT"]
+                 [maria/shapes "0.1.0"]
 
                  [re-view "0.3.33"]
                  [re-view-routing "0.1.3"]
@@ -26,11 +27,10 @@
                  [cljs-live "0.2.9-SNAPSHOT"]
 
 
-                 [lark/commands "0.2.0-SNAPSHOT"]
-                 [lark/value-viewer "0.1.2-SNAPSHOT"]
-                 [lark/cells "0.1.5-SNAPSHOT"]
+                 [lark/value-viewer "0.1.2"]
+                 [lark/cells "0.1.5"]
 
-                 [lark/structure "0.1.3-SNAPSHOT"]
+                 [lark/structure "0.1.5-SNAPSHOT"]
                  [lark/editors "0.1.3-SNAPSHOT"]
                  [lark/tree "0.1.3-SNAPSHOT"]]
 

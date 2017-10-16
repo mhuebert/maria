@@ -75,7 +75,7 @@
                                                                         (cm/cursor-loc pos))]
                                                        (when (and loc (not (= loc (:loc @last-sel))))
 
-                                                         (exec/clear-whichkey!)
+                                                         (swap! exec/state exec/clear-which-key)
 
                                                          (cm/temp-select-node! editor (z/node loc))
                                                          (vreset! last-sel {:pos pos
