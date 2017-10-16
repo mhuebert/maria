@@ -31,6 +31,7 @@
                  [lark/cells "0.1.5"]
 
                  [lark/structure "0.1.5-SNAPSHOT"]
+                 [lark/commands "0.2.2-SNAPSHOT"]
                  [lark/editors "0.1.3-SNAPSHOT"]
                  [lark/tree "0.1.3-SNAPSHOT"]]
 
