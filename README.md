@@ -56,21 +56,7 @@ yarn install;
 webpack -p;
 ```
 
-To run a development server that supports our pushstate routes, install `firebase-tools` globally:
-
-```
-yarn global add firebase-tools;
-// or
-npm i -g firebase-tools;
-```
-
-### start a server, and note the URL that is printed:
-
-```
-yarn run server;
-```
-
-### build Maria and watch for changes:
+### build in development mode, start a local server, and live-reload changes:
 
 ```shell
 yarn run watch;
@@ -79,7 +65,7 @@ yarn run watch;
 ### make a production build:
 
 ```shell
-yarn run build;
+yarn run release;
 ```
 
 ;; TODO: update the following docs for shadow-cljs

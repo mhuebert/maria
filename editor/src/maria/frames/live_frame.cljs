@@ -90,6 +90,4 @@
 
 ;(frame/listen "*" (partial println :editor-listen-all))
 
-
-
-(main)
+(defonce _init_ (main))

@@ -143,9 +143,11 @@
          (let [div (.. editor -display -wrapper)]
            (classes/add div "post-eval")
            (js/setTimeout #(classes/remove div "post-eval") 200)))
-       (Block/eval! this :string source)))
+       (Block/eval! this :string source))
+      true)
     ([this mode form]
      (eval-context/dispose! this)
      (binding [cell/*eval-context* this]
        (Block/eval-log! this ((case mode :form e/eval-form
-                                         :string e/eval-str) form))))))
+                                         :string e/eval-str) form)))
+     true)))

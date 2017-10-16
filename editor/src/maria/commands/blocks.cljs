@@ -26,15 +26,13 @@
                                    :left :end)))
   true)
 
+
 (defcommand :navigate/forward
   {:bindings ["Down"
               "Right"]
    :when     :block-list}
   [context]
-  (if (and (#{"ArrowDown"
-              "ArrowRight"
-              "Down"
-              "Right"} (:key context))
+  (if (and (:binding-vec context)
            (not (some-> (:editor context) (Editor/at-end?))))
     false
     (focus-adjacent! context :right)))
@@ -44,10 +42,7 @@
               "Left"]
    :when     :block-list}
   [context]
-  (if (and (#{"ArrowUp"
-              "ArrowLeft"
-              "Up"
-              "Left"} (:key context))
+  (if (and (:binding-vec context)
            (not (some-> (:editor context) (Editor/at-start?))))
     false
     (focus-adjacent! context :left)))
@@ -65,8 +60,8 @@
 
 (defcommand :select/back
   "Contract selection (reverse of expand-selection)"
-  {:bindings ["M1-2"
-              "M1-Down"]
+  {:bindings ["M1-Down"
+              "M1-2"]
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
@@ -84,9 +79,7 @@
         code
         (do
           (cm/unset-cursor-root! editor)
-          (if (.somethingSelected editor)
-            (.execCommand editor "selectAll")
-            (cm/select-at-cursor editor true)))
+          (.execCommand editor "selectAll"))
         :else nil))
 
 (defcommand :history/undo
@@ -121,7 +114,7 @@
 
 (defcommand :navigate/focus-end
   {:private true
-   :when :block-list}
+   :when    :block-list}
   [context]
   (some-> (filter (complement Block/whitespace?) (.getBlocks (:block-list context)))
           (last)

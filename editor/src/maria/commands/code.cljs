@@ -96,12 +96,13 @@
     (events/listenOnce js/window "keydown" clear-listeners! true)))
 
 (defcommand :select/form-at-cursor
-  {:bindings ["M1"]
-   :when     :block/code}
-  [context]
-  (when-not (cm/selection? (:editor context))
-    (cm/select-at-cursor (:editor context) false))
-  (init-select-by-click (:editor context)))
+    {:bindings ["M1"]
+     :when     :block/code}
+    [{:keys [editor]}]
+  (when editor
+    (when-not (cm/selection? editor)
+      (cm/select-at-cursor editor false))
+    (init-select-by-click editor)))
 
 (defcommand :select/top-level-form
   {:bindings ["M1-Shift"]
@@ -219,25 +220,25 @@
 
 (defcommand :edit/auto-close
   {:bindings ["["
-              "Shift-["
-              "Shift-9"
-              "Shift-'"]
+              "Shift-("
+              "Shift-\""]
    :private  true
    :when     :block/code}
-  [{:keys [editor key]}]
-  (edit/operation editor
-                  (when-let [other-bracket (edit/other-bracket key)]
-                    (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
-                                       (and (= :string (:tag node))
-                                            (tree/inside? node pos)))
-                          ;; if in a string, escape quotes and do not autoclose
-                          [insertion-text forward] (if in-string?
-                                                     (if (= key \") ["\\\"" 2] [key 1])
-                                                     [(str key other-bracket) 1])]
-                      (-> (edit/pointer editor)
-                          (edit/insert! insertion-text)
-                          (edit/move forward)
-                          (edit/set-editor-cursor!))))))
+  [{:keys [editor binding-vec]}]
+  (let [key (last binding-vec)]
+    (edit/operation editor
+                    (when-let [other-bracket (edit/other-bracket key)]
+                      (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
+                                         (and (= :string (:tag node))
+                                              (tree/inside? node pos)))
+                            ;; if in a string, escape quotes and do not autoclose
+                            [insertion-text forward] (if in-string?
+                                                       (if (= key \") ["\\\"" 2] [key 1])
+                                                       [(str key other-bracket) 1])]
+                        (-> (edit/pointer editor)
+                            (edit/insert! insertion-text)
+                            (edit/move forward)
+                            (edit/set-editor-cursor!)))))))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
@@ -255,11 +256,14 @@
       (Block/empty? block) (clear-empty-code-block block-list blocks block)
       (.somethingSelected editor) false
 
-      (and (= \" prev-char)
-           (= \" (edit/get-range pointer 1))) (do (-> pointer
-                                                      (edit/move -1)
-                                                      (edit/insert! 2 ""))
-                                                  true)
+      (= \" prev-char) (do (if (= \" (edit/get-range pointer 1))
+                             (-> pointer
+                                 (edit/move -1)
+                                 (edit/insert! 2 ""))
+                             (-> pointer
+                                 (edit/move -1)
+                                 (edit/set-editor-cursor!)))
+                           true)
 
       (#{:comment :string} (get-in editor [:magic/cursor :node :tag])) false
 
@@ -267,9 +271,9 @@
                                          (edit/move -1)
                                          (edit/set-editor-cursor!))
                                      true)
-      (#{\( \[ \{ } prev-char) (do (edit/operation editor
-                                                     (edit/unwrap! editor)
-                                                     (edit/backspace! editor)) true)
+      (#{\( \[ \{} prev-char) (do (edit/operation editor
+                                                  (edit/unwrap! editor)
+                                                  (edit/backspace! editor)) true)
 
       (util/whitespace-string? (edit/get-range pointer (- (.-ch (:pos pointer)))))
       (edit/operation editor
@@ -323,7 +327,6 @@
 (defcommand :edit/slurp-forward
   "Expand current form to include the form to the right."
   {:bindings ["M1-Shift-Right"
-              "M3-Right"
               "M1-Shift-K"]
    :when     :block/code}
   [{:keys [editor] :as context}]

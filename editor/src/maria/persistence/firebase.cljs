@@ -4,16 +4,26 @@
             [re-db.d :as d]
             [goog.object :as gobj]
             [maria.persistence.local :as local]
-            [maria.persistence.github :as github]))
+            [maria.persistence.github :as github]
+            ["firebase/app" :as firebase]
+            ["firebase/auth"]))
+
+;(def firebase js/firebase)
 
 (def CONNECT_ERR_MESSAGE "Could not initialize Firebase auth")
 
-(def firebase-auth (try (.auth js/firebase)
+(.initializeApp firebase #js {:apiKey            "AIzaSyCu4fEYMcfW6vzQWB0TS--Jphv3hzBqUyo",
+                                 :authDomain        "maria-d04a7.firebaseapp.com",
+                                 :databaseURL       "https://maria-d04a7.firebaseio.com",
+                                 :projectId         "maria-d04a7",
+                                 :storageBucket     "maria-d04a7.appspot.com",
+                                 :messagingSenderId "832199278239"})
+
+(def firebase-auth (try (.auth firebase)
                         (catch js/Error e
                           (prn CONNECT_ERR_MESSAGE))))
 
-
-(def providers (try {"github.com" (doto (js/firebase.auth.GithubAuthProvider.)
+(def providers (try {"github.com" (doto (new (.. firebase -auth -GithubAuthProvider))
                                     (.addScope "gist"))}
                     (catch js/Error e
                       (prn CONNECT_ERR_MESSAGE))))
@@ -25,6 +35,7 @@
              (tokens/put-token provider (-> result
                                             (gobj/get "credential")
                                             (gobj/get "accessToken")))))))
+
 
 (defn sign-out []
   (local/local-put! "auth/accessToken" nil)
@@ -54,5 +65,6 @@
                                                        [:db/add :auth-public :signed-in? false]
                                                        [:db/retract-entity :auth-secret]]))))
   (catch js/Error e
+    (.error js/console e)
     (prn CONNECT_ERR_MESSAGE)))
 

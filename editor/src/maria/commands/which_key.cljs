@@ -7,14 +7,6 @@
             [maria.views.bottom-bar :as bottom-bar]
             [maria.util :as util]))
 
-(defn show-keyset
-  "Render a keyset. Does not support multi-step key-combos."
-  [modifiers-down [keyset]]
-  (let [keyset (set/difference keyset modifiers-down)]
-    [:.dib.ph1.br2.pv05.gray
-     {:key (str keyset)}
-     (registry/keyset-string (set/difference keyset modifiers-down))]))
-
 (defn show-namespace-commands [modifiers-down [namespace hints]]
   (let [row-height 24]
     [:.avoid-break.ph3.pv2
@@ -22,13 +14,17 @@
      [:.b.mb2 namespace]
      [:.flex.flex-column.bg-near-white.ph2
 
-      (for [{:keys [display-name name parsed-bindings]} hints]
+      (for [{:keys [display-name name bindings]} hints]
         [:.flex.items-center.ws-nowrap.pointer.hover-bg-near-white.br2
          {:on-mouse-down #(exec/exec-command-name name)
           :style         {:height row-height}}
          display-name
          [:.flex-auto]
-         (show-keyset modifiers-down (first parsed-bindings))])]]))
+         [:.dib.ph1.br2.pv05.gray
+          (-> (registry/binding-string->vec (first bindings))
+              (set)
+              (set/difference modifiers-down)
+              (registry/keyset-string))]])]]))
 
 (defview show-commands
   {:view/state         exec/state

@@ -6,8 +6,7 @@
 
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
-
-(def -eval-logs (volatile! {}))
+(defonce -eval-logs (volatile! {}))
 
 (def add-error-position e/add-error-position)
 
@@ -45,7 +44,7 @@
 ;; Simple queue for functions to be executed
 ;; after self-host environment is ready.
 (def loaded? false)
-(def queue [])
+(defonce queue [])
 (defn on-load [f]
   (if loaded? (f)
               (set! queue (conj queue f))))
