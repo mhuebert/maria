@@ -1,7 +1,7 @@
 {
   "scripts": {
     "watch": "yarn run shadow-cljs watch live bootstrap trusted",
-    "release": "yarn run shadow-cljs release live; yarn run shadow-cljs release bootstrap;yarn run shadow-cljs release trusted;"
+    "release": "rm -rf resources/public/js/bootstrap; yarn run shadow-cljs release live; yarn run shadow-cljs release bootstrap;yarn run shadow-cljs release trusted;"
   },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
