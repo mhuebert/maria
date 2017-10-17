@@ -8,16 +8,15 @@
 
                 [fast-zip "0.7.0"]
 
-                [maria/friendly "0.1.0-SNAPSHOT"]
+                [maria/friendly "0.1.0"]
                 [maria/shapes "0.1.0"]
 
-                [re-view "0.4.0-SNAPSHOT"]
+                [re-view "0.4.0"]
                 [re-view/prosemirror "0.2.0-SNAPSHOT"]
 
-                [lark/tools "0.1.0-SNAPSHOT"]
+                [lark/tools "0.1.0"]
                 [lark/cells "0.1.5"]
-
-                [cljs-live "0.2.9-SNAPSHOT"]]
+                [cljs-live "0.3.0"]]
 
  :nrepl        {:port 7888}
 
