@@ -38,13 +38,17 @@
                  :devtools         {:http-root    "resources/public"
                                     :http-handler shadow.http.push-state/handle
                                     :http-port    8701
-                                    :after-load   maria.frames.live-frame/render}}
+                                    :after-load   maria.frames.live-frame/render}
+                 :js-options       {:resolve {"codemirror"  {:target :global
+                                                             :global "CodeMirror"}}}}
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
                  :entries    [maria.user
                               cljs.spec.alpha]
-                 :exclude    [cljs.js]}
+                 :exclude    [cljs.js]
+                 :js-options {:resolve {"codemirror"  {:target :global
+                                                       :global "CodeMirror"}}}}
                 :trusted
                 {:target        :browser
                  :output-dir    "resources/public/js/compiled"
