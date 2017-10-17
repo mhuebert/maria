@@ -13,9 +13,10 @@
             [maria.live.ns-utils :as ns-utils]
             [goog.events :as events]
             [lark.commands.exec :as exec]
-            [maria.util :as util]))
+            [maria.util :as util]
+            ["codemirror" :as CM]))
 
-(def pass #(.-Pass js/CodeMirror))
+(def pass #(do CM/Pass))
 
 (def selection? #(and (:block/code %)
                       (some-> (:editor %) (.somethingSelected))))

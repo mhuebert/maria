@@ -6,6 +6,7 @@
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
     "autoprefixer": "^7.1.1",
+    "codemirror": "^5.30.0",
     "css-loader": "^0.28.2",
     "extract-text-webpack-plugin": "^2.1.0",
     "firebase": "^4.5.1",

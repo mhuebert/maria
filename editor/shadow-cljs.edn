@@ -12,9 +12,9 @@
                 [maria/shapes "0.1.0"]
 
                 [re-view "0.4.0"]
-                [re-view/prosemirror "0.2.0-SNAPSHOT"]
+                [re-view/prosemirror "0.2.1-SNAPSHOT"]
 
-                [lark/tools "0.1.0"]
+                [lark/tools "0.1.1"]
                 [lark/cells "0.1.5"]
                 [cljs-live "0.3.0"]]
 
@@ -38,21 +38,13 @@
                  :devtools         {:http-root    "resources/public"
                                     :http-handler shadow.http.push-state/handle
                                     :http-port    8701
-                                    :after-load   maria.frames.live-frame/render}
-                 :js-options       {:resolve {"codemirror"  {:target :global
-                                                             :global "CodeMirror"}
-                                              "markdown-it" {:target :global
-                                                             :global "markdownit"}}}}
+                                    :after-load   maria.frames.live-frame/render}}
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
                  :entries    [maria.user
                               cljs.spec.alpha]
-                 :exclude    [cljs.js]
-                 :js-options {:resolve {"codemirror"  {:target :global
-                                                       :global "CodeMirror"}
-                                        "markdown-it" {:target :global
-                                                       :global "markdownit"}}}}
+                 :exclude    [cljs.js]}
                 :trusted
                 {:target        :browser
                  :output-dir    "resources/public/js/compiled"

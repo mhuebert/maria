@@ -1,9 +1,10 @@
 (ns maria.editors.code
   (:require
 
-    #_["codemirror/addon/selection/mark-selection"]
-    #_["codemirror/mode/clojure/clojure"]
     [lark.structure.codemirror :as cm]
+    ["codemirror" :as CM]
+    ["codemirror/addon/selection/mark-selection"]
+    ["codemirror/mode/clojure/clojure"]
 
     [re-view.core :as v :refer [defview]]
 
@@ -86,7 +87,7 @@
                                          keymap]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
-                                    editor (js/CodeMirror dom-node
+                                    editor (CM dom-node
                                                           (clj->js (merge cm-opts
                                                                           {:value (str (or value default-value))}
                                                                           (cond-> options
