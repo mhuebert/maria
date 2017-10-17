@@ -10,7 +10,7 @@
 
     [maria.util :as util]
     [maria.views.floating.float-ui :as hint]
-    [lark.editors.editor :as Editor]
+    [lark.editor :as Editor]
     [lark.tree.core :as tree]
     [maria.live.ns-utils :as ns-utils]
     [maria.views.dropdown :as dropdown]

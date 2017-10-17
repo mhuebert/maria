@@ -3,7 +3,7 @@
             [cells.eval-context :as eval-context]
             [re-view.core :as v]
             [maria.blocks.blocks :as Block]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
             [lark.commands.exec :as exec]))
 
 

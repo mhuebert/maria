@@ -6,7 +6,7 @@
             [lark.tree.core :as tree]
             [re-view.prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
-            [lark.editors.editor :as Editor]))
+            [lark.editor :as Editor]))
 
 (defn serialize-block [this]
   (.serialize markdown/serializer (Block/state this)))

@@ -1,6 +1,6 @@
 (ns maria.live.ns-utils
   (:require [maria.eval :as e]
-            [cljs-live.eval :as c-e]
+            [lark.eval :as c-e]
             [clojure.string :as string]
             [lark.tree.core :as tree]
             [cljs.analyzer :as ana]))

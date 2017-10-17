@@ -15,7 +15,7 @@
 
 
             [lark.commands.exec :as exec]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
             ["prosemirror-view" :refer [EditorView]]
             ["prosemirror-state" :as state :refer [EditorState]]
             ["prosemirror-inputrules" :as input-rules]

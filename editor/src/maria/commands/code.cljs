@@ -9,14 +9,14 @@
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
             [maria.blocks.prose :as Prose]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
             [maria.live.ns-utils :as ns-utils]
             [goog.events :as events]
             [lark.commands.exec :as exec]
             [maria.util :as util]
             ["codemirror" :as CM]))
 
-(def pass #(do CM/Pass))
+(def pass #(do :lark.commands/Pass))
 
 (def selection? #(and (:block/code %)
                       (some-> (:editor %) (.somethingSelected))))
@@ -222,7 +222,8 @@
 (defcommand :edit/auto-close
   {:bindings ["["
               "Shift-("
-              "Shift-\""]
+              "Shift-\""
+              "Shift-{"]
    :private  true
    :when     :block/code}
   [{:keys [editor binding-vec]}]

@@ -4,7 +4,7 @@
             [lark.tree.core :as tree]
             [clojure.string :as string]
             [maria.eval :as e]
-            [cljs-live.eval :as live-eval]
+            [lark.eval :as live-eval]
             [goog.net.XhrIo :as xhr]
             [maria.util :as util])
   (:import goog.string.StringBuffer))

@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
 
             [lark.structure.codemirror :as cm]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
             [lark.commands.exec :as exec]
 
             [cells.cell :as cell]

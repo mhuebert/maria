@@ -1,6 +1,6 @@
 (ns maria.repl-specials
   "Special forms that exist only in the REPL."
-  (:require [cljs-live.eval :as e :refer [defspecial]]
+  (:require [lark.eval :as e :refer [defspecial]]
             [maria.views.repl-specials :as special-views]
             [maria.friendly.kinds :as kinds]
             [maria.live.ns-utils :as ns-utils]

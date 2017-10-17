@@ -4,7 +4,7 @@
 
             [lark.tree.core :as tree]
             [lark.commands.registry :refer-macros [defcommand]]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
 
             [re-view.core :as v]
             [re-db.d :as d]

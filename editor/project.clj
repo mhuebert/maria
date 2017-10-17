@@ -6,7 +6,7 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[thheller/shadow-cljs "2.0.20"]
+  :dependencies [[thheller/shadow-cljs "2.0.22"]
                  [org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.946"]
 
@@ -24,9 +24,8 @@
                  [re-view "0.4.0"]
                  [re-view/prosemirror "0.2.1-SNAPSHOT"]
 
-                 [lark/tools "0.1.3"]
-                 [lark/cells "0.1.5"]
-                 [cljs-live "0.3.0"]]
+                 [lark/tools "0.1.7"]
+                 [lark/cells "0.1.5"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
@@ -37,7 +36,6 @@
                  "checkouts/re_view_routing/src"
                  "checkouts/re_view_prosemirror/src"
                  "checkouts/re_db/src"
-                 "checkouts/cljs_live/src"
                  "checkouts/shapes"
                  "checkouts/friendly"]
 

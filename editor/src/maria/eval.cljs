@@ -1,6 +1,6 @@
 (ns maria.eval
   (:require [cljs.js :as cljs]
-            [cljs-live.eval :as e :refer [defspecial]]
+            [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
             [re-db.d :as d]))
 

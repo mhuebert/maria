@@ -1,7 +1,7 @@
 (ns maria.commands.blocks
   (:require [lark.commands.registry :refer-macros [defcommand]]
             [maria.blocks.blocks :as Block]
-            [lark.editors.editor :as Editor]
+            [lark.editor :as Editor]
             [maria.blocks.history :as history]
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
