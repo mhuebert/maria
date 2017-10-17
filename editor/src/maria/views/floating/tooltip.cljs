@@ -4,7 +4,7 @@
             [re-db.d :as d]
             [goog.events :as events]
             [goog.dom.dataset :as data]
-            [re-view-routing.core :as r]
+            [re-view.routing :as r]
             [maria.util :as util]
             [cljs.tools.reader.edn :as edn]))
 

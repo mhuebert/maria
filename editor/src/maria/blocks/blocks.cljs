@@ -9,7 +9,7 @@
             [re-view.core :as v]
             [re-db.d :as d]
 
-            [re-view-prosemirror.markdown :as markdown]
+            [re-view.prosemirror.markdown :as markdown]
 
             [cells.cell :as cell]
             [maria.util :as util]

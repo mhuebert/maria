@@ -6,7 +6,7 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[thheller/shadow-cljs "2.0.18"]
+  :dependencies [[thheller/shadow-cljs "2.0.20"]
                  [org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.946"]
 
@@ -18,22 +18,15 @@
 
                  [fast-zip "0.7.0"]
 
-                 [maria/friendly "0.1.0-SNAPSHOT"]
+                 [maria/friendly "0.1.0"]
                  [maria/shapes "0.1.0"]
 
-                 [re-view "0.3.33"]
-                 [re-view-routing "0.1.3"]
-                 [re-view-prosemirror "0.1.10-SNAPSHOT"]
-                 [cljs-live "0.2.9-SNAPSHOT"]
+                 [re-view "0.4.0"]
+                 [re-view/prosemirror "0.2.0-SNAPSHOT"]
 
-
-                 [lark/value-viewer "0.1.2"]
+                 [lark/tools "0.1.0"]
                  [lark/cells "0.1.5"]
-
-                 [lark/structure "0.1.5-SNAPSHOT"]
-                 [lark/commands "0.2.2-SNAPSHOT"]
-                 [lark/editors "0.1.3-SNAPSHOT"]
-                 [lark/tree "0.1.3-SNAPSHOT"]]
+                 [cljs-live "0.3.0"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]

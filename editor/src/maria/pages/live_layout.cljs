@@ -17,7 +17,7 @@
             [lark.commands.exec :as exec]
             [maria.commands.doc :as doc]
             [maria.views.icons :as icons]
-            [re-view-routing.core :as r]))
+            [re-view.routing :as r]))
 
 (d/transact! [[:db/add :ui/globals :sidebar-width 250]])
 

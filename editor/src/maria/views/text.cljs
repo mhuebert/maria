@@ -1,7 +1,7 @@
 (ns maria.views.text
   (:require [re-view.core :as v :refer [view defview]]
             [goog.events :as events]
-            [re-view-routing.core :refer [closest]])
+            [re-view.routing :refer [closest]])
   (:import [goog.dom ViewportSizeMonitor]
            [goog.events EventType]))
 

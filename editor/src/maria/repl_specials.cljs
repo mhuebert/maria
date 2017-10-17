@@ -8,7 +8,7 @@
             [maria.editors.code :as code]
             [maria.views.cards :as repl-ui]
             [maria.util :as util]
-            [re-view-hiccup.core :as hiccup]
+            [re-view.hiccup.core :as hiccup]
             [re-view.core :as v]))
 
 (defspecial dir

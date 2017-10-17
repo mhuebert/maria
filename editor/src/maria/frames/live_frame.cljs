@@ -14,7 +14,7 @@
 
             [maria.html]
             [maria.user :include-macros true]
-            [re-view-routing.core :as r]
+            [re-view.routing :as r]
             [re-view.core :as v :refer [defview]]
             [maria.views.floating.floating-search]
 

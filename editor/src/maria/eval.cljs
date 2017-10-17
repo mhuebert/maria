@@ -62,7 +62,7 @@
                                                  load-gist maria.user.loaders/load-gist
                                                  load-js   maria.user.loaders/load-js
                                                  load-npm  maria.user.loaders/load-npm
-                                                 html      re-view-hiccup.core/element}))
+                                                 html      re-view.hiccup.core/element}))
                (eval-form* '(in-ns maria.user))
                (loaded!)))
   #_(let [bundles ["cljs.core"
@@ -78,7 +78,7 @@
                                                          load-gist maria.user.loaders/load-gist
                                                          load-js   maria.user.loaders/load-js
                                                          load-npm  maria.user.loaders/load-npm
-                                                         html      re-view-hiccup.core/element}))
+                                                         html      re-view.hiccup.core/element}))
                        (eval-form* '(in-ns maria.user))
 
                        (loaded!)))))

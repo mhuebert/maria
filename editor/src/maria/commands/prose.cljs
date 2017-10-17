@@ -2,15 +2,16 @@
   (:require [lark.commands.registry :refer-macros [defcommand]]
             [codemirror :as CM]
             [lark.structure.edit :as edit]
-            [re-view-prosemirror.commands :as commands :refer [apply-command]]
-            [re-view-prosemirror.markdown :as prose]
-            [re-view-prosemirror.core :as pm]
+            [re-view.prosemirror.commands :as commands :refer [apply-command]]
+            [re-view.prosemirror.markdown :as prose]
+            [re-view.prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
             [lark.editors.editor :as Editor]
             [maria.util :as util]
             [maria.blocks.history :as history]
             [re-view.core :as v]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            ["prosemirror-inputrules" :as input-rules]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
@@ -232,7 +233,7 @@
    commands/rule-block-heading-start
    commands/rule-paragraph-start
    commands/rule-image-and-links
-   (pm/InputRule.
+   (input-rules/InputRule.
      #"^\($"
      (fn [state [bracket] & _]
        (when (empty-root-paragraph? state)

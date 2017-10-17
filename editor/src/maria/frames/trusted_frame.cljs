@@ -1,6 +1,6 @@
 (ns maria.frames.trusted-frame
   (:require
-    [re-view-routing.core :as routing]
+    [re-view.routing :as routing]
     [re-view.core :as v :refer [defview]]
     [maria.frames.trusted-routes :as routes]
     [re-db.d :as d]))

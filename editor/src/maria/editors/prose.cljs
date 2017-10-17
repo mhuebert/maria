@@ -1,22 +1,25 @@
 (ns maria.editors.prose
   (:require [re-view.core :as v :refer [defview]]
-            [re-view-prosemirror.commands :as commands]
-            [re-view-prosemirror.commands :refer [apply-command]]
+            [re-view.prosemirror.commands :as commands]
+            [re-view.prosemirror.commands :refer [apply-command]]
             [maria.views.floating.float-ui :as hint]
             [maria.views.icons :as icons]
-            [re-view-prosemirror.core :as pm]
-            [re-view-prosemirror.markdown :as markdown]
+            [re-view.prosemirror.core :as pm]
+            [re-view.prosemirror.markdown :as markdown]
             [goog.object :as gobj]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
 
             [maria.commands.prose :as prose-commands]
-            [re-view-routing.core :as r]
+            [re-view.routing :as r]
 
 
             [lark.commands.exec :as exec]
             [lark.editors.editor :as Editor]
-    #_[re-view-prosemirror.example-toolbar :as toolbar]
+            ["prosemirror-view" :refer [EditorView]]
+            ["prosemirror-state" :as state :refer [EditorState]]
+            ["prosemirror-inputrules" :as input-rules]
+    #_[re-view.prosemirror.example-toolbar :as toolbar]
     #_[maria.views.bottom-bar :as bottom-bar]
             [maria.util :as util]))
 
@@ -35,35 +38,33 @@
    [:a.pm-link.ph2.no-underline.black.f6.hover-underline {:href href} href]])
 
 (defn make-editor-state [doc input-rules]
-  (.create pm/EditorState
+  (.create EditorState
            #js {"doc"     doc
                 "schema"  markdown/schema
-                "plugins" (to-array [#_(.history pm/history)
-                                     #_(pm/keymap pm/keymap-base)
-                                     (.inputRules pm/pm
-                                                  #js {:rules (->> (.-allInputRules pm/pm)
-                                                                   (into input-rules)
-                                                                   (to-array))})])}))
+                "plugins" (to-array [(input-rules/inputRules
+                                       #js {:rules (->> input-rules/allInputRules
+                                                        (into input-rules)
+                                                        (to-array))})])}))
 
 (defn make-editor-view [{:keys [before-change editor-props on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
-  (pm/EditorView. (v/dom-node component) (->> (merge editor-props
-                                                     {:state                   editor-state
-                                                      :spellcheck              false
-                                                      :attributes              {:class "outline-0"}
-                                                      :handleScrollToSelection (fn [view] true)
-                                                      :dispatchTransaction     (fn [tr]
-                                                                                 (let [^js/pm.EditorView pm-view (get @state :pm-view)
-                                                                                       prev-state                (.-state pm-view)]
-                                                                                   (when before-change (before-change))
-                                                                                   (pm/transact! pm-view tr)
-                                                                                   (when-not (nil? on-dispatch)
-                                                                                     (on-dispatch pm-view prev-state))
-                                                                                   (when (and on-selection-activity
-                                                                                              (not= (.-selection (.-state pm-view))
-                                                                                                    (.-selection prev-state)))
-                                                                                     (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
-                                              (clj->js))))
+  (EditorView. (v/dom-node component) (->> (merge editor-props
+                                                  {:state                   editor-state
+                                                   :spellcheck              false
+                                                   :attributes              {:class "outline-0"}
+                                                   :handleScrollToSelection (fn [view] true)
+                                                   :dispatchTransaction     (fn [tr]
+                                                                              (let [^js pm-view (get @state :pm-view)
+                                                                                    prev-state                (.-state pm-view)]
+                                                                                (when before-change (before-change))
+                                                                                (pm/transact! pm-view tr)
+                                                                                (when-not (nil? on-dispatch)
+                                                                                  (on-dispatch pm-view prev-state))
+                                                                                (when (and on-selection-activity
+                                                                                           (not= (.-selection (.-state pm-view))
+                                                                                                 (.-selection prev-state)))
+                                                                                  (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
+                                           (clj->js))))
 
 (defview ProseEditor
   {:spec/props              {:on-dispatch   :Function
@@ -80,9 +81,9 @@
    :reset-doc               (fn [{:keys [view/state parse]} doc]
                               (let [view (:pm-view @state)]
                                 (.updateState view
-                                              (.create pm/EditorState #js {"doc"     doc
-                                                                           "schema"  markdown/schema
-                                                                           "plugins" (gobj/getValueByKeys view "state" "plugins")}))))
+                                              (.create EditorState #js {"doc"     doc
+                                                                        "schema"  markdown/schema
+                                                                        "plugins" (gobj/getValueByKeys view "state" "plugins")}))))
 
    :view/will-receive-props (fn [{:keys [doc block view/state]
                                   :as   this}]
@@ -159,7 +160,7 @@
                                               (.-doc prev-state))
                                     (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
 
-(specify! (.-prototype js/pm.EditorView)
+(specify! (.-prototype EditorView)
 
   Editor/IKind
   (kind [this] :prose)

@@ -1,5 +1,5 @@
 (ns maria.user
-  (:require re-view-hiccup.core
+  (:require re-view.hiccup.core
             [maria.friendly.kinds :refer [what-is]]
             goog.net.jsloader
             maria.user.loaders

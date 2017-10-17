@@ -7,7 +7,8 @@
             [maria.util :as util]
             [maria.persistence.local :as local]
             [maria.pages.block_list :as block-list]
-            [maria.curriculum :as curriculum]))
+            [maria.curriculum :as curriculum]
+            [maria.frames.frame-communication :as frame]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)
@@ -101,11 +102,10 @@
 
          [small-label
           (when (= provider :gist)
-            [:a
-             {:class        (str small-icon-classes " nl2")
-              :href         (str "https://gist.github.com/" id)
-              :data-tooltip (pr-str "View Gist")
-              :target       "_blank"}
+            [:.pointer.nl2
+             {:class        small-icon-classes
+              :on-click #(frame/send frame/trusted-frame [:window/navigate (str "https://gist.github.com/" id) {:popup? true}])
+              :data-tooltip (pr-str "View Gist")}
              (-> icons/OpenInNew
                  (icons/size 16))])
 

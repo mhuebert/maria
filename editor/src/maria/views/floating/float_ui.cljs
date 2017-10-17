@@ -2,7 +2,7 @@
   (:require [re-view.core :as v :refer [defview]]
             [lark.commands.registry :refer-macros [defcommand]]
             [re-db.d :as d]
-            [re-view-routing.core :as r]
+            [re-view.routing :as r]
             [goog.events :as events]
             [maria.views.error :as error])
   (:import [goog.events EventType]))

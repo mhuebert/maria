@@ -76,8 +76,8 @@
   ;; so we have to manually 'dispose' of blocks that are removed due to
   ;; undo/redo operations.
   [prev-version next-version]
-  (let [ids (set/difference (set (map :id prev-version))
-                            (set (map :id next-version)))
+  (let [ids    (set/difference (set (map :id prev-version))
+                               (set (map :id next-version)))
         blocks (filter (comp ids :id) prev-version)]
     (doseq [block blocks]
       (eval-context/dispose! block))))
@@ -119,7 +119,7 @@
     (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
             prev-version (first history)
-            merge? (merge-version? prev-version)
+            merge?       (merge-version? prev-version)
             next-version (with-meta version {:selections-before (if merge? (:selections-before (meta (first history)))
                                                                            @-prior-selection)
                                              :selections-after  (get-selections)

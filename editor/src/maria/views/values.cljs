@@ -10,7 +10,7 @@
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [re-view-hiccup.core :as hiccup]
+            [re-view.hiccup.core :as hiccup]
             [maria.util :refer [space]]
             [maria.eval :as e]
             [lark.value-viewer.core :as views]

@@ -2,11 +2,11 @@
   (:require [re-db.d :as d]
             [maria.persistence.firebase :as remote]
             [clojure.string :as string]
-            [re-view-routing.core :as routing]
+            [re-view.routing :as routing]
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]
             [maria.frames.frame-communication :as frame]
-            [re-view-routing.core :as r]))
+            [re-view.routing :as r]))
 
 (defn navigate! [url opts]
   (if (string/starts-with? url "/")

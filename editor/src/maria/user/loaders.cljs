@@ -3,7 +3,7 @@
             [re-view.hoc :as hoc]
             [maria.views.icons :as icons]
 
-            [re-view-hiccup.core :as hiccup]
+            [re-view.hiccup.core :as hiccup]
 
             [maria.eval :as eval]
             [maria.views.cards :as repl-ui]
