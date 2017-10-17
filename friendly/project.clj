@@ -1,4 +1,4 @@
-(defproject maria/friendly "0.1.0-SNAPSHOT"
+(defproject maria/friendly "0.1.1-SNAPSHOT"
   :description "Code to soften a few rough edges in Clojure(Script)."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -11,4 +11,5 @@
 
   :source-paths ["src"]
   :cljsbuild {:builds []}
-  :deploy-via :clojars)
+  :lein-release {:deploy-via :clojars
+                 :scm        :git})
