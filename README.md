@@ -49,6 +49,11 @@ Like Clojure itself, the Maria curriculum is open-source, but is not primarily a
 
 From the `/editor` directory:
 
+```
+git clone https://github.com/mhuebert/maria.git;
+cd editor;
+```
+
 First, install javascript dependencies and compile stylesheets:
 
 ```
@@ -60,6 +65,25 @@ webpack -p;
 
 ```shell
 yarn run watch;
+```
+
+When these builds have completed, open your web browser to http://localhost:8701.
+
+### running a REPL
+
+The default `nrepl` port, configured in `shadow-cljs.edn`, is `7888`.
+
+Once connected, the following will print out a list of things you can do:
+
+```
+(require '[shadow.cljs.devtools.api :as shadow])
+(shadow/help)
+```
+
+to directly enter the `live` environment (provided you've opened up your browser):
+
+```
+(shadow.cljs.devtools.api/repl :live)
 ```
 
 ### make a production build:
