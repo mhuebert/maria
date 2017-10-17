@@ -14,7 +14,7 @@
                 [re-view "0.4.0"]
                 [re-view/prosemirror "0.2.1-SNAPSHOT"]
 
-                [lark/tools "0.1.1"]
+                [lark/tools "0.1.2"]
                 [lark/cells "0.1.5"]
                 [cljs-live "0.3.0"]]
 
@@ -33,22 +33,17 @@
                  :compiler-options {:optimizations :simple}
                  :output-dir       "resources/public/js/compiled"
                  :asset-path       "/js/compiled"
-                 :modules          {:shadow-live {:entries [#_shadow-init.init
-                                                            maria.frames.live-frame]}}
+                 :modules          {:shadow-live {:entries [maria.frames.live-frame]}}
                  :devtools         {:http-root    "resources/public"
                                     :http-handler shadow.http.push-state/handle
                                     :http-port    8701
-                                    :after-load   maria.frames.live-frame/render}
-                 :js-options       {:resolve {"codemirror"  {:target :global
-                                                             :global "CodeMirror"}}}}
+                                    :after-load   maria.frames.live-frame/render}}
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
                  :entries    [maria.user
                               cljs.spec.alpha]
-                 :exclude    [cljs.js]
-                 :js-options {:resolve {"codemirror"  {:target :global
-                                                       :global "CodeMirror"}}}}
+                 :exclude    [cljs.js]}
                 :trusted
                 {:target        :browser
                  :output-dir    "resources/public/js/compiled"
