@@ -1,7 +1,8 @@
 {:source-paths ["src"
                 "test"
                 "../../lark/tools/src"
-                "../shapes/src"]
+                "../shapes/src"
+                "../../re-view/re_view/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.cognitect/transit-cljs "0.8.239"]
                 [com.cognitect/transit-clj "0.8.300"]
@@ -13,7 +14,7 @@
                 [maria/friendly "0.1.0"]
                 [maria/shapes "0.1.0"]
 
-                [re-view "0.4.1"]
+                [re-view "0.4.2"]
                 [re-view/prosemirror "0.2.2"]
 
                 [lark/tools "0.1.10"]

@@ -21,7 +21,7 @@
                  [maria/friendly "0.1.0"]
                  [maria/shapes "0.1.0"]
 
-                 [re-view "0.4.1"]
+                 [re-view "0.4.2"]
                  [re-view/prosemirror "0.2.2"]
 
                  [lark/tools "0.1.10"]
