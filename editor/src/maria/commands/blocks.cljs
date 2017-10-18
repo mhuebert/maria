@@ -38,6 +38,18 @@
     false
     (focus-adjacent! context :right)))
 
+(defcommand :navigate/next-block
+  {:bindings ["M2-Shift-Down"]
+   :when :block-list}
+  [context]
+  (focus-adjacent! context :right))
+
+(defcommand :navigate/prev-block
+  {:bindings ["M2-Shift-Up"]
+   :when :block-list}
+  [context]
+  (focus-adjacent! context :left))
+
 (defcommand :navigate/backward
   {:bindings ["Up"
               "Left"]
