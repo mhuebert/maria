@@ -4,6 +4,7 @@
     "release": "rm -rf resources/public/js/bootstrap; yarn run shadow-cljs release trusted live bootstrap;"
   },
   "dependencies": {
+    "@braintripping/keypress.js": "github:braintripping/Keypress#4477249",
     "@cljs-oss/module-deps": "^1.1.1",
     "autoprefixer": "^7.1.1",
     "codemirror": "^5.30.0",
@@ -11,7 +12,6 @@
     "extract-text-webpack-plugin": "^2.1.0",
     "firebase": "^4.5.1",
     "firebase-tools": "^3.13.1",
-    "keypress.js": "github:braintripping/Keypress#1442b0a",
     "konan": "^1.1.0",
     "material-components-web": "^0.14.0",
     "module-deps": "^4.1.1",
