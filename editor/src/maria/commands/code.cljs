@@ -115,15 +115,15 @@
   "Expand selection to include form to the left."
   {:bindings ["M1-Left"]
    :when     :block/code}
-  [context]
-  (edit/expand-selection-left (:editor context)))
+  [{:keys [editor]}]
+  (edit/expand-selection-x editor :left))
 
 (defcommand :select/right
   "Expand selection to include form to the right."
   {:bindings ["M1-Right"]
    :when     :block/code}
-  [context]
-  (edit/expand-selection-right (:editor context)))
+  [{:keys [editor]}]
+  (edit/expand-selection-x editor :right))
 
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
