@@ -221,9 +221,12 @@
 
 (defcommand :edit/auto-close
   {:bindings ["["
-              "Shift-("
-              "Shift-\""
-              "Shift-{"]
+              {:key-string "Shift-("
+               :is_solitary false}
+              {:key-string "Shift-\""
+               :is_solitary false}
+              {:key-string "Shift-{"
+               :is_solitary false}]
    :private  true
    :when     :block/code}
   [{:keys [editor binding-vec]}]
@@ -328,8 +331,7 @@
 
 (defcommand :edit/slurp-forward
   "Expand current form to include the form to the right."
-  {:bindings ["M1-Shift-Right"
-              "M1-Shift-K"]
+  {:bindings ["M1-Shift-)"]
    :when     :block/code}
   [{:keys [editor] :as context}]
   (cm/return-cursor-to-root! editor)
@@ -338,8 +340,7 @@
 
 (defcommand :edit/barf-forward
   "Pushes last child of current form out to the right."
-  {:bindings ["M1-Shift-Left"
-              "M3-Left"]
+  {:bindings ["M1-Shift-("]
    :when     :block/code}
   [{:keys [editor]}]
   (cm/return-cursor-to-root! editor)
