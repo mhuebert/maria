@@ -5,7 +5,6 @@
   },
   "dependencies": {
     "@braintripping/keypress.js": "github:braintripping/Keypress#4477249",
-    "@cljs-oss/module-deps": "^1.1.1",
     "autoprefixer": "^7.1.1",
     "codemirror": "^5.30.0",
     "css-loader": "^0.28.2",

@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@braintripping/keypress.js@github:braintripping/Keypress#4477249":
+  version "2.1.4"
+  resolved "https://codeload.github.com/braintripping/Keypress/tar.gz/4477249"
+
 "@cljs-oss/module-deps@^1.1.1":
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@cljs-oss/module-deps/-/module-deps-1.1.1.tgz#62667f282164f3f10f6ab9f124ba416fd12439fa"
@@ -3676,10 +3680,6 @@ jws@^3.0.0, jws@^3.1.4:
     base64url "^2.0.0"
     jwa "^1.1.4"
     safe-buffer "^5.0.1"
-
-"keypress.js@github:braintripping/Keypress#1442b0a":
-  version "2.1.4"
-  resolved "https://codeload.github.com/braintripping/Keypress/tar.gz/1442b0a"
 
 kind-of@^2.0.1:
   version "2.0.1"
