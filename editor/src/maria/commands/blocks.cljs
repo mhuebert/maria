@@ -7,7 +7,8 @@
             [maria.commands.code :as code]
             [re-view.prosemirror.commands :as commands]
             [maria.views.icons :as icons]
-            [lark.structure.codemirror :as cm]))
+            [lark.structure.codemirror :as cm]
+            [lark.structure.edit :as edit]))
 
 (defcommand :eval/doc
   "Evaluate whole doc"
@@ -49,12 +50,12 @@
 
 (defcommand :select/up
   "Expand current selection"
-  {:bindings ["M1-1"
-              "M1-Up"]
+  {:bindings ["M1-Up"
+              "M1-1"]
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
-  (cond code (do (code/select-up editor) true)
+  (cond code (do (edit/expand-selection editor) true)
         prose (do (prose/select-up editor) true)
         :else nil))
 
@@ -65,7 +66,7 @@
    :when     :block
    :icon     icons/Select}
   [{:keys [editor block/prose block/code] :as context}]
-  (cond code (do (code/select-reverse editor) true)
+  (cond code (do (edit/shrink-selection editor) true)
         prose (do (prose/select-reverse editor) true)
         :else nil))
 
@@ -78,7 +79,7 @@
         (commands/apply-command editor commands/select-all)
         code
         (do
-          (cm/unset-cursor-root! editor)
+          (cm/unset-temp-marker! editor)
           (.execCommand editor "selectAll"))
         :else nil))
 

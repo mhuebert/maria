@@ -17,7 +17,7 @@
                 [re-view "0.4.2"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.11"]
+                [lark/tools "0.1.12"]
                 [lark/cells "0.1.5"]]
 
  :nrepl        {:port 7888}
@@ -32,7 +32,7 @@
 
                 :live
                 {:target           :browser
-                 :compiler-options {:optimizations :simple}
+                 :compiler-options {:optimizations :whitespace}
                  :output-dir       "resources/public/js/compiled"
                  :asset-path       "/js/compiled"
                  :modules          {:shadow-live {:entries [maria.frames.live-frame]}}

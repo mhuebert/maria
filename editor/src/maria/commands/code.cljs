@@ -47,12 +47,17 @@
   (.replaceSelection editor "")
   true)
 
-(defcommand :clipboard/paste
+(defcommand :clipboard/paste-insert
   {:bindings ["M1-v"]
    :private  true}
   [{:keys [editor block/code]}]
-  (when-let [pos (and code (cm/cursor-root editor))]
+  (when-let [pos (and code (cm/temp-marker-cursor-pos editor))]
     (.setCursor editor pos))
+  false)
+
+(defcommand :clipboard/paste-replace
+  {:bindings ["M1-Shift-v"]}
+  [{:keys [editor block/code]}]
   false)
 
 (defn init-select-by-click [editor]
@@ -85,7 +90,7 @@
                                                                   (when-let [node (some-> (:loc @last-sel)
                                                                                           (z/node))]
 
-                                                                    (cm/unset-cursor-root! editor)
+                                                                    (cm/unset-temp-marker! editor)
                                                                     (.preventDefault %)
                                                                     (.stopPropagation %)
                                                                     (cm/select-range editor node))) true)
@@ -97,19 +102,20 @@
     (events/listenOnce js/window "keydown" clear-listeners! true)))
 
 (defcommand :select/form-at-cursor
-    {:bindings ["M1"]
-     :when     :block/code}
-    [{:keys [editor]}]
+  {:bindings ["M1"]
+   :when     :block/code}
+  [{:keys [editor]}]
   (when editor
     (when-not (cm/selection? editor)
       (cm/select-at-cursor editor false))
     (init-select-by-click editor)))
 
-(defcommand :select/top-level-form
-  {:bindings ["M1-Shift"]
-   :when     :block/code}
-  [context]
-  (cm/select-at-cursor (:editor context) true))
+
+#_(defcommand :select/top-level-form
+    {:bindings ["M1-Shift"]
+     :when     :block/code}
+    [context]
+    (cm/select-at-cursor (:editor context) true))
 
 (defcommand :select/left
   "Expand selection to include form to the left."
@@ -124,6 +130,7 @@
    :when     :block/code}
   [{:keys [editor]}]
   (edit/expand-selection-x editor :right))
+
 
 (defcommand :navigate/form-start
   "Move cursor to beginning of top-level form."
@@ -141,14 +148,14 @@
 
 (defcommand :navigate/line-start
   "Move cursor to beginning of line."
-  {:bindings ["M1-Shift-Left"]
+  {:bindings ["M2-Shift-Left"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :left))
 
 (defcommand :navigate/line-end
   "Move cursor to end of line."
-  {:bindings ["M1-Shift-Right"]
+  {:bindings ["M2-Shift-Right"]
    :when     :block/code}
   [{:keys [editor]}]
   (edit/cursor-line-edge editor :right))
@@ -221,11 +228,11 @@
 
 (defcommand :edit/auto-close
   {:bindings ["["
-              {:key-string "Shift-("
+              {:key-string  "Shift-("
                :is_solitary false}
-              {:key-string "Shift-\""
+              {:key-string  "Shift-\""
                :is_solitary false}
-              {:key-string "Shift-{"
+              {:key-string  "Shift-{"
                :is_solitary false}]
    :private  true
    :when     :block/code}
@@ -303,16 +310,21 @@
   [context]
   (edit/hop-right (:editor context)))
 
-#_(do
-    (defcommand :navigate/jump-to-top
-      "Move cursor to top of current doc"
-      {:bindings ["M1-Up"]
-       :when     :block/code})
+(defcommand :navigate/jump-to-top
+  "Move cursor to top of current doc"
+  {:bindings ["M2-Up"]
+   :when     :block/code}
+  [{:keys [editor]}]
+  (Editor/set-cursor editor
+                     (Editor/start editor)))
 
-    (defcommand :navigate/jump-to-bottom
-      "Move cursor to bottom of current doc"
-      {:bindings ["M1-Down"]
-       :when     :block/code}))
+(defcommand :navigate/jump-to-bottom
+  "Move cursor to bottom of current doc"
+  {:bindings ["M2-Down"]
+   :when     :block/code}
+  [{:keys [editor]}]
+  (Editor/set-cursor editor
+                     (Editor/end editor)))
 
 (defcommand :edit/comment-line
   "Comment the current line"
@@ -331,19 +343,19 @@
 
 (defcommand :edit/slurp-forward
   "Expand current form to include the form to the right."
-  {:bindings ["M1-Shift-)"]
+  {:bindings ["M1-Shift-Right"]
    :when     :block/code}
   [{:keys [editor] :as context}]
-  (cm/return-cursor-to-root! editor)
+  (cm/return-to-temp-marker! editor)
   (edit/slurp-forward editor)
   (format-code editor))
 
 (defcommand :edit/barf-forward
   "Pushes last child of current form out to the right."
-  {:bindings ["M1-Shift-("]
+  {:bindings ["M1-Shift-Left"]
    :when     :block/code}
   [{:keys [editor]}]
-  (cm/return-cursor-to-root! editor)
+  (cm/return-to-temp-marker! editor)
   (edit/unslurp-forward editor))
 
 (defcommand :edit/kill
@@ -369,21 +381,22 @@
 
 (defcommand :eval/form
   "Evaluate the current form"
-  {:bindings ["M1-Enter"
-              "M1-Shift-Enter"]
+  {:bindings ["M1-Enter"]
    :when     :block/code}
   [{:keys [editor block-view block]}]
   (Block/eval! block))
 
 (defcommand :eval/top-level
   "Evaluate the current top-level form"
-  {:bindings ["Shift-Enter"]
+  {:bindings ["Shift-Enter"
+              "M1-Shift-Enter"]
    :when     :block/code}
   [{:keys [editor block-view block]}]
-  (some->> (:loc (:magic/cursor editor))
-           (tree/top-loc)
-           (tree/string)
-           (Block/eval! block :string)))
+  (when-let [loc (some->> (:loc (:magic/cursor editor))
+                          (tree/top-loc))]
+    (cm/temp-select-node! editor (z/node loc))
+    (js/setTimeout #(cm/return-to-temp-marker! editor) 210)
+    (Block/eval! block)))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"
@@ -417,9 +430,6 @@
   [{:keys [block editor]}]
   (when-let [node (some-> editor :magic/cursor :bracket-loc z/node)]
     (Block/eval-log! block (some-> node tree/string e/compile-str (set/rename-keys {:compiled-js :value})))))
-
-(def select-up edit/expand-selection)
-(def select-reverse edit/shrink-selection)
 
 (defcommand :edit/format-code
   {:bindings ["M2-Tab"]
