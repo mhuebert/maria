@@ -301,14 +301,14 @@
   {:bindings ["M2-Left"]
    :when     :block/code}
   [context]
-  (edit/hop-left (:editor context)))
+  (edit/cursor-skip! (:editor context) :left))
 
 (defcommand :navigate/hop-right
   "Move cursor right one form"
   {:bindings ["M2-Right"]
    :when     :block/code}
   [context]
-  (edit/hop-right (:editor context)))
+  (edit/cursor-skip! (:editor context) :right))
 
 (defcommand :navigate/jump-to-top
   "Move cursor to top of current doc"
