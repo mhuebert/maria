@@ -53,7 +53,7 @@
                                                    :handleScrollToSelection (fn [view] true)
                                                    :dispatchTransaction     (fn [tr]
                                                                               (let [^js pm-view (get @state :pm-view)
-                                                                                    prev-state                (.-state pm-view)]
+                                                                                    prev-state  (.-state pm-view)]
                                                                                 (when before-change (before-change))
                                                                                 (pm/transact! pm-view tr)
                                                                                 (when-not (nil? on-dispatch)
@@ -117,15 +117,16 @@
               (map (fn [menu-item] (menu-item state dispatch))))]))))
 
 (defview ProseRow
-  {:key               :id
-   :get-editor        #(.pmView (:prose-editor-view @(:view/state %)))
-   :view/did-mount    Editor/mount
-   :view/will-unmount (fn [this]
-                        (Editor/unmount this)
-                        ;; prosemirror doesn't fire `blur` command when unmounted
-                        (when (= (:block-view @exec/context) this)
-                          (exec/set-context! {:block/prose nil
-                                              :block-view  nil})))}
+  {:key                :id
+   :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
+   :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
+   :view/did-mount     Editor/mount
+   :view/will-unmount  (fn [this]
+                         (Editor/unmount this)
+                         ;; prosemirror doesn't fire `blur` command when unmounted
+                         (when (= (:block-view @exec/context) this)
+                           (exec/set-context! {:block/prose nil
+                                               :block-view  nil})))}
   [{:keys [view/state block-list block before-change] :as this}]
   [:div
    (ProseEditor {:doc           (Block/state block)

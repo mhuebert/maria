@@ -48,20 +48,21 @@
 
 (defview ShareLink
   [{:keys [view/state doc block block-list]}]
-  (let [unsaved-changes (and (:hovered @state) (doc/unsaved-changes? doc))
-        url             (when-not unsaved-changes
-                          (get-share-url doc block block-list))]
+  (let [{:keys [hovered]} @state]
     (when (= :gist (get-in doc [:project :persisted :persistence/provider]))
-      [(if url :a :div)
-       {:classes        ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
-                         (if unsaved-changes "o-50" "pointer")]
-        :href           url
-        :target         (when url "_blank")
-        :on-mouse-enter #(swap! state assoc :hovered true)
-        :on-mouse-leave #(swap! state dissoc :hovered)}
-       (if unsaved-changes
-         "please save first!"
-         "share")])))
+      (let [unsaved-changes (and hovered (doc/unsaved-changes? doc))
+            url             (when (and hovered (not unsaved-changes))
+                              (get-share-url doc block block-list))]
+        [(if url :a :div)
+         {:classes        ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
+                           (if unsaved-changes "o-50" "pointer")]
+          :href           url
+          :target         (when url "_blank")
+          :on-mouse-enter #(swap! state assoc :hovered true)
+          :on-mouse-leave #(swap! state dissoc :hovered)}
+         (if unsaved-changes
+           "please save first!"
+           "share")]))))
 
 (defview CodeRow
   {:key                :id
@@ -100,12 +101,9 @@
 
 (extend-type Block/CodeBlock
 
-  IFn
-  (-invoke
-    ([this props] (CodeRow (assoc props :block this
-                                        :id (:id this)))))
-
   Block/IBlock
+  (render [this props] (CodeRow (assoc props :block this
+                                             :id (:id this))))
   (kind [this] :code)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]
@@ -144,7 +142,7 @@
            (classes/add div "post-eval")
            (js/setTimeout #(classes/remove div "post-eval") 200)))
        (Block/eval! this :string source))
-      true)
+     true)
     ([this mode form]
      (eval-context/dispose! this)
      (binding [cell/*eval-context* this]

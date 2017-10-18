@@ -24,7 +24,8 @@
   (emit [this])
   (kind [this])
   (state [this])
-  (tag [this]))
+  (tag [this])
+  (render [this props]))
 
 (defn update-view
   [block]

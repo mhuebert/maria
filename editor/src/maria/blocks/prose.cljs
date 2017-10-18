@@ -12,14 +12,12 @@
   (.serialize markdown/serializer (Block/state this)))
 
 (extend-type Block/ProseBlock
-  IFn
-  (-invoke
-    ([this props]
-     (ProseRow (assoc props
-                 :block this
-                 :id (:id this)))))
 
   Block/IBlock
+  (render [this props]
+    (ProseRow (assoc props
+                :block this
+                :id (:id this))))
   (kind [this] :prose)
 
   (empty? [this]
@@ -32,7 +30,7 @@
 
 (defn prepend-paragraph [this]
   (when-let [prose-view (Editor/of-block this)]
-    (let [state (.-state prose-view)
+    (let [state    (.-state prose-view)
           dispatch (.-dispatch prose-view)]
       (dispatch (-> (.-tr state)
                     (.insert 0 (.createAndFill (pm/get-node state :paragraph))))))))
