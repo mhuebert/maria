@@ -19,8 +19,6 @@
             ["prosemirror-view" :refer [EditorView]]
             ["prosemirror-state" :as state :refer [EditorState]]
             ["prosemirror-inputrules" :as input-rules]
-    #_[re-view.prosemirror.example-toolbar :as toolbar]
-    #_[maria.views.bottom-bar :as bottom-bar]
             [maria.util :as util]))
 
 

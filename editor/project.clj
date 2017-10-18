@@ -22,7 +22,7 @@
                  [maria/shapes "0.1.0"]
 
                  [re-view "0.4.0"]
-                 [re-view/prosemirror "0.2.1-SNAPSHOT"]
+                 [re-view/prosemirror "0.2.2"]
 
                  [lark/tools "0.1.8"]
                  [lark/cells "0.1.5"]]
