@@ -92,38 +92,38 @@
                       )
    :view/did-update (fn [this] (update-size this))
    :cols            (fn [{:keys [view/state]}]
-                      (let [fake (:fake-element @state)
-                            sample "Order. When I switched action-handling to a timeout"
+                      (let [fake           (:fake-element @state)
+                            sample         "Order. When I switched action-handling to a timeout"
                             original-value (.-innerHTML fake)
                             original-width (-> fake .getBoundingClientRect .-width (- 9))
-                            _ (set! (.-innerHTML fake) sample)
-                            line-width (-> fake .getBoundingClientRect .-width (- 9))
-                            char-width (/ line-width (count sample))
-                            _ (set! (.-innerHTML fake) original-value)]
+                            _              (set! (.-innerHTML fake) sample)
+                            line-width     (-> fake .getBoundingClientRect .-width (- 9))
+                            char-width     (/ line-width (count sample))
+                            _              (set! (.-innerHTML fake) original-value)]
                         (/ original-width char-width)))
    :rows            (fn [{:keys [view/state]}]
-                      (let [fake (:fake-element @state)
-                            original-value (.-innerHTML fake)
+                      (let [fake            (:fake-element @state)
+                            original-value  (.-innerHTML fake)
                             original-height (-> fake .getBoundingClientRect .-height)
-                            _ (set! (.-innerHTML fake) "|")
-                            line-height (-> fake .getBoundingClientRect .-height)
-                            rows (/ original-height line-height)
-                            _ (set! (.-innerHTML fake) original-value)]
+                            _               (set! (.-innerHTML fake) "|")
+                            line-height     (-> fake .getBoundingClientRect .-height)
+                            rows            (/ original-height line-height)
+                            _               (set! (.-innerHTML fake) original-value)]
                         rows))
    :cursorLine      (fn [{:keys [view/state] :as this}]
                       ;; to get the current line of the cursor, we use our fake/shadow div.
-                      (let [fake (:fake-element @state)
-                            original-value (.-innerHTML fake)
-                            original-height (-> fake .getBoundingClientRect .-height)
-                            pos (.cursorPos this)
-                            _ (set! (.-innerHTML fake) "|")
-                            line-height (-> fake .getBoundingClientRect .-height)
-                            _ (set! (.-innerHTML fake) (subs original-value 0 pos))
+                      (let [fake                 (:fake-element @state)
+                            original-value       (.-innerHTML fake)
+                            original-height      (-> fake .getBoundingClientRect .-height)
+                            pos                  (.cursorPos this)
+                            _                    (set! (.-innerHTML fake) "|")
+                            line-height          (-> fake .getBoundingClientRect .-height)
+                            _                    (set! (.-innerHTML fake) (subs original-value 0 pos))
                             prior-content-height (-> fake .getBoundingClientRect .-height)
-                            rows (/ original-height line-height)
-                            current-line (/ prior-content-height line-height)
-                            current-line (-> current-line (max 1) (min rows))
-                            _ (set! (.-innerHTML fake) original-value)]
+                            rows                 (/ original-height line-height)
+                            current-line         (/ prior-content-height line-height)
+                            current-line         (-> current-line (max 1) (min rows))
+                            _                    (set! (.-innerHTML fake) original-value)]
                         [rows current-line]))
    :lastLineX       (fn [this ch]
                       (+ ch (* (dec (.rows this)) (.cols this))))

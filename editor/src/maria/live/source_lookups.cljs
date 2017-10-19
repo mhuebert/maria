@@ -6,7 +6,8 @@
             [maria.eval :as e]
             [lark.eval :as live-eval]
             [goog.net.XhrIo :as xhr]
-            [maria.util :as util])
+            [maria.util :as util]
+            [shadow.cljs.bootstrap.env :as shadow-env])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -37,13 +38,16 @@
   "Given a 1-indexed position in a source string, return the first form."
   [source position]
   (let [reader (parse/indexing-reader (source-from source position))
-        node (read-node reader)]
+        node   (read-node reader)]
     (tree/string node)))
 
 (defn source-of-top-level-form
   "Given a 1-indexed position in a source string, return the first form."
   [source {:keys [line] :as the-var}]
-  (let [line (dec line)
+  (source-of-form-at-position source {:line line :column 1})
+
+  ;; the following is _very_ slow and shouldn't be necessary.
+  #_(let [line   (dec line)
         reader (parse/indexing-reader source #_(source-from source (assoc position :column 1)))]
     (loop []
       (let [the-node (read-node reader)]
@@ -96,28 +100,40 @@
 
 (def source-path "/js/cljs_live_bundles/sources")
 
+(defn fetch-source [path meta cb]
+  (xhr/send path
+            (fn [e]
+              (let [target (.-target e)]
+                (if (.isSuccess target)
+                  (let [source (.getResponseText target)]
+                    ;; strip source to line/col from meta
+                    (cb {:value (source-of-top-level-form source meta)}))
+                  (cb {:error (str "File not found: `" path "`\n" (.getLastError target))}))))
+            "GET"))
+
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
   [{{meta-file :file :as meta} :meta file :file name :name :as the-var} cb]
-  (if-let [file (or file meta-file)]
-    (let [namespace-path (as-> (namespace name) path
-                               (string/split path ".")
-                               (map munge path)
-                               (string/join "/" path)
-                               (string/replace path "$macros" ""))
-          file (re-find (re-pattern (str namespace-path ".*")) file)]
-      (if-let [source (get @live-eval/cljs-cache file)]
-        (cb {:value (source-of-top-level-form source the-var)})
-        (xhr/send (str source-path "/" file)
-                  (fn [e]
-                    (let [target (.-target e)]
-                      (if (.isSuccess target)
-                        (let [source (.getResponseText target)]
-                          ;; strip source to line/col from meta
-                          (cb {:value (source-of-top-level-form source meta)}))
-                        (cb {:error (str "File not found: `" file "`\n" (.getLastError target))}))))
-                  "GET")))
-    (cb {:error (str "File not specified for `" name "`")})))
+  (if-let [source-name (some-> (namespace name)
+                               (symbol)
+                               (shadow-env/get-ns-info)
+                               (:source-name))]
+    (fetch-source (str e/bootstrap-path source-name)
+                  meta
+                  cb)
+    (if-let [file (or file meta-file)]
+      (let [namespace-path (as-> (namespace name) path
+                                 (string/split path ".")
+                                 (map munge path)
+                                 (string/join "/" path)
+                                 (string/replace path "$macros" ""))
+            file           (re-find (re-pattern (str namespace-path ".*")) file)]
+        (if-let [source (get @live-eval/cljs-cache file)]
+          (cb {:value (source-of-top-level-form source the-var)})
+          (fetch-source (str source-path "/" file)
+                        meta
+                        cb)))
+      (cb {:error (str "File not specified for `" name "`")}))))
 
 (defn fn-source-sync [f]
   (when (fn? f)

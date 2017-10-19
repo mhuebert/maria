@@ -14,7 +14,7 @@
                 [maria/friendly "0.1.0"]
                 [maria/shapes "0.1.0"]
 
-                [re-view "0.4.2"]
+                [re-view "0.4.3"]
                 [re-view/prosemirror "0.2.2"]
 
                 [lark/tools "0.1.16"]
@@ -36,10 +36,11 @@
                  :output-dir       "resources/public/js/compiled"
                  :asset-path       "/js/compiled"
                  :modules          {:shadow-live {:entries [maria.frames.live-frame]}}
-                 :devtools         {:http-root    "resources/public"
-                                    :http-handler shadow.http.push-state/handle
-                                    :http-port    8701
-                                    :after-load   maria.frames.live-frame/render}}
+                 :devtools         {:http-root     "resources/public"
+                                    :http-handler  shadow.http.push-state/handle
+                                    :http-port     8701
+                                    :after-load    maria.frames.live-frame/render
+                                    :async-require true}}
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
@@ -52,7 +53,8 @@
                  :asset-path    "/js/compiled"
                  :optimizations :simple
                  :modules       {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-                 :devtools      {:autoload true}
+                 :devtools      {:autoload      true
+                                 :async-require true}
                  :compiler-options
                                 {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
                                            "node_modules/firebase/externs/firebase-auth-externs.js"

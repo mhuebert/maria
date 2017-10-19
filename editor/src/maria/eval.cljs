@@ -7,6 +7,7 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 (defonce -eval-logs (volatile! {}))
+(def bootstrap-path "/js/bootstrap")
 
 (def add-error-position e/add-error-position)
 
@@ -53,9 +54,11 @@
   (doseq [f queue]
     (f)))
 
+
+
 (defn init []
   (boot/init c-state
-             {:path         "/js/bootstrap"
+             {:path         bootstrap-path
               :load-on-init '#{maria.user cljs.spec.alpha}}
              (fn []
                (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is

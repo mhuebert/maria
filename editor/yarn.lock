@@ -6,30 +6,6 @@
   version "2.1.4"
   resolved "https://codeload.github.com/braintripping/Keypress/tar.gz/4477249"
 
-"@cljs-oss/module-deps@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@cljs-oss/module-deps/-/module-deps-1.1.1.tgz#62667f282164f3f10f6ab9f124ba416fd12439fa"
-  dependencies:
-    JSONStream "^1.0.3"
-    babel-traverse "^6.23.1"
-    babylon "^6.15.0"
-    browser-resolve "^1.7.0"
-    cached-path-relative "^1.0.0"
-    concat-stream "~1.5.0"
-    defined "^1.0.0"
-    detective "^4.0.0"
-    duplexer2 "^0.1.2"
-    enhanced-resolve "3.4.1"
-    inherits "^2.0.1"
-    konan "1.1.0"
-    parents "^1.0.0"
-    readable-stream "^2.0.2"
-    resolve "^1.1.3"
-    stream-combiner2 "^1.1.1"
-    subarg "^1.0.0"
-    through2 "^2.0.0"
-    xtend "^4.0.0"
-
 "@firebase/app@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@firebase/app/-/app-0.1.1.tgz#26e660bff8b4242860dea57eb934a5f71d2b81c2"
@@ -2289,7 +2265,7 @@ end-of-stream@^1.0.0, end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-enhanced-resolve@3.4.1, enhanced-resolve@^3.3.0:
+enhanced-resolve@^3.3.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-3.4.1.tgz#0421e339fd71419b3da13d129b3979040230476e"
   dependencies:
@@ -3704,13 +3680,6 @@ klaw@^1.0.0:
   resolved "https://registry.yarnpkg.com/klaw/-/klaw-1.3.1.tgz#4088433b46b3b1ba259d78785d8e96f73ba02439"
   optionalDependencies:
     graceful-fs "^4.1.9"
-
-konan@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/konan/-/konan-1.1.0.tgz#337743c4b97b4bd1ef8b62a24b315eb8bc4b2094"
-  dependencies:
-    babel-traverse "^6.23.1"
-    babylon "^6.15.0"
 
 konan@^1.1.0:
   version "1.2.1"
@@ -5769,9 +5738,9 @@ shadow-cljs-jar@^0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-0.10.0.tgz#9895e6e5ccfde1c7b673737b1dfd9149194b644f"
 
-shadow-cljs@^2.0.23:
-  version "2.0.23"
-  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.0.23.tgz#6e524f16c9c99a3024d8f5e7486c31db61acdd2c"
+shadow-cljs@^2.0.26:
+  version "2.0.26"
+  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.0.26.tgz#a278ff3d3828fac4ed28fdfa0d40a4c116d6e581"
   dependencies:
     babel-core "^6.26.0"
     babel-preset-env "^1.6.0"

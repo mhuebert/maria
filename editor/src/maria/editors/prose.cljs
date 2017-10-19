@@ -68,7 +68,8 @@
   {:spec/props              {:on-dispatch   :Function
                              :before-change :Function
                              :input-rules   :Object
-                             :doc           :Object}
+                             :doc           :Object
+                             :editor-props  :Map}
    :view/did-mount          (fn [{:keys [view/state
                                          input-rules
                                          doc] :as this}]

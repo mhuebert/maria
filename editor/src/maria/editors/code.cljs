@@ -87,15 +87,15 @@
                                          keymap]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
-                                    editor (CM dom-node
-                                                          (clj->js (merge cm-opts
-                                                                          {:value (str (or value default-value))}
-                                                                          (cond-> options
-                                                                                  keymap (assoc :extraKeys (clj->js keymap))
-                                                                                  read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                                                 (assoc
-                                                                                                   :readOnly true
-                                                                                                   :tabindex -1))))))]
+                                    editor   (CM dom-node
+                                                 (clj->js (merge cm-opts
+                                                                 {:value (str (or value default-value))}
+                                                                 (cond-> options
+                                                                         keymap (assoc :extraKeys (clj->js keymap))
+                                                                         read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                                        (assoc
+                                                                                          :readOnly true
+                                                                                          :tabindex -1))))))]
 
                                 (add-watch editor :maria
                                            (fn [editor
