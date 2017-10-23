@@ -53,7 +53,7 @@
                                                    :handleScrollToSelection (fn [view] true)
                                                    :dispatchTransaction     (fn [tr]
                                                                               (let [^js pm-view (get @state :pm-view)
-                                                                                    prev-state  (.-state pm-view)]
+                                                                                    prev-state (.-state pm-view)]
                                                                                 (when before-change (before-change))
                                                                                 (pm/transact! pm-view tr)
                                                                                 (when-not (nil? on-dispatch)
@@ -158,7 +158,7 @@
 
                                   (when (not= (.-doc (.-state pm-view))
                                               (.-doc prev-state))
-                                    (.splice block-list block [(assoc block :doc (.-doc (.-state pm-view)))])))})])
+                                    (.splice block-list block [(Block/update-prose-block-state block (.-doc (.-state pm-view)))])))})])
 
 (specify! (.-prototype EditorView)
 
@@ -187,7 +187,7 @@
   (-focus! [this coords]
     (v/flush!)
     (let [state (.-state this)
-          doc   (.-doc state)]
+          doc (.-doc state)]
       (.focus this)
       (when-let [selection (cond (keyword? coords)
                                  (case coords :start (.atStart pm/Selection doc)

@@ -8,8 +8,8 @@
             [maria.editors.prose :refer [ProseRow]]
             [lark.editor :as Editor]))
 
-(defn serialize-block [this]
-  (.serialize markdown/serializer (Block/state this)))
+(defn serialize-state [state]
+  (.serialize markdown/serializer state))
 
 (extend-type Block/ProseBlock
 
@@ -20,17 +20,17 @@
                 :id (:id this))))
   (kind [this] :prose)
 
-  (empty? [this]
-    (and (< (.. (:doc this) -content -size) 10)
-         (util/whitespace-string? (serialize-block this))))
+  (empty? [{{:keys [prose/source]} :node}]
+    (util/whitespace-string? source))
 
-  (emit [this]
-    (tree/string {:tag   :comment-block
-                  :value (serialize-block this)})))
+  (emit [{{:keys [prose/state prose/source]} :node}]
+    (or source
+        (tree/string {:tag   :comment-block
+                      :value (serialize-state state)}))))
 
 (defn prepend-paragraph [this]
   (when-let [prose-view (Editor/of-block this)]
-    (let [state    (.-state prose-view)
+    (let [state (.-state prose-view)
           dispatch (.-dispatch prose-view)]
       (dispatch (-> (.-tr state)
                     (.insert 0 (.createAndFill (pm/get-node state :paragraph))))))))

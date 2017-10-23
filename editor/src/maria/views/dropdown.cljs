@@ -35,11 +35,11 @@
   {:bindings ["1" "2" "3" "4" "5" "6" "7" "8" "9"]
    :private  true
    :priority 9
-   :when     :modal/dropdown}
+   :when     :modal/numbered-dropdown}
   [{:keys [modal/dropdown key]}]
   (.selectN dropdown (dec (js/parseInt key))))
 
-(def DEFAULT_PAGE_SIZE 99)
+(def DEFAULT_PAGE_SIZE 9)
 
 (defn page-count [item-count page-size]
   (.ceil js/Math (/ item-count page-size)))
@@ -55,8 +55,7 @@
                                         :value
                                         (on-selection)))
                               {:selection (or default-selection -1)
-                               :PAGE_SIZE DEFAULT_PAGE_SIZE
-                               #_(if max-height (-> (.floor js/Math (-> max-height
+                               :PAGE_SIZE (if max-height (-> (.floor js/Math (-> max-height
                                                                                  (- 32)
                                                                                  (/ 30)))
                                                              (min 9)
@@ -115,9 +114,11 @@
                                 (swap! (:view/state this) assoc :selection (or (:default-selection this) -1)))
                               (when-not (nil? items)
                                 (swap! (:view/state this) assoc :last-items items)))
-   :view/did-mount          #(exec/set-context! {:modal/dropdown %})
-   :view/will-unmount       #(exec/set-context! {:modal/dropdown nil})}
-  [{:keys [view/state on-select! items class ui/max-height]}]
+   :view/did-mount          #(exec/set-context! {:modal/dropdown          %
+                                                 :modal/numbered-dropdown (:numbered? %)})
+   :view/will-unmount       #(exec/set-context! {:modal/dropdown          nil
+                                                 :modal/numbered-dropdown nil})}
+  [{:keys [view/state on-select! items class ui/max-height numbered?]}]
   (let [{:keys [selection page PAGE_SIZE]} @state
         waiting? (nil? items)
         mobile? (d/get :UI :mobile-width?)
@@ -126,6 +127,8 @@
         trigger-event (if mobile? :on-click
                                   :on-mouse-down)
         offset (* page PAGE_SIZE)
+        less? (> page 0)
+        more? (= (bounded-count (inc (+ offset PAGE_SIZE)) items) (inc (+ offset PAGE_SIZE)))
         page-count (page-count (count items) PAGE_SIZE)
         items (drop offset items)]
     (error/error-boundary {:on-error #(do (prn "View error: numbered-list")
@@ -138,27 +141,27 @@
                            (->> (take PAGE_SIZE items)
                                 (map-indexed (fn [i {:keys [value label]}]
                                                [:.nowrap.flex.items-center.pointer.items-stretch
-                                                {:key            (+ offset i)
-                                                 :on-mouse-enter #(swap! state assoc :selection i)
-                                                 :class          (when (= i selection) "bg-darken-lightly")
-                                                 :style          {:border-bottom "1px solid rgba(0,0,0,0.05)"}
-                                                 trigger-event   #(do (on-select! value)
-                                                                      (util/stop! %))}
-                                                (when-not mobile? (legend (if (< i 9) (inc i) " ")))
+                                                {:key          (+ offset i)
+                                                 :on-click     #(swap! state assoc :selection i)
+                                                 :class        (str (when (= i selection) "bg-darken-lightly")
+                                                                    (when-not numbered? " pl2"))
+                                                 :style        {:border-bottom "1px solid rgba(0,0,0,0.05)"}
+                                                 trigger-event #(do (on-select! value)
+                                                                    (util/stop! %))}
+                                                (when (and numbered?
+                                                           (not mobile?))
+                                                  (legend (if (< i 9) (inc i) " ")))
                                                 label])))
-                           (when (> page-count 1)
+                           (when (or more? less?)
                              [:.tc.items-center.flex.items-stretch
-                              [:.flex-auto]
-                              (map (fn [i]
-                                     (let [active? (= i page)
-                                           action (when-not active?
-                                                    #(swap! state assoc :page i))]
-                                       [:.pa1.dib.pointer
-                                        {:on-mouse-over action
-                                         :on-click      action}
-                                        [:.br-100.mv1
-                                         {:style {:width 10 :height 10}
-                                          :class (if active?
-                                                   "bg-light-silver"
-                                                   "bg-light-gray")}]])) (range page-count))
-                              [:.flex-auto]])])))
+                              [:.dib.pointer.tr.w-50.hover-bg-darken.gray.ph2
+                               (if less?
+                                 {:on-click #(swap! state update :page dec)}
+                                 {:class "o-0"})
+                               (icons/style icons/ExpandMore {:transform "rotate(90deg)"})]
+                              [:.dib.pointer.tl.w-50.hover-bg-darken.gray.ph2
+                               (if more?
+                                 {:on-click #(swap! state update :page inc)}
+                                 {:class "o-0"})
+                               (icons/style icons/ExpandMore {:transform "rotate(-90deg)"})]])])))
+

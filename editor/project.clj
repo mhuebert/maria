@@ -21,10 +21,10 @@
                  [maria/friendly "0.1.0"]
                  [maria/shapes "0.1.0"]
 
-                 [re-view "0.4.4"]
+                 [re-view "0.4.6"]
                  [re-view/prosemirror "0.2.2"]
 
-                 [lark/tools "0.1.16"]
+                 [lark/tools "0.1.17"]
                  [lark/cells "0.1.5"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"

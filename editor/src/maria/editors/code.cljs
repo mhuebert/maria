@@ -24,33 +24,34 @@
            (bottom-bar/ShowVar)))
 
 (def update-completions!
-  (fn [{{node :bracket-node
-         pos  :pos :as cursor} :magic/cursor :as editor}]
-    (if (and (not (.somethingSelected editor))
-             node
-             (= :symbol (:tag node))
-             (= (tree/bounds node :right)
-                (tree/bounds pos :left)))
-      (hint/floating-view! {:component    dropdown/numbered-list
-                            :props        {:on-selection (fn [[alias completion full-name]]
-                                                           (some->> (eldoc-view full-name)
-                                                                    (bottom-bar/add-bottom-bar! :eldoc/completion)))
-                                           :class        "shadow-4 bg-white"
-                                           :on-select!   (fn [[alias completion full-name]]
-                                                           (hint/clear!)
-                                                           (cm/replace-range! editor completion node))
-                                           :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
-                                                           {:value [alias completion full-name]
-                                                            :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
-                                                                    alias
-                                                                    [:.flex-auto]
-                                                                    [:.gray.pl3 (str (or (namespace full-name)
-                                                                                         full-name))]]})}
-                            :float/pos    (util/rect->abs-pos (Editor/cursor-coords editor)
-                                                              [:right :bottom])
-                            :float/offset [0 10]})
-      (do (hint/clear!)
-          (bottom-bar/retract-bottom-bar! :eldoc/completion)))))
+  (-> (fn [{{node :bracket-node
+             pos  :pos :as cursor} :magic/cursor :as editor}]
+        (if (and (not (.somethingSelected editor))
+                 node
+                 (= :symbol (:tag node))
+                 (= (tree/bounds node :right)
+                    (tree/bounds pos :left)))
+          (hint/floating-view! {:component    dropdown/numbered-list
+                                :props        {:on-selection (fn [[alias completion full-name]]
+                                                               (some->> (eldoc-view full-name)
+                                                                        (bottom-bar/add-bottom-bar! :eldoc/completion)))
+                                               :class        "shadow-4 bg-white"
+                                               :on-select!   (fn [[alias completion full-name]]
+                                                               (hint/clear!)
+                                                               (cm/replace-range! editor completion node))
+                                               :items        (for [[alias completion full-name] (ns-utils/ns-completions node)]
+                                                               {:value [alias completion full-name]
+                                                                :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
+                                                                        alias
+                                                                        [:.flex-auto]
+                                                                        [:.gray.pl3 (str (or (namespace full-name)
+                                                                                             full-name))]]})}
+                                :float/pos    (util/rect->abs-pos (Editor/cursor-coords editor)
+                                                                  [:right :bottom])
+                                :float/offset [0 10]})
+          (do (hint/clear!)
+              (bottom-bar/retract-bottom-bar! :eldoc/completion))))
+      (gf/debounce 75)))
 
 (def options
   {:theme              "maria-light"
@@ -62,6 +63,7 @@
    :styleSelectedText  true
    :magicBrackets      true
    :magicEdit          true
+   :flattenSpans       true
    :configureMouse     (fn [cm repeat e]
                          #js {:moveOnDrag (if (.-shiftKey e)
                                             false
@@ -87,15 +89,15 @@
                                          keymap]
                                   :as   this}]
                               (let [dom-node (v/dom-node this)
-                                    editor   (CM dom-node
-                                                 (clj->js (merge cm-opts
-                                                                 {:value (str (or value default-value))}
-                                                                 (cond-> options
-                                                                         keymap (assoc :extraKeys (clj->js keymap))
-                                                                         read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                                        (assoc
-                                                                                          :readOnly true
-                                                                                          :tabindex -1))))))]
+                                    editor (CM dom-node
+                                               (clj->js (merge cm-opts
+                                                               {:value (str (or value default-value))}
+                                                               (cond-> options
+                                                                       keymap (assoc :extraKeys (clj->js keymap))
+                                                                       read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                                      (assoc
+                                                                                        :readOnly true
+                                                                                        :tabindex -1))))))]
 
                                 (add-watch editor :maria
                                            (fn [editor

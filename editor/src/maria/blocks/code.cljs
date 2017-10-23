@@ -29,20 +29,20 @@
 
 (defn get-share-url [doc block block-list]
   (when-not (doc/unsaved-changes? doc)
-    (let [the-node   (cond-> (:node block)
-                             (= :base (:tag (:node block)))
-                             (-> :value first))
+    (let [the-node (cond-> (:node block)
+                           (= :base (:tag (:node block)))
+                           (-> :value first))
           the-string (tree/string the-node)
-          ast        (->> (Block/emit-list (.getBlocks block-list))
-                          (tree/ast)
-                          (:value)
-                          (remove #(or (tree/whitespace? %)
-                                       (tree/comment? %))))
-          index      (->> ast
-                          (take-while (fn [{:keys [tag] :as node}]
-                                        (or (not= tag (:tag the-node))
-                                            (not= the-string (tree/string node)))))
-                          (count))
+          ast (->> (Block/emit-list (.getBlocks block-list))
+                   (tree/ast)
+                   (:value)
+                   (remove #(or (tree/whitespace? %)
+                                (tree/comment? %))))
+          index (->> ast
+                     (take-while (fn [{:keys [tag] :as node}]
+                                   (or (not= tag (:tag the-node))
+                                       (not= the-string (tree/string node)))))
+                     (count))
           {:keys [id version]} (get-in doc [:project :persisted])]
       (str "http://share.maria.cloud/gist/" id "/" version "/" index))))
 
@@ -51,8 +51,8 @@
   (let [{:keys [hovered]} @state]
     (when (= :gist (get-in doc [:project :persisted :persistence/provider]))
       (let [unsaved-changes (and hovered (doc/unsaved-changes? doc))
-            url             (when (and hovered (not unsaved-changes))
-                              (get-share-url doc block block-list))]
+            url (when (and hovered (not unsaved-changes))
+                  (get-share-url doc block block-list))]
         [(if url :a :div)
          {:classes        ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
                            (if unsaved-changes "o-50" "pointer")]
@@ -111,7 +111,9 @@
                                                           (:value node)
                                                           [node]))))))
 
-  (emit [this] (tree/string (:node this)))
+  (emit [{:keys [node]}]
+    (or (get node :source)
+        (tree/string node)))
 
   eval-context/IDispose
   (on-dispose [this f]

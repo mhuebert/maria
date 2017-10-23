@@ -11,7 +11,8 @@
             [maria.blocks.history :as history]
             [re-view.core :as v]
             [maria.views.icons :as icons]
-            ["prosemirror-inputrules" :as input-rules]))
+            ["prosemirror-inputrules" :as input-rules]
+            [re-view.prosemirror.markdown :as markdown]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))
@@ -156,7 +157,7 @@
                                             (.insert anchor (.-content (Block/state block)))
                                             (.join (inc anchor) (.-depth sel))
                                             (.setSelection sel))))
-                  next-before (assoc before :doc (.. editor -state -doc))]
+                  next-before (Block/update-prose-block-state before (.. editor -state -doc))]
 
               (-> (Editor/of-block next-before)
                   (Editor/focus!))

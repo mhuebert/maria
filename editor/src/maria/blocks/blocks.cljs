@@ -44,9 +44,17 @@
   IBlock
   (state [this] node))
 
-(defrecord ProseBlock [id doc]
+(defrecord ProseBlock [id node]
   IBlock
-  (state [this] doc))
+  (state [this] (get node :prose/state)))
+
+(defn commentize-source [source]
+  (tree/string {:tag   :comment-block
+                :value source}))
+
+(defn update-prose-block-state [block editor-state]
+  (assoc block :node {:prose/state  editor-state
+                      :prose/source (commentize-source (.serialize markdown/serializer editor-state))}))
 
 (defrecord WhitespaceBlock [id node]
   IBlock
@@ -71,7 +79,8 @@
   "Returns a block, given a lark.tree AST node."
   [{:keys [tag value] :as node}]
   (case tag
-    :comment-block (->ProseBlock (d/unique-id) (.parse markdown/parser (:value node)))
+    :comment-block (->ProseBlock (d/unique-id) (merge node {:prose/source (commentize-source value)
+                                                            :prose/state  (.parse markdown/parser value)}))
     (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
     (->CodeBlock (d/unique-id) node)))
 
