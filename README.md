@@ -92,48 +92,4 @@ to directly enter the `live` environment (provided you've opened up your browser
 yarn run release;
 ```
 
-;; TODO: update the following docs for shadow-cljs
 
-### cursive/IntelliJ figwheel+repl
-
-One-time setup:
-
-1. menu command 'Run > Edit Configurations...'
-2. click "+" to add a new configuration
-3. choose 'Clojure REPL > local'
-4. give it a name, eg/ "Figwheel REPL"
-5. choose 'Use clojure.main in normal JVM process'
-6. under 'Parameters', enter `script/repl.clj`
-
-Now, you can run the REPL using a hotkey (default is shift+F10), menu command (Run > Run 'Figwheel REPL') or toolbar button.
-
-This will start a development build and webserver, by default accessible at `http://0.0.0.0:3449/`.
-
-### emacs+nrepl figwheel
-
-Bruce now recommends a different method for starting Figwheel with an
-nREPL server to allow interactive form evaluation (as opposed to only
-recompile on save). The new way is a bit more cumbersome to start, but
-also more flexible, and it has been quite robust so far.
-
-First start an nREPL server from the command line at the top level of
-the `maria` project hierarchy:
-
-``` shell
-lein repl
-```
-
-Then, from an emacs buffer open to one of the project files, do a
-`cider-connect` and follow the prompts.
-
-Lastly, switch to `*cider-repl-localhost*` and execute these commands
-there:
-
-``` clojure
-(use 'figwheel-sidecar.repl-api)
-(start-figwheel!)
-(cljs-repl)
-```
-
-At that stage, you should have both a running figwheel and the ability
-to evaluate forms in the browser from emacs.
