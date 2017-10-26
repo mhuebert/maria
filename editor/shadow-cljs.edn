@@ -4,8 +4,6 @@
                 "../shapes/src"
                 "../../re-view/re_view/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
-                [com.cognitect/transit-cljs "0.8.239"]
-                [com.cognitect/transit-clj "0.8.300"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
 
@@ -32,7 +30,8 @@
 
                 :live
                 {:target           :browser
-                 :compiler-options {:optimizations :simple}
+                 :compiler-options {:optimizations :simple
+                                    :language-in   :ecmascript5}
                  :output-dir       "resources/public/js/compiled"
                  :asset-path       "/js/compiled"
                  :modules          {:shadow-live {:entries [maria.frames.live-frame]}}

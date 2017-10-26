@@ -6,13 +6,11 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[thheller/shadow-cljs "2.0.22"]
+  :dependencies [[thheller/shadow-cljs "2.0.41"]
                  [org.clojure/clojure "1.9.0-alpha17"]
                  [org.clojure/clojurescript "1.9.946"]
 
                  [org.clojure/core.match "0.3.0-alpha4"]
-                 [com.cognitect/transit-cljs "0.8.239"]
-                 [com.cognitect/transit-clj "0.8.300"]
                  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                  [org.clojure/data.json "0.2.6"]
 

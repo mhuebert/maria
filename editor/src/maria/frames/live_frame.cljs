@@ -86,8 +86,4 @@
   (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))
 
-
-
-;(frame/listen "*" (partial println :editor-listen-all))
-
 (defonce _init_ (main))

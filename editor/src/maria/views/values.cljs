@@ -186,7 +186,7 @@
    {:class "bg-darken-red cf"}
    (when source
      (display-source result))
-   [:.ws-prewrap.relative      ;.mv3.pv1
+   [:.ws-prewrap.relative
     [:.ph3.overflow-auto
      (->> (for [message (concat (or formatted-warnings
                                     (format-warnings warnings))
@@ -197,16 +197,16 @@
 
 (defview display-result
   {:key :id}
-  [{:keys [value
-           error
-           warnings
-           show-source?
-           block-id
-           source]
+  [{:keys  [value
+            error
+            warnings
+            show-source?
+            block-id
+            source]
     result :view/props
-    :as this}]
-  (error-view/error-boundary {:on-error (fn [{:keys [error]}]
-                                          (e/handle-block-error block-id error))
+    :as    this}]
+  (error-view/error-boundary {:on-error      (fn [{:keys [error]}]
+                                               (e/handle-block-error block-id error))
                               :error-content (fn [{:keys [error info]}]
                                                (-> result
                                                    (assoc :error (or error (js/Error. "Unknown error"))

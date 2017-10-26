@@ -10,6 +10,7 @@
             [maria.editors.code :as code]
 
             [goog.net.jsloader :as jsl]
+            [goog.html.legacyconversions :refer [trustedResourceUrlFromString]]
 
             [clojure.set :as set]
             [maria.persistence.github :as github]))
@@ -63,8 +64,9 @@
 (defn load-js
   "Load javascript file from url. Return message indicating added global variables."
   [url]
-  (let [start-globals (set (js->clj (.keys js/Object js/window)))]
-    (-> (jsl/load url)
+  (let [start-globals (set (js->clj (.keys js/Object js/window)))
+        url (trustedResourceUrlFromString url)]
+    (-> (jsl/safeLoad url)
         (.addCallback (fn []
                         (when-let [new-globals (seq (set/difference (set (js->clj (.keys js/Object js/window)))
                                                                     start-globals))]

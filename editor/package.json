@@ -1,7 +1,9 @@
 {
   "scripts": {
-    "watch": "yarn run shadow-cljs watch trusted live bootstrap;",
-    "release": "rm -rf resources/public/js/bootstrap; yarn run shadow-cljs release trusted live bootstrap;"
+    "server": "shadow-cljs server;",
+    "watch": "shadow-cljs watch trusted live bootstrap;",
+    "release": "rm -rf resources/public/js/bootstrap; shadow-cljs release trusted live bootstrap;",
+    "postinstall": "ln -svf ./target/shadow-cljs/nrepl.port ./.nrepl-port;"
   },
   "dependencies": {
     "@braintripping/keypress.js": "github:braintripping/Keypress#4477249",
@@ -30,7 +32,7 @@
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "sass-loader": "^6.0.5",
-    "shadow-cljs": "2.0.34",
+    "shadow-cljs": "^2.0.41",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
