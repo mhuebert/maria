@@ -22,7 +22,7 @@
                  [re-view "0.4.6"]
                  [re-view/prosemirror "0.2.2"]
 
-                 [lark/tools "0.1.19"]
+                 [lark/tools "0.1.20"]
                  [lark/cells "0.1.5"]]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
