@@ -2,7 +2,8 @@
                 "test"
                 "../../lark/tools/src"
                 "../shapes/src"
-                "../../re-view/re_view/src"]
+                "../../re-view/re_view/src"
+                #_"../../shadow-cljs/src/main"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]

@@ -141,7 +141,7 @@
           (conj [:.flex.items-stretch.bg-darken-lightly]))
 
         (case persistence-mode
-          :save
+          (:save :create)
           (command-button command-context :doc/save {:text    "Save"
                                                      :tooltip (str (if persisted "Saves Gist"
                                                                                  "Publishes a new gist"))})
