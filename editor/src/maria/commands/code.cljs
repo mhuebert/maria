@@ -247,6 +247,8 @@
                             [insertion-text forward] (if in-string?
                                                        (if (= key \") ["\\\"" 2] [key 1])
                                                        [(str key other-bracket) 1])]
+                        (when (cm/selection? editor)
+                          (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
                         (-> (edit/pointer editor)
                             (edit/insert! insertion-text)
                             (edit/move forward)
