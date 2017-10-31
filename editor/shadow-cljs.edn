@@ -7,7 +7,8 @@
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
-
+                [org.clojure/test.check "0.10.0-alpha2"]
+                [org.clojure/spec.alpha "0.1.134"]
                 [fast-zip "0.7.0"]
 
                 [maria/friendly "0.1.0"]
@@ -44,8 +45,7 @@
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
-                 :entries    [maria.user
-                              cljs.spec.alpha]
+                 :entries    [maria.user]
                  :exclude    [cljs.js]}
                 :trusted
                 {:target        :browser

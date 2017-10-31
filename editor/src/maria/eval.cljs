@@ -2,7 +2,9 @@
   (:require [cljs.js :as cljs]
             [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [cljs.compiler :as comp]
+            [cljs.analyzer :as ana]))
 
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
@@ -61,30 +63,34 @@
              {:path         bootstrap-path
               :load-on-init '#{maria.user cljs.spec.alpha}}
              (fn []
-               (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
-                                                 load-gist maria.user.loaders/load-gist
-                                                 load-js   maria.user.loaders/load-js
-                                                 load-npm  maria.user.loaders/load-npm
-                                                 html      re-view.hiccup.core/element}))
-               (eval-form* '(in-ns maria.user))
+               (eval-form* '(inject 'cljs.core '{what-is         maria.friendly.kinds/what-is
+                                                 load-gist       maria.user.loaders/load-gist
+                                                 load-js         maria.user.loaders/load-js
+                                                 load-npm        maria.user.loaders/load-npm
+                                                 html            re-view.hiccup.core/element
+                                                 macroexpand-1   maria.eval/macroexpand-1
+                                                 macroexpand-all maria.eval/macroexpand-all}))
+               (e/eval c-state
+                       (atom {:ns (symbol "cljs.core")})
+                       '(def eval maria.eval/eval))
                (loaded!)))
   #_(let [bundles ["cljs.core"
-                 "maria.user"
-                 "cljs.spec.alpha"
-                 #_"reagent.core"
-                 #_"bach-leipzig"]]
-    (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
-                     (fn []
-                       (eval-form* '(require '[cljs.core :include-macros true]))
-                       (eval-form* '(require '[maria.user :include-macros true]))
-                       (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
-                                                         load-gist maria.user.loaders/load-gist
-                                                         load-js   maria.user.loaders/load-js
-                                                         load-npm  maria.user.loaders/load-npm
-                                                         html      re-view.hiccup.core/element}))
-                       (eval-form* '(in-ns maria.user))
+                   "maria.user"
+                   "cljs.spec.alpha"
+                   #_"reagent.core"
+                   #_"bach-leipzig"]]
+      (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
+                       (fn []
+                         (eval-form* '(require '[cljs.core :include-macros true]))
+                         (eval-form* '(require '[maria.user :include-macros true]))
+                         (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
+                                                           load-gist maria.user.loaders/load-gist
+                                                           load-js   maria.user.loaders/load-js
+                                                           load-npm  maria.user.loaders/load-npm
+                                                           html      re-view.hiccup.core/element}))
+                         (eval-form* '(in-ns maria.user))
 
-                       (loaded!)))))
+                         (loaded!)))))
 
 
 (defn log-eval-result! [result]
@@ -96,4 +102,57 @@
   (log-eval-result! (eval-str* source)))
 
 (defn eval-form [form]
-  (log-eval-result! (eval-form* form))) 
+  (log-eval-result! (eval-form* form)))
+
+(defn eval [form]
+  (get (eval-form* form) :value))
+
+(def macroexpand-1 (partial ana/macroexpand-1 c-state))
+
+(defn macroexpand-all
+  ([form] (macroexpand-all 1000 form))
+  ([limit form]
+   (loop [form form
+          n 0]
+     (if (>= n limit)
+       form
+       (let [expanded (ana/macroexpand-1 c-state form)]
+         (if (= form expanded)
+           expanded
+           (recur expanded (inc n))))))))
+
+;; Taken from planck eval implementation
+;; The following atoms and fns set up a scheme to
+;; emit function values into JavaScript as numeric
+;; references that are looked up.
+
+(defonce ^:private fn-index (volatile! 0))
+(defonce ^:private fn-refs (volatile! {}))
+
+(defn- clear-fns!
+  "Clears saved functions."
+  []
+  (vreset! fn-refs {}))
+
+(defn- put-fn
+  "Saves a function, returning a numeric representation."
+  [f]
+  (let [n (vswap! fn-index inc)]
+    (vswap! fn-refs assoc n f)
+    n))
+
+(defn- get-fn
+  "Gets a function, given its numeric representation."
+  [n]
+  (get @fn-refs n))
+
+(defn- emit-fn [f]
+  (print "maria.eval.get_fn(" (put-fn f) ")"))
+
+(defmethod comp/emit-constant js/Function
+  [f]
+  (emit-fn f))
+
+(defmethod comp/emit-constant cljs.core/Var
+  [f]
+  (emit-fn f))

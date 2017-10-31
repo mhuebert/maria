@@ -202,7 +202,8 @@
             warnings
             show-source?
             block-id
-            source]
+            source
+            compiled-js]
     result :view/props
     :as    this}]
   (error-view/error-boundary {:on-error      (fn [{:keys [error]}]
@@ -216,7 +217,8 @@
                              (let [warnings (format-warnings warnings)
                                    error? (or error (seq warnings))]
                                (when error
-                                 (.error js/console error))
+                                 (.error js/console error)
+                                 (js/console.log compiled-js))
                                (if error?
                                  (render-error-result (assoc result :formatted-warnings warnings))
                                  [:div
