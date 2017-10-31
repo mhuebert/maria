@@ -2,8 +2,7 @@
                 "test"
                 "../../lark/tools/src"
                 "../shapes/src"
-                "../../re-view/re_view/src"
-                #_"../../shadow-cljs/src/main"]
+                "../../re-view/re_view/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -31,32 +30,31 @@
                  :devtools   {:after-load maria-tests.runner/run-tests}}
 
                 :live
-                {:target           :browser
-                 :compiler-options {:optimizations :simple
-                                    :language-in   :ecmascript5}
-                 :output-dir       "resources/public/js/compiled"
-                 :asset-path       "/js/compiled"
-                 :modules          {:shadow-live {:entries [maria.frames.live-frame]}}
-                 :devtools         {:http-root     "resources/public"
-                                    :http-handler  shadow.http.push-state/handle
-                                    :http-port     8701
-                                    :after-load    maria.frames.live-frame/render
-                                    :async-require true}}
+                {:target     :browser
+                 :release    {:compiler-options {:optimizations :simple
+                                                 :language-in   :ecmascript5}}
+                 :output-dir "resources/public/js/compiled"
+                 :asset-path "/js/compiled"
+                 :modules    {:shadow-live {:entries [maria.frames.live-frame]}}
+                 :devtools   {:http-root     "resources/public"
+                              :http-handler  shadow.http.push-state/handle
+                              :http-port     8701
+                              :after-load    maria.frames.live-frame/render
+                              :async-require true}}
                 :bootstrap
                 {:target     :bootstrap
                  :output-dir "resources/public/js/bootstrap"
                  :entries    [maria.user]
                  :exclude    [cljs.js]}
                 :trusted
-                {:target        :browser
-                 :output-dir    "resources/public/js/compiled"
-                 :asset-path    "/js/compiled"
-                 :optimizations :simple
-                 :modules       {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-                 :devtools      {:autoload      true
-                                 :async-require true}
+                {:target     :browser
+                 :output-dir "resources/public/js/compiled"
+                 :asset-path "/js/compiled"
+                 :modules    {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
+                 :devtools   {:autoload      true
+                              :async-require true}
                  :compiler-options
-                                {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
-                                           "node_modules/firebase/externs/firebase-auth-externs.js"
-                                           "externs/react.ext.js"
-                                           "externs/reactDom.ext.js"]}}}}
+                             {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
+                                        "node_modules/firebase/externs/firebase-auth-externs.js"
+                                        "externs/react.ext.js"
+                                        "externs/reactDom.ext.js"]}}}}

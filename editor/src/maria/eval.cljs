@@ -1,4 +1,5 @@
 (ns maria.eval
+  (:refer-clojure :exclude [macroexpand])
   (:require [cljs.js :as cljs]
             [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
@@ -22,6 +23,15 @@
                    (e/add-error-position))]
     (vswap! -eval-logs update block-id #(cons result (rest %)))
     nil))
+
+#_(set! boot/script-eval (fn script-eval
+                           [code]
+                           (let [node (doto (js/document.createElement "script")
+                                        #_(.setAttribute "src" uri)
+                                        (.setAttribute "type" "text/javascript")
+                                        (.setAttribute "text" code))]
+                             (js/document.body.appendChild node)
+                             (js/document.body.removeChild node))))
 
 (defn result-value [x]
   (if (var? x) @x x))
@@ -61,18 +71,19 @@
 (defn init []
   (boot/init c-state
              {:path         bootstrap-path
-              :load-on-init '#{maria.user cljs.spec.alpha}}
+              :load-on-init '#{maria.user cljs.spec.alpha cljs.spec.test.alpha}}
              (fn []
-               (eval-form* '(inject 'cljs.core '{what-is         maria.friendly.kinds/what-is
-                                                 load-gist       maria.user.loaders/load-gist
-                                                 load-js         maria.user.loaders/load-js
-                                                 load-npm        maria.user.loaders/load-npm
-                                                 html            re-view.hiccup.core/element
-                                                 macroexpand-1   maria.eval/macroexpand-1
-                                                 macroexpand-all maria.eval/macroexpand-all}))
-               (e/eval c-state
-                       (atom {:ns (symbol "cljs.core")})
-                       '(def eval maria.eval/eval))
+               (eval-form* '(inject 'cljs.core '{what-is       maria.friendly.kinds/what-is
+                                                 load-gist     maria.user.loaders/load-gist
+                                                 load-js       maria.user.loaders/load-js
+                                                 load-npm      maria.user.loaders/load-npm
+                                                 html          re-view.hiccup.core/element
+                                                 macroexpand-n maria.eval/macroexpand-n
+                                                 eval          maria.eval/eval}))
+               (doseq [form ['(in-ns cljs.spec.test.alpha$macros)
+                             '(def eval maria.eval/eval)
+                             '(in-ns maria.user)]]
+                 (eval-form* form))
                (loaded!)))
   #_(let [bundles ["cljs.core"
                    "maria.user"
@@ -107,14 +118,12 @@
 (defn eval [form]
   (get (eval-form* form) :value))
 
-(def macroexpand-1 (partial ana/macroexpand-1 c-state))
-
-(defn macroexpand-all
-  ([form] (macroexpand-all 1000 form))
-  ([limit form]
+(defn macroexpand-n
+  ([form] (macroexpand-n 1000 form))
+  ([depth-limit form]
    (loop [form form
           n 0]
-     (if (>= n limit)
+     (if (>= n depth-limit)
        form
        (let [expanded (ana/macroexpand-1 c-state form)]
          (if (= form expanded)

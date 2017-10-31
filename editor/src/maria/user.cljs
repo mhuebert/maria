@@ -17,6 +17,6 @@
                                             ;; are these internal only? -jar
                                             assure-shape-seq shape-bounds bounds shape->vector]]
             [re-view.core :include-macros true]
-            clojure.test.check
+            [cljs.spec.alpha :include-macros true]
             [cljs.spec.test.alpha :include-macros true])
   (:require-macros [cells.cell :refer [defcell cell]]))
