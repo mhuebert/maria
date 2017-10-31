@@ -2,10 +2,12 @@ machine:
   node:
     version: 7.8.0
   java:
-      version: openjdk7
+      version: openjdk8
 dependencies:
   override:
-    - cd editor; npm install
+    - npm install
+      pwd: editor
 test:
   override:
-    - cd editor; npm run release
+    - npm run release
+      pwd: editor
