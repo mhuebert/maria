@@ -1,0 +1,11 @@
+machine:
+  node:
+    version: 7.8.0
+  java:
+      version: openjdk7
+dependencies:
+  override:
+    - cd editor; npm install
+test:
+  override:
+    - cd editor; npm run release
