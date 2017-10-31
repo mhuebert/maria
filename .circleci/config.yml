@@ -19,23 +19,21 @@ jobs:
     steps:
       - checkout
 
-      - run: pwd; ls; cd editor; pwd; ls;
-
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "package.json" }}
+          - v1-dependencies-{{ checksum "editor/package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: npm install
+      - run: pwd; ls; cd editor; npm install
 
       - save_cache:
           paths:
             - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+          key: v1-dependencies-{{ checksum "editor/package.json" }}
         
       # run tests!
-      - run: npm run release
+      - run: pwd; ls; cd editor; npm run release
 
 
