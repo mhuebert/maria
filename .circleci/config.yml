@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: choasia/java-node-serverless
+      - image: rowanto/docker-java8-mvn-nodejs-npm
       
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
