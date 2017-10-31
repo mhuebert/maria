@@ -19,7 +19,7 @@ jobs:
     steps:
       - checkout
 
-      - run: cd project/editor; pwd; ls;
+      - run: pwd; ls; cd editor; pwd; ls;
 
       # Download and cache dependencies
       - restore_cache:
