@@ -32,7 +32,7 @@
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "sass-loader": "^6.0.5",
-    "shadow-cljs": "^2.0.52",
+    "shadow-cljs": "^2.0.53",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
