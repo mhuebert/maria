@@ -2,7 +2,7 @@ machine:
   node:
     version: 7.8.0
   java:
-      version: openjdk8
+      version: 8
 dependencies:
   override:
     - npm install
