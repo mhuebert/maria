@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: rowanto/docker-java8-mvn-nodejs-npm
+      - image: dionakra/nodejs-java8
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
