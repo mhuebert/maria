@@ -1,6 +1,8 @@
 # Maria
 
-The ClojureScript coding environment for beginners.
+The ClojureScript coding environment for beginners. 
+
+(Part editor, part curriculum. A collaborative work by [@daveliepmann](https://twitter.com/daveliepmann), [@jackrusher](https://twitter.com/jackrusher), and [@mhuebert](https://twitter.com/mhuebert).)
 
 
 ## Why?
