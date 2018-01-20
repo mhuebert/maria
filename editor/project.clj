@@ -6,24 +6,13 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies [[thheller/shadow-cljs "2.0.41"]
-                 [org.clojure/clojure "1.9.0-alpha17"]
-                 [org.clojure/clojurescript "1.9.946"]
-
-                 [org.clojure/core.match "0.3.0-alpha4"]
-                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
-                 [org.clojure/data.json "0.2.6"]
-
-                 [fast-zip "0.7.0"]
-
-                 [maria/friendly "0.1.0"]
-                 [maria/shapes "0.1.0"]
-
-                 [re-view "0.4.6"]
-                 [re-view/prosemirror "0.2.2"]
-
-                 [lark/tools "0.1.20"]
-                 [lark/cells "0.1.5"]]
+  :dependencies ~(into '[[thheller/shadow-cljs "2.0.137"]
+                         [org.clojure/clojure "1.9.0-alpha17"]
+                         [org.clojure/clojurescript "1.9.946"]]
+                   (->
+                     (slurp "shadow-cljs.edn")
+                     (read-string)
+                     (:dependencies)))
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
