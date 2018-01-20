@@ -4,7 +4,6 @@
 
 (def js-loggers
   "Browser logging functions based on `key`, defaulting to `console.log`"
-  [key]
   {:error #?(:clj  'js/console.error
              :cljs js/console.error)
    :warn  #?(:clj  'js/console.warn

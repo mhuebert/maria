@@ -32,7 +32,7 @@
     :maria/local (str "/local/" id)
     :maria/curriculum (str "/" (get-in curriculum/by-id [id :slug]))
     (do #_(prn "NO LOCAL URL" provider id)
-        #_(throw (js/Error. (str "no local url" provider id))))))
+      #_(throw (js/Error. (str "no local url" provider id))))))
 
 (defn locals-path
   ([store] (locals-path (d/get :auth-public :username) store))
@@ -90,8 +90,8 @@
 
 (defn sort-projects [projects]
   (sort-by #(or
-              (:updated-at %)
-              (project-filename %)) (fn [a b] (compare b a)) projects))
+             (:updated-at %)
+             (project-filename %)) (fn [a b] (compare b a)) projects))
 
 (defn locals-docs
   "Return the locally-stored docs for `path`"
@@ -159,13 +159,13 @@
   (try
     (let [date (js/Date.)
           locale (.-language js/navigator)]
-      (->> [#js {:hour "numeric"
-                 :minute "numeric"}
-            #js {:year "numeric"
-                 :month "short"
-                 :day "numeric"}]
-           (map #(.toLocaleDateString date locale %))
-           (string/join " ")))
+      (str
+       (.toLocaleTimeString date locale #js {:hour   "numeric"
+                                             :minute "numeric"})
+       ", "
+       (.toLocaleDateString date locale #js {:year  "numeric"
+                                             :month "short"
+                                             :day   "numeric"})))
     (catch js/Error e
       "Untitled")))
 
