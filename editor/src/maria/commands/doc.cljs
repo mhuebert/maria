@@ -8,7 +8,8 @@
             [maria.persistence.github :as github]
             [maria.persistence.local :as local]
             [maria.curriculum :as curriculum]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.log :as log]))
 
 (def send (partial frame/send frame/trusted-frame))
 (local/init-storage ::locals)
@@ -154,8 +155,22 @@
       (update :files dissoc old-name)
       (assoc-in [:files new-name :content] (get-in version [:files old-name :content]))))
 
+(defn untitled-filename []
+  (try
+    (let [date (js/Date.)
+          locale (.-language js/navigator)]
+      (->> [#js {:hour "numeric"
+                 :minute "numeric"}
+            #js {:year "numeric"
+                 :month "short"
+                 :day "numeric"}]
+           (map #(.toLocaleDateString date locale %))
+           (string/join " ")))
+    (catch js/Error e
+      "Untitled")))
+
 (defn init-new!
-  ([] (init-new! "Untitled" ""))
+  ([] (init-new! (untitled-filename) ""))
   ([filename content]
    (let [id (d/unique-id)]
      (local/init-storage id {:persistence/provider :maria/local
@@ -185,7 +200,8 @@
 (defn persist! [toolbar]
   (case (persistence-mode toolbar)
     :save (save! toolbar)
-    :create (create! (d/get (:id toolbar) :local) (:id toolbar))))
+    :create (create! (d/get (:id toolbar) :local) (:id toolbar))
+    (log/println :error "Unknown `persistence-mode`: " (persistence-mode toolbar))))
 
 (defcommand :doc/new
   "Create a blank doc"
