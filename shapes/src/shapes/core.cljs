@@ -282,7 +282,7 @@
 
 ;; XXX SVG transforms are a fucking mess, so this needs to be fixed
 (defn scale
-  "Return `shape` with rotated by `amount`."
+  "Return `shape` scaled by `amount`."
   [amount shape]
   (assert-number "amount must be a number!" amount)
   (case (:kind shape)

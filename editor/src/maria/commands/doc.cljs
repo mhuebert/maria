@@ -169,6 +169,11 @@
     (catch js/Error e
       "Untitled")))
 
+(comment
+ (untitled-filename)
+ ;; => 12:41 PM, Jan 20, 2018
+ )
+
 (defn init-new!
   ([] (init-new! (untitled-filename) ""))
   ([filename content]
