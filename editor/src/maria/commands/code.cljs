@@ -255,6 +255,16 @@
                           (edit/move forward)
                           (edit/set-editor-cursor!))))))
 
+(defcommand :edit/type-close-bracket
+  {:bindings ["]"
+              "Shift-0"
+              "Shift-]"]
+   :private  true
+   :when :block/code}
+  [{:keys [editor]}]
+  (when-not (:errors editor)
+    (edit/cursor-skip! editor :right)))
+
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
    :private  true
