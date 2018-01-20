@@ -6,7 +6,7 @@
     "postinstall": "ln -svf ./target/shadow-cljs/nrepl.port ./.nrepl-port;"
   },
   "dependencies": {
-    "@braintripping/keypress.js": "github:braintripping/Keypress#4477249",
+    "@braintripping/keypress.js": "github:braintripping/Keypress#de62f6ec",
     "autoprefixer": "^7.1.1",
     "codemirror": "^5.30.0",
     "css-loader": "^0.28.2",

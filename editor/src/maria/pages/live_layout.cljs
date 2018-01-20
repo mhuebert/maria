@@ -108,7 +108,7 @@
 (defview layout
   [{:keys []}]
   (let [sidebar? (d/get :ui/globals :sidebar?)]
-    [:.w-100.relative.sans-serif
+    [:.w-100.relative.sans-serif.cursor-text
      {:on-click #(when (= (.-target %) (.-currentTarget %))
                    (exec/exec-command-name :navigate/focus-end))
       :style    {:min-height     "100%"

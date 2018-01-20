@@ -17,13 +17,9 @@
   :clean-targets ^{:protect false} ["resources/public/js/compiled"
                                     "target"]
 
-  :source-paths ["src"
-                 "checkouts/re_view/src"
-                 "checkouts/re_view_hiccup/src"
-                 "checkouts/re_view_routing/src"
-                 "checkouts/re_view_prosemirror/src"
-                 "checkouts/re_db/src"
-                 "checkouts/shapes"
-                 "checkouts/friendly"]
+  :source-paths ~(->
+                   (slurp "shadow-cljs.edn")
+                   (read-string)
+                   (:source-paths))
 
   :deploy-via :clojars)

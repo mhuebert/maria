@@ -17,7 +17,7 @@
                 [re-view "0.4.3"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.21"]
+                [lark/tools "0.1.25"]
                 [lark/cells "0.1.7"]]
 
  :nrepl        {:port 7888}

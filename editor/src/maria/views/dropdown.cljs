@@ -24,7 +24,7 @@
   (.down dropdown))
 
 (defcommand :dropdown/select
-  {:bindings ["Enter"]
+  {:bindings ["Enter" "Tab"]
    :private  true
    :priority 9
    :when     :modal/dropdown}

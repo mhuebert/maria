@@ -61,10 +61,10 @@
   false)
 
 (defn init-select-by-click [editor]
-  (let [in-progress?     (volatile! true)
-        last-sel         (volatile! {:pos nil
-                                     :loc nil})
-        listeners        (volatile! [])
+  (let [in-progress? (volatile! true)
+        last-sel (volatile! {:pos nil
+                             :loc nil})
+        listeners (volatile! [])
         clear-listeners! #(do (doseq [key @listeners]
                                 (events/unlistenByKey key))
                               (when @in-progress?
@@ -105,7 +105,9 @@
   {:bindings ["M1"]
    :when     :block/code}
   [{:keys [editor]}]
-  (when editor
+  (when (some-> editor
+                (:errors)
+                (not))
     (when-not (cm/selection? editor)
       (cm/select-at-cursor editor false))
     (init-select-by-click editor)))
@@ -161,10 +163,10 @@
   (edit/cursor-line-edge editor :right))
 
 (defn enter [{:keys [block-view editor block-list block blocks]}]
-  (let [last-line   (.lastLine editor)
-        cursor      (.getCursor editor)
+  (let [last-line (.lastLine editor)
+        cursor (.getCursor editor)
         cursor-line (.-line cursor)
-        cursor-ch   (.-ch cursor)
+        cursor-ch (.-ch cursor)
         empty-block (Block/empty? block)]
     (when-let [edge-position (cond empty-block :empty
                                    (and (= cursor-line last-line)
@@ -179,8 +181,8 @@
                               (:empty :start) Block/left) blocks block)
             adjacent-prose (when (= :prose (some-> adjacent-block (Block/kind)))
                              adjacent-block)
-            new-block      (when-not adjacent-prose
-                             (Block/create :prose))]
+            new-block (when-not adjacent-prose
+                        (Block/create :prose))]
         (case edge-position
           :end (do
                  (.splice block-list block adjacent-prose
@@ -218,7 +220,7 @@
     true))
 
 (defn clear-empty-code-block [block-list blocks block]
-  (let [before      (Block/left blocks block)
+  (let [before (Block/left blocks block)
         replacement (when-not before (Block/create :prose))]
     (.splice block-list block (if replacement [replacement] []))
     (-> (or before replacement)
@@ -228,39 +230,38 @@
 
 (defcommand :edit/auto-close
   {:bindings ["["
-              {:key-string  "Shift-("
-               :is_solitary false}
-              {:key-string  "Shift-\""
-               :is_solitary false}
-              {:key-string  "Shift-{"
-               :is_solitary false}]
+              "Shift-9"                                     ;; (
+              "Shift-'"                                     ;; "
+              "Shift-["]                                    ;; {
    :private  true
    :when     :block/code}
-  [{:keys [editor binding-vec]}]
-  (let [key (last binding-vec)]
-    (edit/operation editor
-                    (when-let [other-bracket (edit/other-bracket key)]
-                      (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
-                                         (and (= :string (:tag node))
-                                              (tree/inside? node pos)))
-                            ;; if in a string, escape quotes and do not autoclose
-                            [insertion-text forward] (if in-string?
-                                                       (if (= key \") ["\\\"" 2] [key 1])
-                                                       [(str key other-bracket) 1])]
-                        (when (cm/selection? editor)
-                          (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
-                        (-> (edit/pointer editor)
-                            (edit/insert! insertion-text)
-                            (edit/move forward)
-                            (edit/set-editor-cursor!)))))))
+  [{:keys [editor binding] :as args}]
+  (edit/operation editor
+                  (when-let [brackets (get {"["       "[]"
+                                            "Shift-9" "()"
+                                            "Shift-'" "\"\""
+                                            "Shift-[" "{}"} binding)]
+                    (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
+                                       (and (= :string (:tag node))
+                                            (tree/inside? node pos)))
+                          ;; if in a string, escape quotes and do not autoclose
+                          [insertion-text forward] (if in-string?
+                                                     (if (= \" (first brackets)) ["\\\"" 2] [(first brackets) 1])
+                                                     [brackets 1])]
+                      (when (cm/selection? editor)
+                        (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
+                      (-> (edit/pointer editor)
+                          (edit/insert! insertion-text)
+                          (edit/move forward)
+                          (edit/set-editor-cursor!))))))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
    :private  true
    :when     :block/code}
   [{:keys [block-list block blocks editor]}]
-  (let [before    (Block/left blocks block)
-        pointer   (edit/pointer editor)
+  (let [before (Block/left blocks block)
+        pointer (edit/pointer editor)
         prev-char (edit/get-range pointer -1)]
     (cond
       (and before
@@ -313,7 +314,7 @@
   (edit/cursor-skip! (:editor context) :right))
 
 (defcommand :navigate/jump-to-top
-  "Move cursor to top of current doc"
+  "Move cursor to top of current block"
   {:bindings ["M2-Up"]
    :when     :block/code}
   [{:keys [editor]}]
@@ -321,7 +322,7 @@
                      (Editor/start editor)))
 
 (defcommand :navigate/jump-to-bottom
-  "Move cursor to bottom of current doc"
+  "Move cursor to bottom of current block"
   {:bindings ["M2-Down"]
    :when     :block/code}
   [{:keys [editor]}]
@@ -330,15 +331,14 @@
 
 (defcommand :edit/comment-line
   "Comment the current line"
-  {:bindings ["M1-Shift-/"]
+  {:bindings ["M1-/"]
    :when     :block/code}
   [context]
   (edit/comment-line (:editor context)))
 
 (defcommand :edit/ignore-form
   "Ignore the current form using the `#_` reader macro ('uneval')"
-  {:bindings ["M1-;"
-              "M1-/"]
+  {:bindings ["M1-;"]
    :when     :block/code}
   [context]
   (edit/uneval! (:editor context)))
