@@ -11,7 +11,7 @@
      (map #(hsl % 100 50) (range 0 250 25)))
 
 (map #(colorize % (square 50))
-     (map #(hsl 120 % 50) (range 0 250 25)))
+     (map #(hsl 120 % 50) (range 0 100 10)))
 
 (map #(colorize % (square 50))
      (map #(hsl 120 50 %) (range 0 100 10)))
@@ -53,7 +53,7 @@
                   (rotate %)
                   (opacity 0.5)
                   (fill (hsl % 90 45)))
-            (range 0 375 15))))
+            (range 0 360 15))))
 
 ;; #### Confetti
 (defn confetti []
