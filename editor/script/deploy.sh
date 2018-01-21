@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 case "$CIRCLE_BRANCH" in
 "release")
-  npx firebase deploy -P prod
+  echo "Deploying to www.maria.cloud:";
+  npx firebase deploy -P prod;
   ;;
 "master")
-  npx firebase deploy -P dev
+  echo "Deploying to dev.maria.cloud";
+  npx firebase deploy -P dev;
   ;;
 esac
