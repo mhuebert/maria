@@ -9,6 +9,7 @@
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
             [maria.blocks.prose :as Prose]
+            [maria.editors.code :refer [PARINFER?]]
             [lark.editor :as Editor]
             [maria.live.ns-utils :as ns-utils]
             [goog.events :as events]
@@ -227,14 +228,17 @@
   true)
 
 (defcommand :edit/auto-close
-  {:bindings ["["
-              "Shift-9"                                     ;; (
-              "Shift-'"                                     ;; "
-              "Shift-["]                                    ;; {
+  {:bindings ["Shift-'"
+              "Shift-["
+              "["
+              "Shift-9"]
    :private  true
    :when     :block/code}
   [{:keys [editor binding] :as args}]
-  (when-not (:errors editor)
+  (when (and (not (:errors editor))
+             (not (and PARINFER? (#{"Shift-["
+                                    "["
+                                    "Shift-9"} binding))))
     (edit/operation editor
                     (when-let [brackets (get {"["       "[]"
                                               "Shift-9" "()"
@@ -254,15 +258,17 @@
                             (edit/move forward)
                             (edit/set-editor-cursor!)))))))
 
+
 (defcommand :edit/type-close-bracket
-    {:bindings ["]"
-                "Shift-0"
-                "Shift-]"]
-     :private  true
-     :when     :block/code}
-    [{:keys [editor]}]
+  {:bindings ["]"
+              "Shift-0"
+              "Shift-]"]
+   :private  true
+   :when     :block/code}
+  [{:keys [editor]}]
+  (when-not PARINFER?
     (when-not (:errors editor)
-      (edit/cursor-skip! editor :right)))
+      (edit/cursor-skip! editor :right))))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
@@ -290,6 +296,8 @@
                            true)
 
       (#{:comment :string} (get-in editor [:magic/cursor :node :tag])) false
+
+      PARINFER? false
 
       (#{")" "]" "}"} prev-char) (do (-> pointer
                                          (edit/move -1)

@@ -18,6 +18,8 @@
    [lark.structure.edit :as edit]
    [goog.functions :as gf]))
 
+(def PARINFER? false)
+
 (defn eldoc-view [sym]
   (some->> sym
            (ns-utils/resolve-var-or-special)
@@ -64,7 +66,7 @@
    :magicBrackets      true
    :magicEdit          true
    :flattenSpans       true
-   :parinfer           "smart"
+   :parinfer           (when PARINFER? "smart")
    :configureMouse     (fn [cm repeat e]
                          #js {:moveOnDrag (if (.-shiftKey e)
                                             false
