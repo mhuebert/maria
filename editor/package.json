@@ -3,7 +3,8 @@
     "server": "shadow-cljs server;",
     "watch": "shadow-cljs watch live trusted bootstrap;",
     "release": "rm -rf resources/public/js/bootstrap; shadow-cljs release trusted live bootstrap;",
-    "postinstall": "ln -svf ./target/shadow-cljs/nrepl.port ./.nrepl-port;"
+    "postinstall": "ln -svf ./target/shadow-cljs/nrepl.port ./.nrepl-port;",
+    "deploy": "./script/deploy.sh"
   },
   "dependencies": {
     "@braintripping/keypress.js": "github:braintripping/Keypress#de62f6ec",
