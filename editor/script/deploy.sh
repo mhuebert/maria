@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 case "$CIRCLE_BRANCH" in
-"master")
-  firebase deploy -P prod
+"release")
+  npx firebase deploy -P prod
   ;;
-"dev")
-  firebase deploy -P dev
+"master")
+  npx firebase deploy -P dev
   ;;
 esac

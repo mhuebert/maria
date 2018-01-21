@@ -34,5 +34,5 @@ jobs:
           key: v1-dependencies-{{ checksum "editor/package.json" }}
 
       # run tests!
-      - run: pwd; ls; cd editor; npm run release
+      - run: pwd; ls; cd editor; npm run release; npm run deploy
 
