@@ -14,7 +14,7 @@
                      (read-string)
                      (:dependencies)))
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled"
+  :clean-targets ^{:protect false} ["public/js/compiled"
                                     "target"]
 
   :source-paths ~(->

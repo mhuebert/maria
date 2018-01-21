@@ -11,7 +11,7 @@ const extractSass = new ExtractTextPlugin({
 module.exports = {
     entry: "./src/styles/maria.scss",
     output: {
-        path: path.join(__dirname, "./resources/public/"),
+        path: path.join(__dirname, "./public/"),
         filename: "maria.css"
     },
     module: {

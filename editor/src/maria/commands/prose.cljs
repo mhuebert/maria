@@ -41,9 +41,9 @@
 (defn enter [{:keys [editor block block-list]}]
   (commands/apply-command editor
                           (commands/chain
-                            (fn [state dispatch]
-                              (split-with-code-block block-list block state nil))
-                            commands/enter)))
+                           (fn [state dispatch]
+                             (split-with-code-block block-list block state nil))
+                           commands/enter)))
 
 (defcommand :prose/newline
   {:bindings       ["Shift-Enter"
@@ -116,12 +116,12 @@
                                                    commands/outdent)))
 
 
-(defcommand :format/indent
-  {:bindings ["Tab"]
-   :when     :block/prose
-   :icon     icons/FormatIndent}
-  [context]
-  (apply-command (:editor context) commands/indent))
+#_(defcommand :format/indent
+    {:bindings ["Tab"]
+     :when     :block/prose
+     :icon     icons/FormatIndent}
+    [context]
+    (apply-command (:editor context) commands/indent))
 
 (defn remove-empty-block [{:keys [blocks block-list block]}]
   (fn [_ _]
@@ -172,12 +172,12 @@
   [{:keys [editor block blocks block-list] :as context}]
   (apply-command editor
                  (commands/chain
-                   commands/open-link
-                   commands/open-image
-                   (join-with-prev context)
-                   (remove-empty-block context)
-                   (handle-cursor-at-start context)
-                   commands/backspace)))
+                  commands/open-link
+                  commands/open-image
+                  (join-with-prev context)
+                  (remove-empty-block context)
+                  (handle-cursor-at-start context)
+                  commands/backspace)))
 
 (defcommand :prose/space
   {:bindings       ["Space"]
@@ -235,15 +235,15 @@
    commands/rule-paragraph-start
    commands/rule-image-and-links
    (input-rules/InputRule.
-     #"^\($"
-     (fn [state [bracket] & _]
-       (when (empty-root-paragraph? state)
-         (js/setTimeout
-           #(split-with-code-block (:block-list block-view)
-                                   (:block block-view)
-                                   state {:content       (str bracket (edit/other-bracket bracket))
-                                          :cursor-coords (CM/Pos 0 1)}) 0)
-         (.-tr state))))])
+    #"^\($"
+    (fn [state [bracket] & _]
+      (when (empty-root-paragraph? state)
+        (js/setTimeout
+         #(split-with-code-block (:block-list block-view)
+                                 (:block block-view)
+                                 state {:content       (str bracket (edit/other-bracket bracket))
+                                        :cursor-coords (CM/Pos 0 1)}) 0)
+        (.-tr state))))])
 
 (defn select-up [this]
   (commands/apply-command this commands/expand-selection))

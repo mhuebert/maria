@@ -105,9 +105,7 @@
   {:bindings ["M1"]
    :when     :block/code}
   [{:keys [editor]}]
-  (when (some-> editor
-                (:errors)
-                (not))
+  (when-not (:errors editor)
     (when-not (cm/selection? editor)
       (cm/select-at-cursor editor false))
     (init-select-by-click editor)))
@@ -236,34 +234,35 @@
    :private  true
    :when     :block/code}
   [{:keys [editor binding] :as args}]
-  (edit/operation editor
-                  (when-let [brackets (get {"["       "[]"
-                                            "Shift-9" "()"
-                                            "Shift-'" "\"\""
-                                            "Shift-[" "{}"} binding)]
-                    (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
-                                       (and (= :string (:tag node))
-                                            (tree/inside? node pos)))
-                          ;; if in a string, escape quotes and do not autoclose
-                          [insertion-text forward] (if in-string?
-                                                     (if (= \" (first brackets)) ["\\\"" 2] [(first brackets) 1])
-                                                     [brackets 1])]
-                      (when (cm/selection? editor)
-                        (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
-                      (-> (edit/pointer editor)
-                          (edit/insert! insertion-text)
-                          (edit/move forward)
-                          (edit/set-editor-cursor!))))))
+  (when-not (:errors editor)
+    (edit/operation editor
+                    (when-let [brackets (get {"["       "[]"
+                                              "Shift-9" "()"
+                                              "Shift-'" "\"\""
+                                              "Shift-[" "{}"} binding)]
+                      (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
+                                         (and (= :string (:tag node))
+                                              (tree/inside? node pos)))
+                            ;; if in a string, escape quotes and do not autoclose
+                            [insertion-text forward] (if in-string?
+                                                       (if (= \" (first brackets)) ["\\\"" 2] [(first brackets) 1])
+                                                       [brackets 1])]
+                        (when (cm/selection? editor)
+                          (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
+                        (-> (edit/pointer editor)
+                            (edit/insert! insertion-text)
+                            (edit/move forward)
+                            (edit/set-editor-cursor!)))))))
 
 (defcommand :edit/type-close-bracket
-  {:bindings ["]"
-              "Shift-0"
-              "Shift-]"]
-   :private  true
-   :when :block/code}
-  [{:keys [editor]}]
-  (when-not (:errors editor)
-    (edit/cursor-skip! editor :right)))
+    {:bindings ["]"
+                "Shift-0"
+                "Shift-]"]
+     :private  true
+     :when     :block/code}
+    [{:keys [editor]}]
+    (when-not (:errors editor)
+      (edit/cursor-skip! editor :right)))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
@@ -302,7 +301,7 @@
 
       (util/whitespace-string? (edit/get-range pointer (- (.-ch (:pos pointer)))))
       (edit/operation editor
-                      (.replaceRange editor ""
+                      (.replaceRange editor " "
                                      (:pos pointer)
                                      (:pos (edit/move-while pointer -1 #(#{\space \newline \tab} %)))))
 

@@ -11,10 +11,9 @@ curriculum/ideating.clj
 cljs-runtime
 *.DS_Store
 node_modules
-**/resources/public/js/cljs_live_bundles
-**/resources/public/js/compiled
+**/public/js/compiled
 **/bootstrap/**
-**/resources/public/css
+**/public/css
 **/checkouts
 **/.cljs_live_planck_cache
 **/test-target/public/js

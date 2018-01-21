@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "resources/public",
+    "public": "public",
     "ignore": [
       "js/compiled/out**",
       "js/compiled/cljs-runtime/**",

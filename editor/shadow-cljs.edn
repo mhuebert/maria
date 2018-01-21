@@ -17,7 +17,7 @@
                 [re-view "0.4.3"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.25"]
+                [lark/tools "0.1.26"]
                 [lark/cells "0.1.7"]]
 
  :nrepl        {:port 7888}
@@ -34,22 +34,22 @@
                 {:target     :browser
                  :release    {:compiler-options {:optimizations :simple
                                                  :language-in   :ecmascript5}}
-                 :output-dir "resources/public/js/compiled"
+                 :output-dir "public/js/compiled"
                  :asset-path "/js/compiled"
                  :modules    {:shadow-live {:entries [maria.frames.live-frame]}}
-                 :devtools   {:http-root     "resources/public"
+                 :devtools   {:http-root     "public"
                               :http-handler  shadow.http.push-state/handle
                               :http-port     8701
                               :after-load    maria.frames.live-frame/render
                               :async-require true}}
                 :bootstrap
                 {:target     :bootstrap
-                 :output-dir "resources/public/js/bootstrap"
+                 :output-dir "public/js/bootstrap"
                  :entries    [maria.user]
                  :exclude    [cljs.js]}
                 :trusted
                 {:target     :browser
-                 :output-dir "resources/public/js/compiled"
+                 :output-dir "public/js/compiled"
                  :asset-path "/js/compiled"
                  :modules    {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
                  :devtools   {:autoload      true

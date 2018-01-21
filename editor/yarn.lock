@@ -2932,6 +2932,16 @@ parents@^1.0.0:
   dependencies:
     path-platform "~0.11.15"
 
+parinfer-codemirror@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/parinfer-codemirror/-/parinfer-codemirror-1.4.2.tgz#2b9b7f27af65bf14282034a17731d4a82367d046"
+  dependencies:
+    parinfer "^3.11.0"
+
+parinfer@^3.11.0, parinfer@^3.12.0:
+  version "3.12.0"
+  resolved "https://registry.yarnpkg.com/parinfer/-/parinfer-3.12.0.tgz#6ea16236319717d579275aa9a94ed1197c3cbd62"
+
 parse-asn1@^5.0.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/parse-asn1/-/parse-asn1-5.1.0.tgz#37c4f9b7ed3ab65c74817b5f2480937fbf97c712"
@@ -3815,9 +3825,9 @@ shadow-cljs-jar@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-1.1.1.tgz#5d74383f5aff8fba25a5d00ee3c3ad035a1bd7a3"
 
-shadow-cljs@^2.0.137:
-  version "2.0.137"
-  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.0.137.tgz#2f2e6167da1eec7780be7c7d78294ebf3914eac7"
+shadow-cljs@^2.0.139:
+  version "2.0.139"
+  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.0.139.tgz#c5a278b8625634f09d5e172c7472029b0bde8d02"
   dependencies:
     babel-core "^6.26.0"
     babel-preset-env "^1.6.0"

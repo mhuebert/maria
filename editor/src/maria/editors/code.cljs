@@ -1,22 +1,22 @@
 (ns maria.editors.code
   (:require
 
-    [lark.structure.codemirror :as cm]
-    ["codemirror" :as CM]
-    ["codemirror/addon/selection/mark-selection"]
-    ["codemirror/mode/clojure/clojure"]
+   [lark.structure.codemirror :as cm]
+   ["codemirror" :as CM]
+   ["codemirror/addon/selection/mark-selection"]
+   ["codemirror/mode/clojure/clojure"]
 
-    [re-view.core :as v :refer [defview]]
+   [re-view.core :as v :refer [defview]]
 
-    [maria.util :as util]
-    [maria.views.floating.float-ui :as hint]
-    [lark.editor :as Editor]
-    [lark.tree.core :as tree]
-    [maria.live.ns-utils :as ns-utils]
-    [maria.views.dropdown :as dropdown]
-    [maria.views.bottom-bar :as bottom-bar]
-    [lark.structure.edit :as edit]
-    [goog.functions :as gf]))
+   [maria.util :as util]
+   [maria.views.floating.float-ui :as hint]
+   [lark.editor :as Editor]
+   [lark.tree.core :as tree]
+   [maria.live.ns-utils :as ns-utils]
+   [maria.views.dropdown :as dropdown]
+   [maria.views.bottom-bar :as bottom-bar]
+   [lark.structure.edit :as edit]
+   [goog.functions :as gf]))
 
 (defn eldoc-view [sym]
   (some->> sym
@@ -64,6 +64,7 @@
    :magicBrackets      true
    :magicEdit          true
    :flattenSpans       true
+   :parinfer           "smart"
    :configureMouse     (fn [cm repeat e]
                          #js {:moveOnDrag (if (.-shiftKey e)
                                             false
