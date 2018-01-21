@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: timbru31/java-node
+      - image: mhuebert/docker-java-node
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
