@@ -8,7 +8,7 @@
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
                 [org.clojure/test.check "0.10.0-alpha2"]
-                [org.clojure/spec.alpha "0.1.134"]
+                [org.clojure/spec.alpha "0.1.143"]
                 [fast-zip "0.7.0"]
 
                 [maria/friendly "0.1.0"]
