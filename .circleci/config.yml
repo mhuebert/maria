@@ -44,9 +44,9 @@ jobs:
           command: npm run deploy;
           working_directory: ~/project/editor
 
-      - run:
-          command: cat target/shadow-cljs/shadow-cljs.log.0
-          working_directory: ~/project/editor
+#      - run:
+#          command: cat target/shadow-cljs/shadow-cljs.log.0
+#          working_directory: ~/project/editor
 
       - save_cache:
           paths:
