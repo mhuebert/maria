@@ -4,13 +4,14 @@
             [cljs.core.match :refer-macros [match]]
             [maria.curriculum :as curriculum]
             [maria.persistence.github :as github]
-            [re-db.d :as d]))
+            [re-db.d :as d]
+            [clojure.set :as set]))
 
 (defn sanitized-location
   "Do not share more information than necessary with live frame."
   []
   (-> (d/entity :router/location)
-      (dissoc :path)
+      (set/rename-keys {:path :parent-path})
       (update :query #(select-keys % [:eval]))))
 
 (defn match-route-segments [segments]

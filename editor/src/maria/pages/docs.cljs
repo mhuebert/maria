@@ -83,16 +83,19 @@
 (defview doc-list
   {:view/initial-state (fn [{:keys [limit]}]
                          {:limit-n (or limit 5)})}
-  [{:keys [view/state context]} docs]
+  [{:keys      [view/state context]} docs]
   (let [{:keys [limit-n]} @state
-        more? (> (count docs) limit-n)]
+        more? (> (count docs) limit-n)
+        parent-path (d/get :router/location :parent-path)]
     [:.flex-auto.overflow-auto.sans-serif.f6.bg-white
      (for [doc (take limit-n docs)
            :let [{:keys [id description persistence/provider remote-url local-url filename]} doc
-                 trashed? (= context :trash)]
+                 trashed? (= context :trash)
+                 active? (= parent-path local-url)]
            :when local-url]
        [:.bb.b--near-white.flex.items-stretch
-        {:class (when-not trashed? "hover-bg-washed-blue")}
+        {:classes [(when-not trashed? "hover-bg-washed-blue")
+                   (when active? "bg-darken")]}
         [:a.db.ph3.pv2.black.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
@@ -104,7 +107,7 @@
           (when (= provider :gist)
             [:.pointer.nl2
              {:class        small-icon-classes
-              :on-click #(frame/send frame/trusted-frame [:window/navigate (str "https://gist.github.com/" id) {:popup? true}])
+              :on-click     #(frame/send frame/trusted-frame [:window/navigate (str "https://gist.github.com/" id) {:popup? true}])
               :data-tooltip (pr-str "View Gist")}
              (-> icons/OpenInNew
                  (icons/size 16))])
@@ -119,10 +122,7 @@
 
             :maria/curriculum
             [:.flex.items-center "Curriculum"]
-            nil)
-          ]
-
-         ]
+            nil)]]
 
         [:.flex.items-center
          (case context
@@ -137,30 +137,29 @@
               (icons/size icons/X 16)])
            :trash
            (list
-             [:.blue.hover-underline.hover-dark-blue.f7.pointer.flex.items-center
-              {:on-click #(do (doc/locals-push! :local/recents id)
-                              (doc/locals-remove! :local/trash id))}
-              "Restore"]
+            [:.blue.hover-underline.hover-dark-blue.f7.pointer.flex.items-center
+             {:on-click #(do (doc/locals-push! :local/recents id)
+                             (doc/locals-remove! :local/trash id))}
+             "Restore"]
 
 
-             [:div
-              {:data-tooltip (pr-str "Delete")
-               :class        (str small-icon-classes " hover-dark-red ")
-               :on-click     #(do
-                                (doc/locals-remove! :local/trash id)
-                                (doc/locals-remove! :local/recents id)
-                                (d/transact! [[:db/retract-entity id]]))}
-              (icons/size icons/Delete 16)])
-           nil)]
-
-        ])
+            [:div
+             {:data-tooltip (pr-str "Delete")
+              :class        (str small-icon-classes " hover-dark-red ")
+              :on-click     #(do
+                               (doc/locals-remove! :local/trash id)
+                               (doc/locals-remove! :local/recents id)
+                               (d/transact! [[:db/retract-entity id]]))}
+             (icons/size icons/Delete 16)])
+           nil)]])
      (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc
                   {:on-click #(swap! state update :limit-n (partial + 20))}
                   (-> icons/ExpandMore
                       (icons/class "ma1"))])]))
 
 (defn gists-list
-  [username]
+  [{:keys [username] :as this}]
+  (prn :gists-list (:view/props this))
   (let [gists (doc/user-gists username)]
     [:.flex-auto.flex.flex-column.relative
      (toolbar/doc-toolbar {:left-content [:.flex.items-center.ph2.gray

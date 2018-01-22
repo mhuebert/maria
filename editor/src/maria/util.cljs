@@ -2,7 +2,8 @@
   (:require [goog.events :as events]
             [goog.object :as gobj]
             [re-view.core :as v]
-            [clojure.string :as string]))
+            [clojure.string :as string])
+  (:require-macros [maria.util :refer [for-map]]))
 
 (defn loader [message]
   [:.w-100.sans-serif.tc
@@ -150,3 +151,21 @@
                            (cons x (step (rest s) (conj seen fx)))))))
                     xs seen)))]
      (step coll #{}))))
+
+(defn map-vals
+  "Build map k -> (f v) for [k v] in map, preserving the initial type"
+  [f m]
+  (cond
+    (sorted? m)
+    (reduce-kv (fn [out-m k v] (assoc out-m k (f v))) (sorted-map) m)
+    (map? m)
+    (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m k (f v))) (transient {}) m))
+    :else
+    (for-map [[k v] m] k (f v))))
+
+(defn map-keys
+  "Build map (f k) -> v for [k v] in map m"
+  [f m]
+  (if (map? m)
+    (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m (f k) v)) (transient {}) m))
+    (for-map [[k v] m] (f k) v)))

@@ -52,9 +52,10 @@
                              (v/swap-silently! state assoc :listener-key)))
    :view/will-unmount #(events/unlistenByKey (:listener-key @(:view/state %)))}
   [{:keys [when-scrolled view/state]} child]
-  [:.fixed.top-0.right-0.left-0.z-5
-   (cond-> (when (:scrolled? @state) when-scrolled)
-           (d/get :ui/globals :sidebar?) (assoc-in [:style :left] (d/get :ui/globals :sidebar-width))) child])
+  [:.fixed.top-0.right-0.left-0.z-5.transition-all
+   (-> (when (:scrolled? @state) when-scrolled)
+       (cond-> (d/get :ui/globals :sidebar?)
+               (assoc-in [:style :left] (d/get :ui/globals :sidebar-width)))) child])
 
 (defview doc-toolbar
   {:view/did-mount          (fn [this]

@@ -23,8 +23,6 @@
             [maria.frames.frame-communication :as frame]
             [maria.commands.code]
             [clojure.string :as string]
-            [maria.persistence.local :as local]
-            [maria.persistence.github :as github]
             [maria.frames.live-actions :as user-actions]
 
             [maria.live.analyze]

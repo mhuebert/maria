@@ -3,21 +3,19 @@
             [maria.views.floating.tooltip :as tooltip]
             [re-db.d :as d]
             [maria.commands.which-key :as which-key]
-            [maria.eval :as e]
             [maria.repl-specials]
-            [maria.views.cards :as repl-ui]
             [cljs.core.match :refer-macros [match]]
             [maria.views.floating.float-ui :as hint]
             [maria.views.bottom-bar :as dock]
             [maria.pages.docs :as docs]
 
-            [maria.persistence.local :as local]
             [maria.views.top-bar :as toolbar]
-            [maria.curriculum :as curriculum]
             [lark.commands.exec :as exec]
             [maria.commands.doc :as doc]
             [maria.views.icons :as icons]
-            [re-view.routing :as r]))
+            [bidi.bidi :as bidi]
+            [clojure.string :as str]
+            [maria.util :as util]))
 
 (d/transact! [[:db/add :ui/globals :sidebar-width 250]])
 
@@ -56,77 +54,88 @@
    ])
 
 (defview sidebar
-  [this]
-  [:.fixed.f7.z-5.top-0.left-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
-   {:style {:width (d/get :ui/globals :sidebar-width)}}
-   [:.flex.items-stretch.pl2.flex-none
-    #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
-                               icons/Docs
-                               nil
-                               "Docs"])
+  [{:keys [visible? id]}]
+  (let [width (d/get :ui/globals :sidebar-width)]
+    [:.fixed.f7.z-5.top-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
+     {:style {:width      width
+              :transition "all ease 0.2s"
+              :left       (if visible? 0 (- width))}}
+     [:.flex.items-stretch.pl2.flex-none
+      #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
+                                 icons/Docs
+                                 nil
+                                 "Docs"])
 
-    #_(toolbar/toolbar-button [{:on-click #(exec/exec-command-name :doc/new)}
-                               nil
-                               "New"
-                               "New Doc"])
+      #_(toolbar/toolbar-button [{:on-click #(exec/exec-command-name :doc/new)}
+                                 nil
+                                 "New"
+                                 "New Doc"])
 
-    (toolbar/toolbar-button [{:href "/"}
+      (toolbar/toolbar-button [{:href "/"}
                                icons/Home
                                nil
                                "Home"])
-    [:.flex-auto]
-    (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
-                             (-> icons/ExpandMore
-                                 (icons/style {:transform "rotate(90deg)"})
-                                 (icons/class "o-60"))
-                             nil
-                             "Close"])]
+      [:.flex-auto]
+      (toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
+                               (-> icons/ExpandMore
+                                   (icons/style {:transform "rotate(90deg)"})
+                                   (icons/class "o-60"))
+                               nil
+                               "Close"])]
 
-   [:.overflow-y-auto.bg-white.pb4
-    (some-> (doc/locals-docs :local/recents)
-            (doc-list-section {:context :recents
-                               :title   "Recent"}))
+     [:.overflow-y-auto.bg-white.pb4
+      (some-> (doc/locals-docs :local/recents)
+              (doc-list-section {:context :recents
+                                 :id      id
+                                 :title   "Recent"}))
 
-    (-> doc/curriculum
-        (doc-list-section {:context :curriculum
-                           :title   "Learning Modules"}))
+      (-> doc/curriculum
+          (doc-list-section {:context :curriculum
+                             :id      id
+                             :title   "Learning Modules"}))
 
 
 
-    (when-let [username (d/get :auth-public :username)]
-      (some-> (seq (doc/user-gists username))
-              (doc-list-section {:context :gists
-                                 :title   "My gists"})))
+      (when-let [username (d/get :auth-public :username)]
+        (some-> (seq (doc/user-gists username))
+                (doc-list-section {:context :gists
+                                   :id      id
+                                   :title   "My gists"})))
 
-    (some-> (doc/locals-docs :local/trash)
-            (doc-list-section {:context :trash
-                               :title   "Trash"
-                               :limit   0}))]
+      (some-> (doc/locals-docs :local/trash)
+              (doc-list-section {:context :trash
+                                 :id      id
+                                 :title   "Trash"
+                                 :limit   0}))]]))
 
-   ])
+(def routes ["/" {""                           landing
+                  "home"                       landing
+                  ["doc/" [#".*" :id]]         docs/file-edit
+                  ["gists/" [#".*" :username]] docs/gists-list
+                  ["local/" [#".*" :id]]       (v/partial docs/file-edit {:local? true})
+                  "local"                      (v/partial docs/gists-list {:username "local"})}])
 
 (defview layout
   [{:keys []}]
-  (let [sidebar? (d/get :ui/globals :sidebar?)]
+  (let [sidebar? (d/get :ui/globals :sidebar?)
+        path (str "/" (str/join "/" (d/get :router/location :segments)))
+        {:keys [route-params handler]} (bidi/match-route routes path)
+
+        ;; normalize encoding... bidi leaves route params in a partially decoded state
+        route-params (util/map-vals (comp js/encodeURIComponent js/decodeURIComponent) route-params)]
     [:.w-100.relative.sans-serif.cursor-text
      {:on-click #(when (= (.-target %) (.-currentTarget %))
                    (exec/exec-command-name :navigate/focus-end))
       :style    {:min-height     "100%"
                  :padding-bottom 40
+                 :transition     "padding-left ease 0.2s"
                  :padding-left   (when sidebar? (d/get :ui/globals :sidebar-width))}}
      (hint/show-floating-view)
-     (when sidebar? (sidebar))
+     (sidebar {:visible? sidebar?
+               :id       (:id route-params)})
      [:.relative.w-100
-      (when-let [segments (d/get :router/location :segments)]
-        (match segments
-               (:or [] ["home"]) (landing)
-               ["landing"] (landing)
-               ["doc" id] (docs/file-edit {:id id})
-               ["gists" username] (docs/gists-list username)
-
-               ["local"] (docs/gists-list "local")
-               ["local" id] (docs/file-edit {:id     id
-                                             :local? true})))]
+      (when handler
+        (handler route-params))]
 
      (which-key/show-commands)
      (dock/BottomBar {})

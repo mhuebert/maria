@@ -316,6 +316,10 @@ $lighten: rgba(255, 255, 255, 0.25);
   z-index: 0;
 }
 
+.transition-all {
+  transition: 0.2s ease all;
+}
+
 .autosize-input-input {
   position: relative;
   z-index: 1;
