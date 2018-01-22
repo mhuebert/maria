@@ -26,13 +26,10 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: pwd; ls; cd editor; npm install
+      - run: pwd; ls; cd editor; npm install; npm run release; 
 
       - save_cache:
           paths:
-            - node_modules
-          key: v1-dependencies-{{ checksum "editor/package.json" }}
-
-      # run tests!
-      - run: pwd; ls; cd editor; npm run release; npm run deploy
-
+            - editor/node_modules
+            - editor/target
+          key: v1-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}

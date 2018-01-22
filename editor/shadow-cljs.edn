@@ -47,6 +47,7 @@
                  :output-dir "public/js/bootstrap"
                  :entries    [maria.user]
                  :exclude    [cljs.js]}
+
                 :trusted
                 {:target     :browser
                  :output-dir "public/js/compiled"
