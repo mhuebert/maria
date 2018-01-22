@@ -44,7 +44,7 @@ jobs:
           command: npx shadow-cljs release bootstrap;
           working_directory: ~/project/editor
 
-#      - run: cd editor; npm run deploy;
+      - run: cd editor; npm run deploy;
 
       - save_cache:
           paths:
