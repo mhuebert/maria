@@ -40,7 +40,13 @@ jobs:
           command: npx shadow-cljs release bootstrap;
           working_directory: ~/project/editor
 
-      - run: cd editor; npm run deploy;
+      - run:
+          command: npm run deploy;
+          working_directory: ~/project/editor
+
+      - run:
+          command: cat target/shadow-cljs/shadow-cljs.log.0
+          working_directory: ~/project/editor
 
       - save_cache:
           paths:
@@ -49,4 +55,4 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
 
-      - run: cat target/shadow-cljs/shadow-cljs.log.0
+
