@@ -31,9 +31,6 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs start;
-          working_directory: ~/project/editor
-      - run:
           command: npx shadow-cljs release live;
           working_directory: ~/project/editor
       - run:
