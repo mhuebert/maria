@@ -53,6 +53,6 @@ jobs:
             - ~/project/editor/node_modules
             - ~/project/editor/target
             - ~/.m2
-          key: v1-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+          key: v2-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
 
 
