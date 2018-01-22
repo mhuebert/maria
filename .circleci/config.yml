@@ -26,18 +26,24 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: cd editor; npm install;
+      - run:
+          command: npm install;
+          working_directory: ~/project/editor
 
-      - run: cd editor; npx shadow-cljs start;
+      - run:
+          command: npx shadow-cljs start;
           background: true
+          working_directory: ~/project/editor
 
-      - run: cd editor; npm run release;
+      - run:
+          command: npm run release;
+          working_directory: ~/project/editor
 
 #      - run: cd editor; npm run deploy;
 
       - save_cache:
           paths:
-            - editor/node_modules
-            - editor/target
+            - ~/project/editor/node_modules
+            - ~/project/editor/target
             - ~/.m2
           key: v1-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
