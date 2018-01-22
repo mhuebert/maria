@@ -22,9 +22,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "editor/package.json" }}
+          - v3-dependencies-{{ checksum "editor/package.json" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v3-dependencies-
 
       - run:
           command: npm install;
@@ -53,6 +53,6 @@ jobs:
             - ~/project/editor/node_modules
             - ~/project/editor/target
             - ~/.m2
-          key: v2-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+          key: v3-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
 
 
