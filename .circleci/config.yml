@@ -26,7 +26,13 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: pwd; ls; cd editor; npm install; npm run release;
+      - run: cd editor; npm install;
+
+      - run: cd editor; npx shadow-cljs start;
+
+      - run: cd editor; npm run release;
+
+#      - run: cd editor; npm run deploy;
 
       - save_cache:
           paths:
