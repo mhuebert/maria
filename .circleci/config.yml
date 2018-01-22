@@ -31,8 +31,7 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs start;
-          background: true
+          command: npx shadow-cljs server;
           working_directory: ~/project/editor
       - run:
           command: sleep 6; npx shadow-cljs release live;
@@ -52,3 +51,5 @@ jobs:
             - ~/project/editor/target
             - ~/.m2
           key: v1-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+
+      - run: cat target/shadow-cljs/shadow-cljs.log.0
