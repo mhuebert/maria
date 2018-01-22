@@ -34,9 +34,14 @@ jobs:
           command: npx shadow-cljs start;
           background: true
           working_directory: ~/project/editor
-
       - run:
-          command: npm run release;
+          command: npx shadow-cljs release live;
+          working_directory: ~/project/editor
+      - run:
+          command: npx shadow-cljs release trusted;
+          working_directory: ~/project/editor
+      - run:
+          command: npx shadow-cljs release bootstrap;
           working_directory: ~/project/editor
 
 #      - run: cd editor; npm run deploy;
