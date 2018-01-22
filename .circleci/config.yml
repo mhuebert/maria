@@ -35,7 +35,7 @@ jobs:
           background: true
           working_directory: ~/project/editor
       - run:
-          command: npx shadow-cljs release live;
+          command: sleep 6; npx shadow-cljs release live;
           working_directory: ~/project/editor
       - run:
           command: npx shadow-cljs release trusted;
