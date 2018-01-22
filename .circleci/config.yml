@@ -31,10 +31,10 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs server;
+          command: npx shadow-cljs start;
           working_directory: ~/project/editor
       - run:
-          command: sleep 6; npx shadow-cljs release live;
+          command: npx shadow-cljs release live;
           working_directory: ~/project/editor
       - run:
           command: npx shadow-cljs release trusted;
