@@ -206,7 +206,7 @@
   (case (persistence-mode toolbar)
     :save (save! toolbar)
     :create (create! (d/get (:id toolbar) :local) (:id toolbar))
-    (log/println :error "Unknown `persistence-mode`: " (persistence-mode toolbar))))
+    (log/println :warn "Unknown `persistence-mode`: " (persistence-mode toolbar))))
 
 (defcommand :doc/new
   "Create a blank doc"

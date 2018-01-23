@@ -18,7 +18,7 @@
    [lark.structure.edit :as edit]
    [goog.functions :as gf]))
 
-(def PARINFER? false)
+(def PARINFER? true)
 
 (defn eldoc-view [sym]
   (some->> sym
@@ -66,7 +66,6 @@
    :magicBrackets      true
    :magicEdit          true
    :flattenSpans       true
-   :parinfer           (when PARINFER? "smart")
    :configureMouse     (fn [cm repeat e]
                          #js {:moveOnDrag (if (.-shiftKey e)
                                             false
@@ -97,6 +96,7 @@
                                                                {:value (str (or value default-value))}
                                                                (cond-> options
                                                                        keymap (assoc :extraKeys (clj->js keymap))
+                                                                       PARINFER? (assoc :parinfer "smart")
                                                                        read-only? (-> (select-keys [:theme :mode :lineWrapping])
                                                                                       (assoc
                                                                                         :readOnly true
