@@ -25,10 +25,11 @@
           segments (if curriculum?
                      ["curriculum" (first segments)]
                      segments)]
+      (when current-username
+        (github/load-user-gists current-username))
       (match segments
              []
-             (do (some-> current-username (github/load-user-gists))
-                 (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
+             (trusted-views/editor-frame-view {:db/transactions [route-tx]})
 
              ["curriculum" slug]
              (match-route-segments ["http-text" (first (for [[module-slug _ id] curriculum/modules
@@ -68,9 +69,7 @@
              ["gist" id]
              (match-route-segments ["gist" id false])
 
-             ["home"] (do
-                        (some-> current-username (github/load-user-gists))
-                        (trusted-views/editor-frame-view {:db/transactions [route-tx]}))
+             ["home"] (trusted-views/editor-frame-view {:db/transactions [route-tx]})
 
              ["gist" id filename]
              (do (github/load-gist id)

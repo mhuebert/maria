@@ -77,26 +77,43 @@
                                                          :value         value
                                                          :default-value default-value})))]]))))
 
-(def small-label :.silver.f7.flex.items-stretch.pr2)
-(def small-icon-classes " silver hover-black ph2 flex items-center pointer h-100")
+(def small-label :.silver.text-size-11.flex.items-stretch.pr2.ttu)
+(def small-icon-classes " silver hover-black ph2 mr1 flex items-center pointer h-100")
 
 (defview doc-list
-  {:view/initial-state (fn [{:keys [limit]}]
+  {:key                :title
+   :view/initial-state (fn [{:keys [limit]}]
                          {:limit-n (or limit 5)})}
-  [{:keys      [view/state context]} docs]
+  [{:keys [view/state context title]} docs]
   (let [{:keys [limit-n]} @state
-        more? (> (count docs) limit-n)
+        more? (and (not= limit-n 0) (> (count docs) limit-n))
         parent-path (d/get :router/location :parent-path)]
-    [:.flex-auto.overflow-auto.sans-serif.f6.bg-white
-     (for [doc (take limit-n docs)
-           :let [{:keys [id description persistence/provider remote-url local-url filename]} doc
-                 trashed? (= context :trash)
+    [:.flex-auto.overflow-auto.sans-serif.f6.bg-white.bb.b--near-white.bw2
+     (when title
+       [:.sans-serif.pl3.pr2.pv2.f7.b.flex.items-center.justify-between.pointer.hover-bg-washed-blue
+        {:key      "title"
+         :on-click #(if (= limit-n 0)
+                      (swap! state update :limit-n + 5)
+                      (swap! state assoc :limit-n 0))}
+        title
+        (-> icons/ExpandMore
+            (icons/class "gray")
+            (icons/style (when-not (= limit-n 0)
+                           {:transform "rotate(180deg)"})))])
+     (for [{:as doc
+            :keys [id
+                   persistence/provider
+                   local-url
+                   filename]} (take limit-n docs)
+           :let [trashed? (= context :trash)
                  active? (= parent-path local-url)]
+           ;; todo
+           ;; figure out exactly what cases have no `local-url`, and why
            :when local-url]
        [:.bb.b--near-white.flex.items-stretch
-        {:classes [(when-not trashed? "hover-bg-washed-blue")
-                   (when active? "bg-darken")]}
-        [:a.db.ph3.pv2.black.no-underline.flex-auto
+        {:classes [(if active? "bg-washed-blue-darker"
+                               (when-not trashed? "hover-bg-washed-blue"))]}
+        [:a.db.ph3.pv2.dark-gray.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
          [:.mb1.truncate
@@ -104,14 +121,6 @@
          #_(some->> description (conj [:.gray.f7.mt1.normal]))
 
          [small-label
-          (when (= provider :gist)
-            [:.pointer.nl2
-             {:class        small-icon-classes
-              :on-click     #(frame/send frame/trusted-frame [:window/navigate (str "https://gist.github.com/" id) {:popup? true}])
-              :data-tooltip (pr-str "View Gist")}
-             (-> icons/OpenInNew
-                 (icons/size 16))])
-
           (case provider
             :maria/local
             [:.flex.items-center "Unsaved"]
@@ -122,7 +131,15 @@
 
             :maria/curriculum
             [:.flex.items-center "Curriculum"]
-            nil)]]
+            nil)
+
+          (when (= provider :gist)
+            [:.pointer.nl1
+             {:class        small-icon-classes
+              :on-click     #(frame/send frame/trusted-frame [:window/navigate (str "https://gist.github.com/" id) {:popup? true}])
+              :data-tooltip (pr-str "View Gist")}
+             (-> icons/OpenInNew
+                 (icons/size 11))])]]
 
         [:.flex.items-center
          (case context
@@ -152,14 +169,12 @@
                                (d/transact! [[:db/retract-entity id]]))}
              (icons/size icons/Delete 16)])
            nil)]])
-     (when more? [:.pointer.gray.hover-black.ph2.hover-bg-washed-blue.tc
+     (when more? [:.pointer.gray.hover-black.pa2.tc.f7
                   {:on-click #(swap! state update :limit-n (partial + 20))}
-                  (-> icons/ExpandMore
-                      (icons/class "ma1"))])]))
+                  "More..."])]))
 
 (defn gists-list
   [{:keys [username] :as this}]
-  (prn :gists-list (:view/props this))
   (let [gists (doc/user-gists username)]
     [:.flex-auto.flex.flex-column.relative
      (toolbar/doc-toolbar {:left-content [:.flex.items-center.ph2.gray

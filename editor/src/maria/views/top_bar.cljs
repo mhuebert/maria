@@ -19,7 +19,7 @@
 (defn toolbar-button [[action icon text tooltip]]
   [(if (:href action) :a.no-underline :div)
    (cond-> {:class (str "pa2 flex items-center gray "
-                        (when action "pointer hover-black hover-bg-near-white"))}
+                        (when action "pointer hover-black"))}
            tooltip (assoc :data-tooltip (pr-str tooltip))
            (fn? action) (assoc :on-click action)
            (map? action) (merge action))

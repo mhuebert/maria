@@ -22,12 +22,6 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
-(defn doc-list-section [docs {:keys [title] :as options}]
-  (when-let [docs (seq (filter :local-url docs))]
-    [:div
-     [:.sans-serif.ph3.pt3.pb2.f7.b title]
-     (docs/doc-list options docs)]))
-
 (defn landing []
   [:.w-100
    (toolbar/doc-toolbar {})
@@ -60,7 +54,7 @@
      {:style {:width      width
               :transition "all ease 0.2s"
               :left       (if visible? 0 (- width))}}
-     [:.flex.items-stretch.pl2.flex-none
+     [:.flex.items-stretch.pl2.flex-none.bg-darken-lightly
       #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
                                  icons/Docs
                                  nil
@@ -82,31 +76,30 @@
                                    (icons/class "o-60"))
                                nil
                                "Close"])]
-
      [:.overflow-y-auto.bg-white.pb4
-      (some-> (doc/locals-docs :local/recents)
-              (doc-list-section {:context :recents
-                                 :id      id
-                                 :title   "Recent"}))
+      (some->> (doc/locals-docs :local/recents)
+               (docs/doc-list {:context :recents
+                               :id      id
+                               :title   "Recent"}))
 
-      (-> doc/curriculum
-          (doc-list-section {:context :curriculum
-                             :id      id
-                             :title   "Learning Modules"}))
-
-
-
+      (some->> doc/curriculum
+               (docs/doc-list {:context :curriculum
+                               :id      id
+                               :title   "Learning Modules"
+                               :limit   0}))
+      
       (when-let [username (d/get :auth-public :username)]
-        (some-> (seq (doc/user-gists username))
-                (doc-list-section {:context :gists
-                                   :id      id
-                                   :title   "My gists"})))
-
-      (some-> (doc/locals-docs :local/trash)
-              (doc-list-section {:context :trash
+        (some->> (seq (doc/user-gists username))
+                 (docs/doc-list {:context :gists
                                  :id      id
-                                 :title   "Trash"
-                                 :limit   0}))]]))
+                                 :title   (str username "'s Gists")
+                                 :limit   0})))
+
+      (some->> (doc/locals-docs :local/trash)
+               (docs/doc-list {:context :trash
+                               :id      id
+                               :title   "Trash"
+                               :limit   0}))]]))
 
 (def routes ["/" {""                           landing
                   "home"                       landing
