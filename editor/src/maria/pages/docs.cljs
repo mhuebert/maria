@@ -90,17 +90,18 @@
         parent-path (d/get :router/location :parent-path)]
     [:.flex-auto.overflow-auto.sans-serif.f6.bg-white.bb.b--near-white.bw2
      (when title
-       [:.sans-serif.pl3.pr2.pv2.f7.b.flex.items-center.justify-between.pointer.hover-bg-washed-blue
+       [:.sans-serif.pa2.f7.b.flex.items-center.pointer.hover-bg-washed-blue
         {:key      "title"
          :on-click #(if (= limit-n 0)
                       (swap! state update :limit-n + 5)
                       (swap! state assoc :limit-n 0))}
-        title
         (-> icons/ExpandMore
             (icons/class "gray")
-            (icons/style (when-not (= limit-n 0)
-                           {:transform "rotate(180deg)"})))])
-     (for [{:as doc
+            (icons/size 20)
+            (icons/style {:transform (when (= limit-n 0)
+                                       "rotate(-90deg)")}))
+        title])
+     (for [{:as   doc
             :keys [id
                    persistence/provider
                    local-url
@@ -116,7 +117,7 @@
         [:a.db.ph3.pv2.dark-gray.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href  (when-not trashed? local-url)}
-         [:.mb1.truncate
+         [:.mb1.truncate.text-size-13
           (doc/strip-clj-ext filename)]
          #_(some->> description (conj [:.gray.f7.mt1.normal]))
 

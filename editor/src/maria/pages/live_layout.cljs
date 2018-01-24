@@ -54,7 +54,7 @@
      {:style {:width      width
               :transition "all ease 0.2s"
               :left       (if visible? 0 (- width))}}
-     [:.flex.items-stretch.pl2.flex-none.bg-darken-lightly
+     [:.flex.items-stretch.pl1.flex-none.bg-darken-lightly
       #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
                                  icons/Docs
                                  nil
@@ -87,7 +87,7 @@
                                :id      id
                                :title   "Learning Modules"
                                :limit   0}))
-      
+
       (when-let [username (d/get :auth-public :username)]
         (some->> (seq (doc/user-gists username))
                  (docs/doc-list {:context :gists
