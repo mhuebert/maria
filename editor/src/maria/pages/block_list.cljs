@@ -53,7 +53,7 @@
   [{:keys [view/state] :as this}]
   (let [{:keys [history]} @state
         blocks (first history)]
-    (into [:.w-100.flex-none.pv3]
+    (into [:.w-100.flex-none.pt3]
           (mapv (fn [block]
                   (Block/render block {:blocks        blocks
                                        :block-list    this

@@ -230,34 +230,47 @@
 (defcommand :edit/auto-close
   {:bindings ["Shift-'"
               "Shift-["
-              "["
-              "Shift-9"]
-   :private  true
-   :when     :block/code}
-  [{:keys [editor binding] :as args}]
+              "Shift-9"
+              "["]
+   :private true
+   :when :block/code}
+  [{:keys [editor binding e event] :as args}]
   (when (and (not (:errors editor))
              (not (and PARINFER? (#{"Shift-["
                                     "["
                                     "Shift-9"} binding))))
-    (edit/operation editor
-                    (when-let [brackets (get {"["       "[]"
-                                              "Shift-9" "()"
-                                              "Shift-'" "\"\""
-                                              "Shift-[" "{}"} binding)]
-                      (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
-                                         (and (= :string (:tag node))
-                                              (tree/inside? node pos)))
-                            ;; if in a string, escape quotes and do not autoclose
-                            [insertion-text forward] (if in-string?
-                                                       (if (= \" (first brackets)) ["\\\"" 2] [(first brackets) 1])
-                                                       [brackets 1])]
-                        (when (cm/selection? editor)
-                          (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
-                        (-> (edit/pointer editor)
-                            (edit/insert! insertion-text)
-                            (edit/move forward)
-                            (edit/set-editor-cursor!)))))))
+    (let [brackets (get {"[" "[]"
+                         "Shift-9" "()"
+                         "Shift-'" "\"\""
+                         "Shift-[" "{}"} binding)]
+      (when brackets
+        (let [in-string? (let [{:keys [node pos]} (:magic/cursor editor)]
+                           (and (= :string (:tag node))
+                                (tree/inside? node pos)))
+              ;; if in a string, escape quotes and do not autoclose
+              [insertion-text forward] (if in-string?
+                                         (if (= \" (first brackets)) ["\\\"" 2] [(first brackets) 1])
+                                         [brackets 1])]
+          (edit/operation editor
+                          (when (cm/selection? editor)
+                            (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
+                          (-> (edit/pointer editor)
+                              (edit/insert! insertion-text)
+                              (edit/move forward)
+                              (edit/set-editor-cursor!))))))))
 
+(defonce
+ _hack
+ ;; Keypress.js does not capture the [ key if another key (eg. spacebar) is already pressed.
+ ;; TODO
+ ;; this can also happen elsewhere, eg. space + shift + 9
+ (events/listen js/window "keydown"
+                (fn [^js e]
+                  (when (and (= (.-key e) "[")
+                             (exec/exec-command-name :edit/auto-close
+                                                     (assoc (exec/get-context)
+                                                       :binding "[")))
+                    (.preventDefault e)))))
 
 (defcommand :edit/type-close-bracket
   {:bindings ["]"

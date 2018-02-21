@@ -160,6 +160,7 @@
     (let [date (js/Date.)
           locale (.-language js/navigator)]
       (str
+       "Untitled "
        (.toLocaleTimeString date locale #js {:hour   "numeric"
                                              :minute "numeric"})
        ", "

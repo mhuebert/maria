@@ -152,16 +152,8 @@
                                                            (not mobile?))
                                                   (legend (if (< i 9) (inc i) " ")))
                                                 label])))
-                           (when (or more? less?)
-                             [:.tc.items-center.flex.items-stretch
-                              [:.dib.pointer.tr.w-50.hover-bg-darken.gray.ph2
-                               (if less?
-                                 {:on-click #(swap! state update :page dec)}
-                                 {:class "o-0"})
-                               (icons/style icons/ExpandMore {:transform "rotate(90deg)"})]
-                              [:.dib.pointer.tl.w-50.hover-bg-darken.gray.ph2
-                               (if more?
-                                 {:on-click #(swap! state update :page inc)}
-                                 {:class "o-0"})
-                               (icons/style icons/ExpandMore {:transform "rotate(-90deg)"})]])])))
+                           #_(when more?
+                             [:.tc.items-center.flex.items-stretch.o-50.hover-o-100
+                              {:on-click #(swap! state update :page inc)}
+                              (icons/style icons/ExpandMore {:transform "scale(0.7)"})])])))
 

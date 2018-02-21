@@ -5,23 +5,10 @@
     [maria.frames.trusted-routes :as routes]
     [re-db.d :as d]))
 
-(enable-console-print!)
-
-(defview remote-progress []
-  (let [active? (> (d/get :remote/status :in-progress) 0)]
-    [:div {:style {:height   (if active? 10 0)
-                   :left     0
-                   :right    0
-                   :top      0
-                   :position "absolute"}}
-
-     (when active?
-       [:.progress-indeterminate])]))
-
 (defview layout []
   [:div {:style {:width  "100%"
                  :height "100%"}}
-   (remote-progress)
+   #_(remote-progress)
    (routes/match-route-segments (d/get :router/location :segments))])
 
 (defonce _

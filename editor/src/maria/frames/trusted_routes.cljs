@@ -16,7 +16,7 @@
 
 (defn match-route-segments [segments]
   (if-not (d/contains? :auth-public)
-    [:.progress-indeterminate]
+    (trusted-views/editor-frame-view {:loading? true})
     (let [current-username (d/get :auth-public :username)
           route-tx (assoc (sanitized-location)
                      :segments segments)
@@ -45,7 +45,7 @@
              (let [url (js/decodeURIComponent id)]
                (github/load-url-text url)
                (trusted-views/editor-frame-view {:db/transactions [(assoc route-tx :segments ["doc" id])]
-                                                 :current-entity  id}))
+                                                 :current-entity id}))
 
 
              ;; re/ :current-entity
@@ -57,13 +57,13 @@
              ["gists" username]
              (do (some-> username (github/load-user-gists))
                  (trusted-views/editor-frame-view {:db/transactions [route-tx]
-                                                   :db/queries      (cond-> []
-                                                                            username (conj [[:doc.owner/username username]]))}))
+                                                   :db/queries (cond-> []
+                                                                       username (conj [[:doc.owner/username username]]))}))
 
 
              (:or
-               ["local" id]
-               ["local"])
+              ["local" id]
+              ["local"])
              (trusted-views/editor-frame-view {:db/transactions [route-tx]})
 
              ["gist" id]
@@ -73,6 +73,6 @@
 
              ["gist" id filename]
              (do (github/load-gist id)
-                 (trusted-views/editor-frame-view {:current-entity  id
+                 (trusted-views/editor-frame-view {:current-entity id
                                                    :db/transactions [(assoc route-tx :segments ["doc" id])]}))))))
 

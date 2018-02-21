@@ -18,7 +18,7 @@
    [lark.structure.edit :as edit]
    [goog.functions :as gf]))
 
-(def PARINFER? true)
+(def PARINFER? false)
 
 (defn eldoc-view [sym]
   (some->> sym

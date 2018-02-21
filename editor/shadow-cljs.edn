@@ -1,9 +1,5 @@
 {:source-paths ["src"
-                "test"
-                "../../lark/tools/src"
-                "../../lark/cells/src"
-                "../shapes/src"
-                "../../re-view/re_view/src"]
+                "test"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -20,8 +16,6 @@
 
                 [lark/tools "0.1.26"]
                 [lark/cells "0.1.7"]]
-
- :nrepl        {:port 7888}
 
  :builds
                {:tests

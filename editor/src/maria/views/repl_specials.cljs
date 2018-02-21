@@ -28,23 +28,24 @@
         arglists (ns-utils/elide-quote (or forms
                                            (:arglists meta)
                                            arglists))]
-    [:.ph3.ws-normal
+    [:.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
-     [:.code.flex.items-center.pointer.mv1
+     [:.code.flex.items-center.pointer.mv1.hover-opacity-parent.pl3
       {:on-click #(swap! state not)}
       (when standalone?
         [:span.o-60 namespace "/"])
       name
       [:.flex-auto]
-      [:span.o-50
+      [:span.o-50.hover-opacity-child
        (when (or doc (seq arglists))
-         (if @state icons/ArrowPointingDown
-                    icons/ArrowPointingLeft))]]
+         (-> icons/ArrowPointingDown
+             (icons/style {:transition "all ease 0.2s"
+                           :transform (when-not @state "rotate(90deg)")})))]]
      (when @state
-       (list
-         [:.mv1.blue.f6 (string/join ", " (map str arglists))]
-         [:.gray.mv2.f6 doc]
-         (docs-link namespace name)))]))
+       [:.ph3
+        [:.mv1.blue.f6 (string/join ", " (map str arglists))]
+        [:.gray.mv2.f6 doc]
+        (docs-link namespace name)])]))
 
 (defview var-source
   {:view/will-mount (fn [{:keys [view/props view/state]}]

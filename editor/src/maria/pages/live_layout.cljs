@@ -17,7 +17,9 @@
             [clojure.string :as str]
             [maria.util :as util]))
 
-(d/transact! [[:db/add :ui/globals :sidebar-width 250]])
+(defonce _
+         (d/transact! [[:db/add :ui/globals :sidebar-width 250]
+                       [:db/add :remote/status :in-progress true]]))
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
@@ -108,21 +110,35 @@
                   ["local/" [#".*" :id]]       (v/partial docs/file-edit {:local? true})
                   "local"                      (v/partial docs/gists-list {:username "local"})}])
 
+(defview remote-progress []
+  (let [active? (> (d/get :remote/status :in-progress) 0)]
+    [:div {:style {:height   (if active? 10 0)
+                   :left     0
+                   :right    0
+                   :top      0
+                   :position "absolute"}}
+
+     (when active?
+       [:.progress-indeterminate])]))
+
 (defview layout
   [{:keys []}]
   (let [sidebar? (d/get :ui/globals :sidebar?)
         path (str "/" (str/join "/" (d/get :router/location :segments)))
-        {:keys [route-params handler]} (bidi/match-route routes path)
-
-        ;; normalize encoding... bidi leaves route params in a partially decoded state
-        route-params (util/map-vals (comp js/encodeURIComponent js/decodeURIComponent) route-params)]
+        {:keys [route-params handler]} (when (d/contains? :router/location)
+                                         (-> (bidi/match-route routes path)
+                                             ;; normalize encoding... bidi leaves route params in a partially decoded state
+                                             (update :route-params
+                                                     (partial util/map-vals
+                                                       (comp js/encodeURIComponent js/decodeURIComponent)))))]
     [:.w-100.relative.sans-serif.cursor-text
      {:on-click #(when (= (.-target %) (.-currentTarget %))
                    (exec/exec-command-name :navigate/focus-end))
       :style    {:min-height     "100%"
-                 :padding-bottom 40
+                 :padding-bottom 140
                  :transition     "padding-left ease 0.2s"
                  :padding-left   (when sidebar? (d/get :ui/globals :sidebar-width))}}
+     (remote-progress)
      (hint/show-floating-view)
      (sidebar {:visible? sidebar?
                :id       (:id route-params)})

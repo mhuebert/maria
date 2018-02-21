@@ -6,7 +6,7 @@
 
   :min-lein-version "2.7.1"
 
-  :dependencies ~(into '[[thheller/shadow-cljs "2.0.137"]
+  :dependencies ~(into '[[thheller/shadow-cljs "2.1.22"]
                          [org.clojure/clojure "1.9.0-alpha17"]
                          [org.clojure/clojurescript "1.9.946"]]
                    (->

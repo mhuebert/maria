@@ -539,3 +539,16 @@ svg {
 .text-size-13 {
   font-size: 13px;
 }
+.hover-opacity-parent {
+  .hover-opacity-child {
+    opacity: 0.3;
+    transition: opacity ease 0.2s;
+  }
+  &:hover .hover-opacity-child {
+    opacity: 1;
+  }
+}
+
+.ttu {
+  letter-spacing: 0.3px;
+}

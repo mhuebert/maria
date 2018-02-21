@@ -85,65 +85,6 @@
     (:collection-expanded? @state)
     (and depth (< depth *format-depth-limit*))))
 
-(defn toggle-depth [{:keys [view/state] :as this} depth label]
-  (let [is-expanded? (expanded? this depth)
-        class (if is-expanded?
-                "cursor-zoom-out hover-bg-darken "
-                "cursor-zoom-in gray hover-black")]
-    [:.dib {:class    class
-            :on-click #(swap! state assoc :collection-expanded? (not is-expanded?))} label]))
-
-(defview format-collection
-  {:view/initial-state {:limit-n              20
-                        :collection-expanded? nil}}
-  [{state :view/state :as this} depth value]
-  (let [{:keys [limit-n]} @state
-        [lb rb] (bracket-type value)
-        more? (= (count (take (inc limit-n) value)) (inc limit-n))
-        hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
-    (cond (empty? value)
-          (str space lb rb space)
-          (expanded? this depth) [:.inline-flex.items-stretch
-                                  {:class hover-class}
-                                  [:.flex.items-start.nowrap (if (empty? value) (str space lb)
-                                                                                (toggle-depth this depth (str space lb space)))]
-                                  [:div.v-top (interpose " " (v-util/map-with-keys (partial format-value (inc depth)) (take limit-n value)))]
-                                  (when more? [:.flex.items-end [expander-outter {:class    "pointer"
-                                                                                  :on-click #(swap! state update :limit-n + 20)} "…"]])
-                                  [:.flex.items-end.nowrap (str space rb space)]]
-          :else [:.inline-flex.items-center.gray.nowrap
-                 {:class hover-class} (toggle-depth this depth (str space lb "…" rb space))])))
-
-(defview format-map
-  {:view/initial-state {:limit-n              20
-                        :collection-expanded? nil}}
-  [{state :view/state :as this} depth value]
-  (let [{:keys [limit-n]} @state
-        [lb rb] (bracket-type value)
-        more? (= (count (take (inc limit-n) value)) (inc limit-n))
-        last-n (if more? limit-n (count value))
-        hover-class (if (even? depth) "hover-bg-darken" "hover-bg-lighten")]
-    (if (or (empty? value) (expanded? this depth))
-      [:table.relative.inline-flex.v-mid
-       {:class hover-class}
-       [:tbody
-        (or (some->> (seq (take limit-n value))
-                     (map-indexed (fn [n [a b]]
-                                    [:tr
-                                     {:key n}
-                                     [:td.v-top.nowrap
-                                      (when (= n 0) (toggle-depth this depth (str space lb space)))]
-                                     [:td.v-top
-                                      (format-value (inc depth) a) space]
-                                     [:td.v-top
-                                      (format-value (inc depth) b)]
-                                     [:td.v-top.nowrap (when (= (inc n) last-n) (str space rb space))]])))
-            [:tr [:td.hover-bg-darken.nowrap (str space lb rb space)]])
-        (when more? [:tr [:td {:col-span 2}
-                          [expander-outter {:on-click #(swap! state update :limit-n + 20)} [inline-centered "…"]]]])]]
-      [:.inline-flex.items-center.gray
-       {:class hover-class} (toggle-depth this depth (str space lb "…" rb space))])))
-
 (defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
@@ -151,15 +92,18 @@
         fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
 
     [:span
-     [expander-outter {:on-click #(swap! state update :expanded? not)}
+     [expander-outter {:on-click #(swap! state update :expanded? not)
+                       :class "pointer hover-opacity-parent"}
       [inline-centered
        (if (and fn-name (not= "" fn-name))
          (some-> (source-lookups/fn-name value) (symbol) (name))
          [:span.o-50.mr1 "ƒ"])
-       (-> (if expanded? icons/ArrowPointingUp
-                         icons/ArrowPointingDown)
+       (-> icons/ArrowPointingDown
            (icons/size 20)
-           (icons/class "mln1 mrn1 o-50"))]
+           (icons/class "mln1 mrn1 hover-opacity-child")
+           (icons/style {:transition "all ease 0.2s"
+                         :transform (when-not expanded?
+                                      "rotate(90deg)")}))]
       (when expanded?
         (or (some-> (source-lookups/js-source->clj-source (.toString value))
                     (code/viewer))
