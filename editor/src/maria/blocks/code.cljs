@@ -54,10 +54,10 @@
             url (when (and hovered (not unsaved-changes))
                   (get-share-url doc block block-list))]
         [(if url :a :div)
-         {:classes        ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
-                           (if unsaved-changes "o-50" "pointer")]
-          :href           url
-          :target         (when url "_blank")
+         {:classes ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
+                    (if unsaved-changes "o-50" "pointer")]
+          :href url
+          :target (when url "_blank")
           :on-mouse-enter #(swap! state assoc :hovered true)
           :on-mouse-leave #(swap! state dissoc :hovered)}
          (if unsaved-changes
@@ -65,11 +65,11 @@
            "share")]))))
 
 (defview CodeRow
-  {:key                :id
+  {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
-   :view/did-mount     Editor/mount
-   :view/will-unmount  Editor/unmount
-   :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
+   :view/did-mount Editor/mount
+   :view/will-unmount Editor/unmount
+   :get-editor #(.getEditor (:editor-view @(:view/state %)))}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
   (let [doc (:current-doc @exec/context)]
     [:.flex.pv2.cursor-text
@@ -77,24 +77,24 @@
                    (Editor/focus! (.getEditor this)))}
      [:.w-50.flex-none
       (error/error-boundary
-        {:on-error (fn [{:keys [error info]}]
-                     (e/handle-block-error (:id block) error))}
-        (code/CodeView {:class                 "pa3 bg-white"
-                        :ref                   #(v/swap-silently! state assoc :editor-view %)
-                        :value                 (Block/emit (:block this))
-                        :on-ast                (fn [node]
-                                                 (.splice block-list block [(assoc block :node node)]))
-                        :before-change         before-change
-                        :on-selection-activity on-selection-activity
-                        :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                    :block-view this})
-                        :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                    :block-view nil})}))]
+       {:on-error (fn [{:keys [error info]}]
+                    (e/handle-block-error (:id block) error))}
+       (code/CodeView {:class "pa3 bg-white"
+                       :ref #(v/swap-silently! state assoc :editor-view %)
+                       :value (Block/emit (:block this))
+                       :on-ast (fn [node]
+                                 (.splice block-list block [(assoc block :node node)]))
+                       :before-change before-change
+                       :on-selection-activity on-selection-activity
+                       :capture-event/focus #(exec/set-context! {:block/code true
+                                                                 :block-view this})
+                       :capture-event/blur #(exec/set-context! {:block/code nil
+                                                                :block-view nil})}))]
 
      [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result
-      (ShareLink {:doc        doc
-                  :block      block
-                  :block-list block-list})
+      #_(ShareLink {:doc doc
+                    :block block
+                    :block-list block-list})
       (some-> (first (Block/eval-log block))
               (assoc :block-id (:id block))
               (value-views/display-result))]]))
