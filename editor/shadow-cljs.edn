@@ -1,5 +1,8 @@
 {:source-paths ["src"
                 "test"]
+
+ ;:deps true
+
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -7,51 +10,48 @@
                 [org.clojure/spec.alpha "0.1.143"]
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
-
                 [maria/friendly "0.1.0"]
                 [maria/shapes "0.1.0"]
-
                 [re-view "0.4.6"]
                 [re-view/prosemirror "0.2.2"]
-
                 [lark/tools "0.1.26"]
                 [lark/cells "0.1.7"]]
 
- :builds
-               {:tests
-                {:target     :browser
-                 :output-dir "test-target/public/js"
-                 :asset-path "js"
-                 :modules    {:tests {:entries [maria-tests.runner]}}
-                 :devtools   {:after-load maria-tests.runner/run-tests}}
+ :builds {:tests
+          {:target :browser
+           :output-dir "test-target/public/js"
+           :asset-path "js"
+           :modules {:tests {:entries [maria-tests.runner]}}
+           :devtools {:after-load maria-tests.runner/run-tests}}
 
-                :live
-                {:target     :browser
-                 :release    {:compiler-options {:optimizations :simple
-                                                 :language-in   :ecmascript5}}
-                 :output-dir "public/js/compiled"
-                 :asset-path "/js/compiled"
-                 :modules    {:shadow-live {:entries [maria.frames.live-frame]}}
-                 :devtools   {:http-root     "public"
-                              :http-handler  shadow.http.push-state/handle
-                              :http-port     8701
-                              :after-load    maria.frames.live-frame/render
-                              :async-require true}}
-                :bootstrap
-                {:target     :bootstrap
-                 :output-dir "public/js/bootstrap"
-                 :entries    [maria.user]
-                 :exclude    [cljs.js]}
+          :live
+          {:target :browser
+           :release {:compiler-options {:optimizations :simple
+                                        :language-in :ecmascript5}}
+           :output-dir "public/js/compiled"
+           :asset-path "/js/compiled"
+           :modules {:shadow-live {:entries [maria.frames.live-frame]}}
+           :devtools {:http-root "public"
+                      :http-handler shadow.http.push-state/handle
+                      :http-port 8701
+                      :after-load maria.frames.live-frame/render
+                      :async-require true}}
+          :bootstrap
+          {:target :bootstrap
+           :output-dir "public/js/bootstrap"
+           :entries [maria.user
+                     ajax.core]
+           :exclude [cljs.js]}
 
-                :trusted
-                {:target     :browser
-                 :output-dir "public/js/compiled"
-                 :asset-path "/js/compiled"
-                 :modules    {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-                 :devtools   {:autoload      true
-                              :async-require true}
-                 :compiler-options
-                             {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
-                                        "node_modules/firebase/externs/firebase-auth-externs.js"
-                                        "externs/react.ext.js"
-                                        "externs/reactDom.ext.js"]}}}}
+          :trusted
+          {:target :browser
+           :output-dir "public/js/compiled"
+           :asset-path "/js/compiled"
+           :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
+           :devtools {:autoload true
+                      :async-require true}
+           :compiler-options
+           {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
+                      "node_modules/firebase/externs/firebase-auth-externs.js"
+                      "externs/react.ext.js"
+                      "externs/reactDom.ext.js"]}}}}
