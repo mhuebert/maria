@@ -52,8 +52,11 @@
                                    :error error)
                             (let [project (:persisted value)
                                   [_ {source :content}] (first (:files project))
-                                  c-env @eval/c-env]
-                              (eval/eval-str* source)
+                                  c-env @eval/c-env
+                                  {:keys [value
+                                          error]} (eval/eval-str* source)]
+                              ;; TOOD
+                              ;; handle error
                               (reset! eval/c-env c-env)
                               (swap! status assoc
                                      :status "Gist loaded."
