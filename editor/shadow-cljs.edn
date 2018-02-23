@@ -1,5 +1,6 @@
 {:source-paths ["src"
-                "test"]
+                "test"
+                "../shapes/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -9,7 +10,7 @@
                 [bidi "2.1.3"]
 
                 [maria/friendly "0.1.0"]
-                [maria/shapes "0.1.0"]
+;;                [maria/shapes "0.1.0"]
 
                 [re-view "0.4.6"]
                 [re-view/prosemirror "0.2.2"]

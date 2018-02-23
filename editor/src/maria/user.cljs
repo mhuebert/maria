@@ -11,11 +11,12 @@
             [shapes.core :as shapes :refer [listen
                                             circle square rectangle triangle path text image
                                             position opacity rotate scale
-                                            colorize stroke no-stroke fill no-fill
+                                            colorize stroke stroke-width no-stroke fill no-fill
                                             color-names rgb hsl rescale
-                                            layer beside above
+                                            layer beside above points-to-path value-to-cell!
                                             ;; are these internal only? -jar
-                                            assure-shape-seq shape-bounds bounds shape->vector]]
+                                            ;;assure-shape-seq shape-bounds bounds shape->vector
+                                            ]]
             [re-view.core :include-macros true]
             [cljs.spec.alpha :include-macros true]
             [cljs.spec.test.alpha :include-macros true])

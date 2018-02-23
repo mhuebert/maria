@@ -136,6 +136,9 @@
             :height      18
             :fill        "#3f4245"}))
 
+;; (defn line [x1 y1 x2 y2]
+;;   (str " M" x1 " " y1 " L" x2 " " y2))
+
 ;; XXX no verification yet, too complicated for the moment
 (defn path
   "Create an arbitrary path from a set of points."
@@ -147,6 +150,23 @@
             :d      points
             :stroke "black"
             :fill   "none"}))
+
+;; TODO generalize (current forces numeric types) and probably rename
+(defn value-to-cell! [the-cell & cell-path]
+  (fn [event]
+    (let [v (js/parseFloat (.-value (.-target event)))]
+      (swap! the-cell (if cell-path
+                        #(assoc-in % cell-path v)
+                        #(identity v))))))
+
+(defn points-to-path
+  "A helper function to create a path-compatible description of a shape from a set of points."
+  [points]
+  (->> (drop 2 points)
+       (partition 2)
+       (mapcat (fn [[x y]] [:L x y]))
+       (into [:M (first points) (second points)])
+       (apply path)))
 
 ;; TODO add general polygon fn
 ;; TODO add spec annotations!
@@ -252,6 +272,13 @@
   (if (= :svg (:kind shape))
     (assoc shape :children (mapv (partial stroke color) (:children shape)))
     (assoc shape :stroke color)))
+
+(defn stroke-width
+  "Return `shape` with its stroke set to `color`."
+  [width shape]
+  (if (= :svg (:kind shape))
+    (assoc shape :children (mapv (partial stroke-width width) (:children shape)))
+    (assoc shape :stroke-width width)))
 
 (defn no-stroke
   "Return `shape` with its stroke color turned off."
