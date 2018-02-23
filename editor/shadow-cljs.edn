@@ -15,7 +15,7 @@
                 [re-view "0.4.6"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.26"]
+                [lark/tools "0.1.27"]
                 [lark/cells "0.1.7"]
                 [cljs-ajax "0.7.3"]]
  :builds
