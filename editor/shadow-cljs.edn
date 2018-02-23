@@ -44,8 +44,7 @@
    :entries [maria.user
              ajax.core]
    :exclude [cljs.js
-             poppea]
-   :module-hash-names true}
+             poppea]}
   :trusted
   {:target :browser
    :output-dir "public/js/compiled"
