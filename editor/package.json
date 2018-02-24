@@ -40,5 +40,8 @@
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
     "webpack": "^2.6.1"
+  },
+  "engines": {
+    "npm": "5.7.1"
   }
 }
