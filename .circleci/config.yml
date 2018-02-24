@@ -33,7 +33,7 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs release live trusted bootstrap --verbose;
+          command: npx shadow-cljs start && npx shadow-cljs release live && npx shadow-cljs release trusted && npx shadow-cljs release bootstrap;
           working_directory: ~/project/editor
 
       - run:
