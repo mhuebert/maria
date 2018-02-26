@@ -31,7 +31,8 @@
                         (frame/unlisten (:frame-id @state) on-message))}
   [{:keys [view/state]}]
   [:iframe.maria-editor-frame
-   {:src (str frame/child-origin "/live.html#frame_" (:frame-id @state))}])
+   {:allow "geolocation"
+    :src (str frame/child-origin "/live.html#frame_" (:frame-id @state))}])
 
 (defview editor-frame-view
   {:spec/props {:default-value :String}}
