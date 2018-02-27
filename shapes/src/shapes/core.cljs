@@ -369,17 +369,19 @@
   "Returns a new shape with these `shapes` layered over each other."
   [& shapes]
   (->Shape (assoc (bounds shapes)
-             :is-a :shape
-             :kind :svg
-             :x 0
-             :y 0
-             :children shapes)))
+                  :is-a :shape
+                  :kind :svg
+                  :x 0
+                  :y 0
+                  :children (remove nil? shapes))))
 
 ;; XXX broken for triangles!
 (defn beside
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
   [& shapes]
-  (->> (assure-shape-seq shapes)
+  (->> shapes
+       (remove nil?)
+       assure-shape-seq
        reverse
        (reduce (fn [state shape]
                  {:out    (conj (state :out)
@@ -398,7 +400,9 @@
 (defn above
   "Return `shapes` with their positions adjusted so they're stacked above one another."
   [& shapes]
-  (->> (assure-shape-seq shapes)
+  (->> shapes
+       (remove nil?)
+       assure-shape-seq
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
