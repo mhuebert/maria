@@ -143,7 +143,7 @@
 
 ;; ... it's a function! What does this mean?
 
-;; `fn` is a special kind of function that returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
+;; `fn` is a "macro", a special kind of function that takes code and transformds it before evaluating it. The `fn` macro returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
 
 ;; To go a bit deeper in how `fn` works, evaluate this giant expression. It will draw a small diagram to help explain how functions work.
 
