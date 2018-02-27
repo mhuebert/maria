@@ -85,7 +85,7 @@
             :fill   "black"}))
 
 (defn rectangle
-  "Returns a rectangle of `width` and `height`."
+  "Returns a rectangle of `width` and `height`. See also `square`."
   [width height]
   (assert-number "width must be a number!" width)
   (assert-number "height must be a number!" height)
