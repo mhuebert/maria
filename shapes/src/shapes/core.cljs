@@ -70,6 +70,20 @@
             :stroke "none"
             :fill   "black"}))
 
+(defn ellipse [radius-x radius-y]
+  (assert-number "radius-x must be a number!" radius-x)
+  (assert-number "radius-y must be a number!" radius-y)
+  (->Shape {:is-a   :shape
+            :kind   :ellipse
+            :rx     radius-x
+            :ry     radius-y
+            :cx     radius-x
+            :cy     radius-y
+            :x      (* 1.5 radius-x)
+            :y      (* 1.5 radius-y)
+            :stroke "none"
+            :fill   "black"}))
+
 (defn rectangle
   "Returns a rectangle of `width` and `height`."
   [width height]
