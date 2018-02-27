@@ -169,3 +169,16 @@
   (if (map? m)
     (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m (f k) v)) (transient {}) m))
     (for-map [[k v] m] (f k) v)))
+
+(defn cd-encode [s]
+  ;; COPIED from clojuredocs.util: https://github.com/zk/clojuredocs/blob/master/src/cljc/clojuredocs/util.cljc
+  ;; Copyright © 2010-present Zachary Kim
+  ;; Distributed under the Eclipse Public License version 1.0
+  (when s
+    (cond
+      (= "." s) "_."
+      (= ".." s) "_.."
+      :else (-> s
+                (str/replace #"/" "_fs")
+                (str/replace #"\\" "_bs")
+                (str/replace #"\?" "_q")))))
