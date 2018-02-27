@@ -21,7 +21,7 @@
   (let [lines (as-> source source
                     (subs source 0 idx)
                     (string/split source "\n"))]
-    {:line   (count lines)
+    {:line (count lines)
      :column (count (last lines))}))
 
 (defn source-from
@@ -38,7 +38,7 @@
   "Given a 1-indexed position in a source string, return the first form."
   [source position]
   (let [reader (parse/indexing-reader (source-from source position))
-        node   (read-node reader)]
+        node (read-node reader)]
     (tree/string node)))
 
 (defn source-of-top-level-form
@@ -47,16 +47,16 @@
   (source-of-form-at-position source {:line line :column 1})
 
   ;; the following is _very_ slow and shouldn't be necessary.
-  #_(let [line   (dec line)
-        reader (parse/indexing-reader source #_(source-from source (assoc position :column 1)))]
-    (loop []
-      (let [the-node (read-node reader)]
-        (cond (nil? the-node)
-              nil
-              (and (>= (:end-line the-node) line)
-                   (not (tree/whitespace? the-node)))
-              (tree/string the-node)
-              :else (recur))))))
+  #_(let [line (dec line)
+          reader (parse/indexing-reader source #_(source-from source (assoc position :column 1)))]
+      (loop []
+        (let [the-node (read-node reader)]
+          (cond (nil? the-node)
+                nil
+                (and (>= (:end-line the-node) line)
+                     (not (tree/whitespace? the-node)))
+                (tree/string the-node)
+                :else (recur))))))
 
 (defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]
   (or (some->> intermediate-values
@@ -89,14 +89,14 @@
 (def fn-var
   "Look up the var for a function using its `name` property"
   (memoize
-    (fn [f]
-      (when (fn? f)
-        (or (when-let [munged-sym (util/some-str (aget f "name"))]
-              (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
-            (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
-                         [_ the-var] (ns-data :defs)
-                         :when (= f (live-eval/var-value the-var))]
-                     the-var)))))))
+   (fn [f]
+     (when (fn? f)
+       (or (when-let [munged-sym (util/some-str (aget f "name"))]
+             (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+           (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
+                        [_ the-var] (ns-data :defs)
+                        :when (= f (live-eval/var-value the-var))]
+                    the-var)))))))
 
 (def source-path "/js/cljs_live_bundles/sources")
 
@@ -114,26 +114,28 @@
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
   [{{meta-file :file :as meta} :meta file :file name :name :as the-var} cb]
-  (if-let [source-name (some-> (namespace name)
-                               (symbol)
-                               (shadow-env/get-ns-info)
-                               (:source-name))]
-    (fetch-source (str e/bootstrap-path source-name)
-                  meta
-                  cb)
-    (if-let [file (or file meta-file)]
-      (let [namespace-path (as-> (namespace name) path
-                                 (string/split path ".")
-                                 (map munge path)
-                                 (string/join "/" path)
-                                 (string/replace path "$macros" ""))
-            file           (re-find (re-pattern (str namespace-path ".*")) file)]
-        (if-let [source (get @live-eval/cljs-cache file)]
-          (cb {:value (source-of-top-level-form source the-var)})
+  (if-let [logged-source (some-> (get @live-eval/cljs-cache meta-file)
+                                 (source-of-top-level-form the-var))]
+    (cb {:value logged-source})
+
+    (if-let [source-name (some-> (namespace name)
+                                 (symbol)
+                                 (shadow-env/get-ns-info)
+                                 (:source-name))]
+      (fetch-source (str e/bootstrap-path source-name)
+                    meta
+                    cb)
+      (if-let [file (or file meta-file)]
+        (let [namespace-path (as-> (namespace name) path
+                                   (string/split path ".")
+                                   (map munge path)
+                                   (string/join "/" path)
+                                   (string/replace path "$macros" ""))
+              file (re-find (re-pattern (str namespace-path ".*")) file)]
           (fetch-source (str source-path "/" file)
                         meta
-                        cb)))
-      (cb {:error (str "File not specified for `" name "`")}))))
+                        cb))
+        (cb {:error (str "File not specified for `" name "`")})))))
 
 (defn fn-source-sync [f]
   (when (fn? f)

@@ -97,7 +97,7 @@
   (let [{:keys [limit-n]} @state
         more? (and (not= limit-n 0) (> (count docs) limit-n))
         parent-path (d/get :router/location :parent-path)]
-    [:.flex-auto.overflow-auto.sans-serif.f6.bg-white.bb.b--near-white.bw2
+    [:.flex-auto.sans-serif.f6.bg-white.bb.b--near-white.bw2
      [:.sans-serif.pa2.f7.b.flex.items-center.pointer.hover-opacity-parent
       {:key "title"
        :on-click #(if (= limit-n 0)

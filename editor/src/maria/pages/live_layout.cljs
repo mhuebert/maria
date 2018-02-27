@@ -19,7 +19,7 @@
 
 (defonce _
          (d/transact! [[:db/add :ui/globals :sidebar-width 250]
-                       [:db/add :remote/status :in-progress true]]))
+                       #_[:db/add :remote/status :in-progress true]]))
 
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))

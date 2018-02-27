@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: mhuebert/docker-java-node
+      - image: circleci/openjdk:8-jdk-node-browsers
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -33,13 +33,7 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs release live;
-          working_directory: ~/project/editor
-      - run:
-          command: npx shadow-cljs release trusted;
-          working_directory: ~/project/editor
-      - run:
-          command: npx shadow-cljs release bootstrap;
+          command: npx shadow-cljs release trusted live bootstrap;
           working_directory: ~/project/editor
 
       - run:

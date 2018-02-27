@@ -72,29 +72,30 @@
   (let [{:keys [context]} @state
         commands (exec/contextual-commands context)]
     (FloatingSearch {:on-selection #(bottom-bar/add-bottom-bar! :eldoc/command-search (bottom-bar/ShowVar (exec/get-command context %)))
-                     :placeholder  "Search commands..."
-                     :on-select!   (fn [value]
-                                     (exec/exec-command-name value context))
-                     :items        (fn [q]
-                                     (let [pattern (re-pattern (str "(?i)\\b" q))]
-                                       (->> commands
-                                            (sequence (comp
-                                                        (filter #(and (not (:private %))
-                                                                      (re-find pattern (str (:name %)))))
-                                                        (map (fn [{:keys [name parsed-bindings exec?] :as command}]
-                                                               {:value name
-                                                                :score (if exec? 0 1)
-                                                                :label [:.h2.mr2.sans-serif.f7.flex.items-center.flex-auto
-                                                                        [:.gray {:class (when-not exec? "o-50")}
-                                                                         (some-> (:display-namespace command)
-                                                                                 (str "/"))]
-                                                                        [:div {:style {:font-weight 500}
-                                                                               :class (when-not exec? "o-50")} (:display-name command)]
-                                                                        [:.flex-auto]
-                                                                        [:.gray
-                                                                         (some->> (ffirst parsed-bindings)
-                                                                                  (registry/keyset-string))]]}))))
-                                            (sort-by :score))))})))
+                     :placeholder "Search commands..."
+                     :on-select! (fn [value]
+                                   (exec/exec-command-name value context))
+                     :items (fn [q]
+                              (let [pattern (re-pattern (str "(?i)\\b" q))]
+                                (->> commands
+                                     (sequence (comp
+                                                (filter #(and (not (:private %))
+                                                              (re-find pattern (str (:name %)))))
+                                                (map (fn [{:keys [name bindings exec?] :as command}]
+                                                       {:value name
+                                                        :score (if exec? 0 1)
+                                                        :label [:.h2.mr2.sans-serif.f7.flex.items-center.flex-auto
+                                                                [:.gray {:class (when-not exec? "o-50")}
+                                                                 (some-> (:display-namespace command)
+                                                                         (str "/"))]
+                                                                [:div {:style {:font-weight 500}
+                                                                       :class (when-not exec? "o-50")} (:display-name command)]
+                                                                [:.flex-auto]
+                                                                [:.gray
+                                                                 (some->> (first bindings)
+                                                                          (registry/binding-string->vec)
+                                                                          (registry/keyset-string))]]}))))
+                                     (sort-by :score))))})))
 
 
 (defcommand :doc/open

@@ -1,4 +1,5 @@
-{:source-paths ["src"
+{:jvm-opts ["-Xmx2G"]
+ :source-paths ["src"
                 "test"
                 "../shapes/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
@@ -15,7 +16,7 @@
                 [re-view "0.4.6"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.26"]
+                [lark/tools "0.1.27"]
                 [lark/cells "0.1.7"]
                 [cljs-ajax "0.7.3"]]
  :builds
@@ -44,7 +45,8 @@
    :entries [maria.user
              ajax.core]
    :exclude [cljs.js
-             poppea]}
+             poppea]
+   :module-hash-names true}
   :trusted
   {:target :browser
    :output-dir "public/js/compiled"
