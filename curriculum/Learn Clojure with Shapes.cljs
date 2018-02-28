@@ -249,14 +249,15 @@ rainbow
 
 (layer
  (position 50 60 (text "(defn labeled-swatch [color] [color (colorize color (square 25))])"))
- (colorize "grey" (position 60 70 (triangle 10)))
- (position 0 102 (text "defines a function"))
- (position 105 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 90 20 (text "name"))
- (position 240 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 200 20 (text "argument(s)"))
- (colorize "grey" (position 310 70 (triangle 10)))
- (position 300 102 (text "expression")))
+ (colorize "grey" (position 65 70 (triangle 10)))
+ (position 20 102 (text "defines a function"))
+ (position 125 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 112 20 (text "name"))
+ (position 197 25 (rotate 60 (colorize "grey" (triangle 10))))
+ (position 170 20 (text "argument(s)"))
+ (colorize "grey" (position 225 70 (rectangle 207 1))) 
+ (colorize "grey" (position 325 70 (rectangle 1 13)))
+ (position 295 102 (text "expression")))
 
 ;; OK. Let’s try it. Let’s use `defn` to make labeled swatches (like `color-names` uses) so we know what color we’re looking at. Our function will take a color and return a vector that has the color name (the label) and then a square showing the color (the swatch):
 
