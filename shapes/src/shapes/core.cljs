@@ -380,8 +380,8 @@
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
   [& shapes]
   (->> shapes
-       (remove nil?)
        assure-shape-seq
+       (remove nil?)
        reverse
        (reduce (fn [state shape]
                  {:out    (conj (state :out)
@@ -401,8 +401,8 @@
   "Return `shapes` with their positions adjusted so they're stacked above one another."
   [& shapes]
   (->> shapes
-       (remove nil?)
        assure-shape-seq
+       (remove nil?)
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
