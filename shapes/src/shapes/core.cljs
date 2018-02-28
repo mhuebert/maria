@@ -70,8 +70,22 @@
             :stroke "none"
             :fill   "black"}))
 
+(defn ellipse [radius-x radius-y]
+  (assert-number "radius-x must be a number!" radius-x)
+  (assert-number "radius-y must be a number!" radius-y)
+  (->Shape {:is-a   :shape
+            :kind   :ellipse
+            :rx     radius-x
+            :ry     radius-y
+            :cx     radius-x
+            :cy     radius-y
+            :x      (* 1.5 radius-x)
+            :y      (* 1.5 radius-y)
+            :stroke "none"
+            :fill   "black"}))
+
 (defn rectangle
-  "Returns a rectangle of `width` and `height`."
+  "Returns a rectangle of `width` and `height`. See also `square`."
   [width height]
   (assert-number "width must be a number!" width)
   (assert-number "height must be a number!" height)
@@ -355,17 +369,19 @@
   "Returns a new shape with these `shapes` layered over each other."
   [& shapes]
   (->Shape (assoc (bounds shapes)
-             :is-a :shape
-             :kind :svg
-             :x 0
-             :y 0
-             :children shapes)))
+                  :is-a :shape
+                  :kind :svg
+                  :x 0
+                  :y 0
+                  :children (remove nil? shapes))))
 
 ;; XXX broken for triangles!
 (defn beside
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
   [& shapes]
-  (->> (assure-shape-seq shapes)
+  (->> shapes
+       assure-shape-seq
+       (remove nil?)
        reverse
        (reduce (fn [state shape]
                  {:out    (conj (state :out)
@@ -384,7 +400,9 @@
 (defn above
   "Return `shapes` with their positions adjusted so they're stacked above one another."
   [& shapes]
-  (->> (assure-shape-seq shapes)
+  (->> shapes
+       assure-shape-seq
+       (remove nil?)
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
