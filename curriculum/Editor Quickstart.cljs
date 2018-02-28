@@ -10,21 +10,17 @@
 
 ;; Maria has some special commands to make it easy to select code.
 
-;; 1. Use **Command/Control** (Mac/PC) to select the form next to the cursor. Use the **Arrow Keys** to expand the selection left, right, and up. The down arrow returns the selection to the start position, one step at a time.
+;; Use **Command/Control** (Mac/PC) to select the form next to the cursor. Use the **Arrow Keys** to expand the selection left, right, and up. The down arrow returns the selection to the start position, one step at a time.
 
 ;;    ![](https://i.imgur.com/5t0bFWP.gif)
 
-;; 2. Add **Shift** to temporarily expand the selection to the top-level form:
-
-;;    ![](https://i.imgur.com/rZrUupp.gif)
-
-;; Try it now: put the cursor inside the code block, and try selecting the various elements. Use **Command/Control** + **Arrow Keys** to grow the selection left, right, up and down. Add **Shift** to grow the selection to the whole block.
+;; Try it now: put the cursor inside the code block, and try selecting the various elements. Use **Command/Control** + **Arrow Keys** to grow the selection left, right, up and down.
 
 [:a "b" 3]
 
 ;; ### Evaluating code
 
-;; The most important part! Hold down **Command/Control** and then press **Enter** (or **Return**) key to evaluate the currently selected code. Just like with selections, adding **Shift** expands the selection to the whole block.
+;; The most important part! Hold down **Command/Control** and then press **Enter** (or **Return**) key to evaluate the currently selected code. Adding **Shift** evaluates the whole block, even though the selection doesn't change.
 
 ;; Try it now, in this code block:
 
