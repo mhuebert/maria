@@ -22,7 +22,7 @@
 
 ;; The most important part! Hold down **Command/Control** and then press **Enter** (or **Return**) key to evaluate the currently selected code. Adding **Shift** evaluates the whole block, even though the selection doesn't change.
 
-;; Try it now, in this code block:
+;; Try it now, in this code block. From inside the expression, evaluate just one circle, then all three, without moving the cursor:
 
 [(circle 10)
  (circle 20)
