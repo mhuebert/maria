@@ -60,7 +60,9 @@
     ["Index out of bounds"
      "Somehow you're trying to get a non-existent part of a collection.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
     ["nth not supported on this type %"
-     "It looks like you're trying to iterate over something that isn't sequential. This could be a couple things, but probably involves trying to treat something like a map, set, or keyword as if it were a vector, list, or string. Double-check that you're passing the arguments you think you are. 🤔 Are you passing a map or set parameter to a function expecting a vector or list? Or perhaps you're trying to destructure something that is not a sequence?"]]))
+     "It looks like you're trying to iterate over something that isn't sequential. This could be a couple things, but probably involves trying to treat something like a map, set, or keyword as if it were a vector, list, or string. Double-check that you're passing the arguments you think you are. 🤔 Are you passing a map or set parameter to a function expecting a vector or list? Or perhaps you're trying to destructure something that is not a sequence?"]
+    ["illegal character"
+     "One of the names in that expression contains an 'illegal character'. Often this is because the name contains an emoji, which JavaScript (the programming language your browser uses) doesn't allow."]]))
 ;;"It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"
 
 (defn prettify-error-message
