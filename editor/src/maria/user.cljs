@@ -12,8 +12,9 @@
                                             circle square rectangle triangle path text image
                                             position opacity rotate scale
                                             colorize stroke stroke-width no-stroke fill no-fill
-                                            color-names rgb hsl rescale
+                                            color-names colors-named rgb hsl rescale
                                             layer beside above points-to-path value-to-cell!
+                                            fish
                                             ;; are these internal only? -jar
                                             ;;assure-shape-seq shape-bounds bounds shape->vector
                                             ]]
