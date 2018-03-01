@@ -5,7 +5,8 @@
             [clojure.string :as string]
             [maria.live.source-lookups :as reader]
             [maria.views.cards :as repl-ui]
-            [maria.editors.code :as code]))
+            [maria.editors.code :as code]
+            [maria.friendly.docstrings :as docs]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
@@ -44,7 +45,9 @@
      (when @state
        [:.ph3
         [:.mv1.blue.f6 (string/join ", " (map str arglists))]
-        [:.gray.mv2.f6 doc]
+        [:.gray.mv2.f6 (if-let [friendly-doc (:docstring (get docs/clojure-core name))]
+                         friendly-doc
+                         doc)]
         (docs-link namespace name)])]))
 
 (defview var-source
