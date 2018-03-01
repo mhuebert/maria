@@ -4,6 +4,7 @@
 
 ;; Similar work (but complected with nREPL and having only one example) at https://github.com/tatut/nrepl-doc-inject
 ;; Similar work (using adoc format and with longer/more extensive explanations) at https://github.com/Odie/sidedocs-clj-api-docs
+;; Similar work (started but only 2 examples) at https://github.com/ericnormand/ultra-docstrings/blob/master/src/ultra_docstrings/core.clj
 
 (def clojure-core
   {"map" {:docstring "Applies the given function `f` to each element of the collection `coll`.
