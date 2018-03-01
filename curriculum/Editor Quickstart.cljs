@@ -4,6 +4,8 @@
 
 ;; ### Creating code blocks
 
+;; Maria has "code blocks" and "prose blocks". The text you're reading is in a "prose block", which means it is text meant to explain instead of be evaluated. "Code blocks" are for code to get evaluated.
+
 ;; Press the **Enter** (or **Return**) key on a blank line to create a new code block. Try it now: put the cursor at the end of this line, and then press **Enter** twice.
 
 ;; ### Selections
@@ -30,11 +32,11 @@
 
 ;; ### The Command Palette
 
-;; Press **Command/Control-P** to open the command palette, where you can search through all of the commands available in Maria. Results are filtered to only show what is relevant to the current context (ie. you will see different results if you are in a code or prose block).
+;; Press **Command/Control-P** to open the command palette, where you can search through all of the commands available in Maria. Results are filtered to only show what is relevant to the current context (i.e. you will see different results depending on if you are in a code or prose block).
 
 ;; ### 'Which-Key?'
 
-;; If you hold down a modifier key (`command`, `control`, `option/alt` or `shift`) for one second, the bottom bar will expand to show you all of the commands that you can activate by adding one or more additional keys. Eg/ if you hold down `command` for one second, *which-key* will show all of the key shortcuts that 'begin' with the `command` key.
+;; If you hold down a modifier key (`command`, `control`, `option/alt` or `shift`) for one second, the bottom bar will expand to show you all of the commands that you can activate by adding one or more additional keys. E.g., if you hold down `command` for one second, *which-key* will show all of the key shortcuts that 'begin' with the `command` key.
 
 ;; ### Reporting bugs
 
