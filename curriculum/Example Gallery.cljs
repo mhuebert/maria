@@ -113,15 +113,9 @@
 ;; #### Labeled color swatches:
 (take 10 color-names)
 
-;; And see how color swatches are made by digging into the source:
-(source color-names)
-
-;; `color-names`-style swatches for every possible shade of blue (and
-;; note *how* we get all those shades):
-(map (fn [color-name]
-       [color-name (colorize color-name (square 25))])
-     (filter #(clojure.string/includes? % "blue")
-             (map first color-names)))
+;; `color-names`-style swatches for every possible shade of blue
+(filter #(clojure.string/includes? (first %) "blue")
+        color-names)
 
 ;; #### RGB color picker
 (defcell app-state {:red 0 :green 0 :blue 0})
@@ -143,7 +137,7 @@
 
 ;; #### Data From Space 🚀
 
-;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to use Maria to grab data from across the Web and play with it.
+;; You should really check out [Data Flow](/data-flow) if you’re at all interested in data. It covers how to work with Maria to grab data from across the Web and play with it.
 
 ;; #### Snake!
 
@@ -151,7 +145,7 @@
 
 ;; #### Music!
 
-;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can right in your browser!
+;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can play right in your browser!
 
 ;; ### Flower by ClojureBridge Berlin attendee
 
