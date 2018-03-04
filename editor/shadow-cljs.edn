@@ -10,7 +10,7 @@
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
 
-                [maria/friendly "0.1.0"]
+                [maria/friendly "0.1.2-SNAPSHOT"]
 ;;                [maria/shapes "0.1.0"]
 
                 [re-view "0.4.6"]
