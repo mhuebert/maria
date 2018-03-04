@@ -20,11 +20,11 @@
 (defspecial what-is
   "Defers to maria.messages/what-is; this is only here to handle the edge case of repl-special functions."
   [c-state c-env thing]
-  (e/eval-str c-state c-env (str `(maria.friendly.kinds/what-is ~(cond (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
-                                                                       :maria.kinds/macro
-
-                                                                       (and (symbol? thing) (ns-utils/special-doc-map thing))
+  (e/eval-str c-state c-env (str `(maria.friendly.kinds/what-is ~(cond (and (symbol? thing) (ns-utils/special-doc-map thing))
                                                                        :maria.kinds/special-form
+                                                                       
+                                                                       (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
+                                                                       :maria.kinds/macro
 
                                                                        (contains? e/repl-specials thing)
                                                                        :maria.kinds/function
