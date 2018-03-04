@@ -1,4 +1,4 @@
-(defproject maria/friendly "0.1.2-SNAPSHOT"
+(defproject maria/friendly "0.1.1-SNAPSHOT"
   :description "Code to soften a few rough edges in Clojure(Script)."
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
