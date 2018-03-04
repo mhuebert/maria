@@ -9,7 +9,7 @@
              :refer [interval timeout fetch geo-location with-view]
              :refer-macros [wait]]
             [shapes.core :as shapes :refer [listen
-                                            circle square rectangle triangle path text image
+                                            circle ellipse square rectangle triangle path text image
                                             position opacity rotate scale
                                             colorize stroke stroke-width no-stroke fill no-fill
                                             color-names colors-named rgb hsl rescale
