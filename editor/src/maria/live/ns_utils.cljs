@@ -140,10 +140,21 @@
     do            {:forms [(do exprs*)]
                    :doc   "Evaluates the expressions in order and returns the value of
   the last. If no expressions are supplied, returns nil."}
+    fn            {:forms [(fn & sigs)]
+                   :doc   "params => positional-params* , or positional-params* & next-param
+positional-param => binding-form
+next-param => binding-form
+name => symbol
+
+Defines a function"}
     if            {:forms [(if test then else?)]
                    :doc   "Evaluates test. If not the singular values nil or false,
   evaluates and yields then, otherwise, evaluates and yields else. If
   else is not supplied it defaults to nil."}
+    let            {:forms [(let bindings & body)]
+                   :doc   "Evaluates the exprs in a lexical context in which the symbols in
+the binding-forms are bound to their respective init-exprs or parts
+therein."}
     monitor-enter {:forms [(monitor-enter x)]
                    :doc   "Synchronization primitive that should be avoided
   in user code. Use the 'locking' macro."}
