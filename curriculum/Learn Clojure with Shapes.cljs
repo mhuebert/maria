@@ -4,25 +4,23 @@
 
 ;; First, let's ask the computer some questions. We'll ask our questions in a programming language called Clojure. Here we go!
 
-;; Put your cursor at the end of the line with "puppy" and press `control-enter` (`command-enter` on Mac):
+;; Put your cursor at the end of the following code block with `(circle 25)` and press `Control-Enter` (`Command-Enter` on Mac):
 
-"puppy"
+(circle 25)
 
-;; You just "evaluated" a puppy! 🐶 In Clojure, the word evaluate means to tell the computer to "run" your code and tell you the result.
+;; You just drew a circle by *evaluating* that code. In Clojure, the word evaluate means to tell the computer to run some code and tell you the result.
 
-;; Clojure is a language full of things called expressions, and "puppy" is one of them. All expressions can be evaluated, as you just did. What kind of expression is "puppy"? Evaluate this expression to find out:
+;; Clojure is a language full of things called expressions, and `(circle 25)` is one of them. All expressions can be evaluated, as you just did. Let's take a look a the pieces of that expression:
 
-(what-is "puppy")
+(what-is circle)
 
-;; It's a *string*, which is a funny way of saying "some text". You can tell it's a string because it's wrapped in double-quotes. There are several other kinds of things in Clojure that we'll get to know later, but in the meantime let's talk about those parentheses.
-
-;; Whenever you see an expression in parentheses, it's kind of like a sentence. In Clojure, sentences start with an open-parenthesis: `(`. Next in the Clojure sentence is the verb, in this case, `what-is`. We call these verbs "functions". Whatever comes after the function "verb" are the *arguments* we want to give to the function. When we evaluate an expression in parens it *calls* the function at the beginning of the expression on the arguments that follow. (These arguments don't have anything to do with arguing, it's just a word from maths for what's given to a function).
+;; `circle` is a *function*. By putting the function right after an open-parenthesis, we *call* that function. This makes the expression in parentheses kind of like a sentence. In Clojure, sentences start with an open-parenthesis: `(`. Next in the Clojure sentence is the verb, in this case, `circle`. The verb is usually a function. Whatever comes after the function "verb" are the *arguments* we want to give to the function. When we evaluate an expression in parens it *calls* the function at the beginning of the expression on the arguments that follow. (These arguments don't have anything to do with arguing, it's just a word from maths for what's given to a function).
 
 ;; What do you think evaluating this next function might do? Say your guess out loud before trying it–it's fun and helpful to try to predict what the computer will do.
 
-(circle 50)
+(square 50)
 
-;; We get a circle with a 50-pixel radius. Ask yourself: what's the name of the function we're calling here? What are its arguments?
+;; We get a square with 25-pixel sides. Ask yourself: what's the name of the function we're calling here? What arguments does it take?
 
 ;; I wonder what giving `circle` two arguments would do.
 
@@ -32,27 +30,36 @@
 
 ;; What if we hadn't already known that `circle` needed to be given just one radius argument? How would we find out the arguments to a function? Well, our friend Maria knows, and will tell us. Put your cursor on the `circle` expression. At the bottom left of your browser you should see a short description of the `circle` function. The part in square brackets, "`[radius]`", tells us what arguments the `circle` function takes: one argument called `radius`. The last part of Maria’s hints are a description of what the function does.
 
-;; Sometimes the description of what a function does is quite long, so you’ll want to take a better look at it than the quick hint that Maria shows. You can do that with this expression:
+;; Sometimes the description of what a function does is quite long, so you’ll want to take a better look at it than the quick hint that Maria shows. You can ask the computer to describe a function with this expression:
 
 (doc circle)
 
 ;; The `doc` function is short for "documentation". It tells us what a function does and what arguments it needs. We gave `doc` the argument `circle`, so it gives us documentation for the `circle` function. The computer knows things and wants to share what it knows with us.
 
-;; Remember, we can also examine the different pieces of that expression with `what-is`:
+;; Remember, we can also examine the different pieces of that expression by asking `what-is`:
 
-(what-is 50)
+(what-is 25)
 
 (what-is circle)
 
-(what-is (circle 50))
+(what-is (circle 25))
 
 ;; We can even apply the `what-is` function to the `what-is` function to find out what `what-is` is! 😹
 
 (what-is what-is)
 
+;; OK. Let's review our **Code Inspection Toolbox**:
+;; - `what-is`
+;; - `doc`
+;; - bottom-of-the-screen documentation hints
+;; Whenever you're not sure what some code does, grab one of these to inspect its parts.
+
+;; This is a good time to take a break to stretch your legs. If you're working on this alongside other people, this is a good time to chat with them about how things are going.
+
+
 ;; ## Shapes 🔺 and Colors 🌈
 
-;; Now that you've seen the basics of evaluating expressions, calling functions, and asking the computer clarifying questions with `what-is` and `doc`, let's learn some more through toying with some shapes and colors.
+;; Now that you've seen the basics of evaluating expressions and calling functions, let's learn some more through toying with some shapes and colors.
 
 ;; Try creating your own expression to use some other numbers with `circle`.
 
@@ -75,17 +82,29 @@
 
 (colorize "blue" (rectangle 250 100))
 
-;; Now try putting your cursor after each closing paren `)`, one at a time, using your powers of evaluation on each sub-expression.
+;; Now try putting your cursor inside the nested expression and evaluating just the inner sub-expression. For instance, with your cursor on `100`, pressing the evaluation key command will evaluate just that value: 100. With your cursor one level "outwards", after the closing paren `)` of `(rectangle 250 100)`, you'll evaluate just that sub-expression.
 
-(colorize "blue" (rectangle 250 (* 2 50)))
+;; Another trick: you can always evaluate the whole expression with `Control-Shift-Enter`; `Shift-Command-Enter` on Mac. That is, even with your cursor at `rectangle` in `(colorize "blue" (rectangle 250 100))`, adding `Shift` to your evaluation key command will evaluate not `rectangle` but the top-level expression of that code block: `(colorize "blue" (rectangle 250 100))`. This is particularly useful when making changes.
 
-;; Do you now know what `*` does?
+;; Now, try evaluating each inner part of this expression:
 
-;; Maybe, if you feel like it, change "blue" to "purple" or another color. (For a list of colors that Maria understands, try evaluating `color-names`, without parentheses around it.)
+(colorize "turquoise" (rectangle 300 (* 2 25)))
 
-;; We're going now to start exploring the power of evaluating different parts of expressions. Before doing that, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
+;; Do you now know what `*` does? Evaluating individual sub-expressions like this is an important tool in anyone's **Code Inspection Toolbox**.
 
-;; In addition to nesting expressions, we can also combine expressions to create a layer of shapes. We do this by using the `layer` function:
+;; Maybe, if you feel like it, change "blue" to "purple" or another color. What color names does Maria recognize? Explore this:
+
+color-names
+
+;; You can expand that list by clicking the ellipsis ("..."). But that's a lot of colors. To filter just the ones you want, explore this:
+
+(colors-named "yellow")
+
+;; Try other partial color names, like "slate" or "light". 🔭
+
+;; Before moving ahead, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
+
+;; In addition to nesting expressions, we can also combine expressions to create groups of shapes. We do this by using the `layer` function. Let's reach into our **Code Inspection Toolbox** to ask about it:
 
 (doc layer)
 
@@ -95,7 +114,7 @@
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
-;; But we can also position them within a layer using the `position` function, which takes an `x` and a `y` to tell it where to put a shape:
+;; We can also position them within a layer using the `position` function, which takes an `x` and a `y` to tell it where to put a shape:
 
 (layer
  (colorize "springgreen" (circle 25))
@@ -111,200 +130,238 @@
  (position 45 10 (colorize "magenta" (triangle 24)))
  (position 40 55 (colorize "white" (circle 10))))
 
-;; If you have some time, take a minute and play around a little. Make your own shape combinations, evaluating inner expressions to make sure you know how they fit into the expression containing them. 🕸️
+;; Take a minute and play around a little. See what you can make by combining shapes. 🏠️ 🕸️ Remember to use your **Code Inspection Toolbox**:
+;; - `doc`
+;; - bottom-of-the-screen documentation hints
+;; - `what-is`
+;; - evaluating sub-expressions
+
+;; ⬇ your code goes here (or anywhere, really!)
+
+;; ⬆ your code goes here
+
 
 ;; ## ⚡️ Computing Superpowers 💪🏽
 
-;; What if we want to draw a whole bunch of shapes? Typing "rectangle" over and over again is a 😴 chore. We don't have time for that! Our friend the computer wants to help, and it is REALLY GOOD at repetitive chores. 🤖
+;; We can draw a whole bunch of shapes using two new things: "vectors" and the `map` function. Try it first:
 
-;; Let's start by evaluating this:
+(map square [2 4 8 16 32 64 128])
 
-(what-is [1 2 3 4])
+;; What's going on here? The part in square brackets (`[` and `]`) is a vector, which is how we store a bunch of things in order. We use it here to make a bunch of squares with that size. We use `map` to evaluates the function `square` on each thing in our vector. The result is a square for every number in our collection.
 
-;; "Vectors" are how we store sequences of things. They're written using square braces `[]` and they evaluate to themselves like strings and numbers. This vector describes the order of prehistoric eras:
+;; Try using `map` with `circle`. Replace "_" with your code:
 
-["Stone Age" "Bronze Age" "Iron Age"]
+(map _)
 
-;; This comes in handy when we want to do something like draw a bunch of related shapes. For instance, we could make a vector of circles like so:
+;; If we want to `map` a function that takes two arguments, we need to give it two arguments. We can do that by giving `map` one vector for the first argument and a second vector for the second argument.
 
-[(circle 16) (circle 32) (circle 64) (circle 128)]
+;; We can do that for `rectangle`. The first vector (with all `10`s) is used for the width. The second vector (with different values) is used for the heights:
 
-;; But there's a better, shorter way! When we have a bunch of things, and we want to call a function on each thing, we can use the great `map` function. Watch:
+(map rectangle
+     [10 10 50 50]
+     [10 25 50 75])
 
-(map circle [16 32 64 128])
+;; Play around with the values in those vectors a bit, to get a sense for how `map` uses both vectors.
 
-;; We "mapped" the function `circle` over a vector of all the sizes we want our circles to be.
+;; There's a second way to control multiple arguments in a `map`, and that is to create a function on the fly to do what we want. We use this in situations where only one argument will change. For instance, say we want to create some shapes with particular colors.
 
-;; Have a look at both of those two expressions: one spelling out four calls to `circle`, the other using `map` to call `circle` on every value in a vector. As far as the computer is concerned, both expressions do the same thing. That makes `map` powerful and useful. Lots of `map`’s power comes alive when you pass it a function tailor-made for the problem you’re solving. This probably isn’t obvious yet, so to see what we mean, let's make a new function right now! To start with, here's a really simple example of a function:
+;; 1. We start with a vector of color names, `["red" "blue" "green"]`
+;; 2. We use `fn` to make up a _totally new function_--we call these "anonymous functions", because they don't need names)
+;; 3. We use `map` to apply that anonymous function to each color name in our vector
 
-(fn [radius] (circle radius))
+;; The technique looks like this:
 
-;; Evaluating that doesn't return anything that's like what we've seen before. This expression doesn’t return a shape or value. It returns a funny "f" that shows our code when you click on it. Let’s inspect it by wrapping the expression in a `what-is` call. Go ahead.
+(map (fn [color] (colorize color (circle 25)))
+     ["red" "blue" "green"])
 
-;; ... it's a function! What does this mean?
+;; The short way to read this out loud is "we map an anonymous function, which takes a 'color' argument, over the vector of color names".
 
-;; `fn` is a "macro", a special kind of function that takes code and transformds it before evaluating it. The `fn` macro returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
+;; Let's look closer at our anonymous function.
 
-;; To go a bit deeper in how `fn` works, evaluate this giant expression. It will draw a small diagram to help explain how functions work.
+;;    ![](https://i.imgur.com/U1KuIIf.png)
 
-(layer
- (position 50 60 (text "(fn [radius] (circle radius))"))
- (colorize "grey" (position 55 70 (triangle 10)))
- (position 35 102 (text "function"))
- (position 90 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 60 20 (text "argument(s)"))
- (colorize "grey" (position 160 70 (triangle 10)))
- (position 135 102 (text "expression")))
+;; We create this function-with-no-name using `fn`, which we give two arguments: first a vector and then an expression.
+;; 1. The vector declares what arguments our new function-with-no-name will receive. In this case it takes just one, which we call `color`. This name is like a placeholder that will be filled in when someone calls this function later.
+;; 2. The expression is code that our function-with-no-name will run when _it_ gets evaluated. The `color` placeholder will then get replaced by whatever value our anonymous function is given as an argument.
 
-;; Take a look at the diagram Maria just drew for us.
+;; Making up functions on the fly is super useful. Let's use this technique in another scenario. Say instead of creating shapes with particular colors, we want the same shape but with different degrees of transparency:
 
-;; First, there's the `fn`, which means this expression will evaluate to a function.
+(map (fn [o] (opacity o (square 40)))
+     [0, 1/4, 1/2, 3/4, 1])
 
-;; The part in square brackets `[]` shows the arguments that this function will accept, and the order in which it will expect them. In this case, it's only one argument called `radius`. Arguments are a kind of placeholder that will be filled in when someone calls this function later.
+;; What happens if you evaluate the `fn` sub-expression? It doesn’t return a shape or a value. It returns a funny "f" that shows _our code_ when you click on it. 😲
 
-;; Finally, every function contains an expression that will be evaluated for us when we call it. Inside this expression the arguments used to call this function will be available by the names they were given in the square bracket part before.
+;; Let’s inspect with one of our **Code Inspection Tools**:
 
-;; Try to guess what this expression will return 🤔. Once you have an idea, evaluate the expression to test your hypothesis.
+(what-is (fn [o] (opacity o (square 40))))
 
-(map (fn [radius] (circle radius))
-     [16 32 64 128])
+;; ... it's a function, just like `circle` or `colorize`. What's going on here? `fn` is a "macro", a special kind of function that takes code and transforms it before the code gets evaluated. The `fn` macro returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
 
-;; This function just wraps the `circle` function in another function, so it doesn't do anything different than calling circle directly. But we can change it to also call `colorize` on each circle, like this:
+;; Now you try it. Edit the code below to map an anonymous function over one (or more!) vectors. 🏘️ Consider using `triangle`, `ellipse`, `opacity`, or `colorize`:
 
-(map (fn [radius] (colorize "purple" (circle radius)))
-     [16 32 64 128])
+(map (fn [] ) 
+     [])
 
-;; 💜 💜 💜 💜 Instead of a "circle" function, we wrote a "purple circle" function. The power to create our own functions is the heart of the power of programming.
+;; The power to create our own functions is the heart of the power of programming. We entrust this power now to you. ⚡️ ✨
+
 
 ;; ## 👨🏾‍🚀 Names 👩🏻‍🚀
 
-;; So far, none of the functions we've created have had names. We've created these "anonymous" functions, used them briefly, and that was it. The same goes for the values we've been using, like strings and vectors–none of them have had names, either.
+;; To use a particular shape many times, it's simpler to give it a name. For instance, we can turn one triangle into a mountain range by naming it with `let` and stamping it onto our canvas several times.
 
-;; But sometimes you'll need to use a particular value or function call over and over. That's when you should consider naming it, so it's easier to change, so we know all the occurrences are supposed to be the same thing, and so we don't unnecessarily repeat any computations. For instance, if we're going to use a specific set of colors for some shapes, we might want to create a named color palette so we don't have to repeat the whole list of colors over and over. For this, we can use `let`, like the color-shifting picture we draw using this rainbow palette:
+;; `let` takes two things:
+;;  - a vector of name/value pairs
+;;  - an expression using those names
 
-(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
-  (layer (colorize (rand-nth palette) (square 100))
-         (colorize (rand-nth palette) (triangle 100))
-         (colorize (rand-nth palette) (circle 15))))
+(let [t (triangle 100)] ;; <-- this vector holds our name/value pair
+  ;; now we write an expression using that name:
+  (layer t
+         (position 50 0 t)
+         (position 88 0 t)
+         (position 113 0 t)
+         (position 185 0 t)
+         (position 195 0 t)
+         (position 238 0 t)))
 
-;; Make sure you evaluate this expression more than once 😇
+;; We `let` the letter `t` have the value `(triangle 100)` so we can use the name `t` inside our expression to make a triangle.
 
-;; How does it work? `let` takes two arguments. The first argument is a vector with pairs: first a name, and then an expression that gets that name. In the above expression, that's the `[palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]` part, with `palette` being the name (since it's the first of the pair) and the vector of colors being the expression that `let` turns into that name.
+;; If you need to reuse some value across multiple expressions, you can give it a "global" name with `def`. For instance, we're going to use a rainbow palette for a couple different sketches, so we'll create the name `rainbow`.
 
-;; The second argument to `let` is an expression that uses the names from the first argument. Here, we use the name `palette` to paint some shapes using the `rand-nth` function. Use all the techniques you've learned to explore what `rand-nth` does: Maria’s argument list hints, `what-is`, `doc`, and evaluating the function with different input.
+(def rainbow
+  ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
 
-;; ⬇ explore here (press "return" or "enter" twice to create a code
-;; block)
+;; Now we can use our new name `rainbow` anywhere:
 
-;; ⬆ explore here
-
-;; (The "rand" in `rand-nth` comes from random; the "nth" comes from maths, where it's common to write "1, 2, 3, and so on" as "1, 2, 3, n". So instead of getting "1st" or "2nd" one from our vector, it's a random "nth". 🤓)
-
-;; Notice that the name we made up doesn't do anything outside the `let`:
-
-palette
-
-;; Why? It's helpful to name things, but most of the time we only want our names for a short time. One thing programmers have found out is that having a lot of names that work everywhere gets hard to keep track of. In the above expression, we needed the name `palette` because we wanted to use it several times, and it makes no sense to write out all those color names over and over. If we only needed the list of colors once, we wouldn’t have named it at all. Fewer names makes for simpler code that’s easier to read.
-
-;; What else can we do with that rainbow palette? Well, let’s take a look at the whole thing:
-
-(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
-  (map (fn [color] (colorize color (rectangle 20 20)))
-       palette))
-
-;; Wait. We’re repeating ourselves. If we’re going to use that rainbow palette everywhere, it’s silly to make the same `let` every time.
-
-;; We can *define* names that work all across your program using `def`:
-
-(def rainbow ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
-
-rainbow
-
-(map (fn [color] (colorize color (rectangle 20 20)))
-     rainbow)
+(map (fn [c] (colorize c (circle 25))) rainbow)
 
 ;; 🌈 😺
 
-;; Now we’ve got a `rainbow` in our toolbox, ready to use for whatever. Programming like this is like building a LEGO spaceship, except we can invent whatever blocks we need, and use them as many times as we like.
+;; Maybe that little anonymous function there could come in handy. Let's give it a name, too!
 
-(map (fn [color] (colorize color (rectangle 20 20)))
-     (reverse rainbow))
+(def colorized-circle
+  (fn [c] (colorize c (circle 25))))
 
-;; Did you notice we’re repeating ourselves AGAIN with that function?  Let’s `def` it, too! We can call it "swatch", like the swatches of color samples you get when choosing paint at the hardware store.
+;; Then we can:
 
-(def swatch (fn [color] (colorize color (rectangle 20 20))))
+(colorized-circle "slategray")
 
-;; Now that the colors have been moved to `rainbow` and the square-making function has been moved to `swatch`, our code to see all our rainbow colors is shorter and more clear:
+;; or:
 
-(map swatch rainbow)
+(map colorized-circle ["green" "seagreen" "limegreen" "mediumturquoise"])
 
-;; Notice that this short three-word function call is the same as this more verbose expression:
+;; Nice! That's not all: Programmers like you define functions so often that Clojure has a special shorthand, `defn`, that is like a combined `def` and `fn`. Take a look at how we use `defn` to build `colorized-circle`:
 
-(map (fn [color] (colorize color (rectangle 20 20)))
-     ["red" "orange" "yellow" "green" "blue" "indigo" "violet"])
+(defn colorized-circle [c]
+  (colorize c (circle 25)))
 
-;; It gets better. We programmers define functions so often that Clojure has a special shorthand, `defn`, that is like a combined `def` and `fn`. It takes a name (like `def`), then a vector of arguments (like `fn`), then an expression using those arguments (like both `def` and `fn`).
+;; Let's look closer at `defn`'s parts:
 
-;; Here’s another giant expression. It explains `defn` with a diagram:
+;;    ![](https://i.imgur.com/gnssmpJ.png)
 
-(layer
- (position 50 60 (text "(defn labeled-swatch [color] [color (colorize color (square 25))])"))
- (colorize "grey" (position 65 70 (triangle 10)))
- (position 20 102 (text "defines a function"))
- (position 125 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 112 20 (text "name"))
- (position 197 25 (rotate 60 (colorize "grey" (triangle 10))))
- (position 170 20 (text "argument(s)"))
- (colorize "grey" (position 225 70 (rectangle 207 1))) 
- (colorize "grey" (position 325 70 (rectangle 1 13)))
- (position 295 102 (text "expression")))
+;; Just like with `fn`, evaluating `defn` doesn't return a shape or a value. It returns the function itself, which we can use in an expression somewhere else.
 
-;; OK. Let’s try it. Let’s use `defn` to make labeled swatches (like `color-names` uses) so we know what color we’re looking at. Our function will take a color and return a vector that has the color name (the label) and then a square showing the color (the swatch):
+;; Cool! Now that we're naming functions, we're just about finished.
 
-(defn labeled-swatch [color]
-  [color (colorize color (square 25))])
 
-;; Just like with `fn`, evaluating that `defn` doesn't return a shape or a value or anything else tangible. It returns the function itself. Now the name `labeled-swatch` is defined, so we can call it:
+;; ## 🔬 Putting Your Programmer Tools to Work 🔨
 
-(labeled-swatch "red")
+;; The last part of this whirlwind introduction is to show you how to _think about_ defining functions. How do we start to tackle the problem?
 
-;; We can use it to help make sense of what shades of blue there are.
+;; The problem-solving template goes like this:
+;;  1. explore the problem in a conversation with the computer
+;;  2. gradually turn your explorations into a solution
+;;  3. (maybe) turn your solution into a named function for later
 
-(map labeled-swatch
-     ["blue" "lightskyblue" "darkslateblue"
-      "midnightblue" "powderblue" "steelblue"
-      "cornflowerblue" "aliceblue" "deepskyblue"
-      "skyblue" "dodgerblue" "mediumblue"
-      "darkblue" "blueviolet" "cadetblue"
-      "slateblue" "royalblue" "lightblue"
-      "lightsteelblue" "mediumslateblue"])
+;; Let's try it with a slightly more complex shape-drawing challenge: drawing a flag with a vector of colors we give it. For instance, suppose we want to turn our `rainbow` vector into a rainbow flag, or a vector of three colors into a vertical tricolor like the flag of Germany or the Netherlands. So our goal will be a function that stacks colored bands to make a flag out of whatever color names we give it.
 
-;; Or:
-(labeled-swatch (rand-nth rainbow))
+;; First, we explore. We know we want our code to accept a vector of colors, turning each one into a shape that makes up our flag. From that we can expect that our code might use `map`. Our first attempt might look something like:
 
-;; We can even tell future programmers how to use our function by documenting it. Right now `labeled-swatch` doesn’t have any documentation:
+(map (fn [c] (colorize c (rectangle 300 20))) 
+     rainbow)
 
-(doc labeled-swatch)
+;; But that's not quite right, because `map` returns a collection of shapes, and we want the shapes stacked next to each other. To get the rectangles adjacent we need the `apply` function. Like `map`, `apply` takes a function and a collection, but instead of doing the function to each value in the collection, `apply` gives all of the arguments at once to the function. This is especially useful with functions that take any number of arguments, like `above` and `beside`. 
 
-;; ...but if we add a string to our `defn` between the function name and the argument vector, that string will show up when you call `doc`. We call those "docstrings", short for "documentation string". Let’s write our own docstring describing what `labeled-swatch` does, and then re-evaluate `(doc swatch)`.
+(apply above
+       (map (fn [c]
+              (colorize c (rectangle 300 20))) 
+            rainbow))
 
-(defn labeled-swatch
-  "HI I’M A DOCSTRING PLEASE TURN ME INTO SOMETHING HELPFUL"
-  [color]
-  [color (colorize color (square 25))])
+;; The `above` function needs its arguments to be shapes, and it is willing to accept any number of them. We used `apply` as a bridge between between a function that wants many arguments and a collection of those arguments as a single value.
 
-;; Hey–nice work! 🎉 💯 👏🏾 You created a function. That’s the only requirement to being a True Programmer. Give yourself a high-five. I am right now giving you a high-five. Maria is giving you a high-five.
+;; We've explored the problem (step 1) and now we're ready to turn our exploration into a solution (step 2). To make a solution, we need to make our flag have the right proportions not just for `rainbow` colors, but for other numbers of colors as well. Right now, using fewer colors just looks thin and off-balance compared to the familiar 3:2 ratio we had earlier:
+
+(apply above
+       (map (fn [c]
+              (colorize c (rectangle 300 20))) 
+            ["orange" "red" "lightgreen" "brown"]))
+
+;; The challenge here is to generalize our flag-drawing code. The next code block has a solution. Try to wrestle with the problem yourself before scrolling down to see how Maria solves it. Use the code block right there. Experiment with different numbers of colors in the vector, and different ways of calculating the size of the rectangle.
+
+;; ...
+
+;; ...
+
+;; (Hint: you'll want to `count` the vector of colors.)
+
+;; ...
+
+;; ...
+
+;; ...
+
+;; ...
+
+;; ...
+
+;; ...
+
+;; ...
+
+;; Here's the solution Maria got:
+
+(let [colors ["blue" "green"]]
+  (apply above
+         (map (fn [c]
+                (colorize c (rectangle 300 (/ 200 (count colors))))) 
+              colors)))
+
+;; To preserve the 3:2 ratio, we divide the total height (200) by the number of colors we have. The `let` helps in two ways: first it allows us to try out different vectors of colors without repeating ourselves, and then when we're done it tells us what the arguments to our function should be.
+
+;; Now that we have a general vertical-stacked-colors flag solution, we're ready for step 3: turning our solution into a function. What should we call our function? If you're stumped, you're in good company: naming things is one of the truly hard problems in programming. One servicable name is `vertical-flag`, which we can define like this:
+
+(defn vertical-flag [colors] 
+  (apply above
+         (map (fn [c]
+                (colorize c (rectangle 300 (/ 200 (count colors))))) 
+              colors)))
+
+;; See how the `let` for `colors` turns into the argument list for our function? Let's try it out!
+
+;; Rainbow flag!
+(vertical-flag rainbow)
+
+;; Germany!
+(vertical-flag ["black" "red" "gold"])
+
+;; Indonesia!
+(vertical-flag ["red" "white"])
+
+;; Catalonia!
+(vertical-flag ["gold" "red" "gold" "red" "gold" "red" "gold" "red" "gold"])
+
+;; We could keep going (Ukraine! Hungary! Russia!), and if you're hungry for more, you could write a similar function for horizontal flags, but let's take a moment to congratulate you.
+
+;; Nice work! 🎉 💯 👏🏾 You created a function. That’s the only requirement to being a True Programmer. Give yourself a high-five. I am right now giving you a high-five. Maria is giving you a high-five.
+
 
 ;; # Where to Go From Here
 
 ;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Where to go with that power is up to you. Your next step is to find interesting ways to put functions together to create cool stuff. I look forward to seeing what you make. ✨
 
-;; This introduction to Clojure intentionally avoids getting into the benefits of Lisp syntax, language features like immutability or laziness, hosting and tooling concerns, and the full span of basic data types. This document is a consciously incomplete introduction. While all of those topics are valuable material, they are secondary for the Clojure beginner. Instead, since Clojure programmers typically spend the majority of their time juggling expressions, names, and functions, we try to offer in Maria a playground where the beginner is introduced to those fundamental tools.
+;; This introduction to programming through Clojure intentionally avoids getting into the benefits of Lisp syntax, language features like immutability or laziness, hosting and tooling concerns, and the full span of basic data types. This document is a consciously incomplete introduction. While all of those topics are valuable material, they are secondary for the programming beginner. Instead, since Clojure programmers typically spend the majority of their time juggling expressions, names, and functions, we try to offer with Maria a playground where the beginner is introduced to those fundamental tools.
 
 ;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/), or write your own code on a fresh page by using the New button at the top left.
 
-;; If you want to learn the full powers of the Maria environment, start with a look at the [Editor Quickstart](https://maria.cloud/quickstart).
-
-;; If you have the patience to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
+;; If you'd like to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
 
 ;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://maria.cloud/gist/888b354fe941866721370a91e181252c) or linguistics, or...?
