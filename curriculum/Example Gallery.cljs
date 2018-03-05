@@ -55,6 +55,10 @@
                   (fill (hsl % 90 45)))
             (range 0 360 15))))
 
+;; #### Minimal cells demo: sampling from a palette every quarter-second
+(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
+  (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
+
 ;; #### Confetti
 (defn confetti []
   (let [palette (cycle ["aqua" "springgreen" "magenta"])]
@@ -67,7 +71,7 @@
 ;; try it–more than once!
 (confetti)
 
-;; now let’s have the computer do it for us every 1/10 of a second!
+;; Use cells to have the computer do it for us every 1/10 of a second:
 (cell (interval 100 confetti))
 
 ;; #### User interfaces and Adjustible shapes
@@ -105,10 +109,6 @@
  (position 45 74 (colorize "orange" (rectangle 10 5)))
  (position 33 82 (colorize "orange" (rectangle 10 5)))
  (position 35 2  (colorize "black"  (rectangle 10 20))))
-
-;; #### Sample from a palette every quarter-second
-(let [palette ["red" "orange" "yellow" "green" "blue" "indigo" "violet"]]
-  (cell (interval 250 #(colorize (rand-nth palette) (square 50)))))
 
 ;; #### Labeled color swatches:
 (take 10 color-names)
