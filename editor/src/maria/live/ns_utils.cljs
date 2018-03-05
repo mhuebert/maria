@@ -232,3 +232,15 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
                  :let [completion (cond->> alias
                                            root-ns-sym (str root-ns-sym "/"))]]
              [alias completion full-name])))))
+(defn cd-encode [s]
+  ;; COPIED from clojuredocs.util: https://github.com/zk/clojuredocs/blob/master/src/cljc/clojuredocs/util.cljc
+  ;; Copyright © 2010-present Zachary Kim
+  ;; Distributed under the Eclipse Public License version 1.0
+  (when s
+    (cond
+      (= "." s) "_."
+      (= ".." s) "_.."
+      :else (-> s
+                (str/replace #"/" "_fs")
+                (str/replace #"\\" "_bs")
+                (str/replace #"\?" "_q")))))

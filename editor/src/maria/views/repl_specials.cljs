@@ -11,7 +11,7 @@
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
     [:.mv2
-     [:a.f7.black {:href   (str "https://clojuredocs.org/clojure.core/" name)
+     [:a.f7.black {:href   (str "https://clojuredocs.org/clojure.core/" (ns-utils/cd-encode name))
                    :target "_blank"
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
