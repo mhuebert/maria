@@ -20,6 +20,17 @@
 
 [:a "b" 3]
 
+;; ### Moving Parentheses
+
+;; Since every open-parenthesis needs to be "balanced" with a close-parenthesis for your code to work, Maria does her best to help with that. One thing Maria provides that will help you keep your parens balanced is to use `Shift-Control-<left-or-right-arrow>` (`Shift-Command-<left-or-right-arrow>` on Mac) to extend your parentheses rightward or retract them leftward.
+
+;; Across programming culture this is universally called "slurping" and "barfing" the part of the expression that moves into or out of your parens. Yes, the terms are gross 🤮 but it's what people say.
+
+;; Try it out. Put your cursor inside `(map circle)` and press `Shift-Control-<right-arrow>` (`Shift-Command-<right-arrow>` on Mac) to "slurp" the vector into your `map` expression. Do the same with `left-arrow` to "barf" the vector back out.
+
+(map circle) [25 25 25]
+
+
 ;; ### Evaluating code
 
 ;; The most important part! Hold down **Command/Control** and then press **Enter** (or **Return**) key to evaluate the currently selected code. Adding **Shift** evaluates the whole block, even though the selection doesn't change.
