@@ -8,6 +8,7 @@
   [["intro" "Learn Clojure with Shapes" (repo-path "curriculum/Learn Clojure with Shapes.cljs")]
    ["quickstart" "Editor Quickstart" (repo-path "curriculum/Editor Quickstart.cljs")]
    ["gallery" "Example Gallery" (repo-path "curriculum/Example Gallery.cljs")]
+   ["animation-quickstart" "Animation Quickstart" (repo-path "curriculum/Animation Quickstart.cljs")]
    ["what-if" "What if?" (repo-path "curriculum/What If.cljs")]
    ["cells" "Welcome to Cells" (repo-path "curriculum/Welcome to Cells.cljs")]
    ["data-flow" "Data Flow" (repo-path "curriculum/Data Flow.cljs")]
