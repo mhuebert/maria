@@ -1,5 +1,7 @@
 (ns shapes.core)
 
+;; TODO add spec annotations!
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Support for _An Introduction to Racket with Pictures_-style pedagogy
 
@@ -58,17 +60,20 @@
       x-parsed
       (throw (js/Error. message)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; basic types
+
 (defn circle
   "Returns a circle of `radius`."
   [radius]
   (assert-number "radius must be a number!" radius)
-  (->Shape {:is-a   :shape
-            :kind   :circle
-            :r      radius
-            :cx     radius
-            :cy     radius
-            :stroke "none"
-            :fill   "black"}))
+  (->Shape {:is-a         :shape
+            :kind         :circle
+            :r            radius
+            :cx           radius
+            :cy           radius
+            :stroke       "none"
+            :stroke-width 0
+            :fill         "black"}))
 
 (defn ellipse [radius-x radius-y]
   (assert-number "radius-x must be a number!" radius-x)
@@ -79,8 +84,9 @@
             :ry     radius-y
             :cx     radius-x
             :cy     radius-y
-            :x      (* 1.5 radius-x)
-            :y      (* 1.5 radius-y)
+            ;; :x      (* 1.5 radius-x)
+            ;; :y      (* 1.5 radius-y)
+            :stroke-width 0
             :stroke "none"
             :fill   "black"}))
 
@@ -95,6 +101,7 @@
             :y      0
             :width  width
             :height height
+            :stroke-width 0
             :stroke "none"
             :fill   "black"}))
 
@@ -103,37 +110,6 @@
   [side]
   (assert-number "side must be a number!" side)
   (rectangle side side))
-
-(defn triangle
-  "Returns an equilateral triangle with sides of `size`."
-  [size]
-  (assert-number "size must be a number!" size)
-  (->Shape (let [h (* 0.8660259 size)]
-             {:is-a   :shape
-              :kind   :polygon
-              :x      0
-              :y      0
-              :width  size
-              :height size
-              :points [[0 size]
-                       [(/ size 2) (- size h)]
-                       [size size]]
-              :stroke "none"
-              :fill   "black"})))
-
-(defn image
-  "Add an image to the drawing"
-  ([src] (image 200 200 src))
-  ([size src]
-   (assert-number "size must be a number!" size)
-   (image size size src))
-  ([width height src]
-  (assert-number "width must be a number!" width)
-  (assert-number "height must be a number!" height)  
-   (->Shape {:kind   :image
-             :href   src
-             :width  width
-             :height height})))
 
 (defn text
   "Add a label containing `the-text` to a drawing."
@@ -150,47 +126,21 @@
             :height      18
             :fill        "#3f4245"}))
 
-;; (defn line [x1 y1 x2 y2]
-;;   (str " M" x1 " " y1 " L" x2 " " y2))
+(defn image
+  "Add an image to the drawing"
+  ([src] (image 200 200 src))
+  ([size src]
+   (assert-number "size must be a number!" size)
+   (image size size src))
+  ([width height src]
+  (assert-number "width must be a number!" width)
+  (assert-number "height must be a number!" height)  
+   (->Shape {:kind   :image
+             :href   src
+             :width  width
+             :height height})))
 
-;; XXX no verification yet, too complicated for the moment
-(defn path
-  "Create an arbitrary path from a set of points."
-  [& points]
-  (->Shape {:is-a   :shape
-            :kind   :path
-            :width  100
-            :height 100
-            :d      points
-            :stroke "black"
-            :fill   "none"}))
-
-;; TODO generalize (current forces numeric types) and probably rename
-(defn value-to-cell! [the-cell & cell-path]
-  (fn [event]
-    (let [v (js/parseFloat (.-value (.-target event)))]
-      (swap! the-cell (if cell-path
-                        #(assoc-in % cell-path v)
-                        #(identity v))))))
-
-(defn points-to-path
-  "A helper function to create a path-compatible description of a shape from a set of points."
-  [points]
-  (->> (drop 2 points)
-       (partition 2)
-       (mapcat (fn [[x y]] [:L x y]))
-       (into [:M (first points) (second points)])
-       (apply path)))
-
-;; TODO add general polygon fn
-;; TODO add spec annotations!
-
-(defn assure-shape-seq
-  "Returns `shape-or-shapes` wrapped in a vector if it appears to be a single shape."
-  [shape-or-shapes]
-  (cond (instance? Shape shape-or-shapes) [shape-or-shapes]
-        (instance? Shape (first shape-or-shapes)) shape-or-shapes
-        :else (assure-shape-seq (first shape-or-shapes))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; points/paths
 
 (defn scale-points
   "Scale a set of `points` by `factor`."
@@ -199,121 +149,83 @@
 
 (defn points-bounds [pts]
   (reduce (fn [[x-min y-min x-max y-max] [x y]]
-            [(if (< x x-min) x x-min)
-             (if (< y y-min) y y-min)
-             (if (> x x-max) x x-max)
-             (if (> y y-max) y y-max)])
-          [100000 100000 -100000 -100000]                   ;; buggy because not max positive/negative
+            [(min x x-min)
+             (min y y-min)
+             (max x x-max)
+             (max y y-max)])
+          [js/Number.MAX_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER]
           (partition 2 (filter number? pts))))
-
-(defn shape-bounds
-  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this shape."
-  [shape]
-  {:width  (+ (or (:x shape) 0)
-              (or (:cx shape) 0)
-              (or (:width shape) 0)
-              (or (:r shape) 0)
-              (if-let [pts (:d shape)]
-                (let [[x-min y-min x-max y-max] (points-bounds pts)]
-                  x-max)
-                0))
-   :height (+ (or (:y shape) 0)
-              (or (:cy shape) 0)
-              (or (:height shape) 0)
-              (or (:r shape) 0)
-              (if-let [pts (:d shape)]
-                (let [[x-min y-min x-max y-max] (points-bounds pts)]
-                  y-max)
-                0))})
 
 (defn center-point [shape]
   (let [bounds (shape-bounds shape)]
     [(+ (/ (- (:width bounds) (or (:x shape) 0)) 2) (or (:x shape) 0))
      (+ (/ (- (:height bounds) (or (:y shape) 0)) 2) (or (:y shape) 0))]))
 
-(defn bounds
-  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this group of shapes."
-  [shapes]
-  (let [shapes (assure-shape-seq shapes)
-        bounds (map shape-bounds shapes)]
-    {:width  (:width (apply max-key :width bounds))
-     :height (:height (apply max-key :height bounds))}))
+(defn move-points [shape new-x new-y]
+  (-> shape
+      (assoc :d (mapv #(%1 %2)
+                      (cycle [#(+ new-x (- % (:x shape)))
+                              #(+ new-y (- % (:y shape)))])
+                      (:d shape)))
+      (assoc :x new-x)
+      (assoc :y new-x)))
 
-(defn points->string [pts]
-  (->> (map (partial interpose ",") pts)
-       (interpose " ")
-       flatten
-       (apply str)))
+;; paths are made of points, TODO should be in pairs
+(defn path
+  "Create an arbitrary path from a set of points."
+  [points]
+  (->Shape {:is-a   :shape
+            :kind   :path
+            :x      0
+            :y      0
+            :width  0
+            :height 0
+            :d      points
+            :stroke-width 1
+            :stroke "black"
+            :fill   "none"}))
 
-(defn path-points->string [pts]
-  (->> (map #(if (keyword? %) (str (name %)) %) pts)
-       (interpose " ")
-       (apply str)))
+;; a triangle is a special case of path
+(defn triangle
+  "Returns an equilateral triangle with sides of `size`."
+  [size]
+  (assert-number "size must be a number!" size)
+  (let [h (* 0.8660259 size)]
+    (-> (path [0 size (/ size 2) (- size h) size size])
+        (assoc :stroke "none")
+        (assoc :stroke-width 0)
+        (assoc :fill "black"))))
 
-;; TODO rotate can take two more numbers for the centrum, would
-;; probably be better for each thing to rotate around itself
-;; TODO SVG translation/rotation causes slipping, may need to re-calc bounds
-;; TODO re-implement this mess using a transform matrix
-(defn shape->vector [shape]
-  (let [{:keys [kind children d text] :as attrs} @shape
-        unkinded (dissoc attrs :is-a :kind)]
-    (into [kind (reduce                                     ;; clean up/preprocess the string-y bits of the SVG element
-                  (fn [m [k v]]
-                    (case k
-                      :d (update m :d path-points->string)
-                      :points (update m :points points->string)
-                      :rotate (case kind
-                                :path (let [[x-min y-min x-max y-max] (points-bounds d)]
-                                        (update m :transform #(str (or % "") " rotate(" (:rotate m) "," (- x-max x-min) "," (- y-max y-min) ")")))
-                                #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x attrs) "," (:y attrs) ")"))
-                                (let [[x y] (center-point m)]
-                                  (update m :transform #(str (or % "") " rotate(" (:rotate m) "," x "," y ")"))))
-                      :translate (update m :transform #(str (or % "") " translate(" (apply str (interpose "," (:translate m))) ")"))
-                      :scale (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
-                      m))
-                  unkinded
-                  (select-keys unkinded [:d :points :rotate :translate :scale]))
-           text]
-          (mapv shape->vector children))))
-
-(defn to-hiccup [shape]
-  [:svg (assoc (bounds shape) :x 0 :y 0)
-   (shape->vector shape)])
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; attribute setters
 
 (defn stroke
   "Return `shape` with its stroke set to `color`."
   [color shape]
-  (if (= :svg (:kind shape))
-    (assoc shape :children (mapv (partial stroke color) (:children shape)))
-    (assoc shape :stroke color)))
+  (let [s (assoc shape :stroke color)]
+    (if (= 0 (:stroke-width s))
+      (assoc s :stroke-width 1)
+      s)))
 
 (defn stroke-width
   "Return `shape` with its stroke set to `color`."
   [width shape]
-  (if (= :svg (:kind shape))
-    (assoc shape :children (mapv (partial stroke-width width) (:children shape)))
-    (assoc shape :stroke-width width)))
+  (assoc shape :stroke-width width))
 
 (defn no-stroke
   "Return `shape` with its stroke color turned off."
   [shape]
-  (if (= :svg (:kind shape))
-    (assoc shape :children (mapv no-stroke (:children shape)))
-    (assoc shape :stroke "none")))
+  (assoc shape :stroke "none"))
 
 (defn fill
   "Return `shape` with its fill set to `color`."
   [color shape]
-  (if (= :svg (:kind shape))
-    (assoc shape :children (mapv (partial fill color) (:children shape)))
-    (assoc shape :fill color)))
+  (assoc shape :fill color))
 
 (defn no-fill
   "Return `shape` with its fill color turned off."
   [shape]
-  (if (= :svg (:kind shape))
-    (assoc shape :children (mapv no-fill (:children shape)))
-    (assoc shape :fill "none")))
+  (assoc shape :fill "none"))
 
 (defn colorize
   "Return `shape` with its color set to `color`."
@@ -327,8 +239,20 @@
   [amount shape]
   (assert-number "amount must be a number!" amount)
   (case (:kind shape)
+    :circle (-> shape
+                (update :r (partial * amount))
+                (update :cx (partial * amount))
+                (update :cy (partial * amount)))
+    :ellipse (-> shape
+                 (update :rx (partial * amount))
+                 (update :ry (partial * amount))
+                 (update :cx (partial * amount))
+                 (update :cy (partial * amount)))
     :path (update shape :d scale-points amount)
-    (assoc shape :scale amount)))
+    :rect (-> shape
+              (update :height (partial * amount))
+              (update :width (partial * amount)))
+    (assoc shape :scale amount))) ;; XXX always use "scale-points"
 
 ;; XXX SVG transforms are a fucking mess, so this needs to be fixed
 (defn rotate
@@ -337,14 +261,6 @@
   (assert-number "amount must be a number!" amount)
   (if (not= :circle (:kind shape))
     (assoc shape :rotate amount)))
-
-(defn move-points [m new-x new-y]
-  (let [old-x (:x m)
-        old-y (:y m)]
-    (assoc m :points (mapv (fn [[x y]]
-                             [(+ new-x (- x old-x))
-                              (+ new-y (- y old-y))])
-                           (:points m)))))
 
 (defn position
   "Return `shape` with its x and y positions set to `x` and `y`."
@@ -355,15 +271,63 @@
     :circle (-> shape
                 (assoc :cx x)
                 (assoc :cy y))
-    :polygon (-> (move-points shape x y)
-                 (assoc :x x)
-                 (assoc :y y))
-    :path (-> (assoc shape :translate [x y])
+    :path (-> (move-points shape x y)
               (assoc :x x)
               (assoc :y y))
     (-> shape
         (assoc :x x)
         (assoc :y y))))
+
+(defn opacity
+  "Set the opacity of the shape to `o`, which should be a decimal number between 0 and 1.0"
+  [o shape]
+  (assert-number-range "opacity must be a number between 0 and 1.0!" 0 1.0 o)
+  (assoc shape :opacity (str o)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; compositing functions
+
+(defn assure-shape-seq
+  "Returns `shape-or-shapes` wrapped in a vector if it appears to be a single shape."
+  [shape-or-shapes]
+  (cond (instance? Shape shape-or-shapes) [shape-or-shapes]
+        (instance? Shape (first shape-or-shapes)) shape-or-shapes
+        :else (assure-shape-seq (first shape-or-shapes))))
+
+;; XXX make proper bounding box!
+(defn shape-bounds
+  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this shape."
+  [shape]
+  {:width  (+ (or (:x shape) 0)
+              (or (:cx shape) 0)
+              (or (:width shape) 0)
+              (if-let [sw (:stroke-width shape)]
+                (* 2 sw)
+                0)
+              (or (:r shape) 0)
+              (if-let [pts (:d shape)]
+                (let [[x-min y-min x-max y-max] (points-bounds pts)]
+                  x-max)
+                0))
+   :height (+ (or (:y shape) 0)
+              (or (:cy shape) 0)
+              (or (:height shape) 0)
+              (if-let [sw (:stroke-width shape)]
+                (* 2 sw)
+                0)
+              (or (:r shape) 0)
+              (if-let [pts (:d shape)]
+                (let [[x-min y-min x-max y-max] (points-bounds pts)]
+                  y-max)
+                0))})
+
+(defn bounds
+  "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this group of shapes."
+  [shapes]
+  (let [shapes (assure-shape-seq shapes)
+        bounds (map shape-bounds shapes)]
+    {:width  (:width (apply max-key :width bounds))
+     :height (:height (apply max-key :height bounds))}))
 
 (defn layer
   "Returns a new shape with these `shapes` layered over each other."
@@ -375,7 +339,6 @@
                   :y 0
                   :children (remove nil? shapes))))
 
-;; XXX broken for triangles!
 (defn beside
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
   [& shapes]
@@ -385,14 +348,15 @@
        reverse
        (reduce (fn [state shape]
                  {:out    (conj (state :out)
-                                (update shape (if (= (:kind shape) :circle)
-                                                :cx
-                                                :x) + (apply + (:widths state))))
+                                (position (+ (or (:x shape) 0)
+                                             (or (:cx shape) 0)
+                                             (apply + (:widths state)))
+                                          (+ (or (:y shape) 0)
+                                             (or (:cy shape) 0))
+                                          shape))
                   :widths (butlast (state :widths))})
                {:out    '()
-                :widths (map #(if (= (:kind %) :circle)
-                                (:r %)
-                                (:width %))
+                :widths (map #(or (:r %) (:width %))
                              (map shape-bounds (butlast shapes)))})
        :out
        (apply layer)))
@@ -406,9 +370,12 @@
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
-                                 (update shape (if (= (:kind shape) :circle)
-                                                 :cy
-                                                 :y) + (apply + (:heights state))))
+                                (position (+ (or (:x shape) 0)
+                                             (or (:cx shape) 0))
+                                          (+ (or (:y shape) 0)
+                                             (or (:cy shape) 0)
+                                             (apply + (:heights state)))
+                                          shape))
                   :heights (butlast (state :heights))})
                {:out     '()
                 :heights (map #(if (= (:kind %) :circle)
@@ -423,18 +390,53 @@
 ;; rot    : picture → picture (Rotate a picture anti-clockwise by 90°)
 ;; rot45  : picture → picture (rotate the picture anti-clockwise by 45°)
 
-;;;; from "Creative Scala" intro:
-;; "click to reveal" solutions are a good idea
-;; stroke vs fill? more complicated, but useful.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; output formatting
+
+(defn points-to-path-statement [points]
+  (conj
+   (->> (drop 2 points)
+        (partition 2)
+        (mapcat (fn [[x y]] [:L x y]))
+        (into [:M (first points) (second points)]))
+   :Z))
+
+(defn path-points->string [pts]
+  (->> (points-to-path-statement pts)
+       (map #(if (keyword? %) (str (name %)) %))
+       (interpose " ")
+       (apply str)))
+
+;; TODO rotate can take two more numbers for the centrum, would
+;; probably be better for each thing to rotate around itself
+;; TODO SVG rotation causes slipping, need to re-calc bounds
+;; TODO re-implement this mess using a transform matrix
+(defn shape->vector [shape]
+  (let [{:keys [kind children d text] :as attrs} @shape
+        unkinded (dissoc attrs :is-a :kind)]
+    (into [kind (reduce ; clean up/preprocess the string-y bits of the SVG element
+                  (fn [m [k v]]
+                    (case k
+                      :d      (update m :d path-points->string)
+                      :rotate (case kind
+                                :path (let [[x-min y-min x-max y-max] (points-bounds d)]
+                                        (update m :transform #(str (or % "") " rotate(" (:rotate m) "," (- x-max x-min) "," (- y-max y-min) ")")))
+                                #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x attrs) "," (:y attrs) ")"))
+                                (let [[x y] (center-point m)]
+                                  (update m :transform #(str (or % "") " rotate(" (:rotate m) "," x "," y ")"))))
+                      :scale (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
+                      m))
+                  unkinded
+                  (select-keys unkinded [:d :points :rotate :scale]))
+           text]
+          (mapv shape->vector children))))
+
+(defn to-hiccup [shape]
+  [:svg (assoc (bounds shape) :x 0 :y 0)
+   (shape->vector shape)])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; color helpers and scaling fn
-
-(defn opacity
-  "Set the opacity of the shape to `o`, which should be a decimal number between 0 and 1.0"
-  [o shape]
-  (assert-number-range "opacity must be a number between 0 and 1.0!" 0 1.0 o)
-  (assoc shape :opacity (str o)))
 
 (defn rgb [red green blue]
   "Returns a color of `red`, `green`, `blue`, each represented as a number from (0-255)."
@@ -648,6 +650,17 @@
   (mapv (fn [c] [c (colorize c (square 25))])
        (filter (fn [cn] (clojure.string/includes? cn s))
                (map first color-names))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; random helpers to be moved somewhere else
+
+;; TODO generalize (current forces numeric types) and probably rename
+(defn value-to-cell! [the-cell & cell-path]
+  (fn [event]
+    (let [v (js/parseFloat (.-value (.-target event)))]
+      (swap! the-cell (if cell-path
+                        #(assoc-in % cell-path v)
+                        #(identity v))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; pre-cooked SVG shapes
