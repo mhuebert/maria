@@ -327,7 +327,7 @@ color-names
 
 ;; To preserve the 3:2 ratio, we divide the total height (200) by the number of colors we have. The `let` helps in two ways: first it allows us to try out different vectors of colors without repeating ourselves, and then when we're done it tells us what the arguments to our function should be.
 
-;; Now that we have a general vertical-stacked-colors flag solution, we're ready for step 3: turning our solution into a function. What should we call our function? If you're stumped, you're in good company: naming things is one of the truly hard problems in programming. One servicable name is `vertical-flag`, which we can define like this:
+;; Now that we have a general vertical-stacked-colors flag solution, we're ready for step 3: turning our solution into a function. What should we call our function? If you're stumped, you're in good company: naming things is one of the truly hard problems in programming. One serviceable name is `vertical-flag`, which we can define like this:
 
 (defn vertical-flag [colors] 
   (apply above
