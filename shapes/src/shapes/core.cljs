@@ -156,6 +156,8 @@
           [js/Number.MAX_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER]
           (partition 2 (filter number? pts))))
 
+(declare shape-bounds)
+
 (defn center-point [shape]
   (let [bounds (shape-bounds shape)]
     [(+ (/ (- (:width bounds) (or (:x shape) 0)) 2) (or (:x shape) 0))

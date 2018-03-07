@@ -13,8 +13,8 @@
                                             position opacity rotate scale
                                             colorize stroke stroke-width no-stroke fill no-fill
                                             color-names colors-named rgb hsl rescale
-                                            layer beside above points-to-path value-to-cell!
-                                            fish
+                                            layer beside above #_points-to-path value-to-cell!
+                                            #_ gfish
                                             ;; are these internal only? -jar
                                             ;;assure-shape-seq shape-bounds bounds shape->vector
                                             ]]
