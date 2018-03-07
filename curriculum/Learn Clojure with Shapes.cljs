@@ -141,7 +141,7 @@ color-names
 
 (map square [2 4 8 16 32 64 128])
 
-;; What's going on here? The part in square brackets (`[` and `]`) is a vector, which is how we store a bunch of things in order. We use it here to make a bunch of squares with that size. We use `map` to evaluates the function `square` on each thing in our vector. The result is a square for every number in our collection.
+;; What's going on here? The part in square brackets (`[` and `]`) is a vector, which is how we store a bunch of things in order. We use it here to make a bunch of squares with that size. We use `map` to evaluate the function `square` on each thing in our vector. The result is a square for every number in our collection.
 
 ;; Try using `map` with `circle`. Replace "_" with your code:
 
