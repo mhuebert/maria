@@ -12,7 +12,8 @@
    ["what-if" "What if?" (repo-path "curriculum/What If.cljs")]
    ["cells" "Welcome to Cells" (repo-path "curriculum/Welcome to Cells.cljs")]
    ["data-flow" "Data Flow" (repo-path "curriculum/Data Flow.cljs")]
-   ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]])
+   ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]
+   ["intro-cb" "[ClojureBridge] Learn Clojure with Shapes" (repo-path "curriculum/Learn Clojure with Shapes [ClojureBridge].cljs")]])
 
 (def owner {:username  "curriculum"
             :local-url "/curriculum"})
