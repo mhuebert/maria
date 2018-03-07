@@ -160,7 +160,7 @@ color-names
 ;; There's a second way to control multiple arguments in a `map`, and that is to create a function on the fly to do what we want. We use this in situations where only one argument will change. For instance, say we want to create some shapes with particular colors.
 
 ;; 1. We start with a vector of color names, `["red" "blue" "green"]`
-;; 2. We use `fn` to make up a _totally new function_--we call these "anonymous functions", because they don't need names)
+;; 2. We use `fn` to make up a _totally new function_--we call these "anonymous functions", because they don't need names
 ;; 3. We use `map` to apply that anonymous function to each color name in our vector
 
 ;; The technique looks like this:
