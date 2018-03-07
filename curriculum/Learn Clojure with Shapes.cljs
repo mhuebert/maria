@@ -354,8 +354,8 @@ color-names
 
 ;; This introduction to programming through Clojure intentionally avoids getting into the benefits of Lisp syntax, language features like immutability or laziness, hosting and tooling concerns, and the full span of basic data types. This document is a consciously incomplete introduction. While all of those topics are valuable material, they are secondary for the programming beginner. Instead, since Clojure programmers typically spend the majority of their time juggling expressions, names, and functions, we try to offer with Maria a playground where the beginner is introduced to those fundamental tools.
 
-;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/), or write your own code on a fresh page by using the New button at the top left.
+;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/curriculum), or write your own code on a fresh page by using the New button at the top left.
 
 ;; If you'd like to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
 
-;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://maria.cloud/gist/888b354fe941866721370a91e181252c) or linguistics, or...?
+;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://www.maria.cloud/shannons-entropy) or linguistics, or...?
