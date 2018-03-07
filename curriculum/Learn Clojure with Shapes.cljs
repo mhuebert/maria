@@ -96,12 +96,6 @@
 
 color-names
 
-;; You can expand that list by clicking the ellipsis ("..."). But that's a lot of colors. To filter just the ones you want, explore this:
-
-(colors-named "yellow")
-
-;; Try other partial color names, like "slate" or "light". 🔭
-
 ;; Before moving ahead, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
 
 ;; In addition to nesting expressions, we can also combine expressions to create groups of shapes. We do this by using the `layer` function. Let's reach into our **Code Inspection Toolbox** to ask about it:
