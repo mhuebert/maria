@@ -248,14 +248,13 @@ color-names
 
 ;; ## 🔬 Putting Your Programmer Tools to Work 🔨
 
-;; The last part of this whirlwind introduction is to show you how to _think about_ defining functions. How do we start to tackle the problem?
+;; The last thing is to show you how to _think about_ defining functions. The problem-solving template goes like this:
 
-;; The problem-solving template goes like this:
-;;  1. explore the problem in a conversation with the computer
+;;  1. explore the problem
 ;;  2. gradually turn your explorations into a solution
-;;  3. (maybe) turn your solution into a named function for later
+;;  3. (maybe) turn your solution into a named function
 
-;; Let's try it with a slightly more complex shape-drawing challenge: drawing a flag with a vector of colors we give it. For instance, suppose we want to turn our `rainbow` vector into a rainbow flag, or a vector of three colors into a vertical tricolor like the flag of Germany or the Netherlands. So our goal will be a function that stacks colored bands to make a flag out of whatever color names we give it.
+;; Let's try it by drawing a flag based on a vector of colors. For instance, suppose we want to turn our `rainbow` vector into a rainbow flag. Our goal is a function that makes a flag out of whatever color names we give it.
 
 ;; First, we explore. Our first attempt might look something like:
 
@@ -337,12 +336,13 @@ color-names
 
 ;; # Where to Go From Here
 
-;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Where to go with that power is up to you. Your next step is to find interesting ways to put functions together to create cool stuff. I look forward to seeing what you make. ✨
+;; You've been introduced to the essence of code: writing expressions, asking the computer questions, and creating functions. Your next step is to find interesting ways to put functions together to create cool stuff.
 
-;; This introduction to programming through Clojure intentionally avoids getting into the benefits of Lisp syntax, language features like immutability or laziness, hosting and tooling concerns, and the full span of basic data types. This document is a consciously incomplete introduction. While all of those topics are valuable material, they are secondary for the programming beginner. Instead, since Clojure programmers typically spend the majority of their time juggling expressions, names, and functions, we try to offer with Maria.cloud a playground where the beginner is introduced to those fundamental tools.
+;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery) or explore more of our curriculum modules:
 
-;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/), or write your own code on a fresh page by using the New button at the top left.
+;; - cover conditional logic in [What If?](https://www.maria.cloud/what-if)
+;; - explore math, statistics, and information theory through [Shannon's Entropy](https://www.maria.cloud/shannons-entropy)
+;; - learn how to make animations and user interfaces with [Cells](https://www.maria.cloud/cells) (or skip the "learning" part with the [Animation Quickstart](https://dev.maria.cloud/animation-quickstart)
+;; - poke around open data APIs with [Data Flow](https://www.maria.cloud/data-flow)
 
-;; If you'd like to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
-
-;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://maria.cloud/gist/888b354fe941866721370a91e181252c) or linguistics, or...?
+;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What would you like to with through programming?
