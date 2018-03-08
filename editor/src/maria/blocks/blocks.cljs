@@ -21,7 +21,6 @@
 (defprotocol IBlock
 
   (empty? [this])
-  (emit [this])
   (kind [this])
   (state [this])
   (tag [this])
@@ -59,7 +58,9 @@
 (defrecord WhitespaceBlock [id node]
   IBlock
   (kind [this] :whitespace)
-  (emit [this] (:value node))
+
+  Object
+  (toString [this] (:value node))
 
   IFn
   (-invoke [this props] [:div]))
@@ -78,9 +79,10 @@
 (defn from-ast
   "Returns a block, given a lark.tree AST node."
   [{:keys [tag value] :as node}]
+
   (case tag
-    :comment-block (->ProseBlock (d/unique-id) (merge node {:prose/source (commentize-source value)
-                                                            :prose/state  (.parse markdown/parser value)}))
+    :comment-block (->ProseBlock (d/unique-id) (assoc node :prose/source (commentize-source value)
+                                                           :prose/state (.parse markdown/parser value)))
     (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
     (->CodeBlock (d/unique-id) node)))
 
@@ -91,9 +93,10 @@
                   :prose ""
                   :code [])))
   ([kind value]
-   (from-ast {:tag   (case kind :prose :comment-block
-                                :code :base)
-              :value value})))
+   (from-ast (case kind :prose {:tag :comment-block
+                                :value value}
+                        :code {:tag :base
+                               :children value}))))
 
 (def emit-list
   "Returns the concatenated source for a list of blocks."
@@ -101,7 +104,7 @@
     (reduce (fn [out block]
               (if (whitespace? block)
                 out
-                (let [source (emit block)]
+                (let [source (str block)]
                   (if-not (clojure.core/empty? source)
                     (str out source "\n\n")
                     out))))
@@ -116,9 +119,9 @@
 (defn from-source
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
-  (->> (tree/ast (:ns @e/c-env) source)
+  (->> (tree/ast source)
        (tree/group-comment-blocks)
-       (:value)
+       (:children)
        (reduce (fn [out node]
                  (cond-> out
                          (not (or (tree/whitespace? node)

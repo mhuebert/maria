@@ -22,9 +22,9 @@
 (defn highlights-for-position
   "Return ranges for appropriate highlights for a position within given Clojure source."
   [source position]
-  (when-let [highlights (some-> (tree/ast (:ns @e/c-env) source)
+  (when-let [highlights (some-> (tree/ast source)
                                 (tree/ast-zip)
-                                (tree/node-at position)
+                                (tree/navigate position)
                                 (z/node)
                                 (tree/node-highlights))]
     (case (count highlights)
@@ -108,7 +108,9 @@
         (or (some-> (source-lookups/js-source->clj-source (.toString value))
                     (code/viewer))
             (some-> (source-lookups/fn-var value)
-                    (special-views/var-source))))]]))
+                    (special-views/var-source))
+            [:div.pre
+             (code/viewer (.toString value))]))]]))
 
 (def format-value views/format-value)
 

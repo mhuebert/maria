@@ -7,7 +7,8 @@
             [lark.eval :as live-eval]
             [goog.net.XhrIo :as xhr]
             [maria.util :as util]
-            [shadow.cljs.bootstrap.env :as shadow-env])
+            [shadow.cljs.bootstrap.env :as shadow-env]
+            [maria.live.ns-utils :as ns-utils])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -71,9 +72,9 @@
   "Searches previously compiled ClojureScript<->JavaScript mappings to return the original ClojureScript
   corresponding to compiled JavaScript"
   [js-source]
-  (when-let [{:keys [index source compiled-js source-map]} (->> @e/eval-log
-                                                                (keep (partial js-match js-source))
-                                                                (first))]
+  (when-let [{:keys [index source compiled-js source-map] :as result} (->> @e/eval-log
+                                                                           (keep (partial js-match js-source))
+                                                                           (first))]
     (let [pos (-> (live-eval/mapped-cljs-position (index-position index compiled-js) source-map)
                   (update :line inc)
                   (update :column inc))]
@@ -92,7 +93,8 @@
    (fn [f]
      (when (fn? f)
        (or (when-let [munged-sym (util/some-str (aget f "name"))]
-             (e/resolve-var (symbol (demunge-symbol-str munged-sym))))
+             (when-let [the-var (ns-utils/resolve-var (symbol (demunge-symbol-str munged-sym)))]
+               the-var))
            (first (for [[_ ns-data] (get-in @e/c-state [:cljs.analyzer/namespaces])
                         [_ the-var] (ns-data :defs)
                         :when (= f (live-eval/var-value the-var))]

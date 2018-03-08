@@ -1,7 +1,7 @@
 (ns maria.blocks.code
   (:require [re-view.core :as v :refer [defview]]
 
-            [lark.structure.codemirror :as cm]
+            [lark.editors.codemirror :as cm]
             [lark.editor :as Editor]
             [lark.commands.exec :as exec]
 
@@ -31,11 +31,11 @@
   (when-not (doc/unsaved-changes? doc)
     (let [the-node (cond-> (:node block)
                            (= :base (:tag (:node block)))
-                           (-> :value first))
+                           (-> :children first))
           the-string (tree/string the-node)
           ast (->> (Block/emit-list (.getBlocks block-list))
                    (tree/ast)
-                   (:value)
+                   (:children)
                    (remove #(or (tree/whitespace? %)
                                 (tree/comment? %))))
           index (->> ast
@@ -81,7 +81,7 @@
                     (e/handle-block-error (:id block) error))}
        (code/CodeView {:class "pa3 bg-white"
                        :ref #(v/swap-silently! state assoc :editor-view %)
-                       :value (Block/emit (:block this))
+                       :value (str (:block this))
                        :on-ast (fn [node]
                                  (.splice block-list block [(assoc block :node node)]))
                        :before-change before-change
@@ -107,11 +107,13 @@
   (kind [this] :code)
   (empty? [this]
     (let [{:keys [tag] :as node} (:node this)]
-      (= 0 (count (filter (complement tree/whitespace?) (if (= :base tag)
-                                                          (:value node)
-                                                          [node]))))))
+      (= 0 (count (filter (complement tree/whitespace?)
+                          (if (= :base tag)
+                            (:children node)
+                            [node]))))))
 
-  (emit [{:keys [node]}]
+  Object
+  (toString [{:keys [node]}]
     (or (get node :source)
         (tree/string node)))
 
@@ -138,7 +140,7 @@
     ([this]
      (let [editor (Editor/of-block this)
            source (or (cm/selection-text editor)
-                      (Block/emit this))]
+                      (str this))]
        (when (.somethingSelected editor)
          (let [div (.. editor -display -wrapper)]
            (classes/add div "post-eval")

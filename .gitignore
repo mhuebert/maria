@@ -20,4 +20,4 @@ node_modules
 **/.cljs_rhino_repl/
 **/.firebaserc
 maria.css
-.cpcache
+**/.cpcache/**
