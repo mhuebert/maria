@@ -94,4 +94,10 @@ to directly enter the `live` environment (provided you've opened up your browser
 yarn run release;
 ```
 
+## License
 
+The curriculum is licensed as [Creative Commons Attribution 4.0  (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). 
+
+The Shapes and Friendly libraries are distributed under the Eclipse Public License 2.0. 
+
+See LICENSE files in relevant subdirectories.
