@@ -44,7 +44,7 @@
      [:li "The " [:a {:href "/quickstart"} "Editor Quickstart"] ", if you're already familiar with Clojure."]
      [:li "An " [:a {:href "/gallery?eval=true"} "Example Gallery"] " of user creations."]
      [:li "Understand the " [:a {:target "_blank"
-                                 :href   "https://github.com/mhuebert/maria/blob/master/curriculum/pedagogy.md"} "Pedagogy"] " behind Maria's curriculum."]
+                                 :href   "https://github.com/mhuebert/maria/wiki/Curriculum"} "Pedagogy"] " behind Maria's curriculum."]
      [:li "Discover the " [:a {:target "_blank"
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
