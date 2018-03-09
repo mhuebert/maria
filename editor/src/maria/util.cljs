@@ -169,3 +169,9 @@
   (if (map? m)
     (persistent! (reduce-kv (fn [out-m k v] (assoc! out-m (f k) v)) (transient {}) m))
     (for-map [[k v] m] (f k) v)))
+
+(defn guard-> [x f]
+  (when (f x) x))
+
+(defn guard->> [f x]
+  (when (f x) x))

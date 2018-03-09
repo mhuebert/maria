@@ -7,7 +7,7 @@
             [maria.commands.code :as code]
             [re-view.prosemirror.commands :as commands]
             [maria.views.icons :as icons]
-            [lark.structure.codemirror :as cm]
+            [lark.editors.codemirror :as cm]
             [lark.structure.edit :as edit]))
 
 (defcommand :eval/doc
@@ -17,7 +17,7 @@
   [{:keys [block-list]}]
   (doseq [block (.getBlocks block-list)]
     (when (satisfies? Block/IEval block)
-      (Block/eval! block :string (Block/emit block)))))
+      (Block/eval! block :string (str block)))))
 
 (defn focus-adjacent! [{:keys [blocks block]} dir]
   (some-> ((case dir :right Block/right

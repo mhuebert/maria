@@ -23,10 +23,13 @@
   (empty? [{{:keys [prose/source]} :node}]
     (util/whitespace-string? source))
 
-  (emit [{{:keys [prose/state prose/source]} :node}]
+  Object
+  (toString [{{:keys [prose/state prose/source]} :node
+              :as this}]
     (or source
-        (tree/string {:tag   :comment-block
-                      :value (serialize-state state)}))))
+        (tree/string {:tag :comment-block
+                      :value (or (some-> state (serialize-state))
+                                 "")}))))
 
 (defn prepend-paragraph [this]
   (when-let [prose-view (Editor/of-block this)]
@@ -35,72 +38,72 @@
       (dispatch (-> (.-tr state)
                     (.insert 0 (.createAndFill (pm/get-node state :paragraph))))))))
 (comment
-  (js/setTimeout
-    #(do (let [[A B C Code_ D E :as blocks] [(Block/create :prose "A")
-                                             (Block/create :prose "B")
-                                             (Block/create :prose "C")
-                                             (Block/create :code)
-                                             (Block/create :prose "D")
-                                             (Block/create :prose "E")]
-               test (fn [spliced before-value after-value first-value spliced-count]
-                      (let [{:keys [before after]} (meta spliced)]
-                        (try
-                          (assert (= spliced-count (count spliced)))
-                          (assert (= before-value (:value (:node before))))
-                          (assert (= first-value (:value (:node (first spliced)))))
-                          (assert (= after-value (:value (:node after))))
-                          (catch js/Error e
+ (js/setTimeout
+  #(do (let [[A B C Code_ D E :as blocks] [(Block/create :prose "A")
+                                           (Block/create :prose "B")
+                                           (Block/create :prose "C")
+                                           (Block/create :code)
+                                           (Block/create :prose "D")
+                                           (Block/create :prose "E")]
+             test (fn [spliced before-value after-value first-value spliced-count]
+                    (let [{:keys [before after]} (meta spliced)]
+                      (try
+                        (assert (= spliced-count (count spliced)))
+                        (assert (= before-value (:value (:node before))))
+                        (assert (= first-value (:value (:node (first spliced)))))
+                        (assert (= after-value (:value (:node after))))
+                        (catch js/Error e
 
-                            (println {:before  [(:value (:node before)) :expected before-value]
-                                      :after   [(:value (:node after)) :expected after-value]
-                                      :spliced spliced})
-                            (throw e)))))]
-           #_(assert (= 3 (count (Block/join-blocks blocks))))
+                          (println {:before [(:value (:node before)) :expected before-value]
+                                    :after [(:value (:node after)) :expected after-value]
+                                    :spliced spliced})
+                          (throw e)))))]
+         #_(assert (= 3 (count (Block/join-blocks blocks))))
 
-           ;;
-           ;; Removals
+         ;;
+         ;; Removals
 
-           (test (Block/splice-blocks blocks A [])
-                 nil "B\n\nC" "B\n\nC" 3)
+         (test (Block/splice-blocks blocks A [])
+               nil "B\n\nC" "B\n\nC" 3)
 
-           (test (Block/splice-blocks blocks B [])
-                 "A\n\nC" [] "A\n\nC" 3)
+         (test (Block/splice-blocks blocks B [])
+               "A\n\nC" [] "A\n\nC" 3)
 
-           (test (Block/splice-blocks blocks C [])
-                 "A\n\nB" [] "A\n\nB" 3)
+         (test (Block/splice-blocks blocks C [])
+               "A\n\nB" [] "A\n\nB" 3)
 
-           ;; NOTE
-           ;; if 'before' block was merged with 'after' block,
-           ;;    'after' is nil.
-           (test (Block/splice-blocks blocks Code_ [])
-                 "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
+         ;; NOTE
+         ;; if 'before' block was merged with 'after' block,
+         ;;    'after' is nil.
+         (test (Block/splice-blocks blocks Code_ [])
+               "A\n\nB\n\nC\n\nD\n\nE" nil "A\n\nB\n\nC\n\nD\n\nE" 1)
 
-           (test (Block/splice-blocks blocks D [])
-                 [] "E" "A\n\nB\n\nC" 3)
+         (test (Block/splice-blocks blocks D [])
+               [] "E" "A\n\nB\n\nC" 3)
 
-           ;;
-           ;; Insertions
+         ;;
+         ;; Insertions
 
-           (test (Block/splice-blocks blocks A [(Block/create :prose "X")])
-                 nil [] "X\n\nB\n\nC" 3)
-           ;; replacing 'A' has side-effect of joining with B and C.
-           ;; in the real world, prose blocks will always be joined.
+         (test (Block/splice-blocks blocks A [(Block/create :prose "X")])
+               nil [] "X\n\nB\n\nC" 3)
+         ;; replacing 'A' has side-effect of joining with B and C.
+         ;; in the real world, prose blocks will always be joined.
 
 
-           (test (Block/splice-blocks blocks B 1 [])
-                 "A" [] "A" 3)
+         (test (Block/splice-blocks blocks B 1 [])
+               "A" [] "A" 3)
 
-           (test (Block/splice-blocks blocks B -1 [])
-                 nil "C" "C" 3)
+         (test (Block/splice-blocks blocks B -1 [])
+               nil "C" "C" 3)
 
-           (test (Block/splice-blocks blocks B 2 [])
-                 "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
+         (test (Block/splice-blocks blocks B 2 [])
+               "A\n\nD\n\nE" nil "A\n\nD\n\nE" 1)
 
-           (test (Block/splice-blocks blocks A 5 [])
-                 nil nil nil 0)
+         (test (Block/splice-blocks blocks A 5 [])
+               nil nil nil 0)
 
-           (test (Block/splice-blocks blocks E -5 [])
-                 nil nil nil 0))) 0))
+         (test (Block/splice-blocks blocks E -5 [])
+               nil nil nil 0))) 0))
 
 ;; TODO
 
@@ -137,32 +140,32 @@
     (:prose-editor-view @(:view/state editor-view)))
 #_(defview markdown
     {:view/initial-state {:editing? false
-                          :pm-view  nil}}
+                          :pm-view nil}}
     [{:keys [view/state view/prev-state]} s]
     (if (:editing? @state)
-      (prose/Editor {:value   s
-                     :ref     #(let [pm-view (some-> % (get-pm))]
-                                 (v/swap-silently! state assoc :pm-view pm-view)
+      (prose/Editor {:value s
+                     :ref #(let [pm-view (some-> % (get-pm))]
+                             (v/swap-silently! state assoc :pm-view pm-view)
 
-                                 (when (and pm-view (not (:pm-view prev-state)))
-                                   (when-let [selection (some->> (:clicked-coords @state)
-                                                                 (clj->js)
-                                                                 (.posAtCoords pm-view)
-                                                                 (.-pos)
-                                                                 (.resolve (.. pm-view -state -doc))
-                                                                 (.near js/pm.Selection))]
-                                     (.dispatch pm-view (.. pm-view -state -tr (setSelection selection))))
+                             (when (and pm-view (not (:pm-view prev-state)))
+                               (when-let [selection (some->> (:clicked-coords @state)
+                                                             (clj->js)
+                                                             (.posAtCoords pm-view)
+                                                             (.-pos)
+                                                             (.resolve (.. pm-view -state -doc))
+                                                             (.near js/pm.Selection))]
+                                 (.dispatch pm-view (.. pm-view -state -tr (setSelection selection))))
 
-                                   (some-> pm-view (.focus))))
+                               (some-> pm-view (.focus))))
                      :on-blur #(do (.log js/console "prose/Editor on-blur")
                                    (swap! state assoc
                                           :editing? false
                                           :clicked-coords nil))})
-      [:.cf {:ref                     #(v/swap-silently! state assoc :md-view %)
-             :on-click                #(swap! state assoc
-                                              :editing? true
-                                              :clicked-coords {:left (.-mouseX %)
-                                                               :top  (.-mouseY %)})
+      [:.cf {:ref #(v/swap-silently! state assoc :md-view %)
+             :on-click #(swap! state assoc
+                               :editing? true
+                               :clicked-coords {:left (.-mouseX %)
+                                                :top (.-mouseY %)})
              :dangerouslySetInnerHTML {:__html (.render md s)}}]))
 
 #_(defn select-near-click [e pm-view]
@@ -172,9 +175,9 @@
           $pos (some->> (.posAtCoords pm-view #js {:left (cond (> mouseX right) (dec right)
                                                                (< mouseX left) (inc left)
                                                                :else mouseX)
-                                                   :top  (cond (> mouseY bottom) (dec bottom)
-                                                               (< mouseY top) (inc top)
-                                                               :else mouseY)})
+                                                   :top (cond (> mouseY bottom) (dec bottom)
+                                                              (< mouseY top) (inc top)
+                                                              :else mouseY)})
                         (.-pos)
                         (.resolve (.. pm-view -state -doc)))]
       (when $pos

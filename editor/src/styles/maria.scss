@@ -78,6 +78,14 @@ $selection-color: #f4f4d6;
   span.cm-link {
     color: #987aa0;
   }
+
+  span.error-text {
+    //background: rgba(255,0,0,0.1);
+    color: #ff9e9e;
+    &.cm-bracket {
+      border-bottom: 2px solid black;
+    }
+  }
 }
 
 /* I don't think we're using these */
@@ -130,7 +138,7 @@ div.CodeMirror {
 }
 
 .monospace, .code, code, pre, .CodeMirror {
-  font-family: Consolas, Menlo, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
+  font-family: Menlo, Consolas, Monaco, Lucida Console, Liberation Mono, DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace, serif;
 }
 
 .prosemirror-content {
@@ -217,22 +225,13 @@ $lighten: rgba(255, 255, 255, 0.25);
   background-color: $lighten;
 }
 
-.error-text {
-  //background: rgba(255,0,0,0.1);
-  border-bottom: 2px solid black;
-}
-
-.bg-darken-red, .parinfer-error {
+.bg-darken-red {
   background-color: rgba(255, 79, 79, 0.1);
 }
 
 .bg-washed-blue-darker, .hover-bg-washed-blue:active, .hover-bg-washed-blue:focus {
   background-color: #e5feff;
 }
-
-//.parinfer-paren-trail {
-//  opacity: 0.7;
-//}
 
 .progress-indeterminate, .progress-indeterminate:before {
   height: 3px;
@@ -416,9 +415,10 @@ $lighten: rgba(255, 255, 255, 0.25);
 }
 
 .cursor-marker {
-  border-right: 2px solid #9b7ea3; //#9ba450 #a78939
-  display: inline;
-  margin: -1px;
+  border-right: 1px solid #b8b8b8; //#9ba450 #a78939
+  display: inline-block;
+  height: 20px;
+  margin: -4px -0.5px;
 }
 
 .code {

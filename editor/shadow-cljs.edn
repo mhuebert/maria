@@ -2,7 +2,8 @@
  :source-paths ["src"
                 "test"
                 "../shapes/src"
-                "../friendly/src"]
+                "../friendly/src"
+                #_"../../lark/tools/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -10,14 +11,14 @@
                 [org.clojure/spec.alpha "0.1.143"]
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
-
-;;                [maria/friendly "0.1.1-SNAPSHOT"]
-;;                [maria/shapes "0.1.0"]
+                
+                ;;                [maria/friendly "0.1.1-SNAPSHOT"]
+                ;;                [maria/shapes "0.1.0"]
 
                 [re-view "0.4.6"]
                 [re-view/prosemirror "0.2.2"]
 
-                [lark/tools "0.1.27"]
+                [lark/tools "0.1.28"]
                 [lark/cells "0.1.7"]
                 [cljs-ajax "0.7.3"]]
  :builds
