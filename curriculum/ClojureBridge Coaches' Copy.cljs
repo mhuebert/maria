@@ -46,7 +46,9 @@
 
 ;; The goal here is to reinforce the lessons of the first section, encourage experimentation, and to introduce evaluation of sub-expressions. Make sure to have them try switching between evaluating an inner expression and evaluating the top-level expression by adding `Shift` to the key chord.
 
-;; We also send learners on a field trip to the [Editor Quickstart](https://maria.cloud/quickstart) to level up their ability to manipulate code.
+;; This is often a good time to introduce some form of "inventory": a list of functions the learner has been exposed to. We find this is best kept in a non-digital format like a whiteboard or sheet of paper.
+
+;; Notice that we send learners on a field trip to the [Editor Quickstart](https://maria.cloud/quickstart) to level up their ability to manipulate code. We want to remove barriers to writing code, so some structural editing commands are necessary.
 
 ;; Sometimes learners find this a good spot to go off-script and draw a bunch of composite shapes. This is awesome and should be encouraged. Don't railroad people to a set curriculum. Address their questions as they come up.
 
