@@ -12,6 +12,7 @@
             [re-view.core :as v]
             [maria.views.icons :as icons]
             ["prosemirror-inputrules" :as input-rules]
+            ["prosemirror-commands" :as pm-commands]
             [re-view.prosemirror.markdown :as markdown]))
 
 (defn empty-root-paragraph? [state]
@@ -132,6 +133,7 @@
                    (some-> (Editor/of-block after) (Editor/focus! :start)))
         true))))
 
+
 (defn delete-empty-cursor-node [state dispatch]
   (when (some-> (pm/cursor-node state)
                 (commands/empty-node?))
@@ -158,7 +160,6 @@
 
 (defn join-with-prev [{:keys [blocks block-list block editor]}]
   (fn [_ _]
-    (has-selection? editor)
     (when (and (Editor/at-start? editor)
                (not (has-selection? editor)))
       (let [before (Block/left blocks block)]
@@ -180,6 +181,16 @@
 
               true)))))))
 
+(def backspace (commands/chain pm-commands/deleteSelection
+                               commands/clear-empty-non-paragraph-nodes
+                               (pm-commands/autoJoin pm-commands/joinBackward (fn [x y]
+                                                                                (some-> y
+                                                                                        .-content
+                                                                                        .-content
+                                                                                        (aget 0)
+                                                                                        (commands/empty-node?))))
+                               input-rules/undoInputRule))
+
 (defcommand :prose/backspace
   {:bindings ["Backspace"]
    :private true
@@ -192,9 +203,9 @@
                   commands/clear-empty-non-paragraph-nodes
                   (join-with-prev context)
                   (remove-empty-block context)
-                  commands/outdent
+
                   (handle-cursor-at-start context)
-                  commands/backspace)))
+                  backspace)))
 
 (defcommand :prose/space
   {:bindings ["Space"]
