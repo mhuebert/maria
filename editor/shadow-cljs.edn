@@ -1,9 +1,10 @@
 {:jvm-opts ["-Xmx2G"]
  :source-paths ["src"
                 "test"
-                "../shapes/src"
-                "../friendly/src"
-                "../../lark/tools/src"]
+                "../shapes/src"                             ;; also published: [maria/shapes "0.0.0"]
+                "../friendly/src"                           ;; also published: [maria/friendly "0.0.0"]
+                #_"../../lark/tools/src"                    ;; for local dev
+                #_"../../re-view/re_view/src"]              ;; for local dev
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -11,11 +12,8 @@
                 [org.clojure/spec.alpha "0.1.143"]
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
-                
-                ;;                [maria/friendly "0.1.1-SNAPSHOT"]
-                ;;                [maria/shapes "0.1.0"]
 
-                [re-view "0.4.6"]
+                [re-view "0.4.9"]
                 [re-view/prosemirror "0.2.2"]
 
                 [lark/tools "0.1.28"]
