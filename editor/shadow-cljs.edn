@@ -3,7 +3,7 @@
                 "test"
                 "../shapes/src"
                 "../friendly/src"
-                #_"../../lark/tools/src"]
+                "../../lark/tools/src"]
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
