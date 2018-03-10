@@ -60,6 +60,7 @@
                                                      (.returnSelections this)
                                                      (ui/clear!)
                                                      (on-select! value))
+                                :select-on-enter true
                                 :ui/max-height     max-height
                                 :default-selection 0
                                 :on-selection      on-selection

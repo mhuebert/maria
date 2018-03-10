@@ -30,9 +30,9 @@
   (-deref [this] attrs)
   ILookup
   (-lookup [this k]
-    (get attrs k))
+    (-lookup attrs k))
   (-lookup [this k not-found]
-    (get attrs k not-found))
+    (-lookup attrs k not-found))
   IAssociative
   (-assoc [this key val]
     (new Shape (assoc attrs key val)))
@@ -133,8 +133,8 @@
    (assert-number "size must be a number!" size)
    (image size size src))
   ([width height src]
-  (assert-number "width must be a number!" width)
-  (assert-number "height must be a number!" height)  
+   (assert-number "width must be a number!" width)
+   (assert-number "height must be a number!" height)
    (->Shape {:kind   :image
              :href   src
              :width  width
@@ -302,36 +302,38 @@
 (defn shape-bounds
   "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this shape."
   [shape]
-  {:width  (+ (or (:x shape) 0)
-              (or (:cx shape) 0)
-              (or (:width shape) 0)
-              (if-let [sw (:stroke-width shape)]
-                (* 2 sw)
-                0)
-              (or (:r shape) 0)
-              (or (:rx shape) 0)
-              (if-let [pts (:d shape)]
-                (let [[x-min y-min x-max y-max] (points-bounds pts)]
-                  x-max)
-                0))
-   :height (+ (or (:y shape) 0)
-              (or (:cy shape) 0)
-              (or (:height shape) 0)
-              (if-let [sw (:stroke-width shape)]
-                (* 2 sw)
-                0)
-              (or (:r shape) 0)
-              (or (:ry shape) 0)
-              (if-let [pts (:d shape)]
-                (let [[x-min y-min x-max y-max] (points-bounds pts)]
-                  y-max)
-                0))})
+  (let [attrs (cond-> shape
+                      (= Shape (type shape)) (deref))]
+    {:width (+ (-lookup attrs :x 0)
+               (-lookup attrs :cx 0)
+               (-lookup attrs :width 0)
+               (if-let [sw (-lookup attrs :stroke-width)]
+                 (* 2 sw)
+                 0)
+               (-lookup attrs :r 0)
+               (-lookup attrs :rx 0)
+               (if-let [pts (-lookup attrs :d)]
+                 (let [[x-min y-min x-max y-max] (points-bounds pts)]
+                   x-max)
+                 0))
+     :height (+ (-lookup attrs :y 0)
+                (-lookup attrs :cy 0)
+                (-lookup attrs :height 0)
+                (if-let [sw (-lookup attrs :stroke-width)]
+                  (* 2 sw)
+                  0)
+                (-lookup attrs :r 0)
+                (-lookup attrs :ry 0)
+                (if-let [pts (-lookup attrs :d)]
+                  (let [[x-min y-min x-max y-max] (points-bounds pts)]
+                    y-max)
+                  0))}))
 
 (defn bounds
   "Returns a map containing :height :width keys that represent the outer (i.e. highest) x/y position for this group of shapes."
   [shapes]
   (let [shapes (assure-shape-seq shapes)
-        bounds (map shape-bounds shapes)]
+        bounds (mapv shape-bounds shapes)]
     {:width  (:width (apply max-key :width bounds))
      :height (:height (apply max-key :height bounds))}))
 
@@ -339,11 +341,11 @@
   "Returns a new shape with these `shapes` layered over each other."
   [& shapes]
   (->Shape (assoc (bounds shapes)
-                  :is-a :shape
-                  :kind :svg
-                  :x 0
-                  :y 0
-                  :children (remove nil? shapes))))
+             :is-a :shape
+             :kind :svg
+             :x 0
+             :y 0
+             :children (remove nil? shapes))))
 
 (defn beside
   "Return `shapes` with their positions adjusted so they're lined up beside one another."
@@ -353,13 +355,13 @@
        (remove nil?)
        reverse
        (reduce (fn [state shape]
-                 {:out    (conj (state :out)
-                                (position (+ (or (:x shape) 0)
-                                             (or (:cx shape) 0)
-                                             (apply + (:widths state)))
-                                          (+ (or (:y shape) 0)
-                                             (or (:cy shape) 0))
-                                          shape))
+                 {:out (conj (state :out)
+                             (position (+ (get shape :x 0)
+                                          (or (:cx shape) 0)
+                                          (apply + (:widths state)))
+                                       (+ (or (:y shape) 0)
+                                          (or (:cy shape) 0))
+                                       shape))
                   :widths (butlast (state :widths))})
                {:out    '()
                 :widths (map #(or (:r %) (:width %))
@@ -376,12 +378,12 @@
        reverse
        (reduce (fn [state shape]
                  {:out     (conj (state :out)
-                                (position (+ (or (:x shape) 0)
-                                             (or (:cx shape) 0))
-                                          (+ (or (:y shape) 0)
-                                             (or (:cy shape) 0)
-                                             (apply + (:heights state)))
-                                          shape))
+                                 (position (+ (or (:x shape) 0)
+                                              (or (:cx shape) 0))
+                                           (+ (or (:y shape) 0)
+                                              (or (:cy shape) 0)
+                                              (apply + (:heights state)))
+                                           shape))
                   :heights (butlast (state :heights))})
                {:out     '()
                 :heights (map #(if (= (:kind %) :circle)
@@ -421,19 +423,19 @@
   (let [{:keys [kind children d text] :as attrs} @shape
         unkinded (dissoc attrs :is-a :kind)]
     (into [kind (reduce ; clean up/preprocess the string-y bits of the SVG element
-                  (fn [m [k v]]
-                    (case k
-                      :d      (update m :d path-points->string)
-                      :rotate (case kind
-                                :path (let [[x-min y-min x-max y-max] (points-bounds d)]
-                                        (update m :transform #(str (or % "") " rotate(" (:rotate m) "," (- x-max x-min) "," (- y-max y-min) ")")))
-                                #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x attrs) "," (:y attrs) ")"))
-                                (let [[x y] (center-point m)]
-                                  (update m :transform #(str (or % "") " rotate(" (:rotate m) "," x "," y ")"))))
-                      :scale (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
-                      m))
-                  unkinded
-                  (select-keys unkinded [:d :points :rotate :scale]))
+                 (fn [m [k v]]
+                   (case k
+                     :d      (update m :d path-points->string)
+                     :rotate (case kind
+                               :path (let [[x-min y-min x-max y-max] (points-bounds d)]
+                                       (update m :transform #(str (or % "") " rotate(" (:rotate m) "," (- x-max x-min) "," (- y-max y-min) ")")))
+                               #_(update m :transform #(str (or % "") " rotate(" (:rotate m) "," (:x attrs) "," (:y attrs) ")"))
+                               (let [[x y] (center-point m)]
+                                 (update m :transform #(str (or % "") " rotate(" (:rotate m) "," x "," y ")"))))
+                     :scale (update m :transform #(str (or % "") " scale(" (:scale m) ")"))
+                     m))
+                 unkinded
+                 (select-keys unkinded [:d :points :rotate :scale]))
            text]
           (mapv shape->vector children))))
 
@@ -476,7 +478,7 @@
   (assert-number-range "alpha must be a number between 0 and 1.0!" 0 1.0 alpha)
   (apply str "hsla(" hue "," saturation "%," lightness "%, " alpha ")"))
 
-(defn rescale 
+(defn rescale
   "Rescales value from range [old-min, old-max] to [new-min, new-max]"
   [value old-min old-max new-min new-max]
   (assert-number "value must be a number!" value)
@@ -654,8 +656,8 @@
   "Subset of `color-names` whose names include the given String `s`"
   [s]
   (mapv (fn [c] [c (colorize c (square 25))])
-       (filter (fn [cn] (clojure.string/includes? cn s))
-               (map first color-names))))
+        (filter (fn [cn] (clojure.string/includes? cn s))
+                (map first color-names))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; random helpers to be moved somewhere else

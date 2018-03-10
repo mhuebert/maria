@@ -24,10 +24,13 @@
   (.down dropdown))
 
 (defcommand :dropdown/select
-  {:bindings ["Tab"]
+  {:bindings ["Tab" "Enter"]
    :private true
    :priority 9
-   :when :modal/dropdown}
+   :when (fn [{:keys [binding modal/dropdown] :as context}]
+           (and (get context :modal/dropdown)
+                (or (= binding "Tab")
+                    (:select-on-enter dropdown))))}
   [{:keys [modal/dropdown]}]
   (.select dropdown))
 
