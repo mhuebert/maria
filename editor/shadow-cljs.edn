@@ -13,7 +13,7 @@
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
 
-                [re-view "0.4.10"]
+                [re-view "0.4.11"]
                 [re-view/prosemirror "0.2.2"]
 
                 [lark/tools "0.1.30"]
@@ -31,8 +31,8 @@
   {:target :browser
    :release {:compiler-options {:optimizations :simple
                                 :language-in :ecmascript5
-                                :closure-defines {re-view.render-loop/count-fps? false}}}
-   :compiler-options {:closure-defines {re-view.render-loop/count-fps? true}}
+                                :closure-defines {re-view.render-loop/count-fps?* false}}}
+   :compiler-options {:closure-defines {re-view.render-loop/count-fps?* true}}
    :output-dir "public/js/compiled"
    :asset-path "/js/compiled"
    :modules {:shadow-live {:entries [maria.frames.live-frame]}}
@@ -48,7 +48,7 @@
              ajax.core]
    :exclude [cljs.js
              poppea]
-   :module-hash-names true}
+   :module-hash-names true}git stat
   :trusted
   {:target :browser
    :output-dir "public/js/compiled"
