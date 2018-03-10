@@ -3,8 +3,8 @@
                 "test"
                 "../shapes/src"                             ;; also published: [maria/shapes "0.0.0"]
                 "../friendly/src"                           ;; also published: [maria/friendly "0.0.0"]
-                #_"../../lark/tools/src"                    ;; for local dev
-                #_"../../re-view/re_view/src"]              ;; for local dev
+                "../../lark/tools/src"                    ;; for local dev
+                "../../re-view/re_view/src"]              ;; for local dev
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -13,7 +13,7 @@
                 [fast-zip "0.7.0"]
                 [bidi "2.1.3"]
 
-                [re-view "0.4.9"]
+                [re-view "0.4.10"]
                 [re-view/prosemirror "0.2.2"]
 
                 [lark/tools "0.1.30"]
@@ -30,7 +30,9 @@
   :live
   {:target :browser
    :release {:compiler-options {:optimizations :simple
-                                :language-in :ecmascript5}}
+                                :language-in :ecmascript5
+                                :closure-defines {re-view.render-loop/count-fps? false}}}
+   :compiler-options {:closure-defines {re-view.render-loop/count-fps? true}}
    :output-dir "public/js/compiled"
    :asset-path "/js/compiled"
    :modules {:shadow-live {:entries [maria.frames.live-frame]}}
