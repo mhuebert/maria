@@ -3,8 +3,8 @@
                 "test"
                 "../shapes/src"                             ;; also published: [maria/shapes "0.0.0"]
                 "../friendly/src"                           ;; also published: [maria/friendly "0.0.0"]
-                "../../lark/tools/src"                    ;; for local dev
-                "../../re-view/re_view/src"]              ;; for local dev
+                "../../lark/tools/src"                      ;; for local dev
+                "../../re-view/re_view/src"]                ;; for local dev
  :dependencies [[org.clojure/core.match "0.3.0-alpha4"]
                 [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
                 [org.clojure/data.json "0.2.6"]
@@ -48,7 +48,7 @@
              ajax.core]
    :exclude [cljs.js
              poppea]
-   :module-hash-names true}git stat
+   :module-hash-names true}
   :trusted
   {:target :browser
    :output-dir "public/js/compiled"
