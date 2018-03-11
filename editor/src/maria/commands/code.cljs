@@ -433,7 +433,6 @@
   [{:keys [editor]}]
   (cm/return-to-temp-marker! editor)
   (edit/unslurp-forward editor)
-  (edit/format! editor)
   true)
 
 (defcommand :edit/kill
