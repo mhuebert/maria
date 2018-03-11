@@ -268,17 +268,17 @@
                                              [(first brackets) 1]))
                                          (when-let [expected-bracket (first (expected-brackets loc pos :backward))]
                                            [expected-bracket 1])
-                                         (let [[pad-before pad-after] (->> (edit/chars-around pointer)
-                                                                           (mapv #(when (and %
-                                                                                             (not (contains? #{" " "" \#} %))
-                                                                                             (not (parse/boundary? %)))
-                                                                                    " ")))
+                                         (let [[ch-before ch-after] (edit/chars-around pointer)
+                                               pad-before (when (format/pad-chars? ch-before (first brackets))
+                                                            " ")
+                                               pad-after (when (format/pad-chars? (second brackets) ch-after)
+                                                           " ")
+
                                                brackets (str pad-before
                                                              brackets
                                                              pad-after)]
-                                           [brackets (if pad-before 2 1)]))]
-        ;; TODO
-        ;; add space around bracket pairs
+                                           [brackets (cond-> 1
+                                                             pad-before (inc))]))]
         (edit/with-formatting editor
           (when (cm/selection? editor)
             (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
@@ -357,7 +357,6 @@
                                          (edit/set-editor-cursor!))
                                      true)
       (#{\( \[ \{} prev-char) (do (edit/unwrap! editor)
-
                                   true)
       (util/whitespace-string? (edit/get-range pointer -1))
       (edit/with-formatting editor
