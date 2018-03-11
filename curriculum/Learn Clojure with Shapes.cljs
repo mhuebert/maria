@@ -20,7 +20,7 @@
 
 (square 50)
 
-;; We get a square with 25-pixel sides. Ask yourself: what's the name of the function we're calling here? What arguments does it take?
+;; We get a square with 50-pixel sides. Ask yourself: what's the name of the function we're calling here? What arguments does it take?
 
 ;; I wonder what giving `circle` two arguments would do.
 
@@ -34,7 +34,7 @@
 
 (doc circle)
 
-;; The `doc` function is short for "documentation". It tells us what a function does and what arguments it needs. We gave `doc` the argument `circle`, so it gives us documentation for the `circle` function. The computer knows things and wants to share what it knows with us.
+;; `doc` is short for "documentation". The `doc` function tells us what a function does and what arguments it needs. We gave `doc` the argument `circle`, so it gives us documentation for the `circle` function. The computer knows things and wants to share what it knows with us.
 
 ;; Remember, we can also examine the different pieces of that expression by asking `what-is`:
 
@@ -54,7 +54,7 @@
 ;; - bottom-of-the-screen documentation hints
 ;; Whenever you're not sure what some code does, grab one of these to inspect its parts.
 
-;; This is a good time to take a break to stretch your legs. If you're working on this alongside other people, this is a good time to chat with them about how things are going.
+;; This is a good time to take a break. Stretch your legs. Are you working on this alongside other people? This is a good time to chat with them about how things are going.
 
 
 ;; ## Shapes 🔺 and Colors 🌈
@@ -68,7 +68,7 @@
 
 ;; ⬆ your code goes here
 
-;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go way off-script with lots of your own code blocks, you should consider opening a fresh page with the "New" button at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
+;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go off script with lots of your own code blocks, you should consider opening a fresh page with the "New" button at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
 
 ;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
@@ -108,7 +108,7 @@ color-names
  (colorize "aqua" (square 50))
  (colorize "magenta" (circle 25)))
 
-;; We can also position them within a layer using the `position` function, which takes an `x` and a `y` to tell it where to put a shape:
+;; We can also position them within a layer using the `position` function, which takes an `x` and a `y` to tell it where to put a shape, counting down and to the right from the top left corner.
 
 (layer
  (colorize "springgreen" (circle 25))
@@ -141,7 +141,7 @@ color-names
 
 (map square [2 4 8 16 32 64 128])
 
-;; What's going on here? The part in square brackets (`[` and `]`) is a vector, which is how we store a bunch of things in order. We use it here to make a bunch of squares with that size. We use `map` to evaluate the function `square` on each thing in our vector. The result is a square for every number in our collection.
+;; What's going on here? The part in square brackets (`[` and `]`) is a vector, which is how we store a bunch of things in order. We use a vector of numbers here to make a bunch of squares with that size. We use `map` to evaluate the function `square` on each thing in our vector. The result is a square for every number in our collection.
 
 ;; Try using `map` with `circle`. Replace "_" with your code:
 
@@ -168,15 +168,15 @@ color-names
 (map (fn [color] (colorize color (circle 25)))
      ["red" "blue" "green"])
 
-;; The short way to read this out loud is "we map an anonymous function, which takes a 'color' argument, over the vector of color names".
+;; The short way to read this out loud is "we map an anonymous function, which takes a 'color' argument, over a vector of color names".
 
 ;; Let's look closer at our anonymous function.
 
 ;;    ![](https://i.imgur.com/U1KuIIf.png)
 
 ;; We create this function-with-no-name using `fn`, which we give two arguments: first a vector and then an expression.
-;; 1. The vector declares what arguments our new function-with-no-name will receive. In this case it takes just one, which we call `color`. This name is like a placeholder that will be filled in when someone calls this function later.
-;; 2. The expression is code that our function-with-no-name will run when _it_ gets evaluated. The `color` placeholder will then get replaced by whatever value our anonymous function is given as an argument.
+;; 1. The vector declares what arguments our new function-with-no-name will receive. In this case it takes just one, which we call `color`. This name is a placeholder that will be filled in when someone calls this function later.
+;; 2. The expression is code that our function-with-no-name will run when _it_ gets evaluated. The `color` placeholder will be replaced by whatever value our anonymous function is given as an argument.
 
 ;; Making up functions on the fly is super useful. Let's use this technique in another scenario. Say instead of creating shapes with particular colors, we want the same shape but with different degrees of transparency:
 
@@ -262,9 +262,9 @@ color-names
 ;; The last part of this whirlwind introduction is to show you how to _think about_ defining functions. How do we start to tackle the problem?
 
 ;; The problem-solving template goes like this:
-;;  1. explore the problem in a conversation with the computer
-;;  2. gradually turn your explorations into a solution
-;;  3. (maybe) turn your solution into a named function for later
+;;  1. Explore the problem in a conversation with the computer
+;;  2. Gradually turn your explorations into a solution
+;;  3. (maybe) Turn your solution into a named function for later
 
 ;; Let's try it with a slightly more complex shape-drawing challenge: drawing a flag with a vector of colors we give it. For instance, suppose we want to turn our `rainbow` vector into a rainbow flag, or a vector of three colors into a vertical tricolor like the flag of Germany or the Netherlands. So our goal will be a function that stacks colored bands to make a flag out of whatever color names we give it.
 
@@ -321,7 +321,7 @@ color-names
 
 ;; To preserve the 3:2 ratio, we divide the total height (200) by the number of colors we have. The `let` helps in two ways: first it allows us to try out different vectors of colors without repeating ourselves, and then when we're done it tells us what the arguments to our function should be.
 
-;; Now that we have a general vertical-stacked-colors flag solution, we're ready for step 3: turning our solution into a function. What should we call our function? If you're stumped, you're in good company: naming things is one of the truly hard problems in programming. One serviceable name is `vertical-flag`, which we can define like this:
+;; Now that we have a general vertically-stacked-colors flag solution, we're ready for step 3: turning our solution into a function. What should we call our function? If you're stumped, you're in good company: naming things is one of the truly hard problems in programming. One serviceable name is `vertical-flag`, which we can define like this:
 
 (defn vertical-flag [colors] 
   (apply above
@@ -343,7 +343,7 @@ color-names
 ;; Catalonia!
 (vertical-flag ["gold" "red" "gold" "red" "gold" "red" "gold" "red" "gold"])
 
-;; We could keep going (Ukraine! Hungary! Russia!), and if you're hungry for more, you could write a similar function for horizontal flags, but let's take a moment to congratulate you.
+;; We could keep going (Ukraine! Hungary! Holland!), and if you're hungry for more, you could write a similar function for horizontal flags, but let's take a moment to congratulate you.
 
 ;; Nice work! 🎉 💯 👏🏾 You created a function. That’s the only requirement to being a True Programmer. Give yourself a high-five. I am right now giving you a high-five. Maria is giving you a high-five.
 
