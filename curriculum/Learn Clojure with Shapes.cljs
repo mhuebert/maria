@@ -189,7 +189,7 @@ color-names
 
 (what-is (fn [o] (opacity o (square 40))))
 
-;; ... it's a function, just like `circle` or `colorize`. What's going on here? `fn` is a "macro", a special kind of function that takes code and transforms it before the code gets evaluated. The `fn` macro returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
+;; ... it's a function, just like `circle` or `colorize`. What's going on here? `fn` is an unusual kind of function called a "special form", which means it is one of the building blocks of Clojure. The `fn` special form returns a brand new function. Whenever you see an expression that starts with `fn`, that's what it's doing: creating a function. Evaluating a `fn` expression gives us back a function itself, not the result of calling a function.
 
 ;; Now you try it. Edit the code below to map an anonymous function over one (or more!) vectors. 🏘️ Consider using `triangle`, `ellipse`, `opacity`, or `colorize`:
 
@@ -356,6 +356,6 @@ color-names
 
 ;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/curriculum), or write your own code on a fresh page by using the New button at the top left.
 
-;; If you'd like to work through a textbook, consider [these Clojure books](https://clojure.org/community/books).
+;; If you'd like to work through a textbook, consider [Clojure for the Brave and True](https://www.braveclojure.com/clojure-for-the-brave-and-true/) or [Living Clojure](http://shop.oreilly.com/product/0636920034292.do).
 
 ;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://www.maria.cloud/shannons-entropy) or linguistics, or...?
