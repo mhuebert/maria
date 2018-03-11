@@ -17,7 +17,8 @@
             [maria.views.values :as value-views]
             [maria.util :as util]
             [maria.frames.frame-communication :as frame]
-            [maria.commands.doc :as doc]))
+            [maria.commands.doc :as doc]
+            [fast-zip.core :as z]))
 
 
 
@@ -114,8 +115,10 @@
 
   Object
   (toString [{:keys [node]}]
-    (or (get node :source)
-        (tree/string node)))
+    (let [node (cond-> node
+                       (= (type node) z/ZipperLocation) (z/node))]
+      (or (get node :source)
+          (tree/string node))))
 
   eval-context/IDispose
   (on-dispose [this f]
