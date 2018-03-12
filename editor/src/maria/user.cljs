@@ -9,11 +9,11 @@
              :refer [interval timeout fetch geo-location with-view]
              :refer-macros [wait]]
             [shapes.core :as shapes :refer [listen
-                                            circle ellipse square rectangle triangle path text image
+                                            circle ellipse square rectangle triangle polygon polyline text image
                                             position opacity rotate scale
                                             colorize stroke stroke-width no-stroke fill no-fill
                                             color-names colors-named rgb hsl rescale
-                                            layer beside above #_points-to-path value-to-cell!
+                                            layer beside above value-to-cell!
                                             #_ gfish
                                             ;; are these internal only? -jar
                                             ;;assure-shape-seq shape-bounds bounds shape->vector
