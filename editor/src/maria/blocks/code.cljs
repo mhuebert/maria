@@ -107,18 +107,16 @@
                                              :id (:id this))))
   (kind [this] :code)
   (empty? [this]
-    (let [{:keys [tag] :as node} (:node this)]
-      (= 0 (count (filter (complement tree/whitespace?)
-                          (if (= :base tag)
-                            (:children node)
-                            [node]))))))
+    (let [node (:node this)
+          children (if (= :base (:tag node))
+                     (:children node)
+                     [node])]
+      (= 0 (count (remove tree/whitespace? children)))))
 
   Object
   (toString [{:keys [node]}]
-    (let [node (cond-> node
-                       (= (type node) z/ZipperLocation) (z/node))]
-      (or (get node :source)
-          (tree/string node))))
+    (or (get node :source)
+        (tree/string node)))
 
   eval-context/IDispose
   (on-dispose [this f]

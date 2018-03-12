@@ -93,6 +93,8 @@
                   :prose ""
                   :code [])))
   ([kind value]
+   ;; TODO
+   ;; create a real ast?
    (from-ast (case kind :prose {:tag :comment-block
                                 :value value}
                         :code {:tag :base
