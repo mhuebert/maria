@@ -22,7 +22,7 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v4-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+          - v5-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
 
       - run:
           name: Install(Clojure, via curl)
@@ -37,11 +37,11 @@ jobs:
           name: Compile Styles, via webpack
           command: npx webpack -p;
           working_directory: ~/project/editor
-
-      - run:
-          name: Compute Classpath, via clj
-          command: clojure -Spath
-          working_directory: ~/project/editor
+#
+#      - run:
+#          name: Compute Classpath, via clj
+#          command: clojure -Spath
+#          working_directory: ~/project/editor
 
       - run:
           name: Compile ClojureScript, via shadow-cljs
@@ -64,6 +64,6 @@ jobs:
             - ~/project/editor/node_modules
             - ~/project/editor/target
             - ~/.m2
-          key: v4-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+          key: v5-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
 
 
