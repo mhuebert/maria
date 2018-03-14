@@ -25,10 +25,8 @@
   :bootstrap
   {:target :bootstrap
    :output-dir "public/js/bootstrap"
-   :entries [maria.user
-             ajax.core]
-   :exclude [cljs.js
-             poppea]
+   :entries [maria.user]
+   :exclude [cljs.js]
    :module-hash-names true}
   :trusted
   {:target :browser

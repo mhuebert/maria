@@ -16,7 +16,10 @@
             [maria.eval :as e]
 
             [cells.eval-context :as eval-context]
-            [fast-zip.core :as z]))
+            [fast-zip.core :as z]
+            [lark.tree.node :as node]
+            [lark.tree.emit :as emit]
+            [lark.tree.ext :as ext]))
 
 (defprotocol IBlock
 
@@ -48,7 +51,7 @@
   (state [this] (get node :prose/state)))
 
 (defn commentize-source [source]
-  (tree/string {:tag   :comment-block
+  (emit/string {:tag   :comment-block
                 :value source}))
 
 (defn update-prose-block-state [block editor-state]
@@ -122,11 +125,11 @@
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
   (->> (tree/ast source)
-       (tree/group-comment-blocks)
+       (ext/group-comment-blocks)
        (:children)
        (reduce (fn [out node]
                  (cond-> out
-                         (not (or (tree/whitespace? node)
+                         (not (or (node/whitespace? node)
                                   (and (= :comment-block (:tag node))
                                        (util/whitespace-string? (:value node)))))
                          (conj (from-ast node)))) [])

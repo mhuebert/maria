@@ -20,6 +20,5 @@
                                             ]]
             [re-view.core :include-macros true]
             [cljs.spec.alpha :include-macros true]
-            [cljs.spec.test.alpha :include-macros true]
-            [ajax.core])
+            [cljs.spec.test.alpha :include-macros true])
   (:require-macros [cells.cell :refer [defcell cell]]))

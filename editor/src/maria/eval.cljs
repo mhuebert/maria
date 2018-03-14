@@ -1,5 +1,5 @@
 (ns maria.eval
-  (:refer-clojure :exclude [macroexpand])
+  (:refer-clojure :exclude [macroexpand eval])
   (:require [cljs.js :as cljs]
             [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]

@@ -30,52 +30,52 @@ $selection-color: #f4f4d6;
   .CodeMirror-cursor {
     border-left: 1px solid #868886 !important;
   }
-  span.cm-comment {
+  .cm-comment {
     color: #a3685a;
   }
-  span.cm-atom {
+  .cm-atom {
     color: #987aa0;
   }
-  span.cm-number {
+  .cm-number {
     color: #987aa0;
   }
-  span.cm-property, span.cm-attribute {
+  .cm-property, .cm-attribute {
     color: #98a14b;
   }
 
-  span.cm-keyword, span.cm-builtin {
+  .cm-keyword, .cm-builtin {
     color: #cc6666;
   }
-  span.cm-string {
+  .cm-string {
     color: #a78938;
   }
 
-  span.cm-variable {
+  .cm-variable {
     color: #98a14b;
   }
 
-  span.cm-variable-2 {
+  .cm-variable-2 {
     color: #7192ae;
   }
 
-  span.cm-def {
+  .cm-def {
     color: #cb804c;
   }
 
-  span.cm-error {
+  .cm-error {
     background: #cc6666;
     color: #969896;
   }
 
-  span.cm-bracket {
+  .cm-bracket {
     color: #c9c9c9;
   }
 
-  span.cm-tag {
+  .cm-tag {
     color: #cc6666;
   }
 
-  span.cm-link {
+  .cm-link {
     color: #987aa0;
   }
 
@@ -392,6 +392,9 @@ $lighten: rgba(255, 255, 255, 0.25);
     padding: 2px 3px;
     background-color: rgba(0, 0, 0, 0.05);
   }
+
+}
+@media screen and (min-width: 30em) {
   .ProseMirror > * {
     max-width: 50%;
   }

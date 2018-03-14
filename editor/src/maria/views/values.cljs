@@ -16,7 +16,8 @@
             [lark.value-viewer.core :as views]
             [lark.tree.core :as tree]
             [lark.tree.range :as range]
-            [fast-zip.core :as z])
+            [fast-zip.core :as z]
+            [lark.tree.nav :as nav])
   (:import [goog.async Deferred]))
 
 (defn highlights-for-position
@@ -24,9 +25,9 @@
   [source position]
   (when-let [highlights (some-> (tree/ast source)
                                 (tree/ast-zip)
-                                (tree/navigate position)
+                                (nav/navigate position)
                                 (z/node)
-                                (tree/node-highlights))]
+                                (range/node-highlights))]
     (case (count highlights)
       0 nil
       1 (first highlights)

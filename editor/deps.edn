@@ -1,18 +1,31 @@
 {:paths ["src"
          "test"]
+
  :deps {org.clojure/core.match {:mvn/version "0.3.0-alpha4"}
-        com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         org.clojure/data.json {:mvn/version "0.2.6"}
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
         org.clojure/spec.alpha {:mvn/version "0.1.143"}
-        fast-zip {:mvn/version "0.7.0"}
-        bidi {:mvn/version "2.1.3"}
-        re-view {:mvn/version "0.4.12"}
-        re-view/prosemirror {:mvn/version "0.2.2"}
-        lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "d9073a449aacf0cf40fdc48b959cd2f1bcd5c516"
-                    :deps/root "tools"} #_{:local/root "../../lark/tools/src"}
-        lark/cells {:mvn/version "0.1.7"}
+
+        ;; user fun
         maria/friendly {:local/root "../friendly"}
         maria/shapes {:local/root "../shapes"}
-        cljs-ajax {:mvn/version "0.7.3"}}}
+        maria/cells {:local/root "../cells"}
+
+        ;; UI (react)
+        re-view {:mvn/version "0.4.12"}
+        re-view/prosemirror {:mvn/version "0.2.2"}
+
+        ;; parse, eval, format
+        lark/tools {:git/url "https://github.com/braintripping/lark.git"
+                    :sha "f2292a6d938809aee7f5b3fed2f64c7b8c5274d2"
+                    :deps/root "tools"}
+        ;{:local/root "../../lark/tools"}
+
+        ;; 3rd party utils
+        com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
+        fast-zip {:mvn/version "0.7.0"}
+        bidi {:mvn/version "2.1.3"}
+
+        ;; ClojureScript - includes patch to fix cljs.spec.alpha `eval` warnings
+        org.clojure/clojurescript
+        {:git/url "https://github.com/mfikes/clojurescript" :sha "ec281b735b5c3e1a80f1cc46f8996aba45d13987"}}}

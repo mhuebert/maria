@@ -77,7 +77,7 @@
                                                  (let [pos (cm/pos->boundary cm-pos)]
                                                    (when-not (= pos (:pos @last-sel))
                                                      (let [loc (some-> (:zipper editor)
-                                                                       (tree/navigate pos))
+                                                                       (nav/navigate pos))
                                                            loc (some->> loc
                                                                         (cm/sexp-near pos))]
                                                        (when (and loc (not (= loc (:loc @last-sel))))
@@ -245,7 +245,7 @@
 (defn in-string? [loc cursor-pos]
   (let [node (z/node loc)]
     (and (= :string (:tag node))
-         (tree/within-inner? node cursor-pos))))
+         (range/within-inner? node cursor-pos))))
 
 (defcommand :edit/auto-close
   {:bindings ["Shift-'"
@@ -314,7 +314,7 @@
         {:keys [node pos]} (get editor :magic/cursor)
 
         prev-node (some-> (get editor :zipper)
-                          (tree/navigate (update pos :column (comp (partial max 0) dec)))
+                          (nav/navigate (update pos :column (comp (partial max 0) dec)))
                           (z/node))]
 
     (cond
@@ -470,7 +470,7 @@
    :when :block/code}
   [{:keys [editor block-view block]}]
   (when-let [loc (some->> (:loc (:magic/cursor editor))
-                          (tree/top-loc))]
+                          (nav/top-loc))]
     (cm/temp-select-node! editor (z/node loc))
     (js/setTimeout #(cm/return-to-temp-marker! editor) 210)
     (Block/eval! block)))
@@ -487,7 +487,7 @@
   {:bindings ["M1-I"]
    :when :block/code}
   [{:keys [block-view editor block]}]
-  (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
+  (when-let [form (some-> editor :magic/cursor :bracket-loc z/node emit/sexp)]
     (if (and (symbol? form) (ns-utils/resolve-var-or-special e/c-state e/c-env form))
       (Block/eval! block :form (list 'doc form))
       (Block/eval! block :form (list 'maria.friendly.kinds/what-is (list 'quote form))))))
@@ -495,10 +495,10 @@
 (defcommand :info/source
   "Show source code for the current var"
   {:when #(and (:block/code %)
-               (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
+               (some->> (:editor %) :magic/cursor :bracket-loc z/node emit/sexp symbol?))}
   [{:keys [block editor]}]
   (Block/eval! block :form (list 'source
-                                 (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+                                 (some-> editor :magic/cursor :bracket-loc z/node emit/sexp))))
 
 (defcommand :info/javascript-source
   "Show compiled javascript for current form"
@@ -506,7 +506,7 @@
    :when :block/code}
   [{:keys [block editor]}]
   (when-let [node (some-> editor :magic/cursor :bracket-loc z/node)]
-    (Block/eval-log! block (some-> node tree/string e/compile-str (set/rename-keys {:compiled-js :value})))))
+    (Block/eval-log! block (some-> node emit/string e/compile-str (set/rename-keys {:compiled-js :value})))))
 
 (defcommand :edit/format
   {:bindings ["M2-Tab"]

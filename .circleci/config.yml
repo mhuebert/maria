@@ -25,11 +25,11 @@ jobs:
           - v6-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/deps.edn"}}
 
       - run:
-          name: Install(Clojure, via curl)
+          name: Install Clojure, via curl
           command: curl -O https://download.clojure.org/install/linux-install-1.9.0.358.sh && chmod +x linux-install-1.9.0.358.sh && sudo ./linux-install-1.9.0.358.sh
 
       - run:
-          name: Install(JS deps, via npm)
+          name: Install JavaScript dependencies, via NPM
           command: npm install;
           working_directory: ~/project/editor
 

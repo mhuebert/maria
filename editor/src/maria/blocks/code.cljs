@@ -18,7 +18,10 @@
             [maria.util :as util]
             [maria.frames.frame-communication :as frame]
             [maria.commands.doc :as doc]
-            [fast-zip.core :as z]))
+            [fast-zip.core :as z]
+            [lark.tree.node :as node]
+            [lark.tree.emit :as emit]
+            [maria.views.icons :as icons]))
 
 
 
@@ -33,16 +36,16 @@
     (let [the-node (cond-> (:node block)
                            (= :base (:tag (:node block)))
                            (-> :children first))
-          the-string (tree/string the-node)
+          the-string (emit/string the-node)
           ast (->> (Block/emit-list (.getBlocks block-list))
                    (tree/ast)
                    (:children)
-                   (remove #(or (tree/whitespace? %)
-                                (tree/comment? %))))
+                   (remove #(or (node/whitespace? %)
+                                (node/comment? %))))
           index (->> ast
                      (take-while (fn [{:keys [tag] :as node}]
                                    (or (not= tag (:tag the-node))
-                                       (not= the-string (tree/string node)))))
+                                       (not= the-string (emit/string node)))))
                      (count))
           {:keys [id version]} (get-in doc [:project :persisted])]
       (str "http://share.maria.cloud/gist/" id "/" version "/" index))))
@@ -73,10 +76,15 @@
    :get-editor #(.getEditor (:editor-view @(:view/state %)))}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
   (let [doc (:current-doc @exec/context)]
-    [:.flex.pv2.cursor-text
+    [:.flex.pv2.cursor-text.flex-column.flex-row-ns
      {:on-click #(when (= (.-target %) (.-currentTarget %))
                    (Editor/focus! (.getEditor this)))}
-     [:.w-50.flex-none
+     [:.w-100.w-50-ns.flex-none.relative.cm-s-maria-light
+      [:.absolute.bottom-0.right-0.pa1.z-9.dib.dn-ns.pointer
+       {:on-click #(Block/eval! block)}
+       (-> icons/Play
+           (icons/size 18)
+           (icons/class "cm-variable"))]
       (error/error-boundary
        {:on-error (fn [{:keys [error info]}]
                     (e/handle-block-error (:id block) error))}
@@ -92,7 +100,7 @@
                        :capture-event/blur #(exec/set-context! {:block/code nil
                                                                 :block-view nil})}))]
 
-     [:.w-50.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result
+     [:.w-100.w-50-ns.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result.pt3.pt0-ns
       #_(ShareLink {:doc doc
                     :block block
                     :block-list block-list})
@@ -111,12 +119,12 @@
           children (if (= :base (:tag node))
                      (:children node)
                      [node])]
-      (= 0 (count (remove tree/whitespace? children)))))
+      (= 0 (count (remove node/whitespace? children)))))
 
   Object
   (toString [{:keys [node]}]
     (or (get node :source)
-        (tree/string node)))
+        (emit/string node)))
 
   eval-context/IDispose
   (on-dispose [this f]

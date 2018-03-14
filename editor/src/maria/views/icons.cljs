@@ -191,3 +191,9 @@
 
 (def Blank
   [:svg {:width "24" :height "24" :view-box "0 0 24 24" :xmlns "http://www.w3.org/2000/svg"}])
+
+(def Play
+  [:svg
+   {:fill "currentColor" :width "24" :height "24" :view-box "0 0 32 32", :enable-background "new 0 0 32 32", :xml-space "preserve", :preserve-aspect-ratio "xMidYMid meet"}
+   [:path
+    {:d "M32,2c0-1.105-0.895-2-2-2H2C0.895,0,0,0.895,0,2v28c0,1.105,0.895,2,2,2h28c1.105,0,2-0.895,2-2V2z M12,22V10l10,6L12,22z"}]])

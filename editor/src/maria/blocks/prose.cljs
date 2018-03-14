@@ -6,7 +6,8 @@
             [lark.tree.core :as tree]
             [re-view.prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
-            [lark.editor :as Editor]))
+            [lark.editor :as Editor]
+            [lark.tree.emit :as emit]))
 
 (defn serialize-state [state]
   (.serialize markdown/serializer state))
@@ -27,7 +28,7 @@
   (toString [{{:keys [prose/state prose/source]} :node
               :as this}]
     (or source
-        (tree/string {:tag :comment-block
+        (emit/string {:tag :comment-block
                       :value (or (some-> state (serialize-state))
                                  "")}))))
 
