@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Compile ClojureScript, via shadow-cljs
-          command: npx shadow-cljs release trusted && npx shadow-cljs release live && npx shadow-cljs release bootstrap;
+          command: npx shadow-cljs release trusted live bootstrap;
           working_directory: ~/project/editor
 
       - run:
