@@ -1,5 +1,5 @@
 {:jvm-opts ["-Xmx2G"]
- :deps true
+ :deps false
  :source-paths ["src"
                 "test"
                 "../shapes/src"                             ;; also published: [maria/shapes "0.0.0"]
