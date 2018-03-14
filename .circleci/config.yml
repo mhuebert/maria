@@ -39,8 +39,13 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
+          name: Compute Classpath, via clj
+          command: clojure -Spath
+          working_directory: ~/project/editor
+
+      - run:
           name: Compile ClojureScript, via shadow-cljs
-          command: npx shadow-cljs release trusted live bootstrap;
+          command: npx shadow-cljs release trusted && npx shadow-cljs release live && npx shadow-cljs release bootstrap;
           working_directory: ~/project/editor
 
       - run:
