@@ -50,7 +50,7 @@
           {:keys [id version]} (get-in doc [:project :persisted])]
       (str "http://share.maria.cloud/gist/" id "/" version "/" index))))
 
-(defview ShareLink
+(v/defview ShareLink
   [{:keys [view/state doc block block-list]}]
   (let [{:keys [hovered]} @state]
     (when (= :gist (get-in doc [:project :persisted :persistence/provider]))
@@ -68,7 +68,7 @@
            "please save first!"
            "share")]))))
 
-(defview CodeRow
+(v/defview CodeRow
   {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount Editor/mount
@@ -80,7 +80,7 @@
      {:on-click #(when (= (.-target %) (.-currentTarget %))
                    (Editor/focus! (.getEditor this)))}
      [:.w-100.w-50-ns.flex-none.relative.cm-s-maria-light
-      [:.absolute.bottom-0.right-0.pa1.z-9.dib.dn-ns.pointer
+      [:.absolute.bottom-0.right-0.pa2.z-3.dib.dn-ns.pointer
        {:on-click #(Block/eval! block)}
        (-> icons/Play
            (icons/size 18)
@@ -150,10 +150,13 @@
      (let [editor (Editor/of-block this)
            source (or (cm/selection-text editor)
                       (str this))]
-       (when (.somethingSelected editor)
-         (let [div (.. editor -display -wrapper)]
-           (classes/add div "post-eval")
-           (js/setTimeout #(classes/remove div "post-eval") 200)))
+       (when-not (.somethingSelected editor)
+         (cm/set-temp-marker! editor)
+         (.execCommand editor "selectAll")
+         (js/setTimeout #(cm/return-to-temp-marker! editor) 210))
+       (let [div (.. editor -display -wrapper)]
+         (classes/add div "post-eval")
+         (js/setTimeout #(classes/remove div "post-eval") 200))
        (Block/eval! this :string source))
      true)
     ([this mode form]

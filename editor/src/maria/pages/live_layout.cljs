@@ -27,7 +27,7 @@
 (defn landing []
   [:.w-100
    (toolbar/doc-toolbar {})
-   [:.tc.serif.center
+   [:.tc.serif.center.ph3
     {:style {:max-width 600}}
     [:.f1.mb3.pt5 "Welcome to Maria,"]
     [:.f3.mv3 "a coding environment for beginners."]

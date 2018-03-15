@@ -19,7 +19,8 @@
             [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
-            [lark.tree.ext :as ext]))
+            [lark.tree.ext :as ext]
+            [lark.tree.reader :as rd]))
 
 (defprotocol IBlock
 
@@ -51,11 +52,10 @@
   (state [this] (get node :prose/state)))
 
 (defn commentize-source [source]
-  (emit/string {:tag   :comment-block
-                :value source}))
+  (emit/string (rd/ValueNode :comment-block source)))
 
 (defn update-prose-block-state [block editor-state]
-  (assoc block :node {:prose/state  editor-state
+  (assoc block :node {:prose/state editor-state
                       :prose/source (commentize-source (.serialize markdown/serializer editor-state))}))
 
 (defrecord WhitespaceBlock [id node]
@@ -81,13 +81,14 @@
 
 (defn from-ast
   "Returns a block, given a lark.tree AST node."
-  [{:keys [tag value] :as node}]
-
-  (case tag
-    :comment-block (->ProseBlock (d/unique-id) (assoc node :prose/source (commentize-source value)
-                                                           :prose/state (.parse markdown/parser value)))
-    (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
-    (->CodeBlock (d/unique-id) node)))
+  [node]
+  (let [tag (.-tag node)
+        value (.-value node)]
+    (case tag
+      :comment-block (->ProseBlock (d/unique-id) (assoc node :prose/source (commentize-source value)
+                                                             :prose/state (.parse markdown/parser value)))
+      (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
+      (->CodeBlock (d/unique-id) node))))
 
 (defn create
   "Returns a block, given a kind (:code or :prose) and optional value."
@@ -98,10 +99,10 @@
   ([kind value]
    ;; TODO
    ;; create a real ast?
-   (from-ast (case kind :prose {:tag :comment-block
-                                :value value}
-                        :code {:tag :base
-                               :children value}))))
+   (from-ast (case kind :prose (-> (rd/EmptyNode :comment-block)
+                                   (assoc! :value value))
+                        :code (-> (rd/EmptyNode :base)
+                                  (assoc! :children value))))))
 
 (def emit-list
   "Returns the concatenated source for a list of blocks."
@@ -178,11 +179,11 @@
                                            [(util/take-until #(= (:id %) (:id to-block)) the-rest)
                                             (rest (drop-while #(not= (:id %) (:id to-block)) the-rest))])
          result (with-meta
-                  (-> (vec before-blocks)
-                      (into values)
-                      (into after-blocks))
-                  {:before (last before-blocks)
-                   :after  (first after-blocks)})]
+                 (-> (vec before-blocks)
+                     (into values)
+                     (into after-blocks))
+                 {:before (last before-blocks)
+                  :after (first after-blocks)})]
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
@@ -191,9 +192,9 @@
      result)))
 
 (defcommand :doc/print-to-console
-  "Prints the current document to console as a string."
-  {:when :block-list}
-  [{:keys [block-list]}]
-  (print (-> (.getBlocks block-list)
-             (ensure-blocks)
-             (emit-list))))
+            "Prints the current document to console as a string."
+            {:when :block-list}
+            [{:keys [block-list]}]
+            (print (-> (.getBlocks block-list)
+                       (ensure-blocks)
+                       (emit-list))))
