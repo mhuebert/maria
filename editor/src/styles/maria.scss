@@ -9,7 +9,7 @@ $selection-color: #f4f4d6;
 .cm-s-maria-light.CodeMirror {
   background: #f9f8f4;
   color: #3f4245;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .cm-s-maria-light {
@@ -130,7 +130,7 @@ div.CodeMirror {
 }
 
 .f-body {
-  font-size: 1.25rem;
+  font-size: 20px;
 }
 
 .pre-wrap {
@@ -397,6 +397,12 @@ $lighten: rgba(255, 255, 255, 0.25);
 @media screen and (min-width: 30em) {
   .ProseMirror > * {
     max-width: 50%;
+  }
+  .cm-s-maria-light.CodeMirror {
+    font-size: 14px;
+  }
+  .f-body {
+    font-size: 18px;
   }
 }
 
