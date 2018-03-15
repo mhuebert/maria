@@ -1,5 +1,4 @@
-{:jvm-opts ["-Xmx2G"]
- :deps true
+{:deps true
  :builds
  {:tests
   {:target :browser
