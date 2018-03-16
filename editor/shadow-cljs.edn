@@ -1,5 +1,6 @@
 {:deps true
  :jvm-opts ["-Xmx2G"]
+ :nrepl {:port 9000}
  :builds
  {:tests
   {:target :browser
