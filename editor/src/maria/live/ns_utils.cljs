@@ -5,7 +5,8 @@
             [lark.tree.core :as tree]
             [cljs.analyzer :as ana]
             [clojure.string :as str]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [cljs.tools.reader.edn :as edn]))
 
 
 (defn builtin-ns? [s]
@@ -142,19 +143,19 @@
     do {:forms [(do exprs*)]
         :doc "Evaluates the expressions in order and returns the value of
   the last. If no expressions are supplied, returns nil."}
-    fn            {:forms [(fn & sigs)]
-                   :doc   "params => positional-params* , or positional-params* & next-param
+    fn {:forms [(fn & sigs)]
+        :doc "params => positional-params* , or positional-params* & next-param
 positional-param => binding-form
 next-param => binding-form
 name => symbol
 
 Defines a function"}
-    if            {:forms [(if test then else?)]
-                   :doc   "Evaluates test. If not the singular values nil or false,
+    if {:forms [(if test then else?)]
+        :doc "Evaluates test. If not the singular values nil or false,
   evaluates and yields then, otherwise, evaluates and yields else. If
   else is not supplied it defaults to nil."}
-    let            {:forms [(let bindings & body)]
-                   :doc   "Evaluates the exprs in a lexical context in which the symbols in
+    let {:forms [(let bindings & body)]
+         :doc "Evaluates the exprs in a lexical context in which the symbols in
 the binding-forms are bound to their respective init-exprs or parts
 therein."}
     monitor-enter {:forms [(monitor-enter x)]
@@ -215,16 +216,15 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
 (defn ana-env []
   (assoc @e/c-state :ns (ana/get-namespace e/c-state (:ns @e/c-env))))
 
-(defn completion-data [{:as node
-                        :keys [tag info value]}]
-  (case tag
-    :symbol [(util/some-str (namespace value))
-             (name value)]
-    :token (when (and (= (get info :tag) :symbol)
-                      (str/ends-with? value "/"))
-             [(subs value 0 (dec (count value)))
-              ""])
-    nil))
+(defn completion-data [node]
+  (when-let [value (some-> node (.-value))]
+    (try (let [val (edn/read-string value)]
+           (when (symbol? val)
+             [(namespace val) (name val)]))
+         (catch js/Error e
+           (when (str/ends-with? value "/")
+             [(subs value 0 (dec (.-length value)))
+              ""])))))
 
 (defn ns-completions
   ([completion-data] (ns-completions (:ns @e/c-env) completion-data))

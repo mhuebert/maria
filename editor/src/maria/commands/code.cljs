@@ -19,7 +19,9 @@
             [lark.tree.nav :as nav]
             [lark.tree.parse :as parse]
             [lark.tree.range :as range]
-            [lark.tree.reader :as rd]))
+            [lark.tree.reader :as rd]
+            [lark.tree.cursor :as cursor]
+            [lark.tree.emit :as emit]))
 
 (def pass #(do :lark.commands/Pass))
 
@@ -27,16 +29,6 @@
                       (some-> (:editor %) (.somethingSelected))))
 (def no-selection? #(and (:block/code %)
                          (some-> (:editor %) (.somethingSelected) (not))))
-
-(defn format-code
-  ([editor] (format-code editor (.getCursor editor)))
-  ([editor pos]
-   (binding [lark.tree.format/*prettify* true]
-     (.setValue editor (-> (.getValue editor)
-                           (tree/ast)
-                           (tree/string)))
-     (.setCursor editor pos)
-     true)))
 
 (defcommand :clipboard/copy
   {:bindings ["M1-c"]
@@ -85,7 +77,7 @@
                                                  (let [pos (cm/pos->boundary cm-pos)]
                                                    (when-not (= pos (:pos @last-sel))
                                                      (let [loc (some-> (:zipper editor)
-                                                                       (tree/navigate pos))
+                                                                       (nav/navigate pos))
                                                            loc (some->> loc
                                                                         (cm/sexp-near pos))]
                                                        (when (and loc (not (= loc (:loc @last-sel))))
@@ -210,15 +202,11 @@
 
           :else
           (do
-            (edit/insert! pointer (str \newline
-                                       (some->> (iterate z/up loc)
-                                                (sequence (comp (take-while identity)
-                                                                (map z/node)
-                                                                (filter #(tree/inside? % pos))
-                                                                (filter format/indentation-parent?)))
-                                                (first)
-                                                (format/child-indent-string loc))))
-            (format-code editor)))))
+            ;; TODO
+            ;; this will cause two separate .setValue CodeMirror firings.
+            ;; can be vastly improved.
+            (edit/with-formatting editor
+              (edit/insert! pointer \newline))))))
 
 (defcommand :edit/delete-selection
   "Remove the current selection."
@@ -257,7 +245,7 @@
 (defn in-string? [loc cursor-pos]
   (let [node (z/node loc)]
     (and (= :string (:tag node))
-         (tree/inside? node cursor-pos))))
+         (range/within-inner? node cursor-pos))))
 
 (defcommand :edit/auto-close
   {:bindings ["Shift-'"
@@ -280,24 +268,25 @@
                                              [(first brackets) 1]))
                                          (when-let [expected-bracket (first (expected-brackets loc pos :backward))]
                                            [expected-bracket 1])
-                                         (let [[pad-before pad-after] (->> (edit/chars-around pointer)
-                                                                           (mapv #(when (and %
-                                                                                             (not (contains? #{" " "" \#} %))
-                                                                                             (not (parse/boundary? %)))
-                                                                                    " ")))
+                                         (let [[ch-before ch-after] (edit/chars-around pointer)
+                                               pad-before (when (format/pad-chars? ch-before (first brackets))
+                                                            " ")
+                                               pad-after (when (format/pad-chars? (second brackets) ch-after)
+                                                           " ")
+
                                                brackets (str pad-before
                                                              brackets
                                                              pad-after)]
-                                           [brackets (if pad-before 2 1)]))]
-        ;; TODO
-        ;; add space around bracket pairs
-        (edit/operation editor
-                        (when (cm/selection? editor)
-                          (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
-                        (-> pointer
-                            (edit/insert! insertion-text)
-                            (edit/move forward)
-                            (edit/set-editor-cursor!)))))))
+                                           [brackets (cond-> 1
+                                                             pad-before (inc))]))]
+        (edit/with-formatting editor
+          (when (cm/selection? editor)
+            (cm/replace-range! editor "" (cm/current-selection-bounds editor)))
+          (-> pointer
+              (edit/insert! insertion-text)
+              (edit/move forward)
+              (edit/set-editor-cursor!))
+          true)))))
 
 (defcommand :edit/type-close-bracket
   {:bindings ["]"
@@ -307,10 +296,12 @@
    :when :block/code}
   [{:keys [editor e]}]
   (let [{:keys [loc pos]} (get editor :magic/cursor)]
-    (if-let [expected-close-brackets (seq (expected-brackets loc pos :forward))]
-      (-> (edit/pointer editor)
-          (edit/insert! (first expected-close-brackets)))
-      (edit/cursor-skip! editor :right))))
+    (if (in-string? loc pos)
+      false
+      (if-let [expected-close-brackets (seq (expected-brackets loc pos :forward))]
+        (-> (edit/pointer editor)
+            (edit/insert! (first expected-close-brackets)))
+        (edit/cursor-skip! editor :right)))))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
@@ -323,7 +314,7 @@
         {:keys [node pos]} (get editor :magic/cursor)
 
         prev-node (some-> (get editor :zipper)
-                          (tree/navigate (update pos :column (comp (partial max 0) dec)))
+                          (nav/navigate (update pos :column (comp (partial max 0) dec)))
                           (z/node))]
 
     (cond
@@ -366,23 +357,19 @@
                                          (edit/set-editor-cursor!))
                                      true)
       (#{\( \[ \{} prev-char) (do (edit/unwrap! editor)
-
                                   true)
-
       (util/whitespace-string? (edit/get-range pointer -1))
-      (let [space-begins (edit/move-while pointer -1 #{\space \newline \tab})]
-        (if (> (- (:line (:pos pointer))
-                  (:line (:pos space-begins))) 1)
-          (do (cm/replace-range! editor "" {:line (- (:line (:pos pointer)) 2)
-                                            :end-line (dec (:line (:pos pointer)))})
-              true)
-          (let [pad? (and (not= (:pos space-begins) (update (:pos pointer) :column dec))
-                          (format/pad-chars? (edit/get-range space-begins -1)
-                                             (edit/get-range pointer 1)))]
-            (.replaceRange editor (if pad? " " "") (:pos space-begins) (:pos pointer))
-            (format-code editor (cond-> (:pos space-begins)
-                                        pad? (update :column inc))))))
-
+      (edit/with-formatting editor
+        (let [space-begins (edit/move-while pointer -1 #{\space \newline \tab})]
+          (if (> (- (:line (:pos pointer))
+                    (:line (:pos space-begins))) 1)
+            (cm/replace-range! editor "" {:line (- (:line (:pos pointer)) 2)
+                                          :end-line (dec (:line (:pos pointer)))})
+            (let [pad? (and (not= (:pos space-begins) (update (:pos pointer) :column dec))
+                            (format/pad-chars? (edit/get-range space-begins -1)
+                                               (edit/get-range pointer 1)))]
+              (.replaceRange editor (if pad? " " "") (:pos space-begins) (:pos pointer)))))
+        true)
       :else false)))
 
 (defcommand :navigate/hop-left
@@ -435,8 +422,9 @@
    :when :block/code}
   [{:keys [editor] :as context}]
   (cm/return-to-temp-marker! editor)
-  (edit/slurp-forward editor)
-  (format-code editor))
+  (edit/with-formatting editor
+    (edit/slurp-forward editor))
+  true)
 
 (defcommand :edit/barf-forward
   "Pushes last child of current form out to the right."
@@ -444,7 +432,8 @@
    :when :block/code}
   [{:keys [editor]}]
   (cm/return-to-temp-marker! editor)
-  (edit/unslurp-forward editor))
+  (edit/unslurp-forward editor)
+  true)
 
 (defcommand :edit/kill
   "Cuts to end of current form or line, whichever comes first."
@@ -481,7 +470,7 @@
    :when :block/code}
   [{:keys [editor block-view block]}]
   (when-let [loc (some->> (:loc (:magic/cursor editor))
-                          (tree/top-loc))]
+                          (nav/top-loc))]
     (cm/temp-select-node! editor (z/node loc))
     (js/setTimeout #(cm/return-to-temp-marker! editor) 210)
     (Block/eval! block)))
@@ -498,7 +487,7 @@
   {:bindings ["M1-I"]
    :when :block/code}
   [{:keys [block-view editor block]}]
-  (when-let [form (some-> editor :magic/cursor :bracket-loc z/node tree/sexp)]
+  (when-let [form (some-> editor :magic/cursor :bracket-loc z/node emit/sexp)]
     (if (and (symbol? form) (ns-utils/resolve-var-or-special e/c-state e/c-env form))
       (Block/eval! block :form (list 'doc form))
       (Block/eval! block :form (list 'maria.friendly.kinds/what-is (list 'quote form))))))
@@ -506,10 +495,10 @@
 (defcommand :info/source
   "Show source code for the current var"
   {:when #(and (:block/code %)
-               (some->> (:editor %) :magic/cursor :bracket-loc z/node tree/sexp symbol?))}
+               (some->> (:editor %) :magic/cursor :bracket-loc z/node emit/sexp symbol?))}
   [{:keys [block editor]}]
   (Block/eval! block :form (list 'source
-                                 (some-> editor :magic/cursor :bracket-loc z/node tree/sexp))))
+                                 (some-> editor :magic/cursor :bracket-loc z/node emit/sexp))))
 
 (defcommand :info/javascript-source
   "Show compiled javascript for current form"
@@ -517,10 +506,22 @@
    :when :block/code}
   [{:keys [block editor]}]
   (when-let [node (some-> editor :magic/cursor :bracket-loc z/node)]
-    (Block/eval-log! block (some-> node tree/string e/compile-str (set/rename-keys {:compiled-js :value})))))
+    (Block/eval-log! block (some-> node emit/string e/compile-str (set/rename-keys {:compiled-js :value})))))
 
-(defcommand :edit/format-code
+(defcommand :edit/format
   {:bindings ["M2-Tab"]
    :when :block/code}
   [{:keys [editor]}]
-  (format-code editor))
+  (edit/format! editor)
+  true)
+
+(defcommand :edit/space
+  {:bindings ["Space" "Tab"]
+   :when :block/code}
+  [{:keys [editor]}]
+  (when-not (.somethingSelected editor)
+    (edit/with-formatting editor
+      {:preserve-cursor-space? true}
+      (-> (edit/pointer editor)
+          (edit/insert! " "))
+      true)))

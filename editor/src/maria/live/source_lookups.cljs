@@ -8,7 +8,8 @@
             [goog.net.XhrIo :as xhr]
             [maria.util :as util]
             [shadow.cljs.bootstrap.env :as shadow-env]
-            [maria.live.ns-utils :as ns-utils])
+            [maria.live.ns-utils :as ns-utils]
+            [lark.tree.emit :as emit])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -40,7 +41,7 @@
   [source position]
   (let [reader (parse/indexing-reader (source-from source position))
         node (read-node reader)]
-    (tree/string node)))
+    (emit/string node)))
 
 (defn source-of-top-level-form
   "Given a 1-indexed position in a source string, return the first form."
@@ -55,8 +56,8 @@
           (cond (nil? the-node)
                 nil
                 (and (>= (:end-line the-node) line)
-                     (not (tree/whitespace? the-node)))
-                (tree/string the-node)
+                     (not (node/whitespace? the-node)))
+                (emit/string the-node)
                 :else (recur))))))
 
 (defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]

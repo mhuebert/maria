@@ -22,25 +22,39 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v3-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+          - v6-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/deps.edn"}}
 
       - run:
+          name: Install Clojure, via curl
+          command: curl -O https://download.clojure.org/install/linux-install-1.9.0.358.sh && chmod +x linux-install-1.9.0.358.sh && sudo ./linux-install-1.9.0.358.sh
+
+      - run:
+          name: Install JavaScript dependencies, via NPM
           command: npm install;
           working_directory: ~/project/editor
 
       - run:
+          name: Compile Styles, via webpack
           command: npx webpack -p;
           working_directory: ~/project/editor
 
       - run:
-          command: npx shadow-cljs release trusted live bootstrap;
+          name: Compute Classpath, via clj
+          command: clojure -Spath
           working_directory: ~/project/editor
 
       - run:
+          name: Compile ClojureScript, via shadow-cljs
+          command: npx shadow-cljs clj-run maria.build/release;
+          working_directory: ~/project/editor
+
+      - run:
+          name: Deploy, via Firebase
           command: npm run deploy;
           working_directory: ~/project/editor
 
       - run:
+          name: Log on Error
           command: cat target/shadow-cljs/shadow-cljs.log.0 2> /dev/null
           working_directory: ~/project/editor
           when: on_fail
@@ -49,7 +63,10 @@ jobs:
           paths:
             - ~/project/editor/node_modules
             - ~/project/editor/target
+            - ~/project/editor/.shadow-cljs
+            - ~/project/editor/.cpcache
             - ~/.m2
-          key: v3-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/shadow-cljs.edn"}}
+            - ~/.clojure/.cpcache
+          key: v6-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/deps.edn"}}
 
 

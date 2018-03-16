@@ -16,7 +16,11 @@
             [maria.eval :as e]
 
             [cells.eval-context :as eval-context]
-            [fast-zip.core :as z]))
+            [fast-zip.core :as z]
+            [lark.tree.node :as node]
+            [lark.tree.emit :as emit]
+            [lark.tree.ext :as ext]
+            [lark.tree.reader :as rd]))
 
 (defprotocol IBlock
 
@@ -48,11 +52,10 @@
   (state [this] (get node :prose/state)))
 
 (defn commentize-source [source]
-  (tree/string {:tag   :comment-block
-                :value source}))
+  (emit/string (rd/ValueNode :comment-block source)))
 
 (defn update-prose-block-state [block editor-state]
-  (assoc block :node {:prose/state  editor-state
+  (assoc block :node {:prose/state editor-state
                       :prose/source (commentize-source (.serialize markdown/serializer editor-state))}))
 
 (defrecord WhitespaceBlock [id node]
@@ -78,13 +81,14 @@
 
 (defn from-ast
   "Returns a block, given a lark.tree AST node."
-  [{:keys [tag value] :as node}]
-
-  (case tag
-    :comment-block (->ProseBlock (d/unique-id) (assoc node :prose/source (commentize-source value)
-                                                           :prose/state (.parse markdown/parser value)))
-    (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
-    (->CodeBlock (d/unique-id) node)))
+  [node]
+  (let [tag (.-tag node)
+        value (.-value node)]
+    (case tag
+      :comment-block (->ProseBlock (d/unique-id) (assoc node :prose/source (commentize-source value)
+                                                             :prose/state (.parse markdown/parser value)))
+      (:newline :space :comma nil) (->WhitespaceBlock (d/unique-id) node)
+      (->CodeBlock (d/unique-id) node))))
 
 (defn create
   "Returns a block, given a kind (:code or :prose) and optional value."
@@ -93,10 +97,12 @@
                   :prose ""
                   :code [])))
   ([kind value]
-   (from-ast (case kind :prose {:tag :comment-block
-                                :value value}
-                        :code {:tag :base
-                               :children value}))))
+   ;; TODO
+   ;; create a real ast?
+   (from-ast (case kind :prose (-> (rd/EmptyNode :comment-block)
+                                   (assoc! :value value))
+                        :code (-> (rd/EmptyNode :base)
+                                  (assoc! :children value))))))
 
 (def emit-list
   "Returns the concatenated source for a list of blocks."
@@ -120,11 +126,11 @@
   "Returns a vector of blocks from a ClojureScript source string."
   [source]
   (->> (tree/ast source)
-       (tree/group-comment-blocks)
+       (ext/group-comment-blocks)
        (:children)
        (reduce (fn [out node]
                  (cond-> out
-                         (not (or (tree/whitespace? node)
+                         (not (or (node/whitespace? node)
                                   (and (= :comment-block (:tag node))
                                        (util/whitespace-string? (:value node)))))
                          (conj (from-ast node)))) [])
@@ -173,11 +179,11 @@
                                            [(util/take-until #(= (:id %) (:id to-block)) the-rest)
                                             (rest (drop-while #(not= (:id %) (:id to-block)) the-rest))])
          result (with-meta
-                  (-> (vec before-blocks)
-                      (into values)
-                      (into after-blocks))
-                  {:before (last before-blocks)
-                   :after  (first after-blocks)})]
+                 (-> (vec before-blocks)
+                     (into values)
+                     (into after-blocks))
+                 {:before (last before-blocks)
+                  :after (first after-blocks)})]
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
@@ -186,9 +192,9 @@
      result)))
 
 (defcommand :doc/print-to-console
-  "Prints the current document to console as a string."
-  {:when :block-list}
-  [{:keys [block-list]}]
-  (print (-> (.getBlocks block-list)
-             (ensure-blocks)
-             (emit-list))))
+            "Prints the current document to console as a string."
+            {:when :block-list}
+            [{:keys [block-list]}]
+            (print (-> (.getBlocks block-list)
+                       (ensure-blocks)
+                       (emit-list))))

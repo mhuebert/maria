@@ -53,6 +53,9 @@
   [{:keys [view/state] :as this}]
   (let [{:keys [history]} @state
         blocks (first history)]
+    ;; TODO
+    ;; see if any problems arise from nodes being created as maps instead of rd/Node's
+    #_(prn (map (comp type :node) blocks))
     (into [:.w-100.flex-none.pt3]
           (mapv (fn [block]
                   (Block/render block {:blocks        blocks

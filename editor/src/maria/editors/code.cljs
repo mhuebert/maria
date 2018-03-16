@@ -17,7 +17,8 @@
    [maria.views.bottom-bar :as bottom-bar]
    [lark.structure.edit :as edit]
    [goog.functions :as gf]
-   [fast-zip.core :as z]))
+   [fast-zip.core :as z]
+   [lark.tree.range :as range]))
 
 (defn eldoc-view [sym]
   (some->> sym
@@ -31,8 +32,8 @@
                                 (z/node))]
           (if-let [completion-data (and (not (.somethingSelected editor))
                                         node
-                                        (= (tree/bounds node :right)
-                                           (tree/bounds pos :left))
+                                        (= (range/bounds node :right)
+                                           (range/bounds pos :left))
                                         (ns-utils/completion-data node))]
             (hint/floating-view! {:component dropdown/numbered-list
                                   :props {:on-selection (fn [[alias completion full-name]]
