@@ -167,7 +167,7 @@
 
 (cell (interval 250 flower))
 
-;; ### Fernseheturm
+;; ### Fernsehturm
 (let [base (layer (position 35 90 (colorize "grey" (circle 25)))
                   (position 34 0 (colorize "grey" (rectangle 4 300)))
                   (position 29 108 (colorize "grey" (rectangle 12 222)))
