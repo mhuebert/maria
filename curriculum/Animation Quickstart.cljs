@@ -38,7 +38,7 @@
 
 ;; Second, define a random-color-name cell:
 
-(defcell a-color (interval 250 #(rand-nth (keys color-names))))
+(defcell a-color (interval 250 #(rand-nth (map first color-names))))
 
 ;; Finally, put the counter and random-color-name cells together using sine and cosine:
 
