@@ -25,12 +25,14 @@
               :http-port 8701
               :after-load maria.frames.live-frame/render
               :async-require true}}
+
   :bootstrap
   {:target :bootstrap
-   :output-dir "public/js/bootstrap"
+   :output-dir "public/js/compiled/bootstrap"
    :entries [maria.user]
    :exclude [cljs.js]
    :module-hash-names true}
+
   :trusted
   {:target :browser
    :output-dir "public/js/compiled"

@@ -2,7 +2,7 @@
   "scripts": {
     "server": "shadow-cljs server;",
     "watch": "shadow-cljs watch live trusted bootstrap;",
-    "release": "rm -rf public/js/bootstrap; shadow-cljs clj-run maria.build/release;",
+    "release": "shadow-cljs clj-run maria.build/release;",
     "postinstall": "ln -svf ./.shadow-cljs/nrepl.port ./.nrepl-port;",
     "deploy": "./script/deploy.sh"
   },
@@ -33,7 +33,7 @@
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "sass-loader": "^6.0.5",
-    "shadow-cljs": "2.2.15",
+    "shadow-cljs": "^2.2.22",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",

@@ -10,7 +10,7 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 (defonce -eval-logs (volatile! {}))
-(def bootstrap-path "/js/bootstrap")
+(def bootstrap-path "/js/compiled/bootstrap")
 
 (def add-error-position e/add-error-position)
 
