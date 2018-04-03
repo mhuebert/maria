@@ -2,6 +2,7 @@
   (:require re-view.hiccup.core
             [maria.friendly.kinds :refer [what-is]]
             goog.net.jsloader
+            goog.crypt ;; solely for `stringToUtf8ByteArray` in Shannon's Entropy lesson -- feel free to remove once we switch to a simple story for grabbing a single external dependency
             maria.user.loaders
             maria.repl-specials
             [cells.cell :refer [cell]]
