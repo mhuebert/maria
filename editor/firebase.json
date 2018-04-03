@@ -4,8 +4,7 @@
     "ignore": [
       "js/compiled/out**",
       "js/compiled/cljs-runtime/**",
-      "js/compiled/node_modules/**",
-      "js/compiled/bootstrap/**"
+      "js/compiled/node_modules/**"
     ],
     "rewrites": [
       {
