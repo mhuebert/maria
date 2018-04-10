@@ -17,7 +17,7 @@
 
         ;; parse, eval, format
         lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "3681f2a9f3c41e237b1f02b4bf0f05765d94ff53"
+                    :sha "7cf4b4a3b6171603109a03eab87e49a20081e95f"
                     :deps/root "tools"}
         ;{:local/root "../../lark/tools"}
 

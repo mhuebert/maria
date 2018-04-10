@@ -15,11 +15,15 @@
   (let [[docstring body] (if (string? (first body))
                            [(first body) (rest body)]
                            [nil body])
+        [meta body] (if (and (map? (first body)) (> (count body) 1))
+                      [(first body) (rest body)]
+                      [nil body])
         cell-name (keyword (str *ns*) (str the-name))]
     `(def ~the-name
        ~@(when docstring (list docstring))
        (let ~lib-bindings
-         (~'cells.cell/cell* ~cell-name (fn [~'self] ~@body))))))
+         (cond-> (~'cells.cell/cell* ~cell-name (fn [~'self] ~@body))
+                 ~meta (with-meta ~meta))))))
 
 (defn- cell-name
   "Construct a cell-name, incorporating the runtime-value of `key` if provided."

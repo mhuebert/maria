@@ -164,10 +164,10 @@
     (cell* (keyword (namespace id) (util/unique-id)) f state))
 
   ICellView
-  (view [this] ((or (::view __meta)
-                    default-view) this))
+  (view [this]
+    ((get __meta :cell/view default-view) this))
   (with-view [this view-fn]
-    (with-meta this (assoc (meta this) ::view view-fn)))
+    (with-meta this (assoc (meta this) :cell/view view-fn)))
 
   IStatus
   (status! [this]
