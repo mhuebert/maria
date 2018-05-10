@@ -155,7 +155,7 @@ color-names
 
 ;; If we want to `map` a function that takes two arguments, we need to give it two arguments. We can do that by giving `map` one vector for the first argument and a second vector for the second argument.
 
-;; We can do that for `rectangle`. The first vector (with all `10`s) is used for the width. The second vector (with different values) is used for the heights:
+;; We can do that for `rectangle`. The first vector (with two `10`s and two `50`s) is used for the width. The second vector (with different values) is used for the heights:
 
 (map rectangle
      [10 10 50 50]
