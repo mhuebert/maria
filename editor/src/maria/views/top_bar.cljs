@@ -1,11 +1,11 @@
 (ns maria.views.top-bar
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
             [maria.views.icons :as icons]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [lark.commands.registry :as registry]
@@ -46,7 +46,7 @@
         (toolbar-button [nil else-icon nil tooltip])))))
 
 
-(defview fixed-top
+(v/defview fixed-top
   {:view/did-mount (fn [{:keys [view/state]}]
                      (->> (events/listen js/window "scroll"
                                          (gf/throttle (fn [e]
@@ -59,35 +59,23 @@
        (cond-> (d/get :ui/globals :sidebar?)
                (assoc-in [:style :left] (d/get :ui/globals :sidebar-width)))) child])
 
-(defview doc-toolbar
+(v/defview doc-toolbar
   {:view/did-mount (fn [this]
                      (.updateWindowTitle this)
-                     (some->> (:id this) (doc/locals-push! :local/recents)))
+                     (some->> (:id this) (doc/locals-push! :local/recents))
+                     (exec/set-context! {:current-doc this}))
    :view/will-unmount (fn [this]
                         (when (= (:current-doc @exec/context) this)
                           (exec/set-context! {:current-doc nil})))
-   :view/will-mount (fn [this] (exec/set-context! {:current-doc this}))
-   :view/will-receive-props (fn [{filename :filename
-                                  props :view/props
-                                  {prev-filename :filename :as prev-props} :view/prev-props
-                                  :as this}]
-                              (when-not (= filename prev-filename)
-                                (.updateWindowTitle this))
-                              (when (not= props prev-props)
-                                (some->> (:id this)
-                                         (doc/locals-push! :local/recents))))
-   :get-filename (fn [{:keys [filename] :as this}]
-                   (get-in this [:project :local :files filename :filename] filename))
-   :update-window-title (fn [{:keys [view/state] :as this}]
-                          (let [filename (.getFilename this)]
-
-                            #_(when (= filename "Untitled.cljs")
-                                (js/setTimeout #(some-> (:title-input @state)
-                                                        :view/state
-                                                        (deref)
-                                                        :input-element
-                                                        (.select)) 50))
-                            (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)])))}
+   :view/did-update (fn [{filename :filename
+                          props :view/props
+                          {prev-filename :filename :as prev-props} :view/prev-props
+                          :as this}]
+                      (when-not (= filename prev-filename)
+                        (.updateWindowTitle this))
+                      (when (not= props prev-props)
+                        (some->> (:id this)
+                                 (doc/locals-push! :local/recents))))}
   [{{:keys [persisted local]} :project
     :keys [filename id view/state left-content] :as this}]
   (let [signed-in? (d/get :auth-public :signed-in?)
@@ -173,5 +161,20 @@
        [:.ph1]])
      [:.h2]
      ]))
+
+(v/extend-view doc-toolbar
+  Object
+  (getFilename [{:keys [filename] :as this}]
+    (get-in this [:project :local :files filename :filename] filename))
+  (updateWindowTitle [{:keys [view/state] :as this}]
+    (let [filename (.getFilename this)]
+
+      #_(when (= filename "Untitled.cljs")
+          (js/setTimeout #(some-> (:title-input @state)
+                                  :view/state
+                                  (deref)
+                                  :input-element
+                                  (.select)) 50))
+      (frame/send frame/trusted-frame [:window/set-title (util/some-str filename)]))))
 
 ;; (str "/gists/" (d/get :auth-public :username))

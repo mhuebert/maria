@@ -1,9 +1,9 @@
 (ns maria.views.dropdown
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [lark.commands.exec :as exec]
             [lark.commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [maria.views.icons :as icons]
             [maria.views.error :as error]))
 
@@ -47,7 +47,7 @@
 (defn page-count [item-count page-size]
   (.ceil js/Math (/ item-count page-size)))
 
-(defview numbered-list
+(v/defview numbered-list
   {:view/initial-state (fn [{:keys [ui/max-height on-selection default-selection items] :as this}]
                          (when (and default-selection
                                     on-selection
@@ -65,58 +65,24 @@
                                                         (max 1))
                                                     DEFAULT_PAGE_SIZE)
                           :page 0})
-   :down (fn [{:keys [view/state items]}]
-           (when (seq items)
-             (let [{:keys [selection page PAGE_SIZE]} @state
-                   item-count (count items)
-                   page-count (page-count item-count PAGE_SIZE)
-                   last-page? (= page (dec page-count))
-                   current-max-selection (if last-page?
-                                           (dec (- item-count (* page PAGE_SIZE)))
-                                           (dec PAGE_SIZE))
-                   [selection page] (if (>= selection current-max-selection)
-                                      [0 (if last-page? 0 (inc page))]
-                                      [(min (inc selection) (dec PAGE_SIZE)) page])]
-               (swap! state assoc :selection selection :page page))))
-   :up (fn [{:keys [view/state items]}]
-         (when (seq items)
-           (let [{:keys [selection page PAGE_SIZE]} @state
-                 item-count (count items)
-                 [selection page] (if (<= selection 0)
-                                    (let [page (max 0 (dec page)) #_(max 0 (if (= page 0) (dec (page-count item-count PAGE_SIZE))
-                                                                     (dec page)))
-                                          selection (min (dec PAGE_SIZE)
-                                                         (dec (- item-count (* page PAGE_SIZE))))]
-                                      [selection page])
-                                    [(dec selection) page])]
-             (swap! state assoc :selection selection :page page))))
-   :select-n (fn [{:keys [on-select! view/state items]} n]
-               (let [{:keys [page PAGE_SIZE]} @state
-                     offset (* PAGE_SIZE page)
-                     n (+ offset n)]
-                 (when (and (< n (count items))
-                            (> n -1))
-                   (on-select! (:value (nth items n)))
-                   true)))
-   :select (fn [this]
-             (let [selection (:selection @(:view/state this))]
-               (.selectN this selection)))
-   :view/will-receive-state (fn [{:keys [view/state view/prev-state on-selection items]}]
-                              (let [{:keys [selection page PAGE_SIZE]} @state
-                                    item-i (+ selection (* page PAGE_SIZE))]
-                                (when (and on-selection
-                                           (not= selection (:selection prev-state)))
-                                  (on-selection (when (and (> item-i -1)
-                                                           (< item-i (count items)))
-                                                  (:value (nth items item-i)))))))
-   :view/will-receive-props
+
+   :view/did-update
    (fn [{{prev-items :items} :view/prev-props
          {items :items} :view/props
          :as this}]
      (when (not= items prev-items)
        (swap! (:view/state this) assoc :selection (or (:default-selection this) 0)))
      (when-not (nil? items)
-       (swap! (:view/state this) assoc :last-items items)))
+       (swap! (:view/state this) assoc :last-items items))
+     (let [{:keys [view/state view/prev-state on-selection items]} this]
+       (when (not= @state prev-state)
+         (let [{:keys [selection page PAGE_SIZE]} @state
+               item-i (+ selection (* page PAGE_SIZE))]
+           (when (and on-selection
+                      (not= selection (:selection prev-state)))
+             (on-selection (when (and (> item-i -1)
+                                      (< item-i (count items)))
+                             (:value (nth items item-i)))))))))
    :view/did-mount #(exec/set-context! {:modal/dropdown %
                                         :modal/numbered-dropdown (:numbered? %)})
    :view/will-unmount #(exec/set-context! {:modal/dropdown nil
@@ -159,4 +125,43 @@
                                [:.tc.items-center.flex.items-stretch.o-50.hover-o-100
                                 {:on-click #(swap! state update :page inc)}
                                 (icons/style icons/ExpandMore {:transform "scale(0.7)"})])])))
+
+(v/extend-view numbered-list
+  Object
+  (down [{:keys [view/state items]}]
+    (when (seq items)
+      (let [{:keys [selection page PAGE_SIZE]} @state
+            item-count (count items)
+            page-count (page-count item-count PAGE_SIZE)
+            last-page? (= page (dec page-count))
+            current-max-selection (if last-page?
+                                    (dec (- item-count (* page PAGE_SIZE)))
+                                    (dec PAGE_SIZE))
+            [selection page] (if (>= selection current-max-selection)
+                               [0 (if last-page? 0 (inc page))]
+                               [(min (inc selection) (dec PAGE_SIZE)) page])]
+        (swap! state assoc :selection selection :page page))))
+  (up [{:keys [view/state items]}]
+    (when (seq items)
+      (let [{:keys [selection page PAGE_SIZE]} @state
+            item-count (count items)
+            [selection page] (if (<= selection 0)
+                               (let [page (max 0 (dec page)) #_(max 0 (if (= page 0) (dec (page-count item-count PAGE_SIZE))
+                                                                                     (dec page)))
+                                     selection (min (dec PAGE_SIZE)
+                                                    (dec (- item-count (* page PAGE_SIZE))))]
+                                 [selection page])
+                               [(dec selection) page])]
+        (swap! state assoc :selection selection :page page))))
+  (selectN [{:keys [on-select! view/state items]} n]
+    (let [{:keys [page PAGE_SIZE]} @state
+          offset (* PAGE_SIZE page)
+          n (+ offset n)]
+      (when (and (< n (count items))
+                 (> n -1))
+        (on-select! (:value (nth items n)))
+        true)))
+  (select [this]
+    (let [selection (:selection @(:view/state this))]
+      (.selectN this selection))))
 

@@ -15,15 +15,15 @@
   (let [[docstring body] (if (string? (first body))
                            [(first body) (rest body)]
                            [nil body])
-        [meta body] (if (and (map? (first body)) (> (count body) 1))
-                      [(first body) (rest body)]
-                      [nil body])
+        [options body] (if (and (map? (first body)) (> (count body) 1))
+                         [(first body) (rest body)]
+                         [nil body])
         cell-name (keyword (str *ns*) (str the-name))]
     `(def ~the-name
        ~@(when docstring (list docstring))
        (let ~lib-bindings
          (cond-> (~'cells.cell/cell* ~cell-name (fn [~'self] ~@body))
-                 ~meta (with-meta ~meta))))))
+                 ~options (with-meta ~options))))))
 
 (defn- cell-name
   "Construct a cell-name, incorporating the runtime-value of `key` if provided."
@@ -41,7 +41,16 @@
    `(~'cells.cell/cell nil ~expr))
   ([key expr]
    `(let ~lib-bindings
-      (~'cells.cell/cell* ~(cell-name key) (fn [~'self] ~expr)))))
+      (~'cells.cell/cell* ~(cell-name key) (fn [~'self] ~expr))))
+  #_(comment
+     ;; should change to this
+     ([& body]
+      (let [[options body] (if (and (map? (first body)) (> (count body) 1))
+                             [(first body) (rest body)]
+                             [nil body])
+            {k :key} options]
+        `(let ~lib-bindings
+           (~'cells.cell/cell* ~(cell-name k) (fn [~'self] ~@body)))))))
 
 (defmacro cell-fn
   "Returns an anonymous function which will evaluate with the current cell in the stack.

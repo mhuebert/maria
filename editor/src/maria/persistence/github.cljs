@@ -2,9 +2,8 @@
   (:require [goog.net.XhrIo :as xhr]
             [goog.object :as gobj]
             [maria.persistence.tokens :as tokens]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [maria.curriculum :as curriculum]
-            [maria.persistence.local :as local]
             [clojure.string :as string]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})

@@ -1,22 +1,17 @@
 (ns maria.blocks.blocks
   (:refer-clojure :exclude [empty?])
-  (:require [clojure.string :as string]
-
-            [lark.tree.core :as tree]
+  (:require [lark.tree.core :as tree]
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.editor :as Editor]
 
-            [re-view.core :as v]
-            [re-db.d :as d]
+            [chia.view :as v]
+            [chia.triple-db :as d]
 
-            [re-view.prosemirror.markdown :as markdown]
+            [chia.prosemirror.markdown :as markdown]
 
-            [cells.cell :as cell]
             [maria.util :as util]
-            [maria.eval :as e]
 
             [cells.eval-context :as eval-context]
-            [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
@@ -43,13 +38,8 @@
 (extend-type nil IBlock
   (empty? [this] true))
 
-(defrecord CodeBlock [id node]
-  IBlock
-  (state [this] node))
-
-(defrecord ProseBlock [id node]
-  IBlock
-  (state [this] (get node :prose/state)))
+(defrecord CodeBlock [id node])
+(defrecord ProseBlock [id node])
 
 (defn commentize-source [source]
   (emit/string (rd/ValueNode :comment-block source)))
@@ -70,14 +60,6 @@
 
 (defn whitespace? [block]
   (= :whitespace (kind block)))
-
-(extend-protocol IEquiv
-  CodeBlock
-  (-equiv [this other] (and (= (:id this) (:id other))
-                            (= (state this) (state other))))
-  ProseBlock
-  (-equiv [this other] (and (= (:id this) (:id other))
-                            (= (state this) (state other)))))
 
 (defn from-ast
   "Returns a block, given a lark.tree AST node."

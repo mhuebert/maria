@@ -6,7 +6,7 @@
    ["codemirror/addon/selection/mark-selection"]
    ["codemirror/mode/clojure/clojure"]
 
-   [re-view.core :as v :refer [defview]]
+   [chia.view :as v]
 
    [maria.util :as util]
    [maria.views.floating.float-ui :as hint]
@@ -18,7 +18,8 @@
    [lark.structure.edit :as edit]
    [goog.functions :as gf]
    [fast-zip.core :as z]
-   [lark.tree.range :as range]))
+   [lark.tree.range :as range]
+   [lark.editor :as editor]))
 
 (defn eldoc-view [sym]
   (some->> sym
@@ -73,7 +74,10 @@
                                         false
                                         true)})})
 
-(defview CodeView
+(defn reset-value! [{:keys [default-value value view/state]}]
+  (cm/set-value-and-refresh! (:editor @state) (or value default-value)))
+
+(v/defview CodeView
   {:view/spec {:props {:event/mousedown :Function
                        :event/keydown :Function
                        :on-ast :Function
@@ -121,8 +125,6 @@
 
                        (set! (.-view editor) this)
                        (swap! editor assoc :view this)
-                       (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor! editor %)
-                                                                (.refresh editor)))
 
                        (swap! state assoc :editor editor)
 
@@ -145,31 +147,37 @@
                        (when auto-focus (.focus editor))
 
                        (cm/mark-ranges! editor error-ranges #js {"className" "error-text"})))
-   :get-editor #(:editor @(:view/state %))
-   :set-value (fn [{:keys [view/state value]}]
-                (when-let [editor (:editor @state)]
-                  (cm/set-preserve-cursor! editor value)))
-   :reset-value (fn [{:keys [default-value value view/state]}]
-                  (.setValueAndRefresh (:editor @state) (or value default-value)))
-   :view/will-receive-props (fn [{:keys [value source-id]
-                                  {prev-source-id :source-id} :view/prev-props
-                                  :as this}]
-                              (let [editor (.getEditor this)]
-                                (if (or (not= source-id prev-source-id)
-                                        (not= value (.getValue editor)))
-                                  (.resetValue this)
-                                  nil)))
-   :view/should-update (fn [_] false)}
+
+   :view/did-update (fn [{:keys [value source-id]
+                          {prev-source-id :source-id} :view/prev-props
+                          :as this}]
+                      (let [editor (editor/get-editor this)]
+                        (if (or (not= source-id prev-source-id)
+                                (not= value (.getValue editor)))
+                          (reset-value! this)
+                          nil)))
+   :view/should-update (fn [_] true)}
   [{:keys [view/state view/props] :as this}]
   [:.cursor-text
-   (-> (select-keys props [:style :class :classes])
+   (-> (select-keys props [:style :class])
        (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
                             (let [editor (:editor @state)]
                               (doto editor
                                 (.setCursor (.lineCount editor) 0)
-                                (.focus))))}))])
+                                (.focus))))
+               :dangerouslySetInnerHTML {:__html ""}}))])
 
-(v/defn viewer [props source]
+(v/extend-view CodeView
+  editor/IEditor
+  (get-editor [this]
+    (-> @(:view/state this)
+        :editor))
+  Object
+  (setValue [{:keys [view/state value]}]
+    (when-let [editor (:editor @state)]
+      (cm/set-preserve-cursor! editor value))))
+
+(v/defview viewer [{:keys [view/props]} source]
   (CodeView (merge {:read-only? true
                     :value source}
                    props)))

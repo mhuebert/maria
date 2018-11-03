@@ -3,7 +3,7 @@
   (:require [cljs.js :as cljs]
             [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [cljs.compiler :as comp]
             [cljs.analyzer :as ana]))
 
@@ -66,8 +66,6 @@
   (doseq [f queue]
     (f)))
 
-
-
 (defn init []
   (boot/init c-state
              {:path         bootstrap-path
@@ -77,31 +75,14 @@
                                                  load-gist     maria.user.loaders/load-gist
                                                  load-js       maria.user.loaders/load-js
                                                  load-npm      maria.user.loaders/load-npm
-                                                 html          re-view.hiccup.core/element
+                                                 html          chia.view.hiccup/element
                                                  macroexpand-n maria.eval/macroexpand-n
                                                  eval          maria.eval/eval}))
                (doseq [form ['(in-ns cljs.spec.test.alpha$macros)
                              '(def eval maria.eval/eval)
                              '(in-ns maria.user)]]
                  (eval-form* form))
-               (loaded!)))
-  #_(let [bundles ["cljs.core"
-                   "maria.user"
-                   "cljs.spec.alpha"
-                   #_"reagent.core"
-                   #_"bach-leipzig"]]
-      (c/load-bundles! (map #(str "/js/cljs_live_bundles/" % ".json") bundles)
-                       (fn []
-                         (eval-form* '(require '[cljs.core :include-macros true]))
-                         (eval-form* '(require '[maria.user :include-macros true]))
-                         (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
-                                                           load-gist maria.user.loaders/load-gist
-                                                           load-js   maria.user.loaders/load-js
-                                                           load-npm  maria.user.loaders/load-npm
-                                                           html      re-view.hiccup.core/element}))
-                         (eval-form* '(in-ns maria.user))
-
-                         (loaded!)))))
+               (loaded!))))
 
 
 (defn log-eval-result! [result]

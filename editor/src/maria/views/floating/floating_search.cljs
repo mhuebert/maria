@@ -1,41 +1,36 @@
 (ns maria.views.floating.floating-search
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [lark.commands.registry :as registry :refer-macros [defcommand]]
-            [maria.commands.which-key :as which-key]
             [lark.commands.exec :as exec]
             [maria.views.dropdown :as dropdown]
             [maria.views.floating.float-ui :as ui]
-            [clojure.string :as string]
             [maria.blocks.history :as history]
             [maria.views.bottom-bar :as bottom-bar]
             [maria.views.icons :as icons]
             [maria.frames.frame-communication :as frame]
-            [maria.persistence.local :as local]
-            [re-db.d :as d]
-            [maria.pages.docs :as docs]
+            [chia.triple-db :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]))
 
 (def -prev-selection (volatile! nil))
 
-(defview FloatingSearch
+(defn return-selections! []
+  (when (not= (some-> (:kind (ui/current-view))
+                      (namespace))
+              (namespace ::this))
+    (when-let [selections @-prev-selection]
+      (history/put-selections! selections)
+      (vreset! -prev-selection nil))))
+
+(v/defview FloatingSearch
   "A floating search bar, displayed near the top-middle of the screen.
   Takes care of saving and returning the current focus/selection."
   {:view/initial-state (fn [] {:q ""})
-   :view/did-mount     (fn [{:keys [view/state] :as this}]
-                         (.captureSelections this)
-                         (some-> (:input @state) (.focus)))
-   :capture-selections (fn [{:keys [view/state]}]
-                         (when-not @-prev-selection
-                           (vreset! -prev-selection (history/get-selections))))
-   :return-selections  (fn [_]
-                         (when (not= (some-> (:kind (ui/current-view))
-                                             (namespace))
-                                     (namespace ::this))
-                           (when-let [selections @-prev-selection]
-                             (history/put-selections! selections)
-                             (vreset! -prev-selection nil))))
-   :view/will-unmount  (fn [this] (.returnSelections this))}
+   :view/did-mount (fn [{:keys [view/state] :as this}]
+                     (when-not @-prev-selection
+                       (vreset! -prev-selection (history/get-selections)))
+                     (some-> (:input @state) (.focus)))
+   :view/will-unmount #(return-selections!)}
   [{:keys [view/state on-selection on-select! items placeholder] :as this}]
   (let [{:keys [q]} @state
         max-height (- (.-innerHeight js/window)
@@ -56,23 +51,23 @@
                                     :ref         #(when % (swap! state assoc :input %))
                                     :value       q
                                     :on-change   #(swap! state assoc :q (.. % -target -value))}]
-       (dropdown/numbered-list {:on-select!        (fn [value]
-                                                     (.returnSelections this)
-                                                     (ui/clear!)
-                                                     (on-select! value))
+       [dropdown/numbered-list {:on-select! (fn [value]
+                                              (return-selections!)
+                                              (ui/clear!)
+                                              (on-select! value))
                                 :select-on-enter true
-                                :ui/max-height     max-height
+                                :ui/max-height max-height
                                 :default-selection 0
-                                :on-selection      on-selection
-                                :items             (items q)})]]]))
+                                :on-selection on-selection
+                                :items (items q)}]]]]))
 
-(defview CommandSearch
+(v/defview CommandSearch
   {:view/initial-state #(do {:context (exec/get-context)})
    :view/will-unmount  #(bottom-bar/retract-bottom-bar! :eldoc/command-search)}
   [{:keys [view/state]}]
   (let [{:keys [context]} @state
         commands (exec/contextual-commands context)]
-    (FloatingSearch {:on-selection #(bottom-bar/add-bottom-bar! :eldoc/command-search (bottom-bar/ShowVar (exec/get-command context %)))
+    [FloatingSearch {:on-selection #(bottom-bar/add-bottom-bar! :eldoc/command-search (bottom-bar/ShowVar (exec/get-command context %)))
                      :placeholder "Search commands..."
                      :on-select! (fn [value]
                                    (exec/exec-command-name value context))
@@ -96,7 +91,7 @@
                                                                  (some->> (first bindings)
                                                                           (registry/binding-string->vec)
                                                                           (registry/keyset-string))]]}))))
-                                     (sort-by :score))))})))
+                                     (sort-by :score))))}]))
 
 
 (defcommand :doc/open

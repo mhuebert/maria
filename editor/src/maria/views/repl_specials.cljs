@@ -1,12 +1,12 @@
 (ns maria.views.repl-specials
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.live.ns-utils :as ns-utils]
             [maria.views.icons :as icons]
-            [clojure.string :as string]
             [maria.live.source-lookups :as reader]
             [maria.views.cards :as repl-ui]
             [maria.editors.code :as code]
-            [maria.friendly.docstrings :as docs]))
+            [maria.friendly.docstrings :as docs]
+            [clojure.string :as str]))
 
 (defn docs-link [namespace name]
   (when (re-find #"^(cljs|clojure)\.core(\$macros)?$" namespace)
@@ -15,16 +15,16 @@
                    :target "_blank"
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
-(defview doc
-  {:view/state #(atom (:expanded? %))
-   :key        :name}
+(v/defview doc
+  {:view/initial-state #(:expanded? %)
+   :key :name}
   [{:keys [doc
            meta
            arglists
            forms
-           view/state
            view/props
-           standalone?] :as this}]
+           standalone?] :as this
+    expanded? :view/state}]
   (let [[namespace name] [(namespace (:name this)) (name (:name this))]
         arglists (ns-utils/elide-quote (or forms
                                            (:arglists meta)
@@ -32,7 +32,7 @@
     [:.ws-normal
      {:class (when standalone? repl-ui/card-classes)}
      [:.code.flex.items-center.pointer.mv1.hover-opacity-parent.pl3
-      {:on-click #(swap! state not)}
+      {:on-click #(swap! expanded? not)}
       (when standalone?
         [:span.o-60 namespace "/"])
       name
@@ -41,17 +41,17 @@
        (when (or doc (seq arglists))
          (-> icons/ArrowPointingDown
              (icons/style {:transition "all ease 0.2s"
-                           :transform (when-not @state "rotate(90deg)")})))]]
-     (when @state
+                           :transform (when-not @expanded? "rotate(90deg)")})))]]
+     (when @expanded?
        [:.ph3
-        [:.mv1.blue.f6 (string/join ", " (map str arglists))]
+        [:.mv1.blue.f6 (str/join ", " arglists)]
         [:.gray.mv2.f6 (if-let [friendly-doc (:docstring (get docs/clojure-core name))]
                          friendly-doc
                          doc)]
         (docs-link namespace name)])]))
 
-(defview var-source
-  {:view/will-mount (fn [{:keys [view/props view/state]}]
+(v/defview var-source
+  {:view/did-mount (fn [{:keys [view/props view/state]}]
                       (reader/var-source props (partial reset! state)))}
   [{:keys [view/state special-form name]}]
   (let [{:keys [value error] :as result} @state]
@@ -61,7 +61,7 @@
                          error)]
           value (code/viewer value))))
 
-(defview dir
+(v/defview dir
   {:view/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
   (let [defs (->> (:defs (ns-utils/analyzer-ns c-state ns))

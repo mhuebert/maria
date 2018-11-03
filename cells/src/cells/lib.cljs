@@ -1,4 +1,5 @@
 (ns cells.lib
+  (:refer-clojure :exclude [delay])
   (:require [cells.cell :as cell
              :refer [*cell-stack*]
              :refer-macros [cell-fn cell]
@@ -86,6 +87,15 @@
        (vreset! clear-key (js/setInterval interval-f n))
        (reset! self (f initial-value))))))
 
+(defn delay
+  [n value]
+  (let [self (first cell/*cell-stack*)
+        clear-key (volatile! nil)
+        _ (on-dispose self #(some-> @clear-key (js/clearTimeout)))
+        timeout-f (cell-fn [] (reset! self value))]
+    (vreset! clear-key (js/setTimeout timeout-f n))
+    nil))
+
 (defn- timeout
   ([n f] (timeout n f nil))
   ([n f initial-value]
@@ -111,7 +121,6 @@
   ([url {:keys [format query]
          :or   {format :json->clj}
          :as   options}]
-   [url options]
    (let [self (first cell/*cell-stack*)
          url (cond-> url
                      query (str "?" (query-string query)))

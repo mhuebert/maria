@@ -1,5 +1,5 @@
 (ns maria.blocks.code
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
 
             [lark.editors.codemirror :as cm]
             [lark.editor :as Editor]
@@ -21,7 +21,8 @@
             [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
-            [maria.views.icons :as icons]))
+            [maria.views.icons :as icons]
+            [lark.editor :as editor]))
 
 
 
@@ -58,8 +59,8 @@
             url (when (and hovered (not unsaved-changes))
                   (get-share-url doc block block-list))]
         [(if url :a :div)
-         {:classes ["share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
-                    (if unsaved-changes "o-50" "pointer")]
+         {:class (str "share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline "
+                      (if unsaved-changes "o-50" "pointer"))
           :href url
           :target (when url "_blank")
           :on-mouse-enter #(swap! state assoc :hovered true)
@@ -72,13 +73,12 @@
   {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount Editor/mount
-   :view/will-unmount Editor/unmount
-   :get-editor #(.getEditor (:editor-view @(:view/state %)))}
+   :view/will-unmount Editor/unmount}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
   (let [doc (:current-doc @exec/context)]
     [:.flex.pv2.cursor-text.flex-column.flex-row-ns
      {:on-click #(when (= (.-target %) (.-currentTarget %))
-                   (Editor/focus! (.getEditor this)))}
+                   (Editor/focus! (editor/get-editor this)))}
      [:.w-100.w-50-ns.flex-none.relative.cm-s-maria-light
       [:.absolute.bottom-0.right-0.pa2.z-3.dib.dn-ns.pointer
        {:on-click #(Block/eval! block)}
@@ -108,9 +108,19 @@
               (assoc :block-id (:id block))
               (value-views/display-result))]]))
 
+(v/extend-view CodeRow
+  editor/IEditor
+  (get-editor [this]
+    (some-> @(:view/state this)
+            :editor-view
+            (editor/get-editor))))
+
 (extend-type Block/CodeBlock
 
   Block/IBlock
+
+  (state [this] (.-node this))
+
   (render [this props] (CodeRow (assoc props :block this
                                              :id (:id this))))
   (kind [this] :code)
@@ -120,6 +130,10 @@
                      (:children node)
                      [node])]
       (= 0 (count (remove node/whitespace? children)))))
+
+  IEquiv
+  (-equiv [this other] (and (= (:id this) (:id other))
+                            (= (Block/state this) (Block/state other))))
 
   Object
   (toString [{:keys [node]}]

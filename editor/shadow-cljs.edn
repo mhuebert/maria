@@ -14,9 +14,9 @@
    :release {:compiler-options
              {:optimizations :simple
               :language-in :ecmascript5
-              :closure-defines {re-view.render-loop/count-fps?* false}}}
+              :closure-defines {chia.view.render-loop/count-fps?* false}}}
    :compiler-options {:closure-defines
-                      {re-view.render-loop/count-fps?* true}}
+                      {chia.view.render-loop/count-fps?* true}}
    :output-dir "public/js/compiled"
    :asset-path "/js/compiled"
    :modules {:shadow-live {:entries [maria.frames.live-frame]}}

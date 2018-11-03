@@ -1,16 +1,14 @@
 (ns maria.views.values
-  (:require [goog.object :as gobj]
-            [shapes.core :as shapes]
+  (:require [shapes.core :as shapes]
             [cells.cell :as cell]
             [maria.friendly.messages :as messages]
             [maria.views.icons :as icons]
-            [re-view.util :as v-util]
-            [re-view.core :as v :refer [defview]]
+            [chia.view :as v]
             [maria.editors.code :as code]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [re-view.hiccup.core :as hiccup]
+            [chia.view.hiccup :as hiccup]
             [maria.util :refer [space]]
             [maria.eval :as e]
             [lark.value-viewer.core :as views]
@@ -61,10 +59,8 @@
   function
   (view [this] (format-function this)))
 
-(declare format-value)
-
-(defview display-deferred
-  {:view/will-mount (fn [{:keys [deferred view/state]}]
+(v/defview display-deferred
+  {:view/did-mount (fn [{:keys [deferred view/state]}]
                       (-> deferred
                           (.addCallback #(swap! state assoc :value %1))
                           (.addErrback #(swap! state assoc :error %))))}
@@ -74,7 +70,7 @@
      [:.gray.i "goog.async.Deferred"]
      [:.pv3 (cond (nil? s) [:.progress-indeterminate]
                   error (str error)
-                  :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
+                  :else (or (some-> value (views/format-value)) [:.gray "Finished."]))]]))
 
 (def expander-outter :.dib.bg-darken.ph2.pv1.mh1.br2)
 (def inline-centered :.inline-flex.items-center)
@@ -86,7 +82,7 @@
     (:collection-expanded? @state)
     (and depth (< depth *format-depth-limit*))))
 
-(defview format-function
+(v/defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
   (let [{:keys [expanded?]} @state
@@ -112,8 +108,6 @@
                     (special-views/var-source))
             [:div.pre
              (code/viewer (.toString value))]))]]))
-
-(def format-value views/format-value)
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
@@ -142,7 +136,7 @@
             [:.mv2 message])
           (interpose [:.bb.b--red.o-20.bw2]))]]])
 
-(defview display-result
+(v/defview display-result
   {:key :id}
   [{:keys  [value
             error
@@ -172,7 +166,7 @@
                                   (when (and source show-source?)
                                     (display-source result))
                                   [:.ws-prewrap.relative
-                                   [:.ph3 (format-value value)]]]))))
+                                   [:.ph3 (views/format-value value)]]]))))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

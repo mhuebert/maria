@@ -1,7 +1,7 @@
 (ns maria.util
   (:require [goog.events :as events]
             [goog.object :as gobj]
-            [re-view.core :as v]
+            [chia.view :as v]
             [clojure.string :as string])
   (:require-macros [maria.util :refer [for-map]]))
 

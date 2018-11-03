@@ -52,8 +52,10 @@
    :private true}
   [{:keys [editor block/code]}]
   (when-let [pos (and code (cm/temp-marker-cursor-pos editor))]
-    (.setCursor editor pos)
-    (js/setTimeout #(.setCursor editor pos) 10))
+    (cm/unset-temp-marker! editor)
+    ;; TODO
+    ;; support multiple selections
+    (.setCursor editor pos))
   false)
 
 (defcommand :clipboard/paste-replace
@@ -82,7 +84,7 @@
                                                                         (cm/sexp-near pos))]
                                                        (when (and loc (not (= loc (:loc @last-sel))))
 
-                                                         (swap! exec/state exec/clear-which-key)
+                                                         (swap! exec/WHICH_KEY_STATE exec/clear-which-key)
 
                                                          (cm/temp-select-node! editor (z/node loc))
                                                          (vreset! last-sel {:pos pos

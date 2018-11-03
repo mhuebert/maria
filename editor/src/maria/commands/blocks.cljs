@@ -5,7 +5,7 @@
             [maria.blocks.history :as history]
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
-            [re-view.prosemirror.commands :as commands]
+            [chia.prosemirror.commands :as commands]
             [maria.views.icons :as icons]
             [lark.editors.codemirror :as cm]
             [lark.structure.edit :as edit]))
@@ -98,7 +98,8 @@
 (defcommand :history/undo
   {:bindings ["M1-z"]
    :icon     icons/Undo}
-  [{:keys [block-list]}]
+  [{:keys [editor block/code block-list]}]
+  (when code (cm/unset-temp-marker! editor))
   (history/undo (:view/state block-list)))
 
 (defcommand :history/redo

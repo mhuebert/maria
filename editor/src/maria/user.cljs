@@ -1,5 +1,5 @@
 (ns maria.user
-  (:require re-view.hiccup.core
+  (:require chia.view.hiccup
             [maria.friendly.kinds :refer [what-is]]
             goog.net.jsloader
             goog.crypt ;; solely for `stringToUtf8ByteArray` in Shannon's Entropy lesson -- feel free to remove once we switch to a simple story for grabbing a single external dependency
@@ -19,7 +19,7 @@
                                             ;; are these internal only? -jar
                                             ;;assure-shape-seq shape-bounds bounds shape->vector
                                             ]]
-            [re-view.core :include-macros true]
+            [chia.view :include-macros true]
             [cljs.spec.alpha :include-macros true]
             [cljs.spec.test.alpha :include-macros true])
   (:require-macros [cells.cell :refer [defcell cell]]))

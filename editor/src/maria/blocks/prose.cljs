@@ -1,10 +1,10 @@
 (ns maria.blocks.prose
-  (:require [re-view.core :as v :refer [defview]]
-            [re-view.prosemirror.core :as pm]
+  (:require [chia.view :as v]
+            [chia.prosemirror.core :as pm]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
             [lark.tree.core :as tree]
-            [re-view.prosemirror.markdown :as markdown]
+            [chia.prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
             [lark.editor :as Editor]
             [lark.tree.emit :as emit]
@@ -20,10 +20,17 @@
     (ProseRow (assoc props
                 :block this
                 :id (:id this))))
+  (state [this]
+    (get (.-node this) :prose/state))
+
   (kind [this] :prose)
 
   (empty? [{{:keys [prose/source]} :node}]
     (util/whitespace-string? source))
+
+  IEquiv
+  (-equiv [this other] (and (= (:id this) (:id other))
+                            (= (Block/state this) (Block/state other))))
 
   Object
   (toString [{{:keys [prose/state prose/source]} :node
@@ -139,7 +146,7 @@
 ;; does not work due to probable bug in ProseMirror where .focus() sets the cursor position to zero.
 #_(defn get-pm [editor-view]
     (:prose-editor-view @(:view/state editor-view)))
-#_(defview markdown
+#_(v/defview markdown
     {:view/initial-state {:editing? false
                           :pm-view nil}}
     [{:keys [view/state view/prev-state]} s]

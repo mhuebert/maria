@@ -1,7 +1,5 @@
 (ns maria.live.source-lookups
-  (:require [cljs.tools.reader.reader-types :as rt]
-            [lark.tree.parse :as parse]
-            [lark.tree.core :as tree]
+  (:require [lark.tree.parse :as parse]
             [clojure.string :as string]
             [maria.eval :as e]
             [lark.eval :as live-eval]
@@ -9,8 +7,7 @@
             [maria.util :as util]
             [shadow.cljs.bootstrap.env :as shadow-env]
             [maria.live.ns-utils :as ns-utils]
-            [lark.tree.emit :as emit])
-  (:import goog.string.StringBuffer))
+            [lark.tree.emit :as emit]))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
 

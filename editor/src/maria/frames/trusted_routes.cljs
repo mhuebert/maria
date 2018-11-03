@@ -1,10 +1,10 @@
 (ns maria.frames.trusted-routes
   (:require [maria.frames.trusted-views :as trusted-views]
-            [re-view.core :as v :refer [defview]]
+            [chia.view :as v]
             [cljs.core.match :refer-macros [match]]
             [maria.curriculum :as curriculum]
             [maria.persistence.github :as github]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [clojure.set :as set]))
 
 (defn sanitized-location

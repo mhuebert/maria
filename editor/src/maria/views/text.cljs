@@ -1,7 +1,7 @@
 (ns maria.views.text
-  (:require [re-view.core :as v :refer [view defview]]
+  (:require [chia.view :as v :refer [view defview]]
             [goog.events :as events]
-            [re-view.routing :refer [closest]])
+            [chia.routing :refer [closest]])
   (:import [goog.dom ViewportSizeMonitor]
            [goog.events EventType]))
 
@@ -84,52 +84,12 @@
        (set! (-> input-element .-style .-lineHeight) (computed-style "line-height"))
        (set! (-> root-node .-style .-height) (str height "px"))))))
 
-(defview autosize-text
-  {:display-name    "AutosizeText"
-   :view/did-mount  (fn [{:keys [auto-focus view/state] :as this}]
-                      (update-size this)
-                      (when auto-focus (.focus (:input-element @state)))
-                      )
-   :view/did-update (fn [this] (update-size this))
-   :cols            (fn [{:keys [view/state]}]
-                      (let [fake           (:fake-element @state)
-                            sample         "Order. When I switched action-handling to a timeout"
-                            original-value (.-innerHTML fake)
-                            original-width (-> fake .getBoundingClientRect .-width (- 9))
-                            _              (set! (.-innerHTML fake) sample)
-                            line-width     (-> fake .getBoundingClientRect .-width (- 9))
-                            char-width     (/ line-width (count sample))
-                            _              (set! (.-innerHTML fake) original-value)]
-                        (/ original-width char-width)))
-   :rows            (fn [{:keys [view/state]}]
-                      (let [fake            (:fake-element @state)
-                            original-value  (.-innerHTML fake)
-                            original-height (-> fake .getBoundingClientRect .-height)
-                            _               (set! (.-innerHTML fake) "|")
-                            line-height     (-> fake .getBoundingClientRect .-height)
-                            rows            (/ original-height line-height)
-                            _               (set! (.-innerHTML fake) original-value)]
-                        rows))
-   :cursorLine      (fn [{:keys [view/state] :as this}]
-                      ;; to get the current line of the cursor, we use our fake/shadow div.
-                      (let [fake                 (:fake-element @state)
-                            original-value       (.-innerHTML fake)
-                            original-height      (-> fake .getBoundingClientRect .-height)
-                            pos                  (.cursorPos this)
-                            _                    (set! (.-innerHTML fake) "|")
-                            line-height          (-> fake .getBoundingClientRect .-height)
-                            _                    (set! (.-innerHTML fake) (subs original-value 0 pos))
-                            prior-content-height (-> fake .getBoundingClientRect .-height)
-                            rows                 (/ original-height line-height)
-                            current-line         (/ prior-content-height line-height)
-                            current-line         (-> current-line (max 1) (min rows))
-                            _                    (set! (.-innerHTML fake) original-value)]
-                        [rows current-line]))
-   :lastLineX       (fn [this ch]
-                      (+ ch (* (dec (.rows this)) (.cols this))))
-   :focus           (fn [{:keys [view/state]}]
-                      (.focus (:input-element @state)))
-   :cursorPos       (fn [{:keys [view/state]}] (get-cursor-pos (:input-element @state)))}
+(v/defview autosize-text
+  {:view/did-mount (fn [{:keys [auto-focus view/state] :as this}]
+                     (update-size this)
+                     (when auto-focus (.focus (:input-element @state)))
+                     )
+   :view/did-update (fn [this] (update-size this))}
   [{:keys [value placeholder class style on-key-down view/props view/state] :as this}]
   (let [placeholder (or placeholder "...")
         v (if (empty? value) placeholder value)]
@@ -142,13 +102,55 @@
         :class class}
        (str v (when (#{"\n" "\r"} (last v)) " "))]]
      [:input (-> props
-                 (update :classes into ["autosize-input-input dib"])
-                 (merge {:ref         #(when % (swap! state assoc :input-element (v/dom-node %)))
+                 (update :class str " autosize-input-input dib")
+                 (merge {:ref #(when % (swap! state assoc :input-element (v/dom-node %)))
                          :on-key-down #(do (update-size this (keydown-char %))
                                            (when on-key-down (on-key-down %)))}
                         (when (re-find #"iPhone|iPad|iPod" (some-> js/navigator .-userAgent))
                           ;; remove text-indent in mobile safari
                           {:style (assoc style :marginLeft -3 :marginRight -3)})))]]))
+
+(v/extend-view autosize-text
+  Object
+  (cols [{:keys [view/state]}]
+    (let [fake (:fake-element @state)
+          sample "Order. When I switched action-handling to a timeout"
+          original-value (.-innerHTML fake)
+          original-width (-> fake .getBoundingClientRect .-width (- 9))
+          _ (set! (.-innerHTML fake) sample)
+          line-width (-> fake .getBoundingClientRect .-width (- 9))
+          char-width (/ line-width (count sample))
+          _ (set! (.-innerHTML fake) original-value)]
+      (/ original-width char-width)))
+  (rows [{:keys [view/state]}]
+    (let [fake (:fake-element @state)
+          original-value (.-innerHTML fake)
+          original-height (-> fake .getBoundingClientRect .-height)
+          _ (set! (.-innerHTML fake) "|")
+          line-height (-> fake .getBoundingClientRect .-height)
+          rows (/ original-height line-height)
+          _ (set! (.-innerHTML fake) original-value)]
+      rows))
+  (cursorLine [{:keys [view/state] :as this}]
+   ;; to get the current line of the cursor, we use our fake/shadow div.
+    (let [fake (:fake-element @state)
+          original-value (.-innerHTML fake)
+          original-height (-> fake .getBoundingClientRect .-height)
+          pos (.cursorPos this)
+          _ (set! (.-innerHTML fake) "|")
+          line-height (-> fake .getBoundingClientRect .-height)
+          _ (set! (.-innerHTML fake) (subs original-value 0 pos))
+          prior-content-height (-> fake .getBoundingClientRect .-height)
+          rows (/ original-height line-height)
+          current-line (/ prior-content-height line-height)
+          current-line (-> current-line (max 1) (min rows))
+          _ (set! (.-innerHTML fake) original-value)]
+      [rows current-line]))
+  (lastLineX [this ch]
+    (+ ch (* (dec (.rows this)) (.cols this))))
+  (focus [{:keys [view/state]}]
+    (.focus (:input-element @state)))
+  (cursorPos [{:keys [view/state]}] (get-cursor-pos (:input-element @state))))
 
 
 

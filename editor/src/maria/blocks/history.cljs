@@ -1,10 +1,11 @@
 (ns maria.blocks.history
   (:require [clojure.set :as set]
             [cells.eval-context :as eval-context]
-            [re-view.core :as v]
+            [chia.view :as v]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
-            [lark.commands.exec :as exec]))
+            [lark.commands.exec :as exec]
+            [lark.editor :as editor]))
 
 
 (defn focused-block-view []
@@ -30,7 +31,7 @@
 
 (defn get-selections []
   (when-let [block-view (focused-block-view)]
-    (when-let [editor (.getEditor block-view)]
+    (when-let [editor (editor/get-editor block-view)]
       [(:block block-view) (Editor/get-selections editor)])))
 
 (defn put-selections! [[block selections]]

@@ -14,8 +14,8 @@
 
             [maria.html]
             [maria.user :include-macros true]
-            [re-view.routing :as r]
-            [re-view.core :as v :refer [defview]]
+            [chia.routing :as r]
+            [chia.view :as v]
             [maria.views.floating.floating-search]
 
             [goog.events :as events]
@@ -26,18 +26,22 @@
             [maria.frames.live-actions :as user-actions]
 
             [maria.live.analyze]
-            [re-db.d :as d]
-            [re-db.patterns :as patterns]
+            [chia.triple-db :as d]
+            [chia.reactive.atom :as ra]
+            [chia.reactive :as reactive]
             [maria.util :as util]))
+
+(defonce cell-store (atom {}))
 
 (extend-type cell/Cell
   cell/ICellStore
   (put-value! [this value]
-    (d/transact! [[:db/add :cells (name this) value]]))
+    (ra/assoc! cell-store (name this) value))
   (get-value [this]
-    (d/get :cells (name this)))
+    (ra/get cell-store (name this)))
   (invalidate! [this]
-    (patterns/invalidate! d/*db* :ea_ [:cells (name this)])))
+   (doseq [reader (ra/all-readers-at-path [(name this)])]
+     (reactive/invalidate! reader nil))))
 
 (extend-protocol kinds/IDoc
   shapes/Shape
@@ -69,7 +73,7 @@
 
 
 
-(defview not-found []
+(v/defview not-found []
   [:div "We couldn't find this page!"])
 
 (defn render []

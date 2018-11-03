@@ -1,7 +1,7 @@
 (ns maria.pages.live-layout
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.views.floating.tooltip :as tooltip]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [maria.commands.which-key :as which-key]
             [maria.repl-specials]
             [cljs.core.match :refer-macros [match]]
@@ -49,7 +49,7 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
-(defview sidebar
+(v/defview sidebar
   [{:keys [visible? id]}]
   (let [width (d/get :ui/globals :sidebar-width)]
     [:.fixed.f7.z-5.top-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
@@ -107,10 +107,10 @@
                   "home"                       landing
                   ["doc/" [#".*" :id]]         docs/file-edit
                   ["gists/" [#".*" :username]] docs/gists-list
-                  ["local/" [#".*" :id]]       (v/partial docs/file-edit {:local? true})
-                  "local"                      (v/partial docs/gists-list {:username "local"})}])
+                  ["local/" [#".*" :id]]       (v/partial-props docs/file-edit {:local? true})
+                  "local"                      (v/partial-props docs/gists-list {:username "local"})}])
 
-(defview remote-progress []
+(v/defview remote-progress []
   (let [active? (> (d/get :remote/status :in-progress) 0)]
     [:div {:style {:height   (if active? 10 0)
                    :left     0
@@ -121,7 +121,7 @@
      (when active?
        [:.progress-indeterminate])]))
 
-(defview layout
+(v/defview layout
   [{:keys []}]
   (let [sidebar? (d/get :ui/globals :sidebar?)
         path (str "/" (str/join "/" (d/get :router/location :segments)))

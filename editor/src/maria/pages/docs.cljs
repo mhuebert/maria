@@ -1,47 +1,25 @@
 (ns maria.pages.docs
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.views.icons :as icons]
-            [re-db.d :as d]
+            [chia.triple-db :as d]
             [maria.views.top-bar :as toolbar]
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [maria.persistence.local :as local]
             [maria.pages.block_list :as block-list]
             [maria.curriculum :as curriculum]
-            [maria.frames.frame-communication :as frame]))
+            [maria.frames.frame-communication :as frame]
+            [chia.util.js-interop :as j]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)
 
-
-(defview file-edit
-  {:doc-editor (fn [{:keys [view/state]}] (:doc-editor @state))
-   :init-doc (fn [{:keys [id] :as this}]
-               (doc/locals-push! :local/recents id)
-               (local/init-storage id)
-               (let [the-doc (d/entity id)]
-                 ;; add persisted version of doc to localStorage
-                 ;; (this should be done somewhere else)
-                 (when-let [provider (or (:persistence/provider the-doc)
-                                         (:persistence/provider (:persisted the-doc))
-                                         (:persistence/provider (:local the-doc)))]
-                   (d/transact! [[:db/update-attr id :local merge
-                                  {:persistence/provider provider}
-                                  {:files (or (:files (:local the-doc))
-                                              (:files (:persisted the-doc)))
-                                   :owner (or (:owner (:local the-doc))
-                                              (:owner (:persisted the-doc)))}]]))))
-   :view/will-receive-props (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
-                              (when-not (= id prev-id)
-                                (.initDoc this)))
-   :view/will-mount (fn [this]
-                      (.initDoc this))
-   :project-files (fn [{:keys [id]}]
-                    (-> (concat (keys (d/get-in id [:persisted :files]))
-                                (keys (d/get-in id [:local :files])))
-                        (distinct)))
-   :current-file (fn [{:keys [filename] :as this}]
-                   (or filename (first (.projectFiles this))))}
+(v/defview file-edit
+  {:view/did-update (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
+                      (when-not (= id prev-id)
+                        (.initDoc this)))
+   :view/did-mount (fn [this]
+                     (.initDoc this))}
   [{:keys [view/state local? id] :as this}]
   (let [{:keys [default-value
                 loading-message
@@ -77,6 +55,32 @@
                                                          :value value
                                                          :default-value default-value})))]]))))
 
+(v/extend-view file-edit
+  Object
+  (docEditor [{:keys [view/state]}] (:doc-editor @state))
+  (initDoc [{:keys [id] :as this}]
+    (doc/locals-push! :local/recents id)
+    (local/init-storage id)
+    (let [the-doc (d/entity id)]
+      ;; add persisted version of doc to localStorage
+      ;; (this should be done somewhere else)
+      (when-let [provider (or (:persistence/provider the-doc)
+                              (:persistence/provider (:persisted the-doc))
+                              (:persistence/provider (:local the-doc)))]
+        (d/transact! [[:db/update-attr id :local merge
+                       {:persistence/provider provider}
+                       {:files (or (:files (:local the-doc))
+                                   (:files (:persisted the-doc)))
+                        :owner (or (:owner (:local the-doc))
+                                   (:owner (:persisted the-doc)))}]]))))
+
+  (projectFiles [{:keys [id]}]
+    (-> (concat (keys (d/get-in id [:persisted :files]))
+                (keys (d/get-in id [:local :files])))
+        (distinct)))
+  (currentFile [{:keys [filename] :as this}]
+    (or filename (first (.projectFiles this)))))
+
 (def small-label :.silver.text-size-11.flex.items-stretch.pr2.ttu)
 (def small-icon-classes " silver hover-black ph2 mr1 flex items-center pointer h-100")
 
@@ -89,11 +93,11 @@
                 :font-size 9
                 :padding 2}} n])))
 
-(defview doc-list
+(v/defview doc-list
   {:key :title
-   :view/initial-state (fn [{:keys [limit]}]
+   :view/initial-state (fn [{:keys [limit view/props] :as this}]
                          {:limit-n (or limit 5)})}
-  [{:keys [view/state context title]} docs]
+  [{:keys [view/state context title] :as this} docs]
   (let [{:keys [limit-n]} @state
         more? (and (not= limit-n 0) (> (count docs) limit-n))
         parent-path (d/get :router/location :parent-path)]
@@ -122,8 +126,8 @@
            ;; figure out exactly what cases have no `local-url`, and why
            :when local-url]
        [:.bt.b--near-white.flex.items-stretch
-        {:classes [(if active? "bg-washed-blue-darker "
-                               (when-not trashed? "hover-bg-washed-blue"))]}
+        {:class [(cond active? "bg-washed-blue-darker"
+                       (not trashed?) "hover-bg-washed-blue")]}
         [:a.db.ph3.pv2.dark-gray.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href (when-not trashed? local-url)}
