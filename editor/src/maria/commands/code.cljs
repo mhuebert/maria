@@ -359,6 +359,9 @@
                                          (edit/set-editor-cursor!))
                                      true)
       (#{\( \[ \{} prev-char) (do (edit/unwrap! editor)
+                                  (-> pointer
+                                      (edit/move -1)
+                                      (edit/set-editor-cursor!))
                                   true)
       (util/whitespace-string? (edit/get-range pointer -1))
       (edit/with-formatting editor

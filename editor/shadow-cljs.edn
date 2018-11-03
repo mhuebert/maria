@@ -14,7 +14,8 @@
    :release {:compiler-options
              {:optimizations :simple
               :language-in :ecmascript5
-              :closure-defines {chia.view.render-loop/count-fps?* false}}}
+              :closure-defines {chia.view.render-loop/count-fps?* false}
+              :output-wrapper false}}
    :compiler-options {:closure-defines
                       {chia.view.render-loop/count-fps?* true}}
    :output-dir "public/js/compiled"

@@ -38,7 +38,7 @@
     "react-dom": "^16.6.0",
     "reset-jss": "^1.0.0",
     "sass-loader": "^6.0.5",
-    "shadow-cljs": "2.3.8",
+    "shadow-cljs": "^2.6.23",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
