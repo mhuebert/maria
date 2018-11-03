@@ -45,7 +45,7 @@ jobs:
 
       - run:
           name: Compile ClojureScript, via shadow-cljs
-          command: npx shadow-cljs clj-run maria.build/release;
+          command: npm run release;
           working_directory: ~/project/editor
 
       - run:

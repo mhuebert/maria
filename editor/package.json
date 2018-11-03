@@ -2,7 +2,7 @@
   "scripts": {
     "server": "shadow-cljs server;",
     "watch": "shadow-cljs watch live trusted bootstrap;",
-    "release": "shadow-cljs clj-run maria.build/release;",
+    "release": "shadow-cljs release live trusted bootstrap;",
     "postinstall": "ln -svf ./.shadow-cljs/nrepl.port ./.nrepl-port;",
     "deploy": "./script/deploy.sh"
   },

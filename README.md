@@ -49,24 +49,27 @@ Like Clojure itself, the Maria curriculum is open-source, but is not primarily a
 
 ## Development
 
-From the `/editor` directory:
-
 ```
 git clone https://github.com/mhuebert/maria.git;
+```
+
+Navigate to the `/editor` directory:
+
+```
 cd editor;
 ```
 
-First, install javascript dependencies and compile stylesheets:
+Install javascript dependencies and compile stylesheets:
 
 ```
-yarn install;
+npm install;
 webpack -p;
 ```
 
 ### build in development mode, start a local server, and live-reload changes:
 
 ```shell
-yarn run watch;
+npm run watch;
 ```
 
 When these builds have completed, open your web browser to http://localhost:8701.
@@ -91,7 +94,7 @@ to directly enter the `live` environment (provided you've opened up your browser
 ### make a production build:
 
 ```shell
-yarn run release;
+npm run release;
 ```
 
 ## License
