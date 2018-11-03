@@ -4,6 +4,7 @@
  :deps {org.clojure/data.json {:mvn/version "0.2.6"}
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
         org.clojure/spec.alpha {:mvn/version "0.1.143"}
+        org.clojure/clojurescript {:mvn/version "1.10.238"}
 
         ;; user fun
         maria/friendly {:local/root "../friendly"}
@@ -13,7 +14,7 @@
         ;; Parse / eval / format
         lark/tools {#_#_:local/root "../../lark/tools"
                     :git/url "https://github.com/braintripping/lark.git"
-                    :sha "f545f8a80c98ab6f58999f7975b730d6994ea21e"
+                    :sha "999526e50787fd2d1a21b233e2ae10b4610e8f31"
                     :deps/root "tools"}
 
         ;; 3rd party utils

@@ -2,7 +2,7 @@
   "scripts": {
     "server": "shadow-cljs server;",
     "watch": "shadow-cljs watch live trusted bootstrap;",
-    "release": "shadow-cljs release live trusted bootstrap;",
+    "release": "shadow-cljs clj-run maria.build/release;",
     "postinstall": "ln -svf ./.shadow-cljs/nrepl.port ./.nrepl-port;",
     "deploy": "./script/deploy.sh"
   },
@@ -14,7 +14,7 @@
     "css-loader": "^0.28.2",
     "extract-text-webpack-plugin": "^2.1.0",
     "firebase": "^4.5.1",
-    "firebase-tools": "^3.17.3",
+    "firebase-tools": "^6.0.1",
     "jss": "^9.8.7",
     "jss-global": "^3.0.0",
     "jss-preset-default": "^4.5.0",
@@ -38,7 +38,7 @@
     "react-dom": "^16.6.0",
     "reset-jss": "^1.0.0",
     "sass-loader": "^6.0.5",
-    "shadow-cljs": "^2.6.23",
+    "shadow-cljs": "2.3.8",
     "style-loader": "^0.18.1",
     "stylus": "^0.54.5",
     "tachyons": "^4.7.4",
