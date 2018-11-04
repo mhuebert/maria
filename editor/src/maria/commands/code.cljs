@@ -17,7 +17,6 @@
             [lark.tree.util :as l-util]
             ["codemirror" :as CM]
             [lark.tree.nav :as nav]
-            [lark.tree.parse :as parse]
             [lark.tree.range :as range]
             [lark.tree.reader :as rd]
             [lark.tree.cursor :as cursor]
@@ -51,12 +50,40 @@
   {:bindings ["M1-v"]
    :private true}
   [{:keys [editor block/code]}]
-  (when-let [pos (and code (cm/temp-marker-cursor-pos editor))]
-    (cm/unset-temp-marker! editor)
-    ;; TODO
-    ;; support multiple selections
-    (.setCursor editor pos))
-  false)
+  ;; placeholder - see below
+  false
+  #_(let [pos (and code (or (cm/temp-marker-cursor-pos editor)
+                          (cm/get-cursor editor)))]
+    (when pos (cm/unset-temp-marker! editor)
+              ;; TODO
+              ;; support multiple selections
+              (.setCursor editor pos))
+    (let [pasted? (try (doto (.execCommand js/document "paste") prn) (catch js/Error e nil))]
+      (if pasted?
+        (do (edit/format! editor)
+            true)
+        (do
+          (js/setTimeout #(edit/format! editor) 10)
+          false)))))
+(defn handle-paste [^js e]
+  (prn @exec/context)
+  (let [{:keys [editor
+                block/code]} (exec/get-context)
+        text (some-> ^js (or (.-clipboardData e)
+                             (.-clipboardData js/window))
+                     (.getData "text"))]
+
+    (when (and code text)
+      (.preventDefault e)
+      (.stopPropagation e)
+      (edit/with-formatting editor
+        (-> (edit/pointer editor)
+            (edit/set-editor-cursor!)
+            (edit/insert! text))))
+    false))
+
+(defonce _
+         (.addEventListener js/document.body "paste" #(#'handle-paste %) true))
 
 (defcommand :clipboard/paste-replace
   {:bindings ["M1-Shift-v"]}
