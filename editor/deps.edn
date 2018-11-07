@@ -11,6 +11,7 @@
         maria/shapes {:local/root "../shapes"}
         maria/cells {:local/root "../cells"}
 
+        ;; view layer
         chia {:git/url "https://github.com/mhuebert/chia"
               :sha "dffc1a0493b5ba51f42685dc27831b96816ef054"}
 
