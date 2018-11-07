@@ -14,13 +14,15 @@
             [goog.events :as events]
             [lark.commands.exec :as exec]
             [maria.util :as util]
-            [lark.tree.util :as l-util]
             ["codemirror" :as CM]
             [lark.tree.nav :as nav]
             [lark.tree.range :as range]
             [lark.tree.reader :as rd]
             [lark.tree.cursor :as cursor]
-            [lark.tree.emit :as emit]))
+            [lark.tree.emit :as emit]
+            [lark.tree.node :as n]
+            [chia.util :as u]
+            [cljs.pprint :as pp]))
 
 (def pass #(do :lark.commands/Pass))
 
@@ -53,20 +55,19 @@
   ;; placeholder - see below
   false
   #_(let [pos (and code (or (cm/temp-marker-cursor-pos editor)
-                          (cm/get-cursor editor)))]
-    (when pos (cm/unset-temp-marker! editor)
-              ;; TODO
-              ;; support multiple selections
-              (.setCursor editor pos))
-    (let [pasted? (try (doto (.execCommand js/document "paste") prn) (catch js/Error e nil))]
-      (if pasted?
-        (do (edit/format! editor)
-            true)
-        (do
-          (js/setTimeout #(edit/format! editor) 10)
-          false)))))
+                            (cm/get-cursor editor)))]
+      (when pos (cm/unset-temp-marker! editor)
+                ;; TODO
+                ;; support multiple selections
+                (.setCursor editor pos))
+      (let [pasted? (try (doto (.execCommand js/document "paste") prn) (catch js/Error e nil))]
+        (if pasted?
+          (do (edit/format! editor)
+              true)
+          (do
+            (js/setTimeout #(edit/format! editor) 10)
+            false)))))
 (defn handle-paste [^js e]
-  (prn @exec/context)
   (let [{:keys [editor
                 block/code]} (exec/get-context)
         text (some-> ^js (or (.-clipboardData e)
@@ -332,6 +333,14 @@
             (edit/insert! (first expected-close-brackets)))
         (edit/cursor-skip! editor :right)))))
 
+(defn replace-with-whitespace [loc]
+  (let [{:as node
+         :keys [end-line end-column]} (z/node loc)]
+    (-> loc
+        (z/replace (-> (rd/ValueNode :space " ")
+                       (assoc :range [end-line end-column end-line (inc end-column)])))
+        (z/insert-right (rd/EmptyNode :cursor)))))
+
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
    :private true
@@ -340,7 +349,7 @@
   (let [before (Block/left blocks block)
         pointer (edit/pointer editor)
         prev-char (edit/get-range pointer -1)
-        {:keys [node pos]} (get editor :magic/cursor)
+        {:keys [node pos loc]} (get editor :magic/cursor)
 
         prev-node (some-> (get editor :zipper)
                           (nav/navigate (update pos :column (comp (partial max 0) dec)))
@@ -348,8 +357,21 @@
 
     (cond
       (.somethingSelected editor) false
+      (get prev-node :invalid?) false
+
+
 
       (Block/empty? block) (clear-empty-code-block block-list blocks block)
+
+      ;; splice
+      (some->> [loc (z/up loc)]
+               (sequence (comp (keep identity)
+                               (map z/node)
+                               (filter n/may-contain-children?)
+                               (map range/inner-range)
+                               (filter #(range/at-start? pos %))))
+               (seq)) (edit/with-formatting editor
+                        (edit/unwrap! editor))
 
       (and before
            (Editor/at-start? editor)) (if (Block/empty? before)
@@ -368,9 +390,7 @@
                                             (Editor/focus! editor))
                                           true))
 
-      (get prev-node :invalid?) false
-
-      (= \" prev-char) (do (if (= \" (edit/get-range pointer 1))
+      (= \" prev-char) (do (if (= "" (.-value node))
                              (-> pointer
                                  (edit/move -1)
                                  (edit/insert! 2 ""))
@@ -385,23 +405,32 @@
                                          (edit/move -1)
                                          (edit/set-editor-cursor!))
                                      true)
-      (#{\( \[ \{} prev-char) (do (edit/unwrap! editor)
-                                  (-> pointer
-                                      (edit/move -1)
-                                      (edit/set-editor-cursor!))
-                                  true)
-      (util/whitespace-string? (edit/get-range pointer -1))
-      (edit/with-formatting editor
-        (let [space-begins (edit/move-while pointer -1 #{\space \newline \tab})]
-          (if (> (- (:line (:pos pointer))
-                    (:line (:pos space-begins))) 1)
-            (cm/replace-range! editor "" {:line (- (:line (:pos pointer)) 2)
-                                          :end-line (dec (:line (:pos pointer)))})
-            (let [pad? (and (not= (:pos space-begins) (update (:pos pointer) :column dec))
-                            (format/pad-chars? (edit/get-range space-begins -1)
-                                               (edit/get-range pointer 1)))]
-              (.replaceRange editor (if pad? " " "") (:pos space-begins) (:pos pointer)))))
-        true)
+
+      (nav/prev-whitespace-node pos loc)
+      (let [ws-loc (nav/prev-whitespace-loc pos loc)]
+        (case (:tag (z/node ws-loc))
+          :space false
+          :newline
+          (let [loc (loop [loc ws-loc]
+                      (if (some-> (z/left loc)
+                                  z/node
+                                  n/whitespace?)
+                        (recur (z/remove loc))
+                        (replace-with-whitespace loc)))]
+
+            (edit/apply-ast! editor (z/root loc))
+            true)
+          #_(edit/with-formatting editor
+              (let [space-begins (edit/move-while pointer -1 #{\space \newline \tab})]
+                (if (> (- (:line (:pos pointer))
+                          (:line (:pos space-begins))) 1)
+                  (cm/replace-range! editor "" {:line (- (:line (:pos pointer)) 2)
+                                                :end-line (dec (:line (:pos pointer)))})
+                  (let [pad? (and (not= (:pos space-begins) (update (:pos pointer) :column dec))
+                                  (format/pad-chars? (edit/get-range space-begins -1)
+                                                     (edit/get-range pointer 1)))]
+                    (.replaceRange editor (if pad? " " "") (:pos space-begins) (:pos pointer)))))
+              true)))
       :else false)))
 
 (defcommand :navigate/hop-left

@@ -26,7 +26,8 @@
   (kind [this] :prose)
 
   (empty? [{{:keys [prose/source]} :node}]
-    (util/whitespace-string? source))
+    (or (nil? source)
+        (util/whitespace-string? source)))
 
   IEquiv
   (-equiv [this other] (and (= (:id this) (:id other))

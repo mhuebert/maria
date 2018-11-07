@@ -11,12 +11,14 @@
         maria/cells {:local/root "../cells"}
 
         ;; view layer
-        chia {:git/url "https://github.com/mhuebert/chia"
+        chia {#_#_:local/root "../../chia"
+              :git/url "https://github.com/mhuebert/chia"
               :sha "dffc1a0493b5ba51f42685dc27831b96816ef054"}
 
         ;; Parse / eval / format
-        lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "aae7a10cc33c24e359a8cee4a584e449a8c066a9"
+        lark/tools {#_#_:local/root "../../lark/tools"
+                    :git/url "https://github.com/braintripping/lark.git"
+                    :sha "6943dc338fcc13f0c8854c9fc4eea4cc0fd5eedd"
                     :deps/root "tools"}
 
         ;; 3rd party utils
