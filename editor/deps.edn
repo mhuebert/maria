@@ -1,6 +1,5 @@
 {:paths ["src"
          "test"]
-
  :deps {org.clojure/data.json {:mvn/version "0.2.6"}
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
         org.clojure/spec.alpha {:mvn/version "0.1.143"}
@@ -17,7 +16,7 @@
 
         ;; Parse / eval / format
         lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "07d771c74e9af1091b12fb0bfa74f57b3f527cfc"
+                    :sha "936adde7695ddfda03c235674bb64cff45a5449f"
                     :deps/root "tools"}
 
         ;; 3rd party utils
