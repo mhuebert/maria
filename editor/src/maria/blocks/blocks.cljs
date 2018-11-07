@@ -42,7 +42,7 @@
 (defrecord ProseBlock [id node])
 
 (defn commentize-source [source]
-  (emit/string (rd/ValueNode :comment-block source)))
+  (:string (rd/ValueNode :comment-block source)))
 
 (defn update-prose-block-state [block editor-state]
   (assoc block :node {:prose/state editor-state

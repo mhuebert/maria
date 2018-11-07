@@ -28,10 +28,11 @@
 
 (def update-completions!
   (-> (fn [{:as editor
-            {:keys [loc pos]} :magic/cursor}]
+            {:keys [loc pos]} :magic/cursor} & [hide?]]
         (when-let [node (some-> (cm/sexp-near pos loc)
                                 (z/node))]
-          (if-let [completion-data (and (not (.somethingSelected editor))
+          (if-let [completion-data (and (not hide?)
+                                        (not (.somethingSelected editor))
                                         node
                                         (= (range/bounds node :right)
                                            (range/bounds pos :left))
@@ -40,7 +41,7 @@
                                   :props {:on-selection (fn [[alias completion full-name]]
                                                           (some->> (eldoc-view full-name)
                                                                    (bottom-bar/add-bottom-bar! :eldoc/completion)))
-                                          :class "shadow-4 bg-white"
+                                          :class "shadow-1x bg-white"
                                           :on-select! (fn [[alias completion full-name]]
                                                         (hint/clear!)
                                                         (cm/replace-range! editor completion node))
@@ -109,16 +110,18 @@
 
                        (add-watch editor :maria
                                   (fn [editor
-                                       {{prev-loc :loc :as prev-cursor} :magic/cursor}
-                                       {{loc :loc pos :pos :as cursor} :magic/cursor}]
+                                       {{prev-loc :loc prev-pos :pos} :magic/cursor}
+                                       {{loc :loc pos :pos} :magic/cursor}]
                                     (js/setTimeout
                                      #(when (.hasFocus editor)
-                                        (when (not= prev-loc loc)
+                                        (when (not= loc)
                                           (some->> (edit/eldoc-symbol loc pos)
                                                    (eldoc-view)
                                                    (bottom-bar/add-bottom-bar! :eldoc/cursor)))
-                                        (when-not (= cursor prev-cursor)
-                                          (update-completions! editor)))
+                                        (when (not= pos prev-pos)
+                                          (update-completions! editor (or (not= (:line pos) (:line prev-pos))
+                                                                          (< (:column pos)
+                                                                             (:column prev-pos))))))
                                      0)))
 
                        (.on editor "blur" #(bottom-bar/retract-bottom-bar! :eldoc/cursor))

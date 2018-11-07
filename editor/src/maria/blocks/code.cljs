@@ -137,7 +137,7 @@
 
   Object
   (toString [{:keys [node]}]
-    (or (get node :source)
+    (or (get node :string)
         (emit/string node)))
 
   eval-context/IDispose

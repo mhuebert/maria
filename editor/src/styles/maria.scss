@@ -111,7 +111,9 @@ div.CodeMirror pre {
 div.CodeMirror {
   span.CodeMirror-matchingbracket {
     //font-weight: bold;
-    color: #777;
+    //color: #777;
+    color: black;
+    text-shadow: 0 0px 6px #00ffff;
     //cursor: pointer;
   }
   span.CodeMirror-unmatchedBracket {
