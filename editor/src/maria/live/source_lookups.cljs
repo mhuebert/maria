@@ -114,7 +114,7 @@
 (defn var-source
   "Look up the source code corresponding to a var's metadata"
   [{{meta-file :file :as meta} :meta file :file name :name :as the-var} cb]
-  (if-let [logged-source (some-> (get @live-eval/cljs-cache meta-file)
+  (if-let [logged-source (some-> (get @live-eval/evaluated-sources-by-filename meta-file)
                                  (source-of-top-level-form the-var))]
     (cb {:value logged-source})
 

@@ -58,7 +58,8 @@
   [:.fixed.top-0.right-0.left-0.z-5.transition-all
    (-> (when (:scrolled? @state) when-scrolled)
        (cond-> (d/get :ui/globals :sidebar?)
-               (assoc-in [:style :left] (d/get :ui/globals :sidebar-width)))) child])
+               (assoc-in [:style :left] (d/get :ui/globals :sidebar-width))))
+   child])
 
 (v/defview doc-toolbar
   {:view/did-mount (fn [this]
@@ -92,76 +93,71 @@
         {:keys [persistence/provider remote-url]} persisted
         persistence-mode (doc/persistence-mode this)
         sidebar? (d/get :ui/globals :sidebar?)]
-    [:div
-     (fixed-top
-      {:when-scrolled {:style {:background-color "#e7e7e7"
-                               :border-bottom "2px solid #e2e2e2"}}}
-      [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
+    [fixed-top
+     {:when-scrolled {:style {:background-color "#e7e7e7"
+                              :border-bottom "2px solid #e2e2e2"}}}
+     [:#top-bar.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2.mb2
+      (when-not sidebar?
+        [toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
+                         icons/Docs
+                         nil
+                         (if sidebar? "Hide Sidebar" "Docs")]])
 
-       (when-not sidebar?
-         (list
-          (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
-                           icons/Docs
-                           nil
-                           (if sidebar? "Hide Sidebar" "Docs")])))
+      (command-button command-context :doc/new {:text "New"
+                                                :tooltip false})
 
-       (command-button command-context :doc/new {:text "New"
-                                                 :tooltip false})
+      (some->>
+       (or left-content
+           (when filename
+             (list
+              [:.ph2.flex.items-center
+               (when (and parent-username parent-url)
+                 [:a.hover-underline.gray.no-underline.dn.dib-ns {:href parent-url} parent-username])
+               [:.ph1.gray.dn.dib-ns "/"]
+               (text/autosize-text {:auto-focus true
+                                    :class "mr2 half-b sans-serif"
+                                    :ref #(when % (swap! state assoc :title-input %))
+                                    :value (doc/strip-clj-ext current-filename)
+                                    :on-key-down #(cond (and (= 13 (.-which %))
+                                                             (not (or (.-metaKey %)
+                                                                      (.-ctrlKey %))))
+                                                        (doc/persist! this)
+                                                        (= 40 (.-which %))
+                                                        (exec/exec-command-name :navigate/focus-start)
+                                                        :else nil)
+                                    :placeholder "Enter a title..."
+                                    :on-change #(update-filename (doc/add-clj-ext (.-value (.-target %))))})]
+              )))
+       (conj [:.flex.items-stretch.bg-darken-lightly]))
 
-       (some->>
-        (or left-content
-            (when filename
-              (list
-               [:.ph2.flex.items-center
-                (when (and parent-username parent-url)
-                  [:a.hover-underline.gray.no-underline.dn.dib-ns {:href parent-url} parent-username])
-                [:.ph1.gray.dn.dib-ns "/"]
-                (text/autosize-text {:auto-focus true
-                                     :class "mr2 half-b sans-serif"
-                                     :ref #(when % (swap! state assoc :title-input %))
-                                     :value (doc/strip-clj-ext current-filename)
-                                     :on-key-down #(cond (and (= 13 (.-which %))
-                                                              (not (or (.-metaKey %)
-                                                                       (.-ctrlKey %))))
-                                                         (doc/persist! this)
-                                                         (= 40 (.-which %))
-                                                         (exec/exec-command-name :navigate/focus-start)
-                                                         :else nil)
-                                     :placeholder "Enter a title..."
-                                     :on-change #(update-filename (doc/add-clj-ext (.-value (.-target %))))})]
-               )))
-        (conj [:.flex.items-stretch.bg-darken-lightly]))
+      (case persistence-mode
+        (:save :create)
+        (command-button command-context :doc/save {:text "Save"
+                                                   :tooltip (str (if persisted false
+                                                                               "Publish as new Gist"))})
+        :saved
+        (toolbar-button [nil nil [:span.o-60 "Saved"] nil])
+        nil)
+      (command-button command-context :doc/revert-to-saved-version {:text "Revert"})
 
-       (case persistence-mode
-         (:save :create)
-         (command-button command-context :doc/save {:text "Save"
-                                                    :tooltip (str (if persisted false
-                                                                                "Publish as new Gist"))})
-         :saved
-         (toolbar-button [nil nil [:span.o-60 "Saved"] nil])
-         nil)
-       (command-button command-context :doc/revert-to-saved-version {:text "Revert"})
+      (command-button command-context :doc/duplicate {:text "Duplicate"
+                                                      :tooltip false})
 
-       (command-button command-context :doc/duplicate {:text "Duplicate"
-                                                       :tooltip false})
+      (when (= provider :gist)
+        (toolbar-button [{:href remote-url
+                          :target "_blank"} icons/OpenInNew nil "View on GitHub"]))
 
-       (when (= provider :gist)
-         (toolbar-button [{:href remote-url
-                           :target "_blank"} icons/OpenInNew nil "View on GitHub"]))
+      [:.flex-auto]
 
-       [:.flex-auto]
+      (command-button command-context :commands/command-search {:text "Commands..."})
 
-       (command-button command-context :commands/command-search {:text "Commands..."})
-
-       (toolbar-button [{:href "https://www.github.com/mhuebert/maria/issues"
-                         :tab-index -1
-                         :target "_blank"} nil "Bug Report"])
-       (if (d/get :auth-public :signed-in?)
-         (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
-         (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
-       [:.ph1]])
-     [:.h2]
-     ]))
+      (toolbar-button [{:href "https://www.github.com/mhuebert/maria/issues"
+                        :tab-index -1
+                        :target "_blank"} nil "Bug Report"])
+      (if (d/get :auth-public :signed-in?)
+        (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
+        (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
+      [:.ph1]]]))
 
 (v/extend-view doc-toolbar
   Object

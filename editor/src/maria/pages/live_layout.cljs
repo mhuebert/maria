@@ -26,7 +26,8 @@
 
 (defn landing []
   [:.w-100
-   (toolbar/doc-toolbar {})
+   [toolbar/doc-toolbar {}]
+   [:.h2]
    [:.tc.serif.center.ph3
     {:style {:max-width 600}}
     [:.f1.mb3.pt5 "Welcome to Maria,"]
@@ -49,7 +50,7 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
-(v/defview sidebar
+(v/defn sidebar
   [{:keys [visible? id]}]
   (let [width (d/get :ui/globals :sidebar-width)]
     [:.fixed.f7.z-5.top-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
@@ -138,14 +139,14 @@
                  :padding-bottom 140
                  :transition     "padding-left ease 0.2s"
                  :padding-left   (when sidebar? (d/get :ui/globals :sidebar-width))}}
-     (remote-progress)
-     (hint/show-floating-view)
-     (sidebar {:visible? sidebar?
-               :id       (:id route-params)})
+     [remote-progress]
+     [hint/show-floating-view]
+     [sidebar {:visible? sidebar?
+               :id (:id route-params)}]
      [:.relative.w-100
       (when handler
         (handler route-params))]
 
-     (which-key/show-commands)
-     (dock/BottomBar {})
-     (tooltip/Tooltip)]))
+     [which-key/show-commands]
+     [dock/BottomBar {}]
+     [tooltip/Tooltip]]))

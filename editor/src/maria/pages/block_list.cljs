@@ -9,7 +9,8 @@
             [maria.commands.blocks]
             [maria.eval :as e]
             [lark.editor :as editor]
-            [chia.reactive :as r]))
+            [chia.reactive :as r]
+            [kitchen-async.promise :as p]))
 
 (exec/add-context-augmenter! :auth #(assoc % :signed-in? (d/get :auth-public :signed-in?)))
 
@@ -37,7 +38,8 @@
                      (history/after-mount (:view/state this))
                      (exec/set-context! {:block-list this})
                      (when (= (str (d/get-in :router/location [:query :eval])) "true")
-                       (e/on-load #(exec/exec-command-name :eval/doc))))
+                       (p/do @e/compiler-ready
+                             (exec/exec-command-name :eval/doc))))
    :view/will-unmount #(exec/set-context! {:block-list nil})
    :view/did-update (fn [{value :value
                           source-id :source-id

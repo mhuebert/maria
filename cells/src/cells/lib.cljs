@@ -96,18 +96,6 @@
     (vreset! clear-key (js/setTimeout timeout-f n))
     nil))
 
-(defn- timeout
-  ([n f] (timeout n f nil))
-  ([n f initial-value]
-
-   (let [self (first cell/*cell-stack*)
-         _ (cell/status! self :loading)
-         clear-key (js/setTimeout (cell-fn []
-                                           (cell/status! self nil)
-                                           (reset! self (f @self))) n)]
-     (on-dispose self #(js/clearTimeout clear-key))
-     initial-value)))
-
 (def parse-fns {:json->clj (comp #(js->clj % :keywordize-keys true) js/JSON.parse)
                 :json      js/JSON.parse
                 :text      identity})

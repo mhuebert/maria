@@ -16,6 +16,7 @@
         lark/tools {:local/root "../../lark/tools"}
 
         appliedscience/js-interop {:mvn/version "0.1.11"}
+        #_#_thheller/shadow-cljs {:mvn/version "2.8.14"}
 
         ;; 3rd party utils
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
@@ -27,7 +28,7 @@
            {:override-deps
 
             {chia {:git/url "https://github.com/mhuebert/chia"
-                   :sha "dffc1a0493b5ba51f42685dc27831b96816ef054"}
+                   :sha "c707f276cad0ef74d29297b5b13a37bd2d2c75c7"}
              lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                         :sha "6943dc338fcc13f0c8854c9fc4eea4cc0fd5eedd"
+                         :sha "113b9f6f8d8ff7a3c35864fb5f50c20be61c729e"
                          :deps/root "tools"}}}}}

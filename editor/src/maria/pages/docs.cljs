@@ -37,13 +37,14 @@
                         (let [local-value (get-in project [:local :files filename :content])
                               persisted-value (get-in project [:persisted :files filename :content])]
                           [:.h-100.flex.flex-column
-                           (toolbar/doc-toolbar (cond (empty? filenames)
+                           [toolbar/doc-toolbar (cond (empty? filenames)
                                                       {:left-content "Empty Gist"}
                                                       error nil
                                                       :else {:project project
                                                              :owner owner
                                                              :filename filename
-                                                             :id id}))
+                                                             :id id})]
+                           [:.h2]
                            [:.flex.flex-auto
                             (or (some->> error (conj [:.pa3.dark-red]))
                                 (when-let [value (or local-value persisted-value)]
@@ -196,5 +197,6 @@
      (toolbar/doc-toolbar {:left-content [:.flex.items-center.ph2.gray
                                           [:a.hover-underline.gray.no-underline.flex.items-center {:href (str "/gists/" username)} username]
                                           util/space "/"]})
+     [:.h2]
      [:.ma3.bg-white
       (doc-list {} gists)]]))

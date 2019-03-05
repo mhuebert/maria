@@ -80,7 +80,7 @@
 
 (defn main []
 
-  (e/init)
+  @e/compiler-ready
 
   (render)
 
