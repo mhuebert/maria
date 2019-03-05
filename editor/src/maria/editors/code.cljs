@@ -79,7 +79,7 @@
   (cm/set-value-and-refresh! (:editor @state) (or value default-value)))
 
 (v/defview CodeView
-  {:view/spec {:props {:event/mousedown :Function
+  {#_#_:view/spec {:props {:event/mousedown :Function
                        :event/keydown :Function
                        :on-ast :Function
                        :keymap :Map}}

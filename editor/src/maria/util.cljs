@@ -81,13 +81,13 @@
       (.scrollTo js/window 0 (-> y-pos
                                  (- (/ innerHeight 2)))))))
 
-(def *debug* true)
+(def DEBUG true)
 
 (defn log-ret [label x]
-  (if *debug* (do
+  (if DEBUG (do
                 (prn label x)
                 x)
-              x))
+            x))
 
 ;; from https://groups.google.com/forum/#!topic/clojure-dev/NaAuBz6SpkY
 (defn take-until

@@ -5,7 +5,8 @@
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
             [lark.commands.exec :as exec]
-            [lark.editor :as editor]))
+            [lark.editor :as editor]
+            [chia.reactive :as r]))
 
 
 (defn focused-block-view []
@@ -55,7 +56,7 @@
 
 (defn initial-state [value]
   {:last-update value
-   :history     (list (Block/ensure-blocks (Block/from-source value)))})
+   :history (list (Block/ensure-blocks (Block/from-source value)))})
 
 (defn after-mount
   "Should be called after doc has been mounted to page.
@@ -65,10 +66,11 @@
     (some-> (first (first (:history @state)))
             (Editor/of-block)
             (Editor/focus! :start))
-    (v/swap-silently! state update :history update-first-meta merge
-                      {:selections-before selections
-                       :selections-after  selections
-                       :timestamp         (.now js/Date)})
+    (r/silently
+     (swap! state update :history update-first-meta merge
+            {:selections-before selections
+             :selections-after selections
+             :timestamp (.now js/Date)}))
     (before-change)))
 
 (defn dispose-removed
@@ -77,14 +79,15 @@
   ;; so we have to manually 'dispose' of blocks that are removed due to
   ;; undo/redo operations.
   [prev-version next-version]
-  (let [ids    (set/difference (set (map :id prev-version))
-                               (set (map :id next-version)))
+  (let [ids (set/difference (set (map :id prev-version))
+                            (set (map :id next-version)))
         blocks (filter (comp ids :id) prev-version)]
     (doseq [block blocks]
       (eval-context/dispose! block))))
 
 (defn clear! [state]
-  (v/swap-silently! state dissoc :history/redo-stack :history))
+  (r/silently
+   (swap! state dissoc :history/redo-stack :history)))
 
 (defn undo [state]
   (let [history (:history @state)]
@@ -120,11 +123,11 @@
     (binding [*ignored-op* true]
       (let [{:keys [history history/redo-stack]} @state
             prev-version (first history)
-            merge?       (merge-version? prev-version)
+            merge? (merge-version? prev-version)
             next-version (with-meta version {:selections-before (if merge? (:selections-before (meta (first history)))
                                                                            @-prior-selection)
-                                             :selections-after  (get-selections)
-                                             :timestamp         (.now js/Date)})]
+                                             :selections-after (get-selections)
+                                             :timestamp (.now js/Date)})]
         (reset! state (-> @state
                           (cond-> merge? (update :history rest))
                           (update :history conj next-version)

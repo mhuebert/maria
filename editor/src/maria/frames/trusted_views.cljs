@@ -7,7 +7,7 @@
 
 (v/defview frame-view
   {:view/initial-state #(do {:frame-id (str (gensym))})
-   :spec/props {:id {:spec :String
+   #_#_:spec/props {:id {:spec string?
                      :doc "unique ID for frame"}
                 :on-message {:spec :Function
                              :doc "Function to be called with messages from iFrame."}}
@@ -38,7 +38,7 @@
     (frame/send (:frame-id @state) [:db/transactions transactions])))
 
 (v/defview editor-frame-view
-  {:spec/props {:default-value :String}}
+  {#_#_:spec/props {:default-value :String}}
   [{:keys [current-entity db/transactions db/queries]
     :or {queries []}}]
   (let [username (d/get :auth-public :username)

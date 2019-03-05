@@ -8,7 +8,8 @@
             [lark.commands.exec :as exec]
             [maria.commands.blocks]
             [maria.eval :as e]
-            [lark.editor :as editor]))
+            [lark.editor :as editor]
+            [chia.reactive :as r]))
 
 (exec/add-context-augmenter! :auth #(assoc % :signed-in? (d/get :auth-public :signed-in?)))
 
@@ -57,7 +58,8 @@
                                                      (first prev-history))]
                            (when blocks-changed?
                              (let [updated-source (Block/emit-list (first history))]
-                               (v/swap-silently! state assoc :last-update updated-source)
+                               (r/silently
+                                (swap! state assoc :last-update updated-source))
                                (on-update updated-source)))
                            blocks-changed?))}
   [{:keys [view/state] :as this}]

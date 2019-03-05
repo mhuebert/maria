@@ -9,7 +9,7 @@
             [maria.pages.block_list :as block-list]
             [maria.curriculum :as curriculum]
             [maria.frames.frame-communication :as frame]
-            [chia.util.js-interop :as j]))
+            [applied-science.js-interop :as j]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)

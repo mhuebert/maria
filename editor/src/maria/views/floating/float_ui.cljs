@@ -2,9 +2,10 @@
   (:require [chia.view :as v]
             [lark.commands.registry :refer-macros [defcommand]]
             [chia.triple-db :as d]
-            [chia.routing :as r]
+            [chia.routing :as routing]
             [goog.events :as events]
-            [maria.views.error :as error])
+            [maria.views.error :as error]
+            [chia.reactive :as r])
   (:import [goog.events EventType]))
 
 (defn tear-down! [{:keys [view/state]}]
@@ -17,14 +18,14 @@
   (let [the-events (to-array cancel-events)
         this-node (v/dom-node this)
         callback (fn [e]
-                   (when (and (not (r/closest (.-target e) (partial = this-node)))
+                   (when (and (not (routing/closest (.-target e) (partial = this-node)))
                               (or (not= (.-type e) "scroll")
                                   (= (.-target e) js/document)))
                      (tear-down! this)
                      (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
     (events/listen js/window the-events callback true)
-    (v/swap-silently! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
-                                                 (v/swap-silently! state dissoc :teardown)))))
+    (r/silently (swap! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
+                                                  (r/silently (swap! state dissoc :teardown)))))))
 
 (v/defview FloatingContainer
   {:view/did-mount (fn [this] (setup-listener! this))

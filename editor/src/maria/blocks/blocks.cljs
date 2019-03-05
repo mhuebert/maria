@@ -28,7 +28,7 @@
 (defn update-view
   [block]
   (some-> (Editor/view block)
-          (v/force-update)))
+          (v/force-update!)))
 
 (defprotocol IEval
   (eval! [this] [this kind value])

@@ -1,7 +1,7 @@
 (ns maria.views.hoc
   (:require [chia.view :as v]
             [chia.view.hiccup :as hiccup]
-            [chia.util.js-interop :as j]
+            [applied-science.js-interop :as j]
             [goog.dom :as gdom]
             ["react-dom" :as react-dom]))
 
@@ -17,7 +17,7 @@
                      (some-> atom
                              (add-watch this (fn [_ _ old new]
                                                (when (not= old new)
-                                                 (v/force-update this))))))
+                                                 (v/force-update! this))))))
    :view/will-unmount (fn [this _ atom]
                         (some-> atom
                                 (remove-watch this)))}
@@ -32,7 +32,7 @@
 
 (defn get-frame-element [this]
   (-> (v/dom-node this)
-      (j/get-in :contentDocument :body)
+      (j/get-in [:contentDocument :body])
       (gdom/getFirstElementChild)))
 
 (defn render-frame! [this content]
@@ -48,7 +48,7 @@
   {:spec/children [:Element]
    :view/did-mount (fn [this content]
                      (-> (v/dom-node this)
-                         (j/get-in :contentDocument :body)
+                         (j/get-in [:contentDocument :body])
                          (gdom/appendChild (gdom/createDom "div")))
                      (render-frame! this content))
    :view/will-unmount (fn [this]

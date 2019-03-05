@@ -9,7 +9,7 @@
   (:require-macros [cljs.analyzer.macros :refer [no-warn]]))
 
 
-(defn analyze-form
+#_(defn analyze-form
   "Returns the ClojureScript ast for a form."
   ([form]
    (analyze-form e/c-state e/c-env form nil))
@@ -23,7 +23,7 @@
                ana/*cljs-static-fns* (:static-fns opts)
                *ns* (create-ns the-ns)
                ana/*passes* (or (:passes opts) ana/*passes*)
-               r/*alias-map* (cljs/current-alias-map)
+               ;r/*alias-map* (cljs/current-alias-map)
                r/*data-readers* tags/*cljs-data-readers*
                r/resolve-symbol cljs/resolve-symbol
                ana/*cljs-file* (:cljs-file opts)]
@@ -39,7 +39,8 @@
 (defn some-namespaced-symbol
   "Returns s (the symbol) if it has a namespace."
   [s]
-  (when (namespace s) s))
+  (when (qualified-symbol? s)
+    (namespace s)))
 
 (defn printable-ast
   "Recursively remove :env keys from an ast - useful for printing."

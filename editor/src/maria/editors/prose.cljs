@@ -6,12 +6,11 @@
             [maria.views.icons :as icons]
             [chia.prosemirror.core :as pm]
             [chia.prosemirror.markdown :as markdown]
-            [goog.object :as gobj]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
 
             [maria.commands.prose :as prose-commands]
-            [chia.routing :as r]
+            [chia.routing :as routing]
 
 
             [lark.commands.exec :as exec]
@@ -21,7 +20,8 @@
             ["prosemirror-inputrules" :as input-rules]
             [maria.util :as util]
             [lark.editor :as editor]
-            [chia.util.js-interop :as j]))
+            [applied-science.js-interop :as j]
+            [chia.reactive :as r]))
 
 
 (v/defview link-dropdown [{:keys [href editor]}]
@@ -72,7 +72,7 @@
             (clj->js))))
 
 (v/defview ProseEditor
-  {:spec/props {:on-dispatch :Function
+  {#_#_:spec/props {:on-dispatch :Function
                 :before-change :Function
                 :input-rules sequential?
                 :doc any?
@@ -91,9 +91,14 @@
                         (.resetDoc this doc)))
    :view/will-unmount (fn [{:keys [view/state]}]
                         (pm/destroy! (:pm-view @state)))}
-  [this]
+  [{:keys [view/props]}]
   [:.prosemirror-content
-   (-> (v/pass-props this)
+   (-> props
+       (dissoc :on-dispatch
+               :before-change
+               :input-rules
+               :doc
+               :editor-props)
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
 
 (v/extend-view ProseEditor
@@ -148,7 +153,7 @@
                 :input-rules (prose-commands/input-rules this)
 
                 :on-click (fn [e]
-                            (when-let [a (r/closest (.-target e) r/link?)]
+                            (when-let [a (routing/closest (.-target e) routing/link?)]
                               (when-not (classes/has a "pm-link")
                                 (do (.stopPropagation e)
                                     (hint/floating-view! {:float/pos (util/rect->abs-pos (.getBoundingClientRect a)
@@ -157,7 +162,8 @@
                                                           :component link-dropdown
                                                           :props {:href (.-href a)
                                                                   :editor (editor/get-editor this)}})))))
-                :ref #(v/swap-silently! state assoc :prose-editor-view %)
+                :ref #(r/silently
+                       (swap! state assoc :prose-editor-view %))
                 :before-change before-change
                 :on-dispatch (fn [pm-view prev-state]
                                #_(when (not= (.-selection (.-state pm-view))

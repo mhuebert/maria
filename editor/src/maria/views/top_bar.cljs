@@ -11,7 +11,7 @@
             [lark.commands.registry :as registry]
             [goog.events :as events]
             [goog.functions :as gf]
-            [maria.persistence.local :as local]))
+            [chia.reactive :as r]))
 
 (defn toolbar-icon [icon]
   (icons/size icon 20))
@@ -51,7 +51,8 @@
                      (->> (events/listen js/window "scroll"
                                          (gf/throttle (fn [e]
                                                         (swap! state assoc :scrolled? (not= 0 (.-scrollY js/window)))) 300))
-                          (v/swap-silently! state assoc :listener-key)))
+                          (r/silently
+                           (swap! state assoc :listener-key))))
    :view/will-unmount #(events/unlistenByKey (:listener-key @(:view/state %)))}
   [{:keys [when-scrolled view/state]} child]
   [:.fixed.top-0.right-0.left-0.z-5.transition-all

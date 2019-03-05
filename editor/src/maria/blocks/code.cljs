@@ -15,14 +15,12 @@
             [maria.editors.code :as code]
             [maria.views.error :as error]
             [maria.views.values :as value-views]
-            [maria.util :as util]
-            [maria.frames.frame-communication :as frame]
             [maria.commands.doc :as doc]
-            [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [maria.views.icons :as icons]
-            [lark.editor :as editor]))
+            [lark.editor :as editor]
+            [chia.reactive :as r]))
 
 
 
@@ -89,7 +87,8 @@
        {:on-error (fn [{:keys [error info]}]
                     (e/handle-block-error (:id block) error))}
        (code/CodeView {:class "pa3 bg-white"
-                       :ref #(v/swap-silently! state assoc :editor-view %)
+                       :ref #(r/silently
+                              (swap! state assoc :editor-view %))
                        :value (str (:block this))
                        :on-ast (fn [node]
                                  (.splice block-list block [(assoc block :node node)]))

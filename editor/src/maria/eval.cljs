@@ -116,33 +116,33 @@
 ;; emit function values into JavaScript as numeric
 ;; references that are looked up.
 
-(defonce ^:private fn-index (volatile! 0))
-(defonce ^:private fn-refs (volatile! {}))
-
-(defn- clear-fns!
-  "Clears saved functions."
-  []
-  (vreset! fn-refs {}))
-
-(defn- put-fn
-  "Saves a function, returning a numeric representation."
-  [f]
-  (let [n (vswap! fn-index inc)]
-    (vswap! fn-refs assoc n f)
-    n))
-
-(defn- get-fn
-  "Gets a function, given its numeric representation."
-  [n]
-  (get @fn-refs n))
-
-(defn- emit-fn [f]
-  (print "maria.eval.get_fn(" (put-fn f) ")"))
-
-(defmethod comp/emit-constant js/Function
-  [f]
-  (emit-fn f))
-
-(defmethod comp/emit-constant cljs.core/Var
-  [f]
-  (emit-fn f))
+;(defonce ^:private fn-index (volatile! 0))
+;(defonce ^:private fn-refs (volatile! {}))
+;
+;(defn- clear-fns!
+;  "Clears saved functions."
+;  []
+;  (vreset! fn-refs {}))
+;
+;(defn- put-fn
+;  "Saves a function, returning a numeric representation."
+;  [f]
+;  (let [n (vswap! fn-index inc)]
+;    (vswap! fn-refs assoc n f)
+;    n))
+;
+;(defn- get-fn
+;  "Gets a function, given its numeric representation."
+;  [n]
+;  (get @fn-refs n))
+;
+;(defn- emit-fn [f]
+;  (print "maria.eval.get_fn(" (put-fn f) ")"))
+;
+;(defmethod comp/emit-constant js/Function
+;  [f]
+;  (emit-fn f))
+;
+;(defmethod comp/emit-constant cljs.core/Var
+;  [f]
+;  (emit-fn f))

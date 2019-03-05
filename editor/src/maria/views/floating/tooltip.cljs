@@ -3,9 +3,10 @@
             [maria.views.floating.float-ui :as ui]
             [goog.events :as events]
             [goog.dom.dataset :as data]
-            [chia.routing :as r]
+            [chia.routing :as routing]
             [maria.util :as util]
-            [cljs.tools.reader.edn :as edn]))
+            [cljs.tools.reader.edn :as edn]
+            [chia.reactive :as r]))
 
 (v/defview Tooltip
   {:view/did-mount
@@ -23,14 +24,15 @@
                                    ;; mouseenter and mouseleave only trigger on currentTarget (body)
                                    (when (or (= "mouseover" (.-type e))
                                              (some-> (.-relatedTarget e)
-                                                     (r/closest #(and (not= % js/document)
-                                                                      (data/has % "tooltip")))))
+                                                     (routing/closest #(and (not= % js/document)
+                                                                            (data/has % "tooltip")))))
                                      {:float/pos (util/rect->abs-pos (.getBoundingClientRect target)
                                                                      [:center :bottom])
                                       :float/offset [0 5]
                                       :content (edn/read-string (data/get target "tooltip"))}))))))]
        (events/listen body the-events callback)
-       (v/swap-silently! state assoc :unlisten #(events/unlisten body the-events callback))))
+       (r/silently
+        (swap! state assoc :unlisten #(events/unlisten body the-events callback)))))
    :view/will-unmount #((:unlisten @(:view/state %)))}
   [{:keys [view/state]}]
   (when-let [{:keys [content float/pos float/offset]} (:tooltip @state)]
