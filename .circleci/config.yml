@@ -35,7 +35,7 @@ jobs:
 
       - run:
           name: Compute Classpath, via clj
-          command: clojure -Spath
+          command: clojure -A:release -Spath
           working_directory: ~/project/editor
 
       - run:
