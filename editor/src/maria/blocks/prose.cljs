@@ -28,9 +28,6 @@
   (empty? [{:as block
             {:as node
              :keys [prose/source]} :node}]
-    (prn :SOURCE source)
-    (prn :NODE node)
-
     (or (nil? source)
         (util/whitespace-string? source)))
 

@@ -6,7 +6,7 @@
             #_[cljs.analyzer :as ana]
             [kitchen-async.promise :as p]))
 
-(def bootstrap-path "/js/compiled/bootstrap")
+(def bootstrap-path "/js/compiled-bootstrap/bootstrap")
 
 ;;;;;;;;;;;;;
 ;;

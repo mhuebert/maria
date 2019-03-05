@@ -18,29 +18,27 @@
               :output-wrapper false}}
    :compiler-options {:closure-defines
                       {chia.view.render-loop/count-fps?* true}}
-   :output-dir "public/js/compiled"
+   :output-dir "public/js/compiled-live"
    :asset-path "/js/compiled"
    :modules {:shadow-live {:entries [maria.frames.live-frame]}}
    :devtools {:http-root "public"
               :http-handler shadow.http.push-state/handle
               :http-port 8701
-              :after-load maria.frames.live-frame/render
-              :async-require true}}
+              :after-load maria.frames.live-frame/render}}
 
   :bootstrap
   {:target :bootstrap
-   :output-dir "public/js/compiled/bootstrap"
+   :output-dir "public/js/compiled-bootstrap"
    :entries [maria.user]
    :exclude [cljs.js]
    :module-hash-names true}
 
   :trusted
   {:target :browser
-   :output-dir "public/js/compiled"
+   :output-dir "public/js/compiled-trusted"
    :asset-path "/js/compiled"
    :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-   :devtools {:autoload true
-              :async-require true}
+   :devtools {:autoload true}
    :compiler-options
    {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
               "node_modules/firebase/externs/firebase-auth-externs.js"
