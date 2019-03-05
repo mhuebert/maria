@@ -59,11 +59,10 @@ Navigate to the `/editor` directory:
 cd editor;
 ```
 
-Install javascript dependencies and compile stylesheets:
+Install javascript dependencies:
 
 ```
 npm install;
-webpack -p;
 ```
 
 ### build in development mode, start a local server, and live-reload changes:

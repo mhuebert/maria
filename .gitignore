@@ -19,6 +19,6 @@ node_modules
 **/test-target/public/js
 **/.cljs_rhino_repl/
 **/.firebaserc
-maria.css
+\
 **/.cpcache/**
 **.shadow-cljs

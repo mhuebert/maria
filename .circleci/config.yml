@@ -34,11 +34,6 @@ jobs:
           working_directory: ~/project/editor
 
       - run:
-          name: Compile Styles, via webpack
-          command: npx webpack -p;
-          working_directory: ~/project/editor
-
-      - run:
           name: Compute Classpath, via clj
           command: clojure -Spath
           working_directory: ~/project/editor

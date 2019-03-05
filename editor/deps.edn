@@ -30,5 +30,5 @@
             {chia {:git/url "https://github.com/mhuebert/chia"
                    :sha "c707f276cad0ef74d29297b5b13a37bd2d2c75c7"}
              lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                         :sha "113b9f6f8d8ff7a3c35864fb5f50c20be61c729e"
+                         :sha "05bc43a10e8a72ba552cc87fd2794eb9db6f06c7"
                          :deps/root "tools"}}}}}
