@@ -8,7 +8,6 @@
             [fast-zip.core :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
-            [maria.blocks.prose :as Prose]
             [lark.editor :as Editor]
             [maria.live.ns-utils :as ns-utils]
             [goog.events :as events]
@@ -22,7 +21,8 @@
             [lark.tree.emit :as emit]
             [lark.tree.node :as n]
             [chia.util :as u]
-            [cljs.pprint :as pp]))
+            [cljs.pprint :as pp]
+            [applied-science.js-interop :as j]))
 
 (def pass #(do :lark.commands/Pass))
 
@@ -48,48 +48,27 @@
   (.replaceSelection editor "")
   true)
 
-(defcommand :clipboard/paste-insert
+(defcommand :clipboard/paste
   {:bindings ["M1-v"]
    :private true}
-  [{:keys [editor block/code]}]
-  ;; placeholder - see below
-  false
-  #_(let [pos (and code (or (cm/temp-marker-cursor-pos editor)
-                            (cm/get-cursor editor)))]
-      (when pos (cm/unset-temp-marker! editor)
-                ;; TODO
-                ;; support multiple selections
-                (.setCursor editor pos))
-      (let [pasted? (try (doto (.execCommand js/document "paste") prn) (catch js/Error e nil))]
-        (if pasted?
-          (do (edit/format! editor)
-              true)
-          (do
-            (js/setTimeout #(edit/format! editor) 10)
-            false)))))
-(defn handle-paste [^js e]
-  (let [{:keys [editor
-                block/code]} (exec/get-context)
-        text (some-> ^js (or (.-clipboardData e)
-                             (.-clipboardData js/window))
-                     (.getData "text"))]
+  [{:keys [editor
+           event
+           block/code
+           clipboard-data]}]
+  (util/stop! event)
 
-    (when (and code text)
-      (.preventDefault e)
-      (.stopPropagation e)
-      (edit/with-formatting editor
-        (-> (edit/pointer editor)
-            (edit/set-editor-cursor!)
-            (edit/insert! text))))
+  )
+
+(defn handle-paste [e]
+  (when-let [clipboard-code (and (:block/code (exec/get-context))
+                                 (util/clipboard-text e))]
+    (exec/exec-command :clipboard/paste
+                       (merge (exec/get-context)
+                              {:clipboard-data clipboard-code
+                               :event e}))
     false))
 
-(defonce _
-         (.addEventListener js/document.body "paste" #(#'handle-paste %) true))
-
-(defcommand :clipboard/paste-replace
-  {:bindings ["M1-Shift-v"]}
-  [{:keys [editor block/code]}]
-  false)
+(defonce _ (.addEventListener js/document.body "paste" #(#'handle-paste %) true))
 
 (defn init-select-by-click [editor]
   (let [in-progress? (volatile! true)

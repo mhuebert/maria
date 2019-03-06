@@ -179,9 +179,6 @@
 
 (specify! (.-prototype EditorView)
 
-  Editor/IKind
-  (kind [this] :prose)
-
   Editor/IHistory
 
   (get-selections [this]

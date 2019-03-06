@@ -2,7 +2,8 @@
   (:require [goog.events :as events]
             [goog.object :as gobj]
             [chia.view :as v]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [applied-science.js-interop :as j])
   (:require-macros [maria.util :refer [for-map]]))
 
 (defn loader [message]
@@ -12,6 +13,11 @@
 (defn stop! [e]
   (.stopPropagation e)
   (.preventDefault e))
+
+(defn clipboard-text [e]
+  (some-> (or (j/get e :clipboardData)
+              (j/get js/window :clipboardData))
+          (j/call :getData "text")))
 
 (defn some-str [s]
   (when (and (string? s) (not (identical? s "")))

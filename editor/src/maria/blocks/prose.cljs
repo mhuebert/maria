@@ -1,9 +1,7 @@
 (ns maria.blocks.prose
-  (:require [chia.view :as v]
-            [chia.prosemirror.core :as pm]
+  (:require [chia.prosemirror.core :as pm]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
-            [lark.tree.core :as tree]
             [chia.prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
             [lark.editor :as Editor]
