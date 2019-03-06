@@ -49,23 +49,26 @@
   true)
 
 (defcommand :clipboard/paste
-  {:bindings ["M1-v"]
-   :private true}
+  {:private true}
   [{:keys [editor
            event
            block/code
            clipboard-data]}]
-  (util/stop! event)
+  (some-> event
+          (util/stop!))
 
-  )
+  (if (.somethingSelected editor)
+    (.replaceSelection editor clipboard-data)
+    (-> (edit/pointer editor)
+        (edit/insert! clipboard-data))))
 
 (defn handle-paste [e]
   (when-let [clipboard-code (and (:block/code (exec/get-context))
                                  (util/clipboard-text e))]
-    (exec/exec-command :clipboard/paste
-                       (merge (exec/get-context)
-                              {:clipboard-data clipboard-code
-                               :event e}))
+    (#'exec/exec-command :clipboard/paste
+     (merge (exec/get-context)
+            {:clipboard-data clipboard-code
+             :event e}))
     false))
 
 (defonce _ (.addEventListener js/document.body "paste" #(#'handle-paste %) true))
