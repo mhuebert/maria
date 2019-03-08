@@ -29,7 +29,7 @@
             {chia {:git/url "https://github.com/mhuebert/chia"
                    :sha "69e85a2c637f8d8be92dd7b3fab69b81af0019df"}
              lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                         :sha "04d471f661ff04c115e6960e8e09c6597a624d51"
+                         :sha "13d9b1f20cc949be1e085909b4c0121b1bab5b56"
                          :deps/root "tools"}
              mhuebert/cljs-static {:git/url "https://github.com/mhuebert/cljs-static"
                                    :sha "9b71dafc6bb1cb43115b1a9a3e020cb8b1259ac4"}}}}}
