@@ -5,7 +5,7 @@
             [maria.blocks.history :as history]
             [maria.commands.prose :as prose]
             [maria.commands.code :as code]
-            [chia.prosemirror.commands :as commands]
+            [prosemirror.commands :as commands]
             [maria.views.icons :as icons]
             [lark.editors.codemirror :as cm]
             [lark.structure.edit :as edit]))

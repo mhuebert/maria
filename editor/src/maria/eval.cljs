@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [macroexpand eval])
   (:require [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             #_[cljs.analyzer :as ana]
             [kitchen-async.promise :as p]))
 

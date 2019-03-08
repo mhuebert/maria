@@ -1,7 +1,7 @@
 (ns maria.frames.trusted-views
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.frames.frame-communication :as frame]
             [cljs.core.match :refer-macros [match]]
             [maria.frames.trusted-actions :as actions]))

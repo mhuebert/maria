@@ -1,12 +1,12 @@
 (ns maria.editors.prose
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
-            [chia.prosemirror.commands :as commands]
-            [chia.prosemirror.commands :refer [apply-command]]
+            [prosemirror.commands :as commands]
+            [prosemirror.commands :refer [apply-command]]
             [maria.views.floating.float-ui :as hint]
             [maria.views.icons :as icons]
-            [chia.prosemirror.core :as pm]
-            [chia.prosemirror.markdown :as markdown]
+            [prosemirror.core :as pm]
+            [prosemirror.markdown :as markdown]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
 

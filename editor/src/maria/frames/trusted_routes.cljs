@@ -4,7 +4,7 @@
             [cljs.core.match :refer-macros [match]]
             [maria.curriculum :as curriculum]
             [maria.persistence.github :as github]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [clojure.set :as set]))
 
 (defn sanitized-location

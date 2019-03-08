@@ -2,7 +2,7 @@
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
             [maria.views.floating.tooltip :as tooltip]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.commands.which-key :as which-key]
             [maria.repl-specials]
             [cljs.core.match :refer-macros [match]]

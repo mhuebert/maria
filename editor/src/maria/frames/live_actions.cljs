@@ -1,6 +1,6 @@
 (ns maria.frames.live-actions
   (:require [cljs.core.match :refer-macros [match]]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
             [maria.commands.doc :as doc]))

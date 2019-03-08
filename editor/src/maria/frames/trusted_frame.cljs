@@ -4,7 +4,7 @@
    [chia.view :as v]
    [chia.view.legacy :as vlegacy]
    [maria.frames.trusted-routes :as routes]
-   [chia.triple-db :as d]
+   [chia.db :as d]
    [chia.reactive :as reactive]))
 
 (vlegacy/defview layout []

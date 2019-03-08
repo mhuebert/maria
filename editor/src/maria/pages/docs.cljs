@@ -1,7 +1,7 @@
 (ns maria.pages.docs
   (:require [chia.view.legacy :as vlegacy]
             [maria.views.icons :as icons]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.views.top-bar :as toolbar]
             [maria.commands.doc :as doc]
             [maria.util :as util]

@@ -1,8 +1,8 @@
 (ns maria.blocks.prose
-  (:require [chia.prosemirror.core :as pm]
+  (:require [prosemirror.core :as pm]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
-            [chia.prosemirror.markdown :as markdown]
+            [prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
             [lark.editor :as Editor]
             [lark.tree.emit :as emit]

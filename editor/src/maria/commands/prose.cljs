@@ -2,9 +2,9 @@
   (:require [lark.commands.registry :refer-macros [defcommand]]
             ["codemirror" :as CM]
             [lark.structure.edit :as edit]
-            [chia.prosemirror.commands :as commands :refer [apply-command]]
-            [chia.prosemirror.markdown :as prose]
-            [chia.prosemirror.core :as pm]
+            [prosemirror.commands :as commands :refer [apply-command]]
+            [prosemirror.markdown :as prose]
+            [prosemirror.core :as pm]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
             [maria.util :as util]
@@ -13,7 +13,7 @@
             [maria.views.icons :as icons]
             ["prosemirror-inputrules" :as input-rules]
             ["prosemirror-commands" :as pm-commands]
-            [chia.prosemirror.markdown :as markdown]))
+            [prosemirror.markdown :as markdown]))
 
 (defn empty-root-paragraph? [state]
   (and (= 1 (pm/cursor-depth state))

@@ -1,7 +1,7 @@
 (ns maria.views.bottom-bar
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.live.ns-utils :as ns-utils]
             [maria.util :as util]))
 

@@ -2,7 +2,7 @@
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
             [maria.blocks.history :as history]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.blocks.code]
             [maria.blocks.prose]
             [maria.blocks.blocks :as Block]

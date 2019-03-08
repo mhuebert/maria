@@ -1,5 +1,5 @@
 (ns maria.frames.trusted-actions
-  (:require [chia.triple-db :as d]
+  (:require [chia.db :as d]
             [maria.persistence.firebase :as remote]
             [clojure.string :as string]
             [chia.routing :as routing]

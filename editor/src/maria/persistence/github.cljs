@@ -2,7 +2,7 @@
   (:require [goog.net.XhrIo :as xhr]
             [goog.object :as gobj]
             [maria.persistence.tokens :as tokens]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.curriculum :as curriculum]
             [clojure.string :as string]))
 

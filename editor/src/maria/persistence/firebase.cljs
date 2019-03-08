@@ -1,7 +1,7 @@
 (ns maria.persistence.firebase
   (:require [chia.view :as v]
             [maria.persistence.tokens :as tokens]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [goog.object :as gobj]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]

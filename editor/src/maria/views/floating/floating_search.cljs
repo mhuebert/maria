@@ -9,7 +9,7 @@
             [maria.views.bottom-bar :as bottom-bar]
             [maria.views.icons :as icons]
             [maria.frames.frame-communication :as frame]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]))
 

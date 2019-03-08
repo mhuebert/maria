@@ -1,5 +1,5 @@
 (ns maria.persistence.local
-  (:require [chia.triple-db :as d]
+  (:require [chia.db :as d]
             [maria.persistence.transit :as t]
             [goog.functions :as gf]
             [goog.object :as gobj]

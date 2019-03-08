@@ -5,9 +5,9 @@
             [lark.editor :as Editor]
 
             [chia.view :as v]
-            [chia.triple-db :as d]
+            [chia.db :as d]
 
-            [chia.prosemirror.markdown :as markdown]
+            [prosemirror.markdown :as markdown]
 
             [maria.util :as util]
 

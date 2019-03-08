@@ -2,7 +2,7 @@
   (:require [chia.view :as v]
             [chia.view.legacy :as vlegacy]
             [lark.commands.registry :refer-macros [defcommand]]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [chia.routing :as routing]
             [goog.events :as events]
             [maria.views.error :as error]

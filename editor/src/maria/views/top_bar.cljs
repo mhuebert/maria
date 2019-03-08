@@ -6,7 +6,7 @@
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
             [maria.views.icons :as icons]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [lark.commands.registry :as registry]

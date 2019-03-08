@@ -4,7 +4,7 @@
             [lark.commands.exec :as exec]
             [lark.commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
-            [chia.triple-db :as d]
+            [chia.db :as d]
             [maria.views.icons :as icons]
             [maria.views.error :as error]))
 
