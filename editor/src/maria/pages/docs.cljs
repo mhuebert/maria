@@ -1,5 +1,5 @@
 (ns maria.pages.docs
-  (:require [chia.view :as v]
+  (:require [chia.view.legacy :as vlegacy]
             [maria.views.icons :as icons]
             [chia.triple-db :as d]
             [maria.views.top-bar :as toolbar]
@@ -14,7 +14,7 @@
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)
 
-(v/defview file-edit
+(vlegacy/defview file-edit
   {:view/did-update (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
                       (when-not (= id prev-id)
                         (.initDoc this)))
@@ -56,7 +56,7 @@
                                                          :value value
                                                          :default-value default-value})))]]))))
 
-(v/extend-view file-edit
+(vlegacy/extend-view file-edit
   Object
   (docEditor [{:keys [view/state]}] (:doc-editor @state))
   (initDoc [{:keys [id] :as this}]
@@ -94,7 +94,7 @@
                 :font-size 9
                 :padding 2}} n])))
 
-(v/defview doc-list
+(vlegacy/defview doc-list
   {:key :title
    :view/initial-state (fn [{:keys [limit view/props] :as this}]
                          {:limit-n (or limit 5)})}

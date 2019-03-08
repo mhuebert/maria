@@ -1,5 +1,6 @@
 (ns maria.share
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.tree.emit :as emit]
             [maria.commands.doc :as doc]
             [lark.tree.node :as node]
@@ -25,7 +26,7 @@
           {:keys [id version]} (get-in doc [:project :persisted])]
       (str "http://share.maria.cloud/gist/" id "/" version "/" index))))
 
-(v/defview ShareLink
+(vlegacy/defview ShareLink
            [{:keys [view/state doc block block-list]}]
            (let [{:keys [hovered]} @state]
              (when (= :gist (get-in doc [:project :persisted :persistence/provider]))

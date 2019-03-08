@@ -16,6 +16,7 @@
             [maria.user :include-macros true]
             [chia.routing :as r]
             [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.views.floating.floating-search]
 
             [goog.events :as events]
@@ -72,7 +73,7 @@
 
 
 
-(v/defview not-found []
+(vlegacy/defview not-found []
   [:div "We couldn't find this page!"])
 
 (defn render []

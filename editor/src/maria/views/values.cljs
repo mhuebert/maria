@@ -4,6 +4,7 @@
             [maria.friendly.messages :as messages]
             [maria.views.icons :as icons]
             [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.editors.code :as code]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
@@ -59,7 +60,7 @@
   function
   (view [this] (format-function this)))
 
-(v/defview display-deferred
+(vlegacy/defview display-deferred
   {:view/did-mount (fn [{:keys [deferred view/state]}]
                       (-> deferred
                           (.addCallback #(swap! state assoc :value %1))
@@ -82,7 +83,7 @@
     (:collection-expanded? @state)
     (and depth (< depth *format-depth-limit*))))
 
-(v/defview format-function
+(vlegacy/defview format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
   (let [{:keys [expanded?]} @state
@@ -136,7 +137,7 @@
             [:.mv2 message])
           (interpose [:.bb.b--red.o-20.bw2]))]]])
 
-(v/defview display-result
+(vlegacy/defview display-result
   {:key :id}
   [{:keys  [value
             error

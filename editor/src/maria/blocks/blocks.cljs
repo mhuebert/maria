@@ -60,7 +60,12 @@
   (-invoke [this props] [:div]))
 
 (defn whitespace? [block]
-  (= :whitespace (kind block)))
+  (try
+    (= :whitespace (kind block))
+    (catch js/Error e
+      (js/console.log "inspect 'block' in console" block)
+      (aset js/window "block" block)
+      (throw e))))
 
 (defn from-ast
   "Returns a block, given a lark.tree AST node."

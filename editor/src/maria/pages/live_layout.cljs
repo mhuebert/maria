@@ -1,5 +1,6 @@
 (ns maria.pages.live-layout
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.views.floating.tooltip :as tooltip]
             [chia.triple-db :as d]
             [maria.commands.which-key :as which-key]
@@ -15,7 +16,8 @@
             [maria.views.icons :as icons]
             [bidi.bidi :as bidi]
             [clojure.string :as str]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [chia.view.props :as props]))
 
 (defonce _
          (d/transact! [[:db/add :ui/globals :sidebar-width 250]
@@ -104,14 +106,14 @@
                                :title   "Trash"
                                :limit   0}))]]))
 
-(def routes ["/" {""                           landing
-                  "home"                       landing
-                  ["doc/" [#".*" :id]]         docs/file-edit
+(def routes ["/" {"" landing
+                  "home" landing
+                  ["doc/" [#".*" :id]] docs/file-edit
                   ["gists/" [#".*" :username]] docs/gists-list
-                  ["local/" [#".*" :id]]       (v/partial-props docs/file-edit {:local? true})
-                  "local"                      (v/partial-props docs/gists-list {:username "local"})}])
+                  ["local/" [#".*" :id]] (props/partial-props docs/file-edit {:local? true})
+                  "local" (props/partial-props docs/gists-list {:username "local"})}])
 
-(v/defview remote-progress []
+(vlegacy/defview remote-progress []
   (let [active? (> (d/get :remote/status :in-progress) 0)]
     [:div {:style {:height   (if active? 10 0)
                    :left     0
@@ -122,7 +124,7 @@
      (when active?
        [:.progress-indeterminate])]))
 
-(v/defview layout
+(vlegacy/defview layout
   [{:keys []}]
   (let [sidebar? (d/get :ui/globals :sidebar?)
         path (str "/" (str/join "/" (d/get :router/location :segments)))

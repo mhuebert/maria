@@ -72,7 +72,7 @@
     false))
 
 (defonce _ (.addEventListener js/document.body "paste" #(#'handle-paste %) true))
-
+ 
 (defn init-select-by-click [editor]
   (let [in-progress? (volatile! true)
         last-sel (volatile! {:pos nil
@@ -280,17 +280,7 @@
                                              [(first brackets) 1]))
                                          (when-let [expected-bracket (first (expected-brackets loc pos :backward))]
                                            [expected-bracket 1])
-                                         (let [[ch-before ch-after] (edit/chars-around pointer)
-                                               pad-before (when (format/pad-chars? ch-before (first brackets))
-                                                            " ")
-                                               pad-after (when (format/pad-chars? (second brackets) ch-after)
-                                                           " ")
-
-                                               brackets (str pad-before
-                                                             brackets
-                                                             pad-after)]
-                                           [brackets (cond-> 1
-                                                             pad-before (inc))]))]
+                                         [brackets 1])]
         (edit/with-formatting editor
           (when (cm/selection? editor)
             (cm/replace-range! editor "" (cm/current-selection-bounds editor)))

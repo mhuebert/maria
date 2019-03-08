@@ -1,5 +1,6 @@
 (ns maria.views.dropdown
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.commands.exec :as exec]
             [lark.commands.registry :refer-macros [defcommand]]
             [maria.util :as util]
@@ -47,7 +48,7 @@
 (defn page-count [item-count page-size]
   (.ceil js/Math (/ item-count page-size)))
 
-(v/defview numbered-list
+(vlegacy/defview numbered-list
   {:view/initial-state (fn [{:keys [ui/max-height on-selection default-selection items] :as this}]
                          (when (and default-selection
                                     on-selection
@@ -126,7 +127,7 @@
                                 {:on-click #(swap! state update :page inc)}
                                 (icons/style icons/ExpandMore {:transform "scale(0.7)"})])])))
 
-(v/extend-view numbered-list
+(vlegacy/extend-view numbered-list
   Object
   (down [{:keys [view/state items]}]
     (when (seq items)

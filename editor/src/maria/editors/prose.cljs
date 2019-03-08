@@ -1,5 +1,6 @@
 (ns maria.editors.prose
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [chia.prosemirror.commands :as commands]
             [chia.prosemirror.commands :refer [apply-command]]
             [maria.views.floating.float-ui :as hint]
@@ -24,7 +25,7 @@
             [chia.reactive :as r]))
 
 
-(v/defview link-dropdown [{:keys [href editor]}]
+(vlegacy/defview link-dropdown [{:keys [href editor]}]
   [:.flex.items-center.bg-white.br2.shadow-4.overflow-hidden
    [:.dib.pointer.hover-bg-darken.pa2.bg-darken-lightly
     {:on-mouse-down (fn [e]
@@ -52,7 +53,7 @@
                                 on-selection-activity
                                 view/state] :as component}
                         editor-state]
-  (new EditorView (v/dom-node component)
+  (new EditorView (vlegacy/dom-node component)
        (->> (merge editor-props
                    {:state editor-state
                     :spellcheck false
@@ -71,7 +72,7 @@
                                                (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
             (clj->js))))
 
-(v/defview ProseEditor
+(vlegacy/defview ProseEditor
   {#_#_:spec/props {:on-dispatch :Function
                 :before-change :Function
                 :input-rules sequential?
@@ -101,7 +102,7 @@
                :editor-props)
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
 
-(v/extend-view ProseEditor
+(vlegacy/extend-view ProseEditor
   Object
   (pmView [this]
     (:pm-view @(:view/state this)))
@@ -132,7 +133,7 @@
              (map (fn [menu-item] (menu-item state dispatch))))]))))
 
 
-(v/defview ProseRow
+(vlegacy/defview ProseRow
   {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount Editor/mount
@@ -173,7 +174,7 @@
                                            (.-doc prev-state))
                                  (.splice block-list block [(Block/update-prose-block-state block (.-doc (.-state pm-view)))])))}))
 
-(v/extend-view ProseRow
+(vlegacy/extend-view ProseRow
   editor/IEditor
   (get-editor [this] (.pmView (:prose-editor-view @(:view/state this)))))
 

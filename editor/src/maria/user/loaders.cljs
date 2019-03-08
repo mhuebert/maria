@@ -1,5 +1,6 @@
 (ns maria.user.loaders
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.views.hoc :as hoc]
             [maria.views.icons :as icons]
 
@@ -15,7 +16,7 @@
             [clojure.set :as set]
             [maria.persistence.github :as github]))
 
-(v/defview gist-loader-status
+(vlegacy/defview gist-loader-status
   [{:keys [status
            url
            error

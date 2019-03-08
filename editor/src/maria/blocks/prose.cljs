@@ -147,7 +147,7 @@
 ;; does not work due to probable bug in ProseMirror where .focus() sets the cursor position to zero.
 #_(defn get-pm [editor-view]
     (:prose-editor-view @(:view/state editor-view)))
-#_(v/defview markdown
+#_(vlegacy/defview markdown
     {:view/initial-state {:editing? false
                           :pm-view nil}}
     [{:keys [view/state view/prev-state]} s]

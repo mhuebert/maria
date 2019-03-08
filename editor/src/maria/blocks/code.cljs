@@ -1,5 +1,6 @@
 (ns maria.blocks.code
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [chia.reactive :as r]
 
             [lark.editors.codemirror :as cm]
@@ -24,7 +25,7 @@
 
 (def -dispose-callbacks (volatile! {}))
 
-(v/defview CodeRow
+(vlegacy/defview CodeRow
   {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount Editor/mount
@@ -67,7 +68,7 @@
             (assoc :block-id (:id block))
             (value-views/display-result))]])
 
-(v/extend-view CodeRow
+(vlegacy/extend-view CodeRow
   editor/IEditor
   (get-editor [this]
     (some-> @(:view/state this)

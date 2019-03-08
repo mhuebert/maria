@@ -1,5 +1,5 @@
 (ns maria.views.text
-  (:require [chia.view :as v :refer [view defview]]
+  (:require [chia.view.legacy :as vlegacy]
             [goog.events :as events]
             [chia.routing :refer [closest]])
   (:import [goog.dom ViewportSizeMonitor]
@@ -73,7 +73,7 @@
   ([{:keys [view/props view/state] :as this} char]
    (when-let [{:keys [input-element fake-element]} @state]
      (let [id (:node/id props)
-           root-node (v/dom-node this)
+           root-node (vlegacy/dom-node this)
            computed-style (select-keys-js (js/getComputedStyle fake-element) ["font-size" "line-height" "font-style" "padding" "font-weight"])
            value (.-innerHTML fake-element)
            _ (when char (set! (.-innerHTML fake-element) (value-adjust (str value char))))
@@ -84,7 +84,7 @@
        (set! (-> input-element .-style .-lineHeight) (computed-style "line-height"))
        (set! (-> root-node .-style .-height) (str height "px"))))))
 
-(v/defview autosize-text
+(vlegacy/defview autosize-text
   {:view/did-mount (fn [{:keys [auto-focus view/state] :as this}]
                      (update-size this)
                      (when auto-focus (.focus (:input-element @state)))
@@ -103,14 +103,14 @@
        (str v (when (#{"\n" "\r"} (last v)) " "))]]
      [:input (-> props
                  (update :class str " autosize-input-input dib")
-                 (merge {:ref #(when % (swap! state assoc :input-element (v/dom-node %)))
+                 (merge {:ref #(when % (swap! state assoc :input-element (vlegacy/dom-node %)))
                          :on-key-down #(do (update-size this (keydown-char %))
                                            (when on-key-down (on-key-down %)))}
                         (when (re-find #"iPhone|iPad|iPod" (some-> js/navigator .-userAgent))
                           ;; remove text-indent in mobile safari
                           {:style (assoc style :marginLeft -3 :marginRight -3)})))]]))
 
-(v/extend-view autosize-text
+(vlegacy/extend-view autosize-text
   Object
   (cols [{:keys [view/state]}]
     (let [fake (:fake-element @state)

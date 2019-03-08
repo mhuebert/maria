@@ -1,5 +1,6 @@
 (ns maria.views.floating.tooltip
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.views.floating.float-ui :as ui]
             [goog.events :as events]
             [goog.dom.dataset :as data]
@@ -8,7 +9,7 @@
             [cljs.tools.reader.edn :as edn]
             [chia.reactive :as r]))
 
-(v/defview Tooltip
+(vlegacy/defview Tooltip
   {:view/did-mount
    (fn [{:keys [view/state]}]
      (let [the-events #js ["mouseover" "mouseout" "mousedown" "mouseenter" "mouseleave"]

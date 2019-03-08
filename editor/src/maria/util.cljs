@@ -1,7 +1,7 @@
 (ns maria.util
   (:require [goog.events :as events]
             [goog.object :as gobj]
-            [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [clojure.string :as string]
             [applied-science.js-interop :as j])
   (:require-macros [maria.util :refer [for-map]]))
@@ -31,7 +31,7 @@
   (str (string/upper-case (first the-name)) (string/replace (subs the-name 1) "-" " ")))
 
 (defn handle-captured-events [{:keys [view/props] :as this}]
-  (let [dom-node (v/dom-node this)]
+  (let [dom-node (vlegacy/dom-node this)]
     (doseq [[key f] props]
       (when (= (namespace key) "capture-event")
         (events/listen dom-node (name key) #(f % this) true)))))

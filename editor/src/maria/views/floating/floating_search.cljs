@@ -1,5 +1,6 @@
 (ns maria.views.floating.floating-search
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.commands.registry :as registry :refer-macros [defcommand]]
             [lark.commands.exec :as exec]
             [maria.views.dropdown :as dropdown]
@@ -22,7 +23,7 @@
       (history/put-selections! selections)
       (vreset! -prev-selection nil))))
 
-(v/defview FloatingSearch
+(vlegacy/defview FloatingSearch
   "A floating search bar, displayed near the top-middle of the screen.
   Takes care of saving and returning the current focus/selection."
   {:view/initial-state (fn [] {:q ""})
@@ -61,7 +62,7 @@
                                 :on-selection on-selection
                                 :items (items q)}]]]]))
 
-(v/defview CommandSearch
+(vlegacy/defview CommandSearch
   {:view/initial-state #(do {:context (exec/get-context)})
    :view/will-unmount  #(bottom-bar/retract-bottom-bar! :eldoc/command-search)}
   [{:keys [view/state]}]

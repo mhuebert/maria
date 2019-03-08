@@ -1,5 +1,6 @@
 (ns maria.views.bottom-bar
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [chia.triple-db :as d]
             [maria.live.ns-utils :as ns-utils]
             [maria.util :as util]))
@@ -27,7 +28,7 @@
     (d/transact! [[:db/update-attr :ui/globals :bottom-bar-stack #(->> (cons [key view] %)
                                                                        (util/distinct-by first))]])))
 
-(v/defview BottomBar
+(vlegacy/defview BottomBar
   [this]
   (let [bottom-bar (d/get :ui/globals :bottom-bar-stack)
         [_ top-view] (first bottom-bar)]

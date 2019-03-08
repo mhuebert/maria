@@ -1,5 +1,6 @@
 (ns maria.pages.block_list
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.blocks.history :as history]
             [chia.triple-db :as d]
             [maria.blocks.code]
@@ -31,7 +32,7 @@
     ;; re-parse blocks when new value doesn't match last emitted value
     (history/add! state (Block/ensure-blocks (Block/from-source value)))))
 
-(v/defview BlockList
+(vlegacy/defview BlockList
   {:key :source-id
    :view/initial-state (fn [{value :value}] (history/initial-state value))
    :view/did-mount (fn [this]
@@ -76,7 +77,7 @@
                                        :block-list this
                                        :before-change history/before-change})) blocks))))
 
-(v/extend-view BlockList
+(vlegacy/extend-view BlockList
   Object
   (getBlocks [this]
     (first (:history @(:view/state this))))

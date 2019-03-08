@@ -26,7 +26,7 @@
  :aliases {:release
            {:override-deps
             {chia {:git/url "https://github.com/mhuebert/chia"
-                   :sha "c707f276cad0ef74d29297b5b13a37bd2d2c75c7"}
+                   :sha "0ad9fa809c5607797c9592bec17d79f485ec5a87"}
              lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                         :sha "324c42ad855acd5db59411cb0ad8487a1fb383dd"
+                         :sha "04d471f661ff04c115e6960e8e09c6597a624d51"
                          :deps/root "tools"}}}}}

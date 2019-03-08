@@ -1,5 +1,6 @@
 (ns maria.commands.which-key
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.commands.registry :as registry]
             [lark.commands.exec :as exec]
             [clojure.set :as set]
@@ -51,7 +52,7 @@
                                                         (map (partial show-namespace-commands modifiers-down)))
                                                    [:.gray.ph2 "No commands"])]])))))
 
-(v/defview show-commands
+(vlegacy/defview show-commands
   {:view/did-mount update-whichkey-state!
    :view/should-update (constantly true)
    :view/did-update update-whichkey-state!}

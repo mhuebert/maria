@@ -7,6 +7,7 @@
    ["codemirror/mode/clojure/clojure"]
 
    [chia.view :as v]
+   [chia.view.legacy :as vlegacy]
 
    [maria.util :as util]
    [maria.views.floating.float-ui :as hint]
@@ -78,7 +79,7 @@
 (defn reset-value! [{:keys [default-value value view/state]}]
   (cm/set-value-and-refresh! (:editor @state) (or value default-value)))
 
-(v/defview CodeView
+(vlegacy/defview CodeView
   {#_#_:view/spec {:props {:event/mousedown :Function
                        :event/keydown :Function
                        :on-ast :Function
@@ -97,7 +98,7 @@
                                 on-selection-activity
                                 keymap]
                          :as this}]
-                     (let [dom-node (v/dom-node this)
+                     (let [dom-node (vlegacy/dom-node this)
                            editor (CM dom-node
                                       (clj->js (merge cm-opts
                                                       {:value (str (or value default-value))}
@@ -170,7 +171,7 @@
                                 (.focus))))
                :dangerouslySetInnerHTML {:__html ""}}))])
 
-(v/extend-view CodeView
+(vlegacy/extend-view CodeView
   editor/IEditor
   (get-editor [this]
     (-> @(:view/state this)
@@ -180,7 +181,7 @@
     (when-let [editor (:editor @state)]
       (cm/set-preserve-cursor! editor value))))
 
-(v/defview viewer [{:keys [view/props]} source]
+(vlegacy/defview viewer [{:keys [view/props]} source]
   (CodeView (merge {:read-only? true
                     :value source}
                    props)))

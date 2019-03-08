@@ -1,5 +1,5 @@
 (ns maria.views.repl-specials
-  (:require [chia.view :as v]
+  (:require [chia.view.legacy :as vlegacy]
             [maria.live.ns-utils :as ns-utils]
             [maria.views.icons :as icons]
             [maria.live.source-lookups :as reader]
@@ -15,7 +15,7 @@
                    :target "_blank"
                    :rel    "noopener noreferrer"} "clojuredocs ↗"]]))
 
-(v/defview doc
+(vlegacy/defview doc
   {:view/initial-state #(:expanded? %)
    :key :name}
   [{:keys [doc
@@ -50,7 +50,7 @@
                          doc)]
         (docs-link namespace name)])]))
 
-(v/defview var-source
+(vlegacy/defview var-source
   {:view/did-mount (fn [{:keys [view/props view/state]}]
                       (reader/var-source props (partial reset! state)))}
   [{:keys [view/state special-form name]}]
@@ -61,7 +61,7 @@
                          error)]
           value (code/viewer value))))
 
-(v/defview dir
+(vlegacy/defview dir
   {:view/initial-state {:expanded? false}}
   [{:keys [view/state]} c-state ns]
   (let [defs (->> (:defs (ns-utils/analyzer-ns c-state ns))

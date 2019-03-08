@@ -1,5 +1,6 @@
 (ns maria.views.floating.float-ui
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.commands.registry :refer-macros [defcommand]]
             [chia.triple-db :as d]
             [chia.routing :as routing]
@@ -16,7 +17,7 @@
                         :or {cancel-events ["mousedown" "focus" "scroll"]}}]
   (tear-down! this)
   (let [the-events (to-array cancel-events)
-        this-node (v/dom-node this)
+        this-node (vlegacy/dom-node this)
         callback (fn [e]
                    (when (and (not (routing/closest (.-target e) (partial = this-node)))
                               (or (not= (.-type e) "scroll")
@@ -27,7 +28,7 @@
     (r/silently (swap! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
                                                   (r/silently (swap! state dissoc :teardown)))))))
 
-(v/defview FloatingContainer
+(vlegacy/defview FloatingContainer
   {:view/did-mount (fn [this] (setup-listener! this))
    :view/did-update (fn [{cancel-events :cancel-events
                           {prev-cancel-events :cancel-events} :view/prev-props :as this}]

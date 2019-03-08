@@ -1,11 +1,12 @@
 (ns maria.frames.trusted-views
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [chia.triple-db :as d]
             [maria.frames.frame-communication :as frame]
             [cljs.core.match :refer-macros [match]]
             [maria.frames.trusted-actions :as actions]))
 
-(v/defview frame-view
+(vlegacy/defview frame-view
   {:view/initial-state #(do {:frame-id (str (gensym))})
    #_#_:spec/props {:id {:spec string?
                      :doc "unique ID for frame"}
@@ -30,14 +31,14 @@
    {:allow "geolocation"
     :src (str frame/child-origin "/live.html#frame_" (:frame-id @state))}])
 
-(v/extend-view frame-view
+(vlegacy/extend-view frame-view
   Object
   (send [{:keys [view/state]} message]
     (frame/send (:frame-id @state) message))
   (sendTransactions [{:keys [db/transactions view/state]}]
     (frame/send (:frame-id @state) [:db/transactions transactions])))
 
-(v/defview editor-frame-view
+(vlegacy/defview editor-frame-view
   {#_#_:spec/props {:default-value :String}}
   [{:keys [current-entity db/transactions db/queries]
     :or {queries []}}]

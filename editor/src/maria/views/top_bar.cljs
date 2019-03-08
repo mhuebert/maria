@@ -1,5 +1,6 @@
 (ns maria.views.top-bar
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.commands.exec :as exec]
             [maria.views.text :as text]
@@ -46,7 +47,7 @@
         (toolbar-button [nil else-icon nil tooltip])))))
 
 
-(v/defview fixed-top
+(vlegacy/defview fixed-top
   {:view/did-mount (fn [{:keys [view/state]}]
                      (->> (events/listen js/window "scroll"
                                          (gf/throttle (fn [e]
@@ -61,7 +62,7 @@
                (assoc-in [:style :left] (d/get :ui/globals :sidebar-width))))
    child])
 
-(v/defview doc-toolbar
+(vlegacy/defview doc-toolbar
   {:view/did-mount (fn [this]
                      (.updateWindowTitle this)
                      (some->> (:id this) (doc/locals-push! :local/recents))
@@ -159,7 +160,7 @@
         (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
       [:.ph1]]]))
 
-(v/extend-view doc-toolbar
+(vlegacy/extend-view doc-toolbar
   Object
   (getFilename [{:keys [filename] :as this}]
     (get-in this [:project :local :files filename :filename] filename))

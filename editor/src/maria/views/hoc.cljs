@@ -1,11 +1,12 @@
 (ns maria.views.hoc
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [chia.view.hiccup :as hiccup]
             [applied-science.js-interop :as j]
             [goog.dom :as gdom]
             ["react-dom" :as react-dom]))
 
-(v/defview bind-atom
+(vlegacy/defview bind-atom
   "Calls component with value of atom & re-renders when atom changes."
   {:key (fn [_ _ prop-atom]
           (let [args @prop-atom
@@ -31,7 +32,7 @@
           (throw (js/Error (str "Invalid format of prop atom, should be vector or map: " args))))))
 
 (defn get-frame-element [this]
-  (-> (v/dom-node this)
+  (-> (vlegacy/dom-node this)
       (j/get-in [:contentDocument :body])
       (gdom/getFirstElementChild)))
 
@@ -43,11 +44,11 @@
                              :href "/app.css"}]
                      content]) (get-frame-element this)))
 
-(v/defview Frame
+(vlegacy/defview Frame
   "Renders component (passed in as child) to an iFrame."
   {:spec/children [:Element]
    :view/did-mount (fn [this content]
-                     (-> (v/dom-node this)
+                     (-> (vlegacy/dom-node this)
                          (j/get-in [:contentDocument :body])
                          (gdom/appendChild (gdom/createDom "div")))
                      (render-frame! this content))

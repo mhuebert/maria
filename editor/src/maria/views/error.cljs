@@ -1,8 +1,9 @@
 (ns maria.views.error
   (:require [chia.view :as v]
+            [chia.view.legacy :as vlegacy]
             [maria.eval :as e]))
 
-(v/defview error-boundary
+(vlegacy/defview error-boundary
   "Error boundary, per React 16"
   {:view/did-catch (fn [{:keys [block-id on-error view/state] :as this} error info]
                      (.log js/console "error-info" info)
