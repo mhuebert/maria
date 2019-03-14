@@ -10,8 +10,8 @@
             [lark.tree.emit :as emit]
             [lark.editor :as editor]
 
-            [cells.cell :as cell]
-            [cells.eval-context :as eval-context]
+            [chia.cell :as cell]
+            [chia.cell.runtime :as runtime]
 
             [maria.blocks.blocks :as Block]
             [maria.eval :as e]
@@ -21,7 +21,8 @@
             [maria.views.values :as value-views]
             [maria.views.icons :as icons]
 
-            [goog.dom.classes :as classes]))
+            [goog.dom.classes :as classes]
+            [chia.cell.runtime :as context]))
 
 (def -dispose-callbacks (volatile! {}))
 
@@ -69,11 +70,11 @@
             (value-views/display-result))]])
 
 (vlegacy/extend-view CodeRow
-  editor/IEditor
-  (get-editor [this]
-    (some-> @(:view/state this)
-            :editor-view
-            (editor/get-editor))))
+                     editor/IEditor
+                     (get-editor [this]
+                                 (some-> @(:view/state this)
+                                         :editor-view
+                                         (editor/get-editor))))
 
 (extend-type Block/CodeBlock
 
@@ -99,7 +100,7 @@
   (toString [{:keys [node]}]
     (emit/string node))
 
-  eval-context/IDispose
+  runtime/IDispose
   (on-dispose [this f]
     (vswap! -dispose-callbacks update (:id this) conj f))
   (-dispose! [this]
@@ -107,7 +108,7 @@
       (f))
     (vswap! -dispose-callbacks dissoc (:id this)))
 
-  eval-context/IHandleError
+  runtime/IHandleError
   (handle-error [this error]
     (e/handle-block-error (:id this) error))
 
@@ -133,8 +134,8 @@
        (Block/eval! this :string source))
      true)
     ([this mode form]
-     (eval-context/dispose! this)
-     (binding [cell/*eval-context* this]
+     (runtime/dispose! this)
+     (binding [context/*runtime* this]
        (Block/eval-log! this ((case mode :form e/eval-form
                                          :string e/eval-str) form)))
      true)))

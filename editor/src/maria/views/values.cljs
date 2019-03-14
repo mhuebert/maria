@@ -1,6 +1,6 @@
 (ns maria.views.values
   (:require [shapes.core :as shapes]
-            [cells.cell :as cell]
+            [chia.cell :as cell]
             [maria.friendly.messages :as messages]
             [maria.views.icons :as icons]
             [chia.view :as v]
@@ -45,26 +45,26 @@
    [:div.v-top value]
    [:.flex.items-end.nowrap rb]])
 
-(extend-protocol hiccup/IEmitHiccup
-  shapes/Shape
-  (to-hiccup [this] (shapes/to-hiccup this)))
-
-(extend-protocol cell/IRenderHiccup
-  object
-  (render-hiccup [this] (hiccup/element this)))
-
 (declare format-function)
-(extend-protocol views/IView
+(declare display-result)
+
+(extend-protocol hiccup/IElement
+  shapes/Shape
+  (to-element [this]
+    (v/to-element
+     (shapes/to-hiccup this)))
   cell/Cell
-  (view [this] (cell/view this))
+  (to-element [this]
+    (display-result {:value (cell/view this)}))
   function
-  (view [this] (format-function this)))
+  (to-element [this]
+    (format-function this)))
 
 (vlegacy/defview display-deferred
   {:view/did-mount (fn [{:keys [deferred view/state]}]
-                      (-> deferred
-                          (.addCallback #(swap! state assoc :value %1))
-                          (.addErrback #(swap! state assoc :error %))))}
+                     (-> deferred
+                         (.addCallback #(swap! state assoc :value %1))
+                         (.addErrback #(swap! state assoc :error %))))}
   [{:keys [view/state]}]
   (let [{:keys [value error] :as s} @state]
     [:div
@@ -139,35 +139,37 @@
 
 (vlegacy/defview display-result
   {:key :id}
-  [{:keys  [value
-            error
-            warnings
-            show-source?
-            block-id
-            source
-            compiled-js]
+  [{:keys [id
+           value
+           error
+           warnings
+           show-source?
+           block-id
+           source
+           compiled-js]
     result :view/props
-    :as    this}]
-  (error-view/error-boundary {:on-error      (fn [{:keys [error]}]
-                                               (e/handle-block-error block-id error))
+    :as this}]
+  (error-view/error-boundary {:key id
+                              :on-error (fn [{:keys [error]}]
+                                          (e/handle-block-error block-id error))
                               :error-content (fn [{:keys [error info]}]
                                                (-> result
                                                    (assoc :error (or error (js/Error. "Unknown error"))
                                                           :error/kind :eval)
                                                    (e/add-error-position)
                                                    (render-error-result)))}
-                             (let [warnings (format-warnings warnings)
-                                   error? (or error (seq warnings))]
-                               (when error
-                                 (.error js/console error)
-                                 (js/console.log compiled-js))
-                               (if error?
-                                 (render-error-result (assoc result :formatted-warnings warnings))
-                                 [:div
-                                  (when (and source show-source?)
-                                    (display-source result))
-                                  [:.ws-prewrap.relative
-                                   [:.ph3 (views/format-value value)]]]))))
+    (let [warnings (format-warnings warnings)
+          error? (or error (seq warnings))]
+      (when error
+        (.error js/console error)
+        (js/console.log compiled-js))
+      (if error?
+        (render-error-result (assoc result :formatted-warnings warnings))
+        [:div
+         (when (and source show-source?)
+           (display-source result))
+         [:.ws-prewrap.relative
+          [:.ph3 [views/format-value value]]]]))))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

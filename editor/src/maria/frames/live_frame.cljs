@@ -4,7 +4,7 @@
             [maria.friendly.kinds :as kinds]
             [shapes.core :as shapes]
 
-            [cells.cell :as cell]
+            [chia.cell :as cell]
 
             [lark.commands.exec]
 
@@ -27,21 +27,7 @@
             [maria.frames.live-actions :as user-actions]
 
             [chia.db :as d]
-            [chia.reactive.atom :as ra]
-            [chia.reactive :as reactive]
             [maria.util :as util]))
-
-(defonce cell-store (atom {}))
-
-(extend-type cell/Cell
-  cell/ICellStore
-  (put-value! [this value]
-    (ra/assoc! cell-store (name this) value))
-  (get-value [this]
-    (ra/get cell-store (name this)))
-  (invalidate! [this]
-   (doseq [reader (ra/all-readers-at-path [(name this)])]
-     (reactive/invalidate! reader nil))))
 
 (extend-protocol kinds/IDoc
   shapes/Shape
@@ -79,7 +65,7 @@
 (defn render []
   (v/render-to-dom (repl/layout {}) "maria-env"))
 
-(defn main []
+(defn ^:export init []
 
   @e/compiler-ready
 
@@ -87,5 +73,3 @@
 
   (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))
-
-(defonce _init_ (main))

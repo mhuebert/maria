@@ -109,7 +109,7 @@
                                                                     (cm/select-range editor node))) true)
                             (events/listen js/window "keyup" #(when-not (registry/M1-down? %)
                                                                 (clear-listeners!)))
-                            (events/listen js/window "blur" #(clear-listeners!))
+                            (events/listen js/window "blur" #(do (prn :blur) (clear-listeners!)))
                             (events/listen js/window "focus" #(clear-listeners!))])
 
     (events/listenOnce js/window "keydown" clear-listeners! true)))
@@ -391,18 +391,7 @@
                         (replace-with-whitespace loc)))]
 
             (edit/apply-ast! editor (z/root loc))
-            true)
-          #_(edit/with-formatting editor
-              (let [space-begins (edit/move-while pointer -1 #{\space \newline \tab})]
-                (if (> (- (:line (:pos pointer))
-                          (:line (:pos space-begins))) 1)
-                  (cm/replace-range! editor "" {:line (- (:line (:pos pointer)) 2)
-                                                :end-line (dec (:line (:pos pointer)))})
-                  (let [pad? (and (not= (:pos space-begins) (update (:pos pointer) :column dec))
-                                  (format/pad-chars? (edit/get-range space-begins -1)
-                                                     (edit/get-range pointer 1)))]
-                    (.replaceRange editor (if pad? " " "") (:pos space-begins) (:pos pointer)))))
-              true)))
+            true)))
       :else false)))
 
 (defcommand :navigate/hop-left

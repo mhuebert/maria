@@ -11,7 +11,7 @@
 
             [maria.util :as util]
 
-            [cells.eval-context :as eval-context]
+            [chia.cell.runtime :as runtime]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
@@ -175,8 +175,8 @@
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
-         (when (satisfies? eval-context/IDispose block)
-           (eval-context/dispose! block))))
+         (when (satisfies? runtime/IDispose block)
+           (runtime/dispose! block))))
      result)))
 
 (defcommand :doc/print-to-console

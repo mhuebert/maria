@@ -16,24 +16,24 @@
              {:optimizations :simple
               :language-in :ecmascript5
               :output-wrapper false}}
-   :output-dir "public/js/compiled-live"
-   :asset-path "/js/compiled-live"
-   :modules {:shadow-live {:entries [maria.frames.live-frame]}}
+   :output-dir "public/js/compiled/live"
+   :asset-path "/js/compiled/live"
+   :modules {:shadow-live {:init-fn maria.frames.live-frame/init}}
    :devtools {:http-root "public"
               :http-port 8701
+              :loader-mode :eval
               :after-load maria.frames.live-frame/render}}
 
   :bootstrap
   {:target :bootstrap
-   :output-dir "public/js/compiled-bootstrap"
+   :output-dir "public/js/compiled/bootstrap"
    :entries [maria.user]
-   :exclude [cljs.js]
-   :module-hash-names true}
+   :exclude [cljs.js]}
 
   :trusted
   {:target :browser
-   :output-dir "public/js/compiled-trusted"
-   :asset-path "/js/compiled-trusted"
+   :output-dir "public/js/compiled/trusted"
+   :asset-path "/js/compiled/trusted"
    :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
    :devtools {:autoload true}
    :compiler-options

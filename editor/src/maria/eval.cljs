@@ -3,10 +3,9 @@
   (:require [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
             [chia.db :as d]
-            #_[cljs.analyzer :as ana]
             [kitchen-async.promise :as p]))
 
-(def bootstrap-path "/js/compiled-bootstrap")
+(def bootstrap-path "/js/compiled/bootstrap")
 
 ;;;;;;;;;;;;;
 ;;

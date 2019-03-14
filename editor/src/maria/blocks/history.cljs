@@ -1,6 +1,6 @@
 (ns maria.blocks.history
   (:require [clojure.set :as set]
-            [cells.eval-context :as eval-context]
+            [chia.cell.runtime :as runtime]
             [chia.view :as v]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
@@ -83,7 +83,7 @@
                             (set (map :id next-version)))
         blocks (filter (comp ids :id) prev-version)]
     (doseq [block blocks]
-      (eval-context/dispose! block))))
+      (runtime/dispose! block))))
 
 (defn clear! [state]
   (r/silently
