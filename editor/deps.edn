@@ -1,4 +1,5 @@
 {:paths ["src"
+         "vendor"
          "test"]
 
  :deps {org.clojure/core.match {:mvn/version "0.3.0-alpha4"}
@@ -15,13 +16,8 @@
         re-view {:mvn/version "0.4.12"}
         re-view/prosemirror {:mvn/version "0.2.2"}
 
-        ;; parse, eval, format
-        lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "7cf4b4a3b6171603109a03eab87e49a20081e95f"
-                    :deps/root "tools"}
-        ;{:local/root "../../lark/tools"}
-
         ;; 3rd party utils
+        net.cgrand/macrovich                {:mvn/version "0.2.1"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         fast-zip {:mvn/version "0.7.0"}
         bidi {:mvn/version "2.1.3"}
