@@ -59,14 +59,14 @@ cd editor;
 First, install javascript dependencies and compile stylesheets:
 
 ```
-yarn install;
+npm install;
 webpack -p;
 ```
 
 ### build in development mode, start a local server, and live-reload changes:
 
 ```shell
-yarn run watch;
+npm run watch;
 ```
 
 When these builds have completed, open your web browser to http://localhost:8701.
@@ -91,7 +91,7 @@ to directly enter the `live` environment (provided you've opened up your browser
 ### make a production build:
 
 ```shell
-yarn run release;
+npm run release;
 ```
 
 ## License
