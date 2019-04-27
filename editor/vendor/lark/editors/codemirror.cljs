@@ -206,7 +206,8 @@
 (defn highlight-range [pos node]
   (if (and (node/has-edges? node)
            (not= :string (:tag node))
-           (range/within? (range/inner-range node) pos))
+           (range/within-inner? node pos)
+           (not (nav/prefix-parents (:tag node))))
     (range/inner-range node)
     node))
 
@@ -214,7 +215,9 @@
   (when-let [cursor-loc (sexp-near pos loc {:direction :left})]
     (let [pos (Pos->range (get-cursor cm))
           node (if top-loc? (z/node (nav/top-loc cursor-loc))
-                            (highlight-range pos (z/node cursor-loc)))]
+                            (->> (nav/include-prefix-parents cursor-loc)
+                                 (z/node)
+                                 (highlight-range pos)))]
       (when (and node (not (node/whitespace? node)))
         (temp-select-node! cm node)))))
 
