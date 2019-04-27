@@ -9,8 +9,9 @@
   "dependencies": {
     "@braintripping/keypress.js": "github:braintripping/Keypress#62e5408",
     "codemirror": "^5.46.0",
-    "firebase": "^4.13.1",
-    "firebase-tools": "^3.19.3",
+    "core-js": "^3.0.1",
+    "firebase": "^5.10.1",
+    "firebase-tools": "^6.7.1",
     "konan": "^1.2.1",
     "module-deps": "^4.1.1",
     "prosemirror-commands": "^0.24.0",
@@ -25,7 +26,7 @@
     "prosemirror-view": "^0.24.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "shadow-cljs": "2.2.22"
+    "shadow-cljs": "^2.8.35"
   },
   "engines": {
     "npm": "5.7.1"

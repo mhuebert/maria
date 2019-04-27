@@ -1,4 +1,5 @@
 {:deps true
+
  :jvm-opts ["-Xmx2G"]
  :nrepl {:port 9000}
  :builds
@@ -14,17 +15,17 @@
    :release {:compiler-options
              {:optimizations :simple
               :language-in :ecmascript5
+              :output-wrapper false
               :closure-defines {re-view.render-loop/count-fps?* false}}}
    :compiler-options {:closure-defines
                       {re-view.render-loop/count-fps?* true}}
    :output-dir "public/js/compiled/live"
    :asset-path "/js/compiled/live"
-   :modules {:shadow-live {:entries [maria.frames.live-frame]}}
+   :modules {:shadow-live {:init-fn maria.frames.live-frame/init}}
    :devtools {:http-root "public"
-              :http-handler shadow.http.push-state/handle
               :http-port 8701
-              :after-load maria.frames.live-frame/render
-              :async-require true}}
+              :loader-mode :eval
+              :after-load maria.frames.live-frame/render}}
 
   :bootstrap
   {:target :bootstrap
@@ -38,8 +39,7 @@
    :output-dir "public/js/compiled/trusted"
    :asset-path "/js/compiled/trusted"
    :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-   :devtools {:autoload true
-              :async-require true}
+   :devtools {:autoload true}
    :compiler-options
    {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
               "node_modules/firebase/externs/firebase-auth-externs.js"

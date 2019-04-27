@@ -140,11 +140,11 @@
 
   Block/IEval
   (eval-log! [this value]
-    (vswap! e/-eval-logs update (:id this) #(take 2 (cons value %)))
+    (vswap! e/-block-eval-log update (:id this) #(take 2 (cons value %)))
     (Block/update-view this)
     value)
   (eval-log [this]
-    (get @e/-eval-logs (:id this)))
+    (get @e/-block-eval-log (:id this)))
   (eval!
     ([this]
      (let [editor (Editor/of-block this)

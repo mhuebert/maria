@@ -13,7 +13,6 @@
 
             [cells.cell :as cell]
             [maria.util :as util]
-            [maria.eval :as e]
 
             [cells.eval-context :as eval-context]
             [fast-zip.core :as z]
