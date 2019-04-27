@@ -37,7 +37,7 @@
   (toString [{{:keys [prose/state prose/source]} :node
               :as this}]
     (or source
-        (emit/string (rd/ValueNode :comment-block (or (some-> state (serialize-state))
+        (emit/string (rd/make-node :comment-block (or (some-> state (serialize-state))
                                                       ""))))))
 
 (defn prepend-paragraph [this]
@@ -148,34 +148,34 @@
 #_(defn get-pm [editor-view]
     (:prose-editor-view @(:view/state editor-view)))
 #_(vlegacy/defview markdown
-    {:view/initial-state {:editing? false
-                          :pm-view nil}}
-    [{:keys [view/state view/prev-state]} s]
-    (if (:editing? @state)
-      (prose/Editor {:value s
-                     :ref #(let [pm-view (some-> % (get-pm))]
-                             (v/swap-silently! state assoc :pm-view pm-view)
+                   {:view/initial-state {:editing? false
+                                         :pm-view nil}}
+                   [{:keys [view/state view/prev-state]} s]
+                   (if (:editing? @state)
+                     (prose/Editor {:value s
+                                    :ref #(let [pm-view (some-> % (get-pm))]
+                                            (v/swap-silently! state assoc :pm-view pm-view)
 
-                             (when (and pm-view (not (:pm-view prev-state)))
-                               (when-let [selection (some->> (:clicked-coords @state)
-                                                             (clj->js)
-                                                             (.posAtCoords pm-view)
-                                                             (.-pos)
-                                                             (.resolve (.. pm-view -state -doc))
-                                                             (.near js/pm.Selection))]
-                                 (.dispatch pm-view (.. pm-view -state -tr (setSelection selection))))
+                                            (when (and pm-view (not (:pm-view prev-state)))
+                                              (when-let [selection (some->> (:clicked-coords @state)
+                                                                            (clj->js)
+                                                                            (.posAtCoords pm-view)
+                                                                            (.-pos)
+                                                                            (.resolve (.. pm-view -state -doc))
+                                                                            (.near js/pm.Selection))]
+                                                (.dispatch pm-view (.. pm-view -state -tr (setSelection selection))))
 
-                               (some-> pm-view (.focus))))
-                     :on-blur #(do (.log js/console "prose/Editor on-blur")
-                                   (swap! state assoc
-                                          :editing? false
-                                          :clicked-coords nil))})
-      [:.cf {:ref #(v/swap-silently! state assoc :md-view %)
-             :on-click #(swap! state assoc
-                               :editing? true
-                               :clicked-coords {:left (.-mouseX %)
-                                                :top (.-mouseY %)})
-             :dangerouslySetInnerHTML {:__html (.render md s)}}]))
+                                              (some-> pm-view (.focus))))
+                                    :on-blur #(do (.log js/console "prose/Editor on-blur")
+                                                  (swap! state assoc
+                                                         :editing? false
+                                                         :clicked-coords nil))})
+                     [:.cf {:ref #(v/swap-silently! state assoc :md-view %)
+                            :on-click #(swap! state assoc
+                                              :editing? true
+                                              :clicked-coords {:left (.-mouseX %)
+                                                               :top (.-mouseY %)})
+                            :dangerouslySetInnerHTML {:__html (.render md s)}}]))
 
 #_(defn select-near-click [e pm-view]
     (let [{:keys [bottom right left top]} (util/js-lookup (.getBoundingClientRect (.-dom pm-view)))

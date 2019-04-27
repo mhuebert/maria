@@ -5,7 +5,7 @@
             [lark.tree.format :as format]
             [lark.structure.edit :as edit :include-macros true]
             [lark.editors.codemirror :as cm]
-            [fast-zip.core :as z]
+            [lark.zipper :as z]
             [clojure.set :as set]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
@@ -22,7 +22,9 @@
             [lark.tree.node :as n]
             [chia.util :as u]
             [cljs.pprint :as pp]
-            [applied-science.js-interop :as j]))
+            [applied-science.js-interop :as j]
+            [chia.util.perf :as perf]
+            [lark.tree.node-types :as types]))
 
 (def pass #(do :lark.commands/Pass))
 
@@ -245,8 +247,8 @@
   (some->> (case expected-direction
              ;; TODO
              ;; edge cases where we find a matching bracket on the wrong side?
-             :forward (cons loc (nav/left-locs loc))
-             :backward (cons loc (nav/right-locs loc)))
+             :forward (cons loc (nav/left-siblings loc))
+             :backward (cons loc (nav/right-siblings loc)))
            (keep (fn [loc]
                    (let [{:keys [tag]
                           {:keys [direction expects]} :info} (z/node loc)]
@@ -309,9 +311,9 @@
   (let [{:as node
          :keys [end-line end-column]} (z/node loc)]
     (-> loc
-        (z/replace (-> (rd/ValueNode :space " ")
-                       (assoc :range [end-line end-column end-line (inc end-column)])))
-        (z/insert-right (rd/EmptyNode :cursor)))))
+        (z/replace (-> (n/make-node types/-space " ")
+                       (assoc :range (perf/array end-line end-column end-line (inc end-column)))))
+        (z/insert-right (n/make-node types/-cursor)))))
 
 (defcommand :edit/backspace
   {:bindings ["Backspace"]
@@ -339,7 +341,7 @@
       (some->> [loc (z/up loc)]
                (sequence (comp (keep identity)
                                (map z/node)
-                               (filter n/may-contain-children?)
+                               (filter n/branch?)
                                (map range/inner-range)
                                (filter #(range/at-start? pos %))))
                (seq)) (edit/with-formatting editor

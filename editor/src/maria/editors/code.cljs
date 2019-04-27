@@ -18,7 +18,7 @@
    [maria.views.bottom-bar :as bottom-bar]
    [lark.structure.edit :as edit]
    [goog.functions :as gf]
-   [fast-zip.core :as z]
+   [lark.zipper :as z]
    [lark.tree.range :as range]
    [lark.editor :as editor]))
 

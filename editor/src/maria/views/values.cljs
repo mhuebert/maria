@@ -15,7 +15,7 @@
             [lark.value-viewer.core :as views]
             [lark.tree.core :as tree]
             [lark.tree.range :as range]
-            [fast-zip.core :as z]
+            [lark.zipper :as z]
             [lark.tree.nav :as nav])
   (:import [goog.async Deferred]))
 
@@ -23,7 +23,7 @@
   "Return ranges for appropriate highlights for a position within given Clojure source."
   [source position]
   (when-let [highlights (some-> (tree/ast source)
-                                (tree/ast-zip)
+                                (tree/zipper)
                                 (nav/navigate position)
                                 (z/node)
                                 (range/node-highlights))]

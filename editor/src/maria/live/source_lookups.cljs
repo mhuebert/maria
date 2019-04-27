@@ -1,18 +1,19 @@
 (ns maria.live.source-lookups
-  (:require [lark.tree.parse :as parse]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [maria.eval :as e]
             [lark.eval :as live-eval]
             [goog.net.XhrIo :as xhr]
             [maria.util :as util]
             [shadow.cljs.bootstrap.env :as shadow-env]
             [maria.live.ns-utils :as ns-utils]
-            [lark.tree.emit :as emit]))
+            [lark.tree.emit :as emit]
+            [lark.tree.reader :as rd]
+            [lark.tree.impl.indexing-reader :as ir]))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
 
 (defn read-node [reader]
-  (parse/parse-next reader))
+  (rd/parse-next reader))
 
 (defn index-position
   "Given an index into a string, returns the 1-indexed line+column position"
@@ -36,7 +37,7 @@
 (defn source-of-form-at-position
   "Given a 1-indexed position in a source string, return the first form."
   [source position]
-  (let [reader (parse/indexing-reader (source-from source position))
+  (let [reader (ir/reader (source-from source position))
         node (read-node reader)]
     (emit/string node)))
 
@@ -47,7 +48,7 @@
 
   ;; the following is _very_ slow and shouldn't be necessary.
   #_(let [line (dec line)
-          reader (parse/indexing-reader source #_(source-from source (assoc position :column 1)))]
+          reader (ir/reader source #_(source-from source (assoc position :column 1)))]
       (loop []
         (let [the-node (read-node reader)]
           (cond (nil? the-node)

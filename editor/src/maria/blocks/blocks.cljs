@@ -11,7 +11,7 @@
 
             [maria.util :as util]
 
-            [chia.cell.runtime :as runtime]
+            [chia.reactive.lifecycle :as lifecycle]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
@@ -42,7 +42,7 @@
 (defrecord ProseBlock [id node])
 
 (defn commentize-source [source]
-  (-> (rd/ValueNode :comment-block source)
+  (-> (rd/make-node :comment-block source)
       (emit/string)))
 
 (defn update-prose-block-state [block editor-state]
@@ -87,10 +87,8 @@
   ([kind value]
    ;; TODO
    ;; create a real ast?
-   (from-ast (case kind :prose (-> (rd/EmptyNode :comment-block)
-                                   (assoc! :value value))
-                        :code (-> (rd/EmptyNode :base)
-                                  (assoc! :children value))))))
+   (from-ast (case kind :prose (rd/make-node :comment-block value)
+                        :code (rd/branch-node :base value)))))
 
 (def emit-list
   "Returns the concatenated source for a list of blocks."
@@ -175,8 +173,8 @@
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
-         (when (satisfies? runtime/IDispose block)
-           (runtime/dispose! block))))
+         (when (satisfies? lifecycle/IDispose block)
+           (lifecycle/dispose! block))))
      result)))
 
 (defcommand :doc/print-to-console

@@ -10,8 +10,7 @@
             [lark.tree.emit :as emit]
             [lark.editor :as editor]
 
-            [chia.cell :as cell]
-            [chia.cell.runtime :as runtime]
+            [chia.reactive.lifecycle :as lifecycle]
 
             [maria.blocks.blocks :as Block]
             [maria.eval :as e]
@@ -21,8 +20,7 @@
             [maria.views.values :as value-views]
             [maria.views.icons :as icons]
 
-            [goog.dom.classes :as classes]
-            [chia.cell.runtime :as context]))
+            [goog.dom.classes :as classes]))
 
 (def -dispose-callbacks (volatile! {}))
 
@@ -100,16 +98,17 @@
   (toString [{:keys [node]}]
     (emit/string node))
 
-  runtime/IDispose
-  (on-dispose [this f]
-    (vswap! -dispose-callbacks update (:id this) conj f))
-  (-dispose! [this]
-    (doseq [f (get @-dispose-callbacks (:id this))]
+  lifecycle/IDispose
+  (on-dispose [this key f]
+    (vswap! -dispose-callbacks update (:id this) assoc key f))
+  (dispose! [this]
+    (doseq [f (vals (get @-dispose-callbacks (:id this)))]
       (f))
     (vswap! -dispose-callbacks dissoc (:id this)))
 
-  runtime/IHandleError
-  (handle-error [this error]
+  ;; was used in conjunction with cell bound-fn
+  #_lifecycle/IHandleError
+  #_(handle-error [this error]
     (e/handle-block-error (:id this) error))
 
   Block/IEval
@@ -134,8 +133,8 @@
        (Block/eval! this :string source))
      true)
     ([this mode form]
-     (runtime/dispose! this)
-     (binding [context/*runtime* this]
+     (lifecycle/dispose! this)
+     (binding [lifecycle/*owner* this]
        (Block/eval-log! this ((case mode :form e/eval-form
                                          :string e/eval-str) form)))
      true)))
