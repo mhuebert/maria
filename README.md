@@ -60,7 +60,6 @@ First, install javascript dependencies and compile stylesheets:
 
 ```
 npm install;
-webpack -p;
 ```
 
 ### build in development mode, start a local server, and live-reload changes:

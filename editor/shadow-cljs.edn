@@ -17,8 +17,8 @@
               :closure-defines {re-view.render-loop/count-fps?* false}}}
    :compiler-options {:closure-defines
                       {re-view.render-loop/count-fps?* true}}
-   :output-dir "public/js/compiled"
-   :asset-path "/js/compiled"
+   :output-dir "public/js/compiled/live"
+   :asset-path "/js/compiled/live"
    :modules {:shadow-live {:entries [maria.frames.live-frame]}}
    :devtools {:http-root "public"
               :http-handler shadow.http.push-state/handle
@@ -35,8 +35,8 @@
 
   :trusted
   {:target :browser
-   :output-dir "public/js/compiled"
-   :asset-path "/js/compiled"
+   :output-dir "public/js/compiled/trusted"
+   :asset-path "/js/compiled/trusted"
    :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
    :devtools {:autoload true
               :async-require true}
