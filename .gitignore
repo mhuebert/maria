@@ -22,3 +22,4 @@ node_modules
 maria.css
 **/.cpcache/**
 **.shadow-cljs
+**/.firebase/**
