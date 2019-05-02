@@ -37,9 +37,9 @@
 (defn toggle-macros-ns [sym]
   (let [s (str sym)]
     (symbol
-      (if (string/ends-with? s "$macros")
-        (string/replace s "$macros" "")
-        (str s "$macros")))))
+     (if (string/ends-with? s "$macros")
+       (string/replace s "$macros" "")
+       (str s "$macros")))))
 
 (defn resolve-var
   ([sym]
