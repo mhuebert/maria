@@ -9,7 +9,8 @@
             [goog.object :as gobj]
             [clojure.string :as string]
             [goog.crypt.base64 :as base64]
-            [cljs.source-map :as sm])
+            [cljs.source-map :as sm]
+            [clojure.string :as str])
   (:require-macros [lark.eval :refer [defspecial]]))
 
 (def ^:dynamic *cljs-warnings* nil)
@@ -17,7 +18,7 @@
 (defonce c-state (cljs/empty-state))
 (defonce c-env (atom {:ns (symbol "cljs.user")}))
 
-(def repl-specials {})
+(defonce repl-specials {})
 
 (defn swap-repl-specials!
   "Mutate repl specials available to the eval fns in this namespace."
@@ -82,23 +83,28 @@
           (and (seq? x) (= 'quote (first x))) (second)))
 
 (defspecial in-ns
-            "Switch to namespace"
-            [c-state c-env namespace]
-            (let [namespace (elide-quote namespace)]
-              (when-not (symbol? namespace) (throw (js/Error. "`in-ns` must be passed a symbol.")))
-              (if (contains? (get @c-state :cljs.analyzer/namespaces) namespace)
-                {:ns namespace}
-                (eval c-state c-env `(~'ns ~namespace)))))
+  "Switch to namespace"
+  [c-state c-env namespace]
+  (let [namespace (elide-quote namespace)]
+    (when-not (symbol? namespace) (throw (js/Error. "`in-ns` must be passed a symbol.")))
+    (if (contains? (get @c-state :cljs.analyzer/namespaces) namespace)
+      {:ns namespace}
+      (eval c-state c-env `(~'ns ~namespace)))))
 
 (defspecial ns
-            "Wraps `ns` to return :ns in result map"
-            [c-state c-env & body]
-            (-> (eval c-state c-env (with-meta (cons 'ns body) {::skip-repl-special true}))
-                (assoc :ns (first body))))
+  "Wraps `ns` to return :ns in result map"
+  [c-state c-env & body]
+  (-> (eval c-state c-env (with-meta (cons 'ns body) {::skip-repl-special true}))
+      (assoc :ns (first body))))
 
 (defn repl-special [c-state c-env body]
-  (let [f (get repl-specials (first body))]
-    (try (f c-state c-env body)
+  (let [special-sym (first body)
+        f (get repl-specials special-sym)
+        special-source (when-let [source (:source (meta body))]
+                         (as-> source source
+                               (str/replace-first source (re-pattern (str "[^]+" (str special-sym))) "")
+                               (subs source 0 (dec (count source)))))]
+    (try (f c-state c-env special-source body)
          (catch js/Error e
            (prn "repl-special error" body)
            (.error js/console e)
@@ -232,7 +238,8 @@
          {:keys [ns] :as result} (if repl-special?
                                    (repl-special c-state c-env form)
                                    (binding [*cljs-warning-handlers* [(partial warning-handler form source)]
-                                             r/*data-readers* (conj r/*data-readers* {'js identity})]
+                                             r/*data-readers* (merge r/*data-readers*
+                                                                     tagged-literals/*cljs-data-readers*)]
                                      (if source
                                        (let [{:keys [compiled-js
                                                      error] :as result} (compile-str c-state c-env source {:form           form
@@ -282,7 +289,8 @@
   "Read src using indexed reader."
   [c-state c-env src]
   (binding [r/resolve-symbol #(resolve-symbol c-state c-env %)
-            r/*data-readers* (conj r/*data-readers* {'js identity})
+            r/*data-readers* (merge r/*data-readers*
+                                    tagged-literals/*cljs-data-readers*)
             r/*alias-map* (get-in @c-state [:cljs.analyzer/namespaces (:ns @c-env) :requires])
             *ns* (:ns @c-env)]
     (try {:value (read-string-indexed src)}
@@ -301,3 +309,4 @@
               result
               (eval-forms c-state c-env value opts))
             {:source src}))))
+

@@ -57,7 +57,7 @@
   [c-state c-env form]
   (let [{:keys [compiled-js
                 error]
-         :as result} (e/compile-str c-state c-env (str form))]
+         :as result} (e/compile-str c-state c-env &source)]
     (if error result
               {:value (hiccup/element [:span compiled-js])})))
 
