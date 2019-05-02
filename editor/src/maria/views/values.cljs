@@ -17,7 +17,8 @@
             [lark.tree.core :as tree]
             [lark.tree.range :as range]
             [fast-zip.core :as z]
-            [lark.tree.nav :as nav])
+            [lark.tree.nav :as nav]
+            [clojure.string :as str])
   (:import [goog.async Deferred]))
 
 (defn highlights-for-position
@@ -94,7 +95,7 @@
 
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)
-                       :class "pointer hover-opacity-parent"}
+                       :class    "pointer hover-opacity-parent"}
       [inline-centered
        (if (and fn-name (not= "" fn-name))
          (some-> (source-lookups/fn-name value) (symbol) (name))
@@ -103,8 +104,8 @@
            (icons/size 20)
            (icons/class "mln1 mrn1 hover-opacity-child")
            (icons/style {:transition "all ease 0.2s"
-                         :transform (when-not expanded?
-                                      "rotate(90deg)")}))]
+                         :transform  (when-not expanded?
+                                       "rotate(90deg)")}))]
       (when expanded?
         (or (some-> (source-lookups/js-source->clj-source (.toString value))
                     (code/viewer))
@@ -128,6 +129,14 @@
                   (distinct)
                   (keep identity)) warnings))
 
+(def error-divider [:.bb.b--red.o-20.bw2])
+
+(v/defview show-stack [{:keys     [stack]}]
+  [:div
+   #_[:a.pv2 {:on-click #(swap! expanded? not)}
+    (if @expanded? "hide" "show stack")]
+   [:pre stack]])
+
 (defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
   [:div
    {:class "bg-darken-red cf"}
@@ -135,12 +144,20 @@
      (display-source result))
    [:.ws-prewrap.relative
     [:.ph3.overflow-auto
-     (->> (for [message (concat (or formatted-warnings
-                                    (format-warnings warnings))
-                                (messages/reformat-error result))
-                :when message]
+     (->> (for [message (->> (concat (or formatted-warnings
+                                         (format-warnings warnings))
+                                     (messages/reformat-error result))
+                             (filter #(and %
+                                           (if (string? %)
+                                             (not (str/blank? %))
+                                             true)))
+                             (distinct))
+                :when (and message (not (str/blank? message)))]
             [:.mv2 message])
-          (interpose [:.bb.b--red.o-20.bw2]))]]])
+          (interpose error-divider))
+     (when-let [stack (some-> (ex-cause error) (aget "stack"))]
+       (list error-divider
+             (show-stack {:stack stack})))]]])
 
 (defview display-result
   {:key :id}
@@ -161,18 +178,18 @@
                                                           :error/kind :eval)
                                                    (e/add-error-position)
                                                    (render-error-result)))}
-                             (let [warnings (format-warnings warnings)
-                                   error? (or error (seq warnings))]
-                               (when error
-                                 (.error js/console error)
-                                 (js/console.log compiled-js))
-                               (if error?
-                                 (render-error-result (assoc result :formatted-warnings warnings))
-                                 [:div
-                                  (when (and source show-source?)
-                                    (display-source result))
-                                  [:.ws-prewrap.relative
-                                   [:.ph3 (format-value value)]]]))))
+    (let [warnings (format-warnings warnings)
+          error? (or error (seq warnings))]
+      (when error
+        (.error js/console error)
+        (js/console.log compiled-js))
+      (if error?
+        (render-error-result (assoc result :formatted-warnings warnings))
+        [:div
+         (when (and source show-source?)
+           (display-source result))
+         [:.ws-prewrap.relative
+          [:.ph3 (format-value value)]]]))))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))

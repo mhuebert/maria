@@ -82,13 +82,8 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error/position]}]
-  (let [error-message (ex-message error)
-        cause-message (ex-message (ex-cause error))]
-    (list
-      (some-> cause-message (prettify-error-message))
-      (some-> error-message (prettify-error-message))
-      (when-let [stack (some-> (ex-cause error) (aget "stack"))]
-        [:pre stack]))))
+      (list (some-> (ex-message (ex-cause error)) (prettify-error-message))
+            (some-> (ex-message error) (prettify-error-message))))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."

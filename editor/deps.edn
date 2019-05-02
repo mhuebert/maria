@@ -10,7 +10,7 @@
                              :sha "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
 
         appliedscience/js-interop {#_#_:local/root "../../js-interop"
-                                   :mvn/version "0.1.18"}
+                                   :mvn/version "0.1.19"}
 
         ;; user fun
         maria/friendly {:local/root "../friendly"}
