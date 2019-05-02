@@ -157,6 +157,7 @@
        (let [div (.. editor -display -wrapper)]
          (classes/add div "post-eval")
          (js/setTimeout #(classes/remove div "post-eval") 200))
+
        (Block/eval! this :string source))
      true)
     ([this mode form]

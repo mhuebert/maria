@@ -463,17 +463,17 @@
   [{:keys [editor block-view block]}]
   (Block/eval! block))
 
-(defcommand :eval/top-level
-  "Evaluate the current top-level form"
+(defcommand :eval/block
+  "Evaluate the current block"
   {:bindings ["Shift-Enter"
               "M1-Shift-Enter"]
    :when :block/code}
   [{:keys [editor block-view block]}]
-  (when-let [loc (some->> (:loc (:magic/cursor editor))
+  #_(when-let [loc (some->> (:loc (:magic/cursor editor))
                           (nav/top-loc))]
     (cm/temp-select-node! editor (z/node loc))
-    (js/setTimeout #(cm/return-to-temp-marker! editor) 210)
-    (Block/eval! block)))
+    (js/setTimeout #(cm/return-to-temp-marker! editor) 210))
+  (Block/eval! block))
 
 #_(defcommand :eval/on-click
     "Evaluate the clicked form"

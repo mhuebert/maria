@@ -1,6 +1,7 @@
 (ns lark.eval
   (:refer-clojure :exclude [eval])
   (:require [cljs.js :as cljs]
+            [cljs.tagged-literals :as tagged-literals]
             [cljs.tools.reader :as r]
             [cljs.tools.reader.reader-types :as rt]
             [cljs.analyzer :as ana :refer [*cljs-warning-handlers*]]
@@ -181,7 +182,8 @@
                                                                                                         ".cljs")))
          result (atom nil)]
      (binding [*cljs-warning-handlers* [(partial warning-handler form source)]
-               r/*data-readers* (conj r/*data-readers* {'js identity})]
+               r/*data-readers* (merge r/*data-readers*
+                                       tagged-literals/*cljs-data-readers*)]
        (swap! cljs-cache assoc file-name source)
        (cljs/compile-str c-state source file-name opts
                          (fn [{error                       :error
