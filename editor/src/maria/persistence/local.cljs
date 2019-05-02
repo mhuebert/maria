@@ -2,17 +2,16 @@
   (:require [re-db.d :as d]
             [maria.persistence.transit :as t]
             [goog.functions :as gf]
-            [goog.object :as gobj]))
+            [applied-science.js-interop :as j]))
 
 (defn local-id [id] (str "maria.local/" id))
 
 (defn local-get [id]
-  (some-> (gobj/get js/window "localStorage")
-          (gobj/get (local-id id))
+  (some-> (j/get-in js/window [:localStorage (local-id id)])
           (t/deserialize)))
 
 (defn local-put! [id data]
-  (gobj/set (.-localStorage js/window) (local-id id) (t/serialize data)))
+  (j/assoc! (.-localStorage js/window) (local-id id) (t/serialize data)))
 
 (defn local-update! [id f & args]
   (local-put! id (apply f (local-get id) args)))

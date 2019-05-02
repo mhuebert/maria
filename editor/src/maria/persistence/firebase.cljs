@@ -2,11 +2,11 @@
   (:require [re-view.core :as v :refer [defview]]
             [maria.persistence.tokens :as tokens]
             [re-db.d :as d]
-            [goog.object :as gobj]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
             ["firebase/app" :as firebase]
-            ["firebase/auth"]))
+            ["firebase/auth"]
+            [applied-science.js-interop :as j]))
 
 ;(def firebase js/firebase)
 
@@ -35,9 +35,7 @@
   (->
    (.signInWithPopup firebase-auth (get providers provider))
    (.then (fn [result]
-            (tokens/put-token provider (-> result
-                                           (gobj/get "credential")
-                                           (gobj/get "accessToken")))))))
+            (tokens/put-token provider (j/get-in result [:credential :accessToken]))))))
 
 
 (defn sign-out []

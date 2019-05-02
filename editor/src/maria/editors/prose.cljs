@@ -6,7 +6,7 @@
             [maria.views.icons :as icons]
             [re-view.prosemirror.core :as pm]
             [re-view.prosemirror.markdown :as markdown]
-            [goog.object :as gobj]
+            [applied-science.js-interop :as j]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
 
@@ -82,7 +82,7 @@
                                 (.updateState view
                                               (.create EditorState #js {"doc"     doc
                                                                         "schema"  markdown/schema
-                                                                        "plugins" (gobj/getValueByKeys view "state" "plugins")}))))
+                                                                        "plugins" (j/get-in view [:state :plugins])}))))
 
    :view/will-receive-props (fn [{:keys [doc block view/state]
                                   :as   this}]

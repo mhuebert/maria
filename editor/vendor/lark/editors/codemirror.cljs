@@ -5,14 +5,14 @@
    [goog.events :as events]
    [lark.tree.core :as tree]
    [goog.dom :as gdom]
-   [goog.object :as gobj]
 
    ;; for protocols:
    [lark.editor :as Editor]
    [clojure.string :as string]
    [lark.tree.range :as range]
    [lark.tree.node :as node]
-   [lark.tree.nav :as nav]))
+   [lark.tree.nav :as nav]
+   [applied-science.js-interop :as j]))
 
 (def ^:dynamic *get-ns* (fn [] (symbol "cljs.user")))
 
@@ -41,11 +41,11 @@
     ([o k]
      (case k :line (.-line o)
              :column (.-ch o)
-             (gobj/get o k)))
+             (j/get o k)))
     ([o k not-found]
      (case k :line (.-line o)
              :column (.-column o)
-             (gobj/get o k not-found)))))
+             (j/get o k not-found)))))
 
 (defn range->Pos
   "Coerces Clojure maps to CodeMirror positions."
@@ -317,11 +317,11 @@
 
   ILookup
   (-lookup
-    ([this k] (get (aget this "cljs$state") k))
+    ([this k] (get (j/get this :cljs$state) k))
     ([this k not-found] (get (aget this "cljs$state") k not-found)))
 
   IDeref
-  (-deref [this] (gobj/get this "cljs$state"))
+  (-deref [this] (j/get this :cljs$state))
 
   IWatchable
   (-add-watch [this key f]
@@ -335,7 +335,7 @@
   IReset
   (-reset! [this newval]
     (let [old-val @this]
-      (gobj/set this "cljs$state" newval)
+      (j/assoc! this :cljs$state newval)
       (-notify-watches this old-val newval)))
 
   ISwap

@@ -55,8 +55,11 @@
 (defspecial js-source
   "Show compiled javascript for `form`"
   [c-state c-env form]
-  (-> (e/compile-str c-state c-env (str form))
-      (set/rename-keys {:compiled-js :value})))
+  (let [{:keys [compiled-js
+                error]
+         :as result} (e/compile-str c-state c-env (str form))]
+    (if error result
+              {:value (hiccup/element [:span compiled-js])})))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"

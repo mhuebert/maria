@@ -1,8 +1,8 @@
 (ns lark.value-viewer.core
-  (:require [goog.object :as gobj]
-            [re-view.util :as v-util]
+  (:require [re-view.util :as v-util]
             [re-view.core :as v :refer [defview]]
-            [re-view.hiccup.core :as hiccup])
+            [re-view.hiccup.core :as hiccup]
+            [applied-science.js-interop :as j])
   (:import [goog.async Deferred]))
 
 (def space \u00A0)
@@ -141,7 +141,7 @@
   {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
   (let [{:keys [expanded?]} @state
-        fn-name (gobj/get value "name" "ƒ")]
+        fn-name (j/get value :name "ƒ")]
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)}
       [inline-centered  [:span.o-50.mr1 fn-name]
@@ -181,7 +181,7 @@
            :function (format-function value)
 
            :atom (wrap-value [[:span.gray.mr1 "#Atom"] nil]
-                             (format-value depth (gobj/get value "state")))
+                             (format-value depth (j/get value :state)))
 
            (cond
              (v/is-react-element? value) value
