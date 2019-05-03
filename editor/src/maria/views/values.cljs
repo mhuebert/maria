@@ -19,7 +19,8 @@
             [fast-zip.core :as z]
             [lark.tree.nav :as nav]
             [clojure.string :as str]
-            [maria.views.cards :as repl-ui])
+            [maria.views.cards :as repl-ui]
+            [applied-science.js-interop :as j])
   (:import [goog.async Deferred]))
 
 (defn highlights-for-position
@@ -158,7 +159,9 @@
                 :when (and message (not (str/blank? message)))]
             [:.mv2 message])
           (interpose error-divider))
-     (when-let [stack (some-> (ex-cause error) (aget "stack"))]
+     (when-let [stack (or (some-> (ex-cause error)
+                                  (j/get :stack))
+                          (j/get error :stack))]
        (list error-divider
              (show-stack {:stack stack})))]]])
 
@@ -196,3 +199,16 @@
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
+
+(comment
+
+ ;; for future stacktrace parsing.
+ ;; I found cljs.stacktrace unable to parse chrome stacktraces.
+ (defn detect-ua-product []
+   ;; https://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
+   (cond (exists? js/chrome) :chrome
+         (exists? js/InstallTrigger) :firefox
+         (or (.test #"(?i)constructor" (j/get js/window :HTMLElement))
+             (and (some-> (j/get js/window [:safari :pushNotification])
+                          (.toString)
+                          (= "[object SafariRemoteNotification]")))) :safari)))
