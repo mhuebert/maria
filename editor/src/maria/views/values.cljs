@@ -18,7 +18,8 @@
             [lark.tree.range :as range]
             [fast-zip.core :as z]
             [lark.tree.nav :as nav]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [maria.views.cards :as repl-ui])
   (:import [goog.async Deferred]))
 
 (defn highlights-for-position
@@ -131,18 +132,20 @@
 
 (def error-divider [:.bb.b--red.o-20.bw2])
 
-(v/defview show-stack [{:keys     [stack]}]
+(v/defview show-stack [{:keys     [stack]
+                        expanded? :view/state}]
   [:div
-   #_[:a.pv2 {:on-click #(swap! expanded? not)}
-    (if @expanded? "hide" "show stack")]
-   [:pre stack]])
+   [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
+    (repl-ui/arrow (if @expanded? :down :right))
+    "stacktrace"]
+   (when @expanded? [:pre stack])])
 
 (defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
   [:div
    {:class "bg-darken-red cf"}
    (when source
      (display-source result))
-   [:.ws-prewrap.relative
+   [:.ws-prewrap.relative.nt3
     [:.ph3.overflow-auto
      (->> (for [message (->> (concat (or formatted-warnings
                                          (format-warnings warnings))

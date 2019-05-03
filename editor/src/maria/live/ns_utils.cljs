@@ -8,7 +8,6 @@
             [maria.util :as util]
             [cljs.tools.reader.edn :as edn]))
 
-
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
        (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))
