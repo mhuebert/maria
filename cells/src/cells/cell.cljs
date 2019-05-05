@@ -25,40 +25,37 @@
   nil)
 
 (defn- tx-cell [cell]
-  (some-> *tx-log* (deref) (get cell)))
+  (when (some? *tx-log*)
+    (get @*tx-log* cell)))
 
 (defn- notify-cell-changed! [cell oldval newval]
+  (prn :notifiy-changed! cell oldval newval)
   (r/invalidate-readers! cell)
   (-notify-watches cell oldval newval))
 
-(defn- mutate-cell! [cell new-attrs-js]
-  (prn :mutate-cell *tx-log*)
+(defn- mutate-cell! [cell attr-obj]
+  {:pre [(object? attr-obj)]}
   (if *tx-log*
-    (vswap! *tx-log* update cell #(doto (or % #js{})
-                                    (gobj/extend new-attrs-js)))
-    (-> (.-state cell)
-        (gobj/extend new-attrs-js))))
+    (vswap! *tx-log* update cell #(j/extend! % attr-obj))
+    (j/extend! (.-state cell) attr-obj)))
 
 (defn- tx! [f]
-  (let [[value tx-changed]
-        (binding [*tx-log* (volatile! {})]
-          (let [value (f)]
-            [value @*tx-log*]))]
-    (doseq [[cell changes] tx-changed]
-      (mutate-cell! cell changes)
-      (let [newval (j/get changes .-value)
-            oldval (j/get cell .-value)]
-        (prn "changes" (j/get changes .-async))
-        (when (or (and (j/contains? changes .-async)
-                       (not= (j/get cell .-async)
-                             (j/get changes .-async)))
-                  (not= oldval newval))
-          (prn :notify-changed cell (j/get changes .-async))
+  (let [tx-log (binding [*tx-log* (volatile! {})]
+                 (f)
+                 @*tx-log*)]
+    (doseq [[cell changes] tx-log]
+      (let [oldval (c/read cell .-value)
+            newval (j/get changes .-value)
+            changed? (or (and (j/contains? changes .-async)
+                              (not= (j/get changes .-async)
+                                    (c/read cell .-async)))
+                         (and (j/contains? changes .-value)
+                              (not= (j/get changes .-value)
+                                    (c/read cell .-value))))]
+        (mutate-cell! cell changes)
+        (when changed?
           (notify-cell-changed! cell oldval newval))))
-    value))
-
-(defn internal-state [cell]
-  (c/read cell .-internal))
+    nil))
 
 (defn log-read! [cell]
   (when-not (identical? cell *cell*)
@@ -166,6 +163,7 @@
     (try (f cell)
          (catch js/Error e
            (owner/dispose! tx-cell)
+           #_(error! cell e)
            (throw e)))))
 
 (defn- eval-and-set! [cell]
@@ -173,7 +171,7 @@
     cell
     (binding [*cell* cell
               *read-log* (volatile! #{})
-              owner/*owner* (c/read cell .-runtime)]
+              owner/*owner* (c/read cell .-owner)]
       (owner/-dispose! cell)
       (let [value (eval-cell cell)
             next-deps (disj @*read-log* cell)]
@@ -199,18 +197,18 @@
 (defn status-view
   "Experimental: cells that implement IStatus can 'show' themselves differently depending on status."
   [this]
+  (prn :status-view this)
   (cond
     (:async/loading? this) ^:hiccup [:.cell-status
                                      [:.circle-loading
                                       [:div]
                                       [:div]]]
 
-    (:async/error this) ^:hiccup  [:div.pa3.bg-darken-red.br2
-                                  (or (if (:async/error this)
-                                        (throw (:async/error this)))
-                                      [:.circle-error
-                                       [:div]
-                                       [:div]])]))
+    (:async/error this) ^:hiccup [:div.pa3.bg-darken-red.br2.inline-flex.items-center
+                                  #_[:.circle-error
+                                   [:div]
+                                   [:div]]
+                                  (str (:async/error this))]))
 
 (defn default-view [cell]
   (if (or (:async/loading? cell)
@@ -219,8 +217,11 @@
     @cell))
 
 (defn view [cell]
-  (let [view-fn (get (meta cell) :cell/view default-view)]
-    (view-fn cell)))
+  (let [view-fn (get (meta cell) :cell/view default-view)
+        formatted-cell (view-fn cell)]
+    (prn :view-fn view-fn)
+    (prn :formatted-cell formatted-cell)
+    formatted-cell))
 
 (defn with-view
   "Attaches `view-fn` to cell"
@@ -260,7 +261,7 @@
   (on-dispose [this key f]
     (c/update! this .-internal update ::on-dispose assoc key f))
   (-dispose! [this]
-    (doseq [f (vals (::on-dispose (internal-state this)))]
+    (doseq [f (vals (::on-dispose (c/read this .-internal)))]
       (f))
     (c/update! this .-internal dissoc ::on-dispose)
     this)
@@ -269,7 +270,7 @@
 
   IWatchable
   (-notify-watches [this oldval newval]
-    (doseq [f (vals (::watches (internal-state this)))]
+    (doseq [f (vals (::watches (c/read this .-internal)))]
       (f this oldval newval)))
   (-add-watch [this key f]
     (c/update! this .-internal update ::watches assoc key f))
@@ -279,6 +280,7 @@
   IDeref
   (-deref [this]
     (log-read! this)
+    (prn :derefed-value (c/read this .-value))
     (c/read this .-value))
 
   IReset
@@ -286,7 +288,7 @@
     (when (not (identical? newval (c/read this .-value)))
       (tx!
        (fn []
-         (complete! this)
+         #_(complete! this)
          (mutate-cell! this (j/obj .-value newval))
          (eval-dependents! this))))
     newval)
@@ -311,17 +313,17 @@
 ;;
 ;; Cell construction
 
-(defn- make-cell [f runtime def?]
+(defn- make-cell [f owner def?]
   (let [cell (Cell. (j/obj .-f f
                            .-value nil
                            .-dependencies #{}
                            .-dependents #{}
-                           .-runtime runtime
+                           .-owner owner
                            .-internal {})
                     nil)]
 
-    (when runtime
-      (owner/on-dispose runtime cell #(owner/-dispose! cell)))
+    (when owner
+      (owner/on-dispose owner cell #(owner/-dispose! cell)))
 
     (tx! #(eval-and-set! cell))
     cell))
@@ -334,21 +336,23 @@
       :keys [prev-cell
              def?
              memo-key]}]
-  (let [runtime (when-not def?
-                  (or *cell*
-                      r/*reader*))]
+  (let [owner (when-not def?
+                (or *cell*
+                    owner/*owner*
+                    r/*reader*))]
 
     (assert (or def? memo-key) "Anonymous cells must provide `memo-key`")
 
     (cond prev-cell
           (do (mutate-cell! prev-cell (j/obj .-f f
                                              .-value nil))
-              (tx! #(eval-and-set! prev-cell)))
+              (tx! #(eval-and-set! prev-cell))
+              prev-cell)
 
-          def? (make-cell f runtime def?)
+          def? (make-cell f owner def?)
 
-          memo-key (u/memoized-on runtime memo-key
-                     (make-cell f runtime def?))
+          memo-key (u/memoized-on owner memo-key
+                     (make-cell f owner def?))
 
           :else (throw (js/Error. (str "Invalid arguments to `cell*` " options))))))
 

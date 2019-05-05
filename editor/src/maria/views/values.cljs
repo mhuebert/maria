@@ -60,13 +60,13 @@
     (display-result {:value (cell/view this)}))
   function
   (-to-element [this]
-    (format-function this)))
+    (format-function nil this)))
 
 (v/defclass display-deferred
   {:view/did-mount (fn [{:keys [deferred view/state]}]
-                      (-> deferred
-                          (.addCallback #(swap! state assoc :value %1))
-                          (.addErrback #(swap! state assoc :error %))))}
+                     (-> deferred
+                         (.addCallback #(swap! state assoc :value %1))
+                         (.addErrback #(swap! state assoc :error %))))}
   [{:keys [view/state]}]
   (let [{:keys [value error] :as s} @state]
     [:div
@@ -85,18 +85,19 @@
     (:collection-expanded? @state)
     (and depth (< depth *format-depth-limit*))))
 
+(def ^:private partial-str (.toString (partial +)))
+
 (v/defclass format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
-  [{:keys [view/state]} value]
+  [{:keys [view/state]} f]
   (let [{:keys [expanded?]} @state
-        fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
-
+        fn-name (some-> (source-lookups/fn-name f) (symbol) (name))]
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)
                        :class    "pointer hover-opacity-parent"}
       [inline-centered
        (if (and fn-name (not= "" fn-name))
-         (some-> (source-lookups/fn-name value) (symbol) (name))
+         (some-> (source-lookups/fn-name f) (symbol) (name))
          [:span.o-50.mr1 "ƒ"])
        (-> icons/ArrowPointingDown
            (icons/size 20)
@@ -105,12 +106,13 @@
                          :transform  (when-not expanded?
                                        "rotate(90deg)")}))]
       (when expanded?
-        (or (some-> (source-lookups/js-source->clj-source (.toString value))
-                    (code/viewer))
-            (some-> (source-lookups/fn-var value)
+        (or (some-> (source-lookups/fn-var f)
                     (special-views/var-source))
+            (some-> (source-lookups/js-source->clj-source f (.toString f))
+                    (code/viewer))
+
             [:div.pre
-             (code/viewer (.toString value))]))]]))
+             (code/viewer (.toString f))]))]]))
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
@@ -128,7 +130,7 @@
 (def error-divider [:.bb.b--red.o-20.bw2])
 
 (v/defclass show-stack [{:keys     [stack]
-                        expanded? :view/state}]
+                         expanded? :view/state}]
   [:div
    [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
     (repl-ui/arrow (if @expanded? :down :right))
@@ -136,7 +138,6 @@
    (when @expanded? [:pre stack])])
 
 (defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
-  (prn :render-error-result result)
   [:div
    {:class "bg-darken-red cf"}
    (when source
@@ -162,8 +163,8 @@
 
 (v/defclass display-result
   {:key :id}
-  [{:keys [id
-           value
+  [{:keys  [id
+            value
             error
             warnings
             show-source?
@@ -172,8 +173,8 @@
             compiled-js]
     result :view/props
     :as    this}]
-  (error-view/error-boundary {:key id
-                              :on-error (fn [{:keys [error]}]
+  (error-view/error-boundary {:key           id
+                              :on-error      (fn [{:keys [error]}]
                                                (e/handle-block-error block-id error))
                               :error-content (fn [{:keys [error info]}]
                                                (-> result

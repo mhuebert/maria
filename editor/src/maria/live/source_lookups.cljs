@@ -9,7 +9,8 @@
             [maria.util :as util]
             [shadow.cljs.bootstrap.env :as shadow-env]
             [maria.live.ns-utils :as ns-utils]
-            [lark.tree.emit :as emit])
+            [lark.tree.emit :as emit]
+            [clojure.string :as str])
   (:import goog.string.StringBuffer))
 
 ;; may the wrath of God feast upon those who introduce 1- and 0-indexes into the same universe
@@ -23,7 +24,7 @@
   (let [lines (as-> source source
                     (subs source 0 idx)
                     (string/split source "\n"))]
-    {:line (count lines)
+    {:line   (count lines)
      :column (count (last lines))}))
 
 (defn source-from
@@ -60,26 +61,27 @@
                 (emit/string the-node)
                 :else (recur))))))
 
-(defn js-match [js-source {:keys [compiled-js intermediate-values] :as result}]
+(defn js-match [js-value js-source {:keys [compiled-js source-map source intermediate-values value] :as result}]
   (or (some->> intermediate-values
-               (keep (partial js-match js-source))
+               (keep (partial js-match js-value js-source))
                (first))
-      (when compiled-js
-        (let [i (.indexOf compiled-js js-source)]
-          (when (> i -1)
-            (assoc result :index i))))))
+      (or (when-let [i (some-> compiled-js (str/index-of js-source))]
+            (source-of-form-at-position source
+                                        (-> (live-eval/mapped-cljs-position (index-position i compiled-js) source-map)
+                                            (update :line inc)
+                                            (update :column inc))))
+          (comment
+           ;; unsure if this is a good idea - leads to some false positives
+           (when (identical? js-value value)
+             source)))))
 
 (defn js-source->clj-source
   "Searches previously compiled ClojureScript<->JavaScript mappings to return the original ClojureScript
   corresponding to compiled JavaScript"
-  [js-source]
-  (when-let [{:keys [index source compiled-js source-map] :as result} (->> @e/eval-log
-                                                                           (keep (partial js-match js-source))
-                                                                           (first))]
-    (let [pos (-> (live-eval/mapped-cljs-position (index-position index compiled-js) source-map)
-                  (update :line inc)
-                  (update :column inc))]
-      (source-of-form-at-position source pos))))
+  [js-value js-source]
+  (->> @e/eval-log
+       (keep (partial js-match js-value js-source))
+       (first)))
 
 (defn demunge-symbol-str [s]
   (when s
@@ -142,7 +144,7 @@
 
 (defn fn-source-sync [f]
   (when (fn? f)
-    (or (js-source->clj-source (.toString f))
+    (or (js-source->clj-source f (.toString f))
         (.toString f))))
 
 (defn fn-name

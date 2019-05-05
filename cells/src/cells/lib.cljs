@@ -89,6 +89,7 @@
 (defn geo-location
   []
   (let [self cell/*cell*]
+    (prn :self self)
     (cell/loading! self)
     (-> (j/get js/navigator :geolocation)
         (j/call :getCurrentPosition

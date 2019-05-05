@@ -142,8 +142,8 @@
     (repl/reset-namespace 'cells.cell-test)
 
 
-    (let [ctx-1 (lifecycle/default-runtime)
-          ctx-2 (lifecycle/default-runtime)]
+    (let [ctx-1 (lifecycle/default-owner)
+          ctx-2 (lifecycle/default-owner)]
 
       (binding [lifecycle/*owner* ctx-1]
         (defcell r 1)
@@ -177,8 +177,8 @@
 
 
 
-    (def ctx-3 (lifecycle/default-runtime))
-    (def ctx-4 (lifecycle/default-runtime))
+    (def ctx-3 (lifecycle/default-owner))
+    (def ctx-4 (lifecycle/default-owner))
 
     (binding [lifecycle/*owner* ctx-3]
       (defn f1 [x]

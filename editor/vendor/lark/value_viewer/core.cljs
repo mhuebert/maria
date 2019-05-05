@@ -177,7 +177,6 @@
 (v/defn format-value
   ([value] (format-value 1 value))
   ([depth value]
-   (prn :format-value value)
    (when (> depth 200)
      (prn value)
      (throw (js/Error. "Format depth too deep!")))
