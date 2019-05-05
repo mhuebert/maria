@@ -10,7 +10,8 @@
             [clojure.string :as string]
             [goog.crypt.base64 :as base64]
             [cljs.source-map :as sm]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [cljs.env :as env])
   (:require-macros [lark.eval :refer [defspecial]]))
 
 (def ^:dynamic *cljs-warnings* nil)
@@ -130,17 +131,18 @@
 (defn warning-handler
   "Collect warnings in a dynamic var"
   [form source warning-type env extra]
-  ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
-  ;;        also unsure of memory implications.
-  (some-> *cljs-warnings*
-          (swap! conj {:type             warning-type
-                       :warning-position (relative-pos (-> (select-keys env [:line :column])
-                                                           (dec-pos))
-                                                       (when (satisfies? IMeta form) (some-> (meta form)
-                                                                                             (dec-pos))))
-                       :extra            extra
-                       :source           source
-                       :form             form})))
+  (when (ana/*cljs-warnings* warning-type)
+    ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
+    ;;        also unsure of memory implications.
+    (some-> *cljs-warnings*
+            (swap! conj {:type             warning-type
+                         :warning-position (relative-pos (-> (select-keys env [:line :column])
+                                                             (dec-pos))
+                                                         (when (satisfies? IMeta form) (some-> (meta form)
+                                                                                               (dec-pos))))
+                         :extra            extra
+                         :source           source
+                         :form             form}))))
 
 (defn stack-error-position [error]
   (let [[line column] (->> (re-find #"<anonymous>:(\d+)(?::(\d+))" (.-stack error))
@@ -235,25 +237,27 @@
          start-ns (:ns opts)
          {:keys [source] :as start-position} (when (satisfies? IMeta form)
                                                (some-> (meta form) (dec-pos)))
-         {:keys [ns] :as result} (if repl-special?
-                                   (repl-special c-state c-env form)
-                                   (binding [*cljs-warning-handlers* [(partial warning-handler form source)]
-                                             r/*data-readers* (merge r/*data-readers*
-                                                                     tagged-literals/*cljs-data-readers*)]
-                                     (if source
-                                       (let [{:keys [compiled-js
-                                                     error] :as result} (compile-str c-state c-env source {:form           form
-                                                                                                           :opts           opts
-                                                                                                           :start-position start-position})]
-                                         (cond-> result
-                                                 (not error) (-> (merge (try {:value (binding [*ns* start-ns]
-                                                                                       (js/eval compiled-js))}
-                                                                             (catch js/Error e {:error      e
-                                                                                                :error/kind :eval})))
-                                                                 (add-error-position))))
-                                       (let [result (atom nil)]
-                                         (cljs/eval c-state form opts #(reset! result %))
-                                         @result))))]
+         {:keys [ns] :as result}
+         (if repl-special?
+           (repl-special c-state c-env form)
+           (binding [*cljs-warning-handlers* [(partial warning-handler form source)]
+                     r/*data-readers* (merge r/*data-readers*
+                                             tagged-literals/*cljs-data-readers*)]
+             (if source
+               (let [{:keys [compiled-js
+                             error] :as result} (compile-str c-state c-env source {:form           form
+                                                                                   :opts           opts
+                                                                                   :start-position start-position})]
+                 (cond-> result
+                         (not error) (-> (merge (try {:value (binding [*ns* start-ns]
+                                                               (js/eval compiled-js))}
+                                                     (catch js/Error e {:error      e
+                                                                        :error/kind :eval})))
+                                         (add-error-position))))
+               (let [result (atom nil)]
+
+                 (cljs/eval c-state form opts #(reset! result %))
+                 @result))))]
      (when (and (some? ns) (not= ns (:ns @c-env)))
        (swap! c-env assoc :ns ns))
      result)))
