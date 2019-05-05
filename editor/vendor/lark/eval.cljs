@@ -132,16 +132,16 @@
   "Collect warnings in a dynamic var"
   [form source warning-type env extra]
   (when (ana/*cljs-warnings* warning-type)
-  ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
-  ;;        also unsure of memory implications.
-  (some-> *cljs-warnings*
-          (swap! conj {:type             warning-type
-                       :warning-position (relative-pos (-> (select-keys env [:line :column])
-                                                           (dec-pos))
-                                                       (when (satisfies? IMeta form) (some-> (meta form)
-                                                                                             (dec-pos))))
-                       :extra            extra
-                       :source           source
+    ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
+    ;;        also unsure of memory implications.
+    (some-> *cljs-warnings*
+            (swap! conj {:type             warning-type
+                         :warning-position (relative-pos (-> (select-keys env [:line :column])
+                                                             (dec-pos))
+                                                         (when (satisfies? IMeta form) (some-> (meta form)
+                                                                                               (dec-pos))))
+                         :extra            extra
+                         :source           source
                          :form             form}))))
 
 (defn stack-error-position [error]
