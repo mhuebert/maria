@@ -1,3 +1,10 @@
-{:paths ["src"
-         "test"]
- :deps {com.stuartsierra/dependency {:mvn/version "0.2.0"}}}
+{:paths ["src"]
+ :deps  {org.clojure/clojure                 {:mvn/version "1.10.0"}
+         org.clojure/clojurescript           {:mvn/version "1.10.520"}
+         appliedscience/js-interop           {:mvn/version "0.1.19"}
+         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
+         chia/reactive                       {:local/root "../../chia/reactive"}}
+
+ :aliases
+        {:test
+         {:extra-paths ["test"]}}}

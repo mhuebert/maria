@@ -1,6 +1,7 @@
 (ns maria.util
   (:require [goog.events :as events]
-            [re-view.core :as v]
+            [goog.object :as gobj]
+            [chia.view :as v]
             [clojure.string :as string]
             [applied-science.js-interop :as j])
   (:require-macros [maria.util :refer [for-map]]))
@@ -12,6 +13,11 @@
 (defn stop! [e]
   (.stopPropagation e)
   (.preventDefault e))
+
+(defn clipboard-text [e]
+  (some-> (or (j/get e :clipboardData)
+              (j/get js/window :clipboardData))
+          (j/call :getData "text")))
 
 (defn some-str [s]
   (when (and (string? s) (not (identical? s "")))
@@ -49,6 +55,14 @@
               (> y-pos (+ scrollY innerHeight)))
       (.scrollTo js/window 0 (-> y-pos
                                  (- (/ innerHeight 2)))))))
+
+(def DEBUG true)
+
+(defn log-ret [label x]
+  (if DEBUG (do
+                (prn label x)
+                x)
+            x))
 
 ;; from https://groups.google.com/forum/#!topic/clojure-dev/NaAuBz6SpkY
 (defn take-until

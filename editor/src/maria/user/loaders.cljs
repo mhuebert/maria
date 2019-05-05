@@ -1,9 +1,9 @@
 (ns maria.user.loaders
-  (:require [re-view.core :as v :refer [defview]]
-            [re-view.hoc :as hoc]
+  (:require [chia.view :as v]
+            [maria.views.hoc :as hoc]
             [maria.views.icons :as icons]
 
-            [re-view.hiccup.core :as hiccup]
+            [chia.view.hiccup :as hiccup]
 
             [maria.eval :as eval]
             [maria.views.cards :as repl-ui]
@@ -15,7 +15,7 @@
             [clojure.set :as set]
             [maria.persistence.github :as github]))
 
-(defview gist-loader-status
+(v/defclass gist-loader-status
   [{:keys [status
            url
            error

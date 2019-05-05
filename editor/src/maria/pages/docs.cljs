@@ -1,20 +1,21 @@
 (ns maria.pages.docs
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.views.icons :as icons]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.views.top-bar :as toolbar]
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [maria.persistence.local :as local]
             [maria.pages.block_list :as block-list]
             [maria.curriculum :as curriculum]
-            [maria.frames.frame-communication :as frame]))
+            [maria.frames.frame-communication :as frame]
+            [applied-science.js-interop :as j]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 (d/transact! curriculum/docs)
 
 
-(defview file-edit
+(v/defclass file-edit
   {:doc-editor (fn [{:keys [view/state]}] (:doc-editor @state))
    :init-doc (fn [{:keys [id] :as this}]
                (doc/locals-push! :local/recents id)
@@ -31,10 +32,10 @@
                                               (:files (:persisted the-doc)))
                                    :owner (or (:owner (:local the-doc))
                                               (:owner (:persisted the-doc)))}]]))))
-   :view/will-receive-props (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
+   :view/did-update (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
                               (when-not (= id prev-id)
                                 (.initDoc this)))
-   :view/will-mount (fn [this]
+   :view/did-mount (fn [this]
                       (.initDoc this))
    :project-files (fn [{:keys [id]}]
                     (-> (concat (keys (d/get-in id [:persisted :files]))
@@ -59,13 +60,14 @@
                         (let [local-value (get-in project [:local :files filename :content])
                               persisted-value (get-in project [:persisted :files filename :content])]
                           [:.h-100.flex.flex-column
-                           (toolbar/doc-toolbar (cond (empty? filenames)
+                           [toolbar/doc-toolbar (cond (empty? filenames)
                                                       {:left-content "Empty Gist"}
                                                       error nil
                                                       :else {:project project
                                                              :owner owner
                                                              :filename filename
-                                                             :id id}))
+                                                             :id id})]
+                           [:.h2]
                            [:.flex.flex-auto
                             (or (some->> error (conj [:.pa3.dark-red]))
                                 (when-let [value (or local-value persisted-value)]
@@ -89,11 +91,11 @@
                 :font-size 9
                 :padding 2}} n])))
 
-(defview doc-list
+(v/defclass doc-list
   {:key :title
-   :view/initial-state (fn [{:keys [limit]}]
+   :view/initial-state (fn [{:keys [limit view/props] :as this}]
                          {:limit-n (or limit 5)})}
-  [{:keys [view/state context title]} docs]
+  [{:keys [view/state context title] :as this} docs]
   (let [{:keys [limit-n]} @state
         more? (and (not= limit-n 0) (> (count docs) limit-n))
         parent-path (d/get :router/location :parent-path)]
@@ -122,8 +124,8 @@
            ;; figure out exactly what cases have no `local-url`, and why
            :when local-url]
        [:.bt.b--near-white.flex.items-stretch
-        {:classes [(if active? "bg-washed-blue-darker "
-                               (when-not trashed? "hover-bg-washed-blue"))]}
+        {:class [(cond active? "bg-washed-blue-darker"
+                       (not trashed?) "hover-bg-washed-blue")]}
         [:a.db.ph3.pv2.dark-gray.no-underline.flex-auto
          {:class (if trashed? "o-50" "pointer")
           :href (when-not trashed? local-url)}
@@ -192,5 +194,6 @@
      (toolbar/doc-toolbar {:left-content [:.flex.items-center.ph2.gray
                                           [:a.hover-underline.gray.no-underline.flex.items-center {:href (str "/gists/" username)} username]
                                           util/space "/"]})
+     [:.h2]
      [:.ma3.bg-white
       (doc-list {} gists)]]))

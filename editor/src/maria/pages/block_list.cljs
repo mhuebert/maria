@@ -1,14 +1,16 @@
 (ns maria.pages.block_list
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.blocks.history :as history]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.blocks.code]
             [maria.blocks.prose]
             [maria.blocks.blocks :as Block]
             [lark.commands.exec :as exec]
             [maria.commands.blocks]
             [maria.eval :as e]
-            [kitchen-async.promise :as p]))
+            [chia.reactive :as r]
+            [kitchen-async.promise :as p]
+            [lark.editor :as editor]))
 
 (exec/add-context-augmenter! :auth #(assoc % :signed-in? (d/get :auth-public :signed-in?)))
 
@@ -17,7 +19,7 @@
                                                    block-view (merge {:editor (.getEditor block-view)}
                                                                      (select-keys block-view [:block :blocks])))))
 
-(defview BlockList
+(v/defclass BlockList
   {:key                     :source-id
    :view/initial-state      (fn [{value :value}] (history/initial-state value))
    :view/did-mount          (fn [this]
@@ -27,7 +29,9 @@
                                 (p/do @e/compiler-ready
                                       (exec/exec-command-name :eval/doc))))
    :view/will-unmount       #(exec/set-context! {:block-list nil})
-   :view/will-receive-props (fn [{value                       :value
+   ;; NOTE for debugging
+   ;; this used to be will-receive-props
+   :view/did-update (fn [{value :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props
                                   state                       :view/state

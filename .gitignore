@@ -21,4 +21,5 @@ node_modules
 **/.firebaserc
 **/.cpcache/**
 **.shadow-cljs
+package-lock.json
 **/.firebase/**

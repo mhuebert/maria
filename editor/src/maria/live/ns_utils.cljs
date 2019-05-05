@@ -10,7 +10,7 @@
 
 (defn builtin-ns? [s]
   (and (not= s 'maria.user)
-       (re-find #"^(?:re-view|maria|cljs|re-db|clojure)" (name s))))
+       (re-find #"^(?:chia|maria|cljs|re-db|clojure)" (name s))))
 
 (defn analyzer-ns [c-state ns]
   (get-in @c-state [:cljs.analyzer/namespaces ns]))

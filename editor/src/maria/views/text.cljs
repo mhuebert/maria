@@ -1,7 +1,7 @@
 (ns maria.views.text
-  (:require [re-view.core :as v :refer [view defview]]
+  (:require [chia.view :as v]
             [goog.events :as events]
-            [re-view.routing :refer [closest]])
+            [chia.routing :refer [closest]])
   (:import [goog.dom ViewportSizeMonitor]
            [goog.events EventType]))
 
@@ -84,9 +84,8 @@
        (set! (-> input-element .-style .-lineHeight) (computed-style "line-height"))
        (set! (-> root-node .-style .-height) (str height "px"))))))
 
-(defview autosize-text
-  {:display-name    "AutosizeText"
-   :view/did-mount  (fn [{:keys [auto-focus view/state] :as this}]
+(v/defclass autosize-text
+  {:view/did-mount (fn [{:keys [auto-focus view/state] :as this}]
                       (update-size this)
                       (when auto-focus (.focus (:input-element @state)))
                       )
@@ -142,7 +141,7 @@
         :class class}
        (str v (when (#{"\n" "\r"} (last v)) " "))]]
      [:input (-> props
-                 (update :classes into ["autosize-input-input dib"])
+                 (update :class str " autosize-input-input dib")
                  (merge {:ref         #(when % (swap! state assoc :input-element (v/dom-node %)))
                          :on-key-down #(do (update-size this (keydown-char %))
                                            (when on-key-down (on-key-down %)))}

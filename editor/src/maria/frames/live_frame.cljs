@@ -4,8 +4,6 @@
             [maria.friendly.kinds :as kinds]
             [shapes.core :as shapes]
 
-            [cells.cell :as cell]
-
             [lark.commands.exec]
 
             [clojure.set]
@@ -14,41 +12,29 @@
 
             [maria.html]
             [maria.user :include-macros true]
-            [re-view.routing :as r]
-            [re-view.core :as v :refer [defview]]
+            [chia.routing :as r]
+            [chia.view :as v]
             [maria.views.floating.floating-search]
 
             [goog.events :as events]
 
             [maria.frames.frame-communication :as frame]
             [maria.commands.code]
-            [clojure.string :as string]
+            [clojure.string :as str]
             [maria.frames.live-actions :as user-actions]
 
-            [re-db.d :as d]
-            [re-db.patterns :as patterns]
+            [chia.db :as d]
             [maria.util :as util]))
-
-(extend-type cell/Cell
-  cell/ICellStore
-  (put-value! [this value]
-    (d/transact! [[:db/add :cells (name this) value]]))
-  (get-value [this]
-    (d/get :cells (name this)))
-  (invalidate! [this]
-    (patterns/invalidate! d/*db* :ea_ [:cells (name this)])))
 
 (extend-protocol kinds/IDoc
   shapes/Shape
   (doc [this] "a shape: some geometry that Maria can draw"))
 
-(enable-console-print!)
-
 (defn navigate [a]
   (frame/send frame/trusted-frame [:window/navigate (let [origin (.. js/window -location -origin)
                                                           href (.-href a)]
                                                       (cond-> (.-href a)
-                                                              (string/starts-with? href origin)
+                                                              (str/starts-with? href origin)
                                                               (subs (count origin)))) {:popup? (= (.-target a) "_blank")}]))
 
 (events/listen js/window "click"
@@ -63,18 +49,18 @@
                  (when-let [a (r/closest (.-target e) r/link?)]
                    (when (= (.-origin a) (.. js/window -location -origin))
                      (let [href (.-href a)]
-                       (set! (.-href a) (string/replace href (.-origin a) (d/get :window/location :origin)))
+                       (set! (.-href a) (str/replace href (.-origin a) (d/get :window/location :origin)))
                        (events/listenOnce js/window "mouseup" #(set! (.-href a) href)))))))
 
 
 
-(defview not-found []
+(v/defclass not-found []
   [:div "We couldn't find this page!"])
 
 (defn render []
   (v/render-to-dom (repl/layout {}) "maria-env"))
 
-(defn init []
+(defn ^:export init []
 
   @e/compiler-ready
 

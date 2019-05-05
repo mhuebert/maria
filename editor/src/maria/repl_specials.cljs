@@ -4,13 +4,12 @@
             [maria.views.repl-specials :as special-views]
             [maria.friendly.kinds :as kinds]
             [maria.live.ns-utils :as ns-utils]
-            [clojure.string :as string]
+            [clojure.string :as str]
             [maria.editors.code :as code]
             [maria.views.cards :as repl-ui]
             [maria.util :as util]
-            [re-view.hiccup.core :as hiccup]
-            [re-view.core :as v]
-            [clojure.set :as set]))
+            [chia.view.hiccup :as hiccup]
+            [chia.view :as v]))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -39,7 +38,7 @@
     {:value (special-views/doc (merge {:expanded?   true
                                        :standalone? true}
                                       the-var))}
-    {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
+    {:error (js/Error. (if (symbol? name) (str "Could not resolve the symbol `" (str/trim-newline (with-out-str (prn name))) "`. Maybe it has not been defined?")
                                           (str (str "`doc` requires a symbol, but a " (cljs.core/name (kinds/kind name)) " was passed."))))}))
 
 
@@ -47,10 +46,10 @@
   "Show source code for given symbol"
   [c-state c-env name]
   (if-let [the-var (and (symbol? name) (ns-utils/resolve-var-or-special c-state c-env name))]
-    {:value (hiccup/element [:div {:classes [repl-ui/card-classes
-                                             "ph3"]}
+    {:value (hiccup/element [:div {:class (str repl-ui/card-classes
+                                               " ph3")}
                              (special-views/var-source the-var)])}
-    {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))
+    {:error (js/Error. (str "Could not resolve the symbol `" (str/trim-newline (with-out-str (prn name))) "`"))}))
 
 (defspecial js-source
   "Show compiled javascript for `form`"

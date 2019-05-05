@@ -6,20 +6,18 @@
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.editor :as Editor]
 
-            [re-view.core :as v]
-            [re-db.d :as d]
+            [chia.view :as v]
+            [chia.db :as d]
 
-            [re-view.prosemirror.markdown :as markdown]
+            [prosemirror.markdown :as markdown]
 
-            [cells.cell :as cell]
             [maria.util :as util]
 
-            [cells.eval-context :as eval-context]
-            [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
-            [lark.tree.reader :as rd]))
+            [lark.tree.reader :as rd]
+            [cells.owner :as owner]))
 
 (defprotocol IBlock
 
@@ -32,7 +30,7 @@
 (defn update-view
   [block]
   (some-> (Editor/view block)
-          (v/force-update)))
+          (v/force-update!)))
 
 (defprotocol IEval
   (eval! [this] [this kind value])
@@ -186,8 +184,8 @@
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
-         (when (satisfies? eval-context/IDispose block)
-           (eval-context/dispose! block))))
+         (when (satisfies? owner/IDispose block)
+           (owner/dispose! block))))
      result)))
 
 (defcommand :doc/print-to-console

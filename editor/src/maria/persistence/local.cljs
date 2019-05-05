@@ -1,5 +1,6 @@
 (ns maria.persistence.local
-  (:require [re-db.d :as d]
+  (:require [chia.db :as d]
+            [chia.reactive :as r]
             [maria.persistence.transit :as t]
             [goog.functions :as gf]
             [applied-science.js-interop :as j]))
@@ -22,8 +23,8 @@
              ([id]
               (d/transact! [{:local (local-get id)
                              :db/id id}])
-              (d/listen {:ea_ [[id :local]]}
-                        (gf/throttle #(local-put! id (d/get id :local)) 300)))
+              (d/listen (gf/throttle #(local-put! id (d/get id :local)) 300)
+                        {:ea_ [[id :local]]}))
              ([id initial-content]
               (when (and (nil? (local-get id)) initial-content)
                 (local-put! id initial-content))

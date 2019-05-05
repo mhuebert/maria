@@ -6,7 +6,7 @@
    ["codemirror/addon/selection/mark-selection"]
    ["codemirror/mode/clojure/clojure"]
 
-   [re-view.core :as v :refer [defview]]
+   [chia.view :as v]
 
    [maria.util :as util]
    [maria.views.floating.float-ui :as hint]
@@ -18,7 +18,8 @@
    [lark.structure.edit :as edit]
    [goog.functions :as gf]
    [fast-zip.core :as z]
-   [lark.tree.range :as range]))
+   [lark.tree.range :as range]
+   [lark.editor :as editor]))
 
 (defn eldoc-view [sym]
   (some->> sym
@@ -27,10 +28,11 @@
 
 (def update-completions!
   (-> (fn [{:as editor
-            {:keys [loc pos]} :magic/cursor}]
+            {:keys [loc pos]} :magic/cursor} & [hide?]]
         (when-let [node (some-> (cm/sexp-near pos loc)
                                 (z/node))]
-          (if-let [completion-data (and (not (.somethingSelected editor))
+          (if-let [completion-data (and (not hide?)
+                                        (not (.somethingSelected editor))
                                         node
                                         (= (range/bounds node :right)
                                            (range/bounds pos :left))
@@ -73,103 +75,105 @@
                                         false
                                         true)})})
 
-(defview CodeView
-  {:view/spec {:props {:event/mousedown :Function
-                       :event/keydown :Function
-                       :on-ast :Function
-                       :keymap :Map}}
-   :view/did-mount (fn [{:keys [default-value
-                                auto-focus
-                                value
-                                on-update
-                                read-only?
-                                on-mount
-                                cm-opts
-                                view/state
-                                view/props
-                                error-ranges
-                                before-change
-                                on-selection-activity
-                                keymap]
-                         :as this}]
-                     (let [dom-node (v/dom-node this)
-                           editor (CM dom-node
-                                      (clj->js (merge cm-opts
-                                                      {:value (str (or value default-value))}
-                                                      (cond-> options
-                                                              keymap (assoc :extraKeys (clj->js keymap))
-                                                              read-only? (-> (select-keys [:theme :mode :lineWrapping])
-                                                                             (assoc
-                                                                               :readOnly true
-                                                                               :tabindex -1))))))]
+(defn reset-value! [{:keys [default-value value view/state]}]
+  (cm/set-value-and-refresh! (:editor @state) (or value default-value)))
 
-                       (add-watch editor :maria
-                                  (fn [editor
-                                       {{prev-loc :loc :as prev-cursor} :magic/cursor}
-                                       {{loc :loc pos :pos :as cursor} :magic/cursor}]
-                                    (js/setTimeout
-                                     #(when (.hasFocus editor)
-                                        (when (not= prev-loc loc)
-                                          (some->> (edit/eldoc-symbol loc pos)
-                                                   (eldoc-view)
-                                                   (bottom-bar/add-bottom-bar! :eldoc/cursor)))
-                                        (when-not (= cursor prev-cursor)
-                                          (update-completions! editor)))
-                                     0)))
+(v/defclass CodeView
+            {#_#_:view/spec {:props {:event/mousedown :Function
+                                     :event/keydown   :Function
+                                     :on-ast          :Function
+                                     :keymap          :Map}}
+             :view/did-mount     (fn [{:keys [default-value
+                                              auto-focus
+                                              value
+                                              on-update
+                                              read-only?
+                                              on-mount
+                                              cm-opts
+                                              view/state
+                                              view/props
+                                              error-ranges
+                                              before-change
+                                              on-selection-activity
+                                              keymap]
+                                       :as   this}]
+                                   (let [dom-node (v/dom-node this)
+                                         editor (CM dom-node
+                                                    (clj->js (merge cm-opts
+                                                                    {:value (str (or value default-value))}
+                                                                    (cond-> options
+                                                                            keymap (assoc :extraKeys (clj->js keymap))
+                                                                            read-only? (-> (select-keys [:theme :mode :lineWrapping])
+                                                                                           (assoc
+                                                                                            :readOnly true
+                                                                                            :tabindex -1))))))]
 
-                       (.on editor "blur" #(bottom-bar/retract-bottom-bar! :eldoc/cursor))
+                                        (add-watch editor :maria
+                                                   (fn [editor
+                                                        {{prev-loc :loc prev-pos :pos} :magic/cursor}
+                                                        {{loc :loc pos :pos} :magic/cursor}]
+                                                     (js/setTimeout
+                                                      #(when (.hasFocus editor)
+                                                         (some->> (edit/eldoc-symbol loc pos)
+                                                                  (eldoc-view)
+                                                                  (bottom-bar/add-bottom-bar! :eldoc/cursor))
+                                                         (when-not (= pos prev-pos)
+                                                           (update-completions! editor (or (not= (:line pos) (:line prev-pos))
+                                                                                           (< (:column pos)
+                                                                                              (:column prev-pos))))))
+                                                      0)))
 
-                       (set! (.-view editor) this)
-                       (swap! editor assoc :view this)
-                       (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor! editor %)
-                                                                (.refresh editor)))
+                                        (.on editor "blur" #(bottom-bar/retract-bottom-bar! :eldoc/cursor))
 
-                       (swap! state assoc :editor editor)
+                                        (set! (.-view editor) this)
+                                        (swap! editor assoc :view this)
+                                        (set! (.-setValueAndRefresh editor) #(do (cm/set-preserve-cursor! editor %)
+                                                                                 (.refresh editor)))
 
-                       (when-not read-only?
+                                        (swap! state assoc :editor editor)
 
-                         ;; event handlers are passed in as props with keys like :event/mousedown
-                         (util/handle-captured-events this)
+                                        (when-not read-only?
 
-                         (when on-mount (on-mount editor this))
+                                          ;; event handlers are passed in as props with keys like :event/mousedown
+                                          (util/handle-captured-events this)
 
-                         (when on-update
-                           (.on editor "change" #(on-update (.getValue %1))))
+                                          (when on-mount (on-mount editor this))
 
-                         (when before-change
-                           (.on editor "beforeChange" before-change))
+                                          (when on-update
+                                            (.on editor "change" #(do (prn :on-update (.getValue %1)) (on-update (.getValue %1)))))
 
-                         (when on-selection-activity
-                           (.on editor "cursorActivity" on-selection-activity)))
+                                          (when before-change
+                                            (.on editor "beforeChange" before-change))
 
-                       (when auto-focus (.focus editor))
+                                          (when on-selection-activity
+                                            (.on editor "cursorActivity" on-selection-activity)))
 
-                       (cm/mark-ranges! editor error-ranges #js {"className" "error-text"})))
-   :get-editor #(:editor @(:view/state %))
-   :set-value (fn [{:keys [view/state value]}]
-                (when-let [editor (:editor @state)]
-                  (cm/set-preserve-cursor! editor value)))
-   :reset-value (fn [{:keys [default-value value view/state]}]
-                  (.setValueAndRefresh (:editor @state) (or value default-value)))
-   :view/will-receive-props (fn [{:keys [value source-id]
-                                  {prev-source-id :source-id} :view/prev-props
-                                  :as this}]
-                              (let [editor (.getEditor this)]
-                                (if (or (not= source-id prev-source-id)
-                                        (not= value (.getValue editor)))
-                                  (.resetValue this)
-                                  nil)))
-   :view/should-update (fn [_] false)}
+                                        (when auto-focus (.focus editor))
+
+                                        (cm/mark-ranges! editor error-ranges #js {"className" "error-text"})))
+             :get-editor         #(:editor @(:view/state %))
+             :set-value          (fn [{:keys [view/state value]}]
+                                   (when-let [editor (:editor @state)]
+                                     (cm/set-preserve-cursor! editor value)))
+             :reset-value        (fn [{:keys [default-value value view/state]}]
+                                   (.setValueAndRefresh (:editor @state) (or value default-value)))
+             :view/should-update (fn [{:keys [value] :as this}]
+                                   (let [editor (.getEditor this)]
+                                        (if (not= value (.getValue editor))
+                                          (.resetValue this)
+                                          nil))
+                                   false)}
   [{:keys [view/state view/props] :as this}]
   [:.cursor-text
-   (-> (select-keys props [:style :class :classes])
+   (-> (select-keys props [:style :class])
        (merge {:on-click #(when (= (.-target %) (.-currentTarget %))
                             (let [editor (:editor @state)]
                               (doto editor
                                 (.setCursor (.lineCount editor) 0)
-                                (.focus))))}))])
+                                (.focus))))
+               :dangerouslySetInnerHTML {:__html ""}}))])
 
-(v/defn viewer [props source]
+(v/defclass viewer [{:keys [view/props]} source]
   (CodeView (merge {:read-only? true
                     :value source}
                    props)))

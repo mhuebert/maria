@@ -133,6 +133,7 @@
 (defn set-preserve-cursor!
   "If value is different from editor's current value, set value, retain cursor position"
   [editor value]
+      (prn :set-preserve! value)
   (when-not (identical? value (.getValue editor))
     (let [cursor-pos (get-cursor editor)]
       (.setValue editor (str value))
@@ -262,6 +263,10 @@
             (.clear))
     (swap! cm assoc :cursor/handle
            (.setBookmark cm (range->Pos cursor) #js {:widget (cursor-bookmark)})))
+
+(defn set-value-and-refresh! [editor value]
+      (set-preserve-cursor! editor value)
+      (.refresh editor))
 
 (defn set-zipper!
   ([editor zipper & [{:keys [decorate?]
