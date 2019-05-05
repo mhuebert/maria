@@ -10,7 +10,8 @@
             [clojure.string :as string]
             [goog.crypt.base64 :as base64]
             [cljs.source-map :as sm]
-            [clojure.string :as str])
+            [clojure.string :as str]
+            [cljs.env :as env])
   (:require-macros [lark.eval :refer [defspecial]]))
 
 (def ^:dynamic *cljs-warnings* nil)
@@ -130,6 +131,7 @@
 (defn warning-handler
   "Collect warnings in a dynamic var"
   [form source warning-type env extra]
+  (when (ana/*cljs-warnings* warning-type)
   ;; note - not including `env` in warnings maps, because it is so large and can't be printed.
   ;;        also unsure of memory implications.
   (some-> *cljs-warnings*
@@ -140,7 +142,7 @@
                                                                                              (dec-pos))))
                        :extra            extra
                        :source           source
-                       :form             form})))
+                         :form             form}))))
 
 (defn stack-error-position [error]
   (let [[line column] (->> (re-find #"<anonymous>:(\d+)(?::(\d+))" (.-stack error))
