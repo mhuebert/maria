@@ -14,10 +14,11 @@
 
 ;; This next code snippet uses hash-maps, [keywords](https://clojure.org/reference/data_structures#Keywords), and keywords as functions with defaults. That's a lot of new stuff! Normally we'd introduce these more slowly but we're a little pressed for time. Sorry about that, we're working on it. :)
 (defcell birds
-  (fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
+  (fetch "https://ebird.org/ws2.0/data/obs/geo/recent"
          {:query {:lat (:latitude @location "52.4821146")
                   :lng (:longitude @location "13.4121388")
                   :maxResults 10
+                  :key "inplsc863h7a" 
                   :fmt "json"}}))
 
 ;; Once that comes back, let's poke at it a bit. That's the best way to get to know some new data. Let's look at just one of the results:
@@ -64,10 +65,12 @@
 ;; Now let's do that for a bunch of bird pictures!
 
 (defcell bird-pics
-  (doall (for [bird @birds]
-           (some->> (:sciName bird)
-                    (find-image)
-                    (image 100)))))
+  (->> @birds 
+       (keep (fn [bird] 
+               (some->> (:sciName bird)
+                        (find-image)
+                        (image 100))))
+       (doall)))
 
 (cell (image (find-image "berlin")))
 

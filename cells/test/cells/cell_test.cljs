@@ -36,7 +36,7 @@
         d #{})
 
       (are [cell transitive-dependents]
-        (= (set (cell/transitive-dependents cell))
+        (= (set (cell/dependents cell))
            (dep-set transitive-dependents))
         a #{b c}
         b #{c}

@@ -115,8 +115,8 @@
                     (into new))]
                new)))))
 
-(def transitive-dependents (transitive-sorted immediate-dependents))
-(def transitive-dependencies (transitive-sorted immediate-dependencies))
+(def dependents (transitive-sorted immediate-dependents))
+(def dependencies (transitive-sorted immediate-dependencies))
 
 (defn depend! [cell dep]
   (c/assoc! cell .-dependencies
@@ -186,7 +186,7 @@
 (defn- eval-dependents! [cell]
   (when-not *computing-dependents*
     (binding [*computing-dependents* true]
-      (doseq [cell (transitive-dependents cell)]
+      (doseq [cell (dependents cell)]
         (eval-and-set! cell))))
   cell)
 
