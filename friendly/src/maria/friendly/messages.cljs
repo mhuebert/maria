@@ -154,7 +154,13 @@
 
    :dynamic
    (fn [_type info]
-     (str "You're not allowed to dynamically change the value of `" (:name info) "`, because it is a static var. Consider redefining it to be `^:dynamic`."))})
+     (str "You're not allowed to dynamically change the value of `" (:name info) "`, because it is a static var. Consider redefining it to be `^:dynamic`."))
+
+   :fn-deprecated
+   (fn [_type info]
+     (str "The function `" (or (:ctor info)
+                               (:name info))
+          "` is deprecated, so it should not and cannot be used."))})
 
 (defn override-analyzer-messages! []
   (doseq [[k f] analyzer-messages]
