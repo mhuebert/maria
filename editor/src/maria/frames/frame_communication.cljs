@@ -5,9 +5,7 @@
 
 ;; NOTE: you can `console.log`, but not `print`, cross-origin windows.
 
-(def port (.. js/window -location -port))
-(def port-suffix (when (and port (not= "" port))
-                   (str ":" port)))
+
 
 (def trusted-frame "trusted")
 
@@ -24,25 +22,31 @@
   (swap! queue update the-queue dissoc id))
 
 (let [this-hostname (.. js/window -location -hostname)
-      other-hostname-lookup {"0.0.0.0"              "localhost"
-                             "localhost"            "0.0.0.0"
+      this-port (.. js/window -location -port)
+      other-hostname-lookup {"localhost"            "localhost"
                              "maria.dev"            "maria-live.dev"
                              "maria-live.dev"       "maria.dev"
                              "www.maria.cloud"      "user.maria.cloud"
                              "user.maria.cloud"     "www.maria.cloud"
                              "dev.maria.cloud"      "dev-user.maria.cloud"
                              "dev-user.maria.cloud" "dev.maria.cloud"}
+      other-port-lookup {"8701" "8702"
+                         "8702" "8701"}
       parent-hostname (cond->> this-hostname
                                is-child? (get other-hostname-lookup))
       child-hostname (cond->> this-hostname
                               is-parent? (get other-hostname-lookup))
+      parent-port (cond->> this-port
+                           is-child? (get other-port-lookup))
+      child-port (cond->> this-port
+                          is-parent? (get other-port-lookup))
       protocol-prefix (str (.. js/window -location -protocol) "//")
       parent-origin (str protocol-prefix
                          parent-hostname
-                         port-suffix)
+                         (some->> parent-port (str ":")))
       child-origin (str protocol-prefix
                         child-hostname
-                        port-suffix)
+                        (some->> child-port (str ":")))
       other-origin (if is-parent? child-origin parent-origin)
       current-frame-id (if is-parent?
                          "trusted"

@@ -25,7 +25,6 @@
             [clojure.string :as string]
             [maria.frames.live-actions :as user-actions]
 
-            [maria.live.analyze]
             [re-db.d :as d]
             [re-db.patterns :as patterns]
             [maria.util :as util]))
@@ -75,13 +74,11 @@
 (defn render []
   (v/render-to-dom (repl/layout {}) "maria-env"))
 
-(defn main []
+(defn init []
 
-  (e/init)
+  @e/compiler-ready
 
   (render)
 
   (frame/listen frame/trusted-frame user-actions/handle-message)
   (frame/send frame/trusted-frame :frame/ready))
-
-(defonce _init_ (main))

@@ -86,7 +86,7 @@
        (vreset! clear-key (js/setInterval interval-f n))
        (reset! self (f initial-value))))))
 
-(defn- timeout
+(defn timeout
   ([n f] (timeout n f nil))
   ([n f initial-value]
 

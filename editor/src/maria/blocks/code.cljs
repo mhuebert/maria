@@ -140,11 +140,11 @@
 
   Block/IEval
   (eval-log! [this value]
-    (vswap! e/-eval-logs update (:id this) #(take 2 (cons value %)))
+    (vswap! e/-block-eval-log update (:id this) #(take 2 (cons value %)))
     (Block/update-view this)
     value)
   (eval-log [this]
-    (get @e/-eval-logs (:id this)))
+    (get @e/-block-eval-log (:id this)))
   (eval!
     ([this]
      (let [editor (Editor/of-block this)
@@ -157,6 +157,7 @@
        (let [div (.. editor -display -wrapper)]
          (classes/add div "post-eval")
          (js/setTimeout #(classes/remove div "post-eval") 200))
+
        (Block/eval! this :string source))
      true)
     ([this mode form]

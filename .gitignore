@@ -11,7 +11,7 @@ curriculum/ideating.clj
 cljs-runtime
 *.DS_Store
 node_modules
-**/public/js/compiled
+**/public/js/compiled*
 **/bootstrap/**
 **/public/css
 **/checkouts
@@ -19,6 +19,6 @@ node_modules
 **/test-target/public/js
 **/.cljs_rhino_repl/
 **/.firebaserc
-maria.css
 **/.cpcache/**
 **.shadow-cljs
+**/.firebase/**

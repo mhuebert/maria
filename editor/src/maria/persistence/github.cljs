@@ -5,7 +5,8 @@
             [re-db.d :as d]
             [maria.curriculum :as curriculum]
             [maria.persistence.local :as local]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [applied-science.js-interop :as j]))
 
 (d/merge-schema! {:doc.owner/username {:db/index true}})
 
@@ -163,7 +164,7 @@
         (fn [e]
           (let [target (.-target e)]
             (if (.isSuccess target)
-              (cb {:value (gobj/get (.getResponseJson target) "login")})
+              (cb {:value (j/get (.getResponseJson target) :login)})
               (cb {:error (.getLastError target)}))))
         "GET"
         nil

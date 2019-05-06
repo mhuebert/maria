@@ -1,10 +1,16 @@
 {:paths ["src"
+         "vendor"
          "test"]
 
- :deps {org.clojure/core.match {:mvn/version "0.3.0-alpha4"}
+ :deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
+        org.clojure/core.match {:mvn/version "0.3.0-alpha4"}
         org.clojure/data.json {:mvn/version "0.2.6"}
         org.clojure/test.check {:mvn/version "0.10.0-alpha2"}
-        org.clojure/spec.alpha {:mvn/version "0.1.143"}
+        athos/kitchen-async {:git/url "https://github.com/athos/kitchen-async.git"
+                             :sha "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
+
+        appliedscience/js-interop {#_#_:local/root "../../js-interop"
+                                   :mvn/version "0.1.19"}
 
         ;; user fun
         maria/friendly {:local/root "../friendly"}
@@ -15,18 +21,9 @@
         re-view {:mvn/version "0.4.12"}
         re-view/prosemirror {:mvn/version "0.2.2"}
 
-        ;; parse, eval, format
-        lark/tools {:git/url "https://github.com/braintripping/lark.git"
-                    :sha "7cf4b4a3b6171603109a03eab87e49a20081e95f"
-                    :deps/root "tools"}
-        ;{:local/root "../../lark/tools"}
-
         ;; 3rd party utils
+        net.cgrand/macrovich                {:mvn/version "0.2.1"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         fast-zip {:mvn/version "0.7.0"}
-        bidi {:mvn/version "2.1.3"}
-        cider/cider-nrepl {:mvn/version "0.16.0"}
-        
-        ;; ClojureScript - includes patch to fix cljs.spec.alpha `eval` warnings
-        org.clojure/clojurescript
-        {:git/url "https://github.com/mfikes/clojurescript" :sha "ec281b735b5c3e1a80f1cc46f8996aba45d13987"}}}
+        bidi {:mvn/version "2.1.5"}
+        cider/cider-nrepl {:mvn/version "0.16.0"}}}

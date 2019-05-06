@@ -4,7 +4,7 @@ case "$CIRCLE_BRANCH" in
   echo "Deploying to www.maria.cloud:";
   npx firebase deploy -P "$FIREBASE_PROD" --only hosting;
   ;;
-"master")
+"dev")
   echo "Deploying to dev.maria.cloud";
   npx firebase deploy -P "$FIREBASE_DEV" --only hosting;
   ;;

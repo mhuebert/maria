@@ -82,13 +82,8 @@
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
   [{:keys [source error error/position]}]
-  (let [error-message (ex-message error)
-        cause-message (ex-message (ex-cause error))]
-    (list
-      (some-> cause-message (prettify-error-message))
-      (some-> error-message (prettify-error-message))
-      (when-let [stack (some-> (ex-cause error) (aget "stack"))]
-        [:pre stack]))))
+      (list (some-> (ex-message (ex-cause error)) (prettify-error-message))
+            (some-> (ex-message error) (prettify-error-message))))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -146,8 +141,11 @@
        (humanize-sequence (bad-types info)) "."))
 
 (defmethod ana/error-message :undeclared-var
-  [type info]
-  (str "`" (:suffix info) "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))
+  [type {missing-name :suffix
+         :keys [macro-present?]}]
+           (if macro-present?
+             (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
+             (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")))
 
 (defmethod ana/error-message :overload-arity
   [type info]

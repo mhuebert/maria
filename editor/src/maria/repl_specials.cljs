@@ -9,7 +9,8 @@
             [maria.views.cards :as repl-ui]
             [maria.util :as util]
             [re-view.hiccup.core :as hiccup]
-            [re-view.core :as v]))
+            [re-view.core :as v]
+            [clojure.set :as set]))
 
 (defspecial dir
   "Display public vars in namespace"
@@ -22,7 +23,7 @@
   [c-state c-env thing]
   (e/eval-str c-state c-env (str `(maria.friendly.kinds/what-is ~(cond (and (symbol? thing) (ns-utils/special-doc-map thing))
                                                                        :maria.kinds/special-form
-                                                                       
+
                                                                        (and (symbol? thing) (:macro (ns-utils/resolve-var c-state c-env thing)))
                                                                        :maria.kinds/macro
 
@@ -50,6 +51,15 @@
                                              "ph3"]}
                              (special-views/var-source the-var)])}
     {:error (js/Error. (str "Could not resolve the symbol `" (string/trim-newline (with-out-str (prn name))) "`"))}))
+
+(defspecial js-source
+  "Show compiled javascript for `form`"
+  [c-state c-env form]
+  (let [{:keys [compiled-js
+                error]
+         :as result} (e/compile-str c-state c-env &source)]
+    (if error result
+              {:value (hiccup/element [:span compiled-js])})))
 
 (defspecial inject
   "Inject vars into a namespace, preserving all metadata (inc. name)"

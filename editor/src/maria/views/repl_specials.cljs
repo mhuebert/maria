@@ -39,9 +39,7 @@
       [:.flex-auto]
       [:span.o-50.hover-opacity-child
        (when (or doc (seq arglists))
-         (-> icons/ArrowPointingDown
-             (icons/style {:transition "all ease 0.2s"
-                           :transform (when-not @state "rotate(90deg)")})))]]
+         (repl-ui/arrow (if @state :down :left)))]]
      (when @state
        [:.ph3
         [:.mv1.blue.f6 (string/join ", " (map str arglists))]

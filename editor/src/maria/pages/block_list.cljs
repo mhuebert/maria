@@ -7,7 +7,8 @@
             [maria.blocks.blocks :as Block]
             [lark.commands.exec :as exec]
             [maria.commands.blocks]
-            [maria.eval :as e]))
+            [maria.eval :as e]
+            [kitchen-async.promise :as p]))
 
 (exec/add-context-augmenter! :auth #(assoc % :signed-in? (d/get :auth-public :signed-in?)))
 
@@ -23,7 +24,8 @@
                               (history/after-mount (:view/state this))
                               (exec/set-context! {:block-list this})
                               (when (= (str (d/get-in :router/location [:query :eval])) "true")
-                                (e/on-load #(exec/exec-command-name :eval/doc))))
+                                (p/do @e/compiler-ready
+                                      (exec/exec-command-name :eval/doc))))
    :view/will-unmount       #(exec/set-context! {:block-list nil})
    :view/will-receive-props (fn [{value                       :value
                                   source-id                   :source-id

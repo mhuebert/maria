@@ -170,9 +170,9 @@
              :dangerouslySetInnerHTML {:__html (.render md s)}}]))
 
 #_(defn select-near-click [e pm-view]
-    (let [{:keys [bottom right left top]} (util/js-lookup (.getBoundingClientRect (.-dom pm-view)))
+    (let [{:keys [bottom right left top]} (j/lookup (.getBoundingClientRect (.-dom pm-view)))
           {mouseX :clientX
-           mouseY :clientY} (util/js-lookup e)
+           mouseY :clientY} (j/lookup e)
           $pos (some->> (.posAtCoords pm-view #js {:left (cond (> mouseX right) (dec right)
                                                                (< mouseX left) (inc left)
                                                                :else mouseX)
