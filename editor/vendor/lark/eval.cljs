@@ -11,7 +11,8 @@
             [goog.crypt.base64 :as base64]
             [cljs.source-map :as sm]
             [clojure.string :as str]
-            [cljs.env :as env])
+            [cljs.env :as env]
+            [clojure.set :as set])
   (:require-macros [lark.eval :refer [defspecial]]))
 
 (def ^:dynamic *cljs-warnings* nil)
@@ -152,16 +153,17 @@
      :column column}))
 
 (defn mapped-cljs-position [{:keys [line column]} source-map]
-  (let [source-map (-> (base64/decodeString source-map)
-                       (js/JSON.parse)
-                       (sm/decode))
-        {:keys [line col]} (some-> (get source-map (dec line))
-                                   (subseq <= column)
-                                   (last)
-                                   (second)
-                                   (last))]
-    {:line   line
-     :column col}))
+  (when-let [source-map (try (some-> (base64/decodeString source-map)
+                                     (js/JSON.parse)
+                                     (sm/decode))
+                             (catch :default e nil))]
+    (some-> (get source-map (dec line))
+            (subseq <= column)
+            (last)
+            (second)
+            (last)
+            (select-keys [:line :col])
+            (set/rename-keys {:col :column}))))
 
 (defn add-error-position [{:keys [error error/position error/kind start-position source-map] :as result}]
   (cond-> result
@@ -171,9 +173,9 @@
                                                                          (select-keys [:line :column])
                                                                          (dec-pos)
                                                                          (relative-pos start-position))
-                                                        :eval (-> (stack-error-position error)
-                                                                  (mapped-cljs-position source-map)
-                                                                  (relative-pos start-position))
+                                                        :eval (some-> (stack-error-position error)
+                                                                      (mapped-cljs-position source-map)
+                                                                      (relative-pos start-position))
                                                         nil))))
 (defonce cljs-cache (atom {}))
 

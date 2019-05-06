@@ -71,19 +71,22 @@
   (let [match (match-in-tokens error-message-trie (tokenize message))]
     (if (some-> match (contains? :message))
       (reduce
-        (fn [message [i replacement]]
-          (string/replace message (str "%" (inc i)) replacement))
-        (:message match)
-        (map vector (range) (:context match)))
+       (fn [message [i replacement]]
+         (string/replace message (str "%" (inc i)) replacement))
+       (:message match)
+       (map vector (range) (:context match)))
       message)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn reformat-error
-  "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [error]}]
-      (list (some-> (ex-message (ex-cause error)) (prettify-error-message))
-            (some-> (ex-message error) (prettify-error-message))))
+(defn error-messages
+  "Returns friendly variants of messages from `error` and its cause"
+  [error]
+  (if (instance? js/Error error)
+    (->> [(some-> (ex-message (ex-cause error)) (prettify-error-message))
+          (some-> (ex-message error) (prettify-error-message))]
+         (keep identity))
+    [(str "Error: " error)]))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -125,28 +128,28 @@
 (def analyzer-messages
   {:fn-arity
    (fn [type info]
-  (str "The function `"
-       (or (:ctor info)
-           (:name info))
-       "` needs "
-       (if (= 0 (-> info :argc))   ;; TODO get arity from meta
-         "more"
-         "a different number of")
-       " arguments."))
+     (str "The function `"
+          (or (:ctor info)
+              (:name info))
+          "` needs "
+          (if (= 0 (-> info :argc))                         ;; TODO get arity from meta
+            "more"
+            "a different number of")
+          " arguments."))
 
    :invalid-arithmetic
    (fn [type info]
-  (str "The arithmetic operator `"
-       (name (:js-op info))
-       "` can't be used on non-numbers, like "
-       (humanize-sequence (bad-types info)) "."))
+     (str "The arithmetic operator `"
+          (name (:js-op info))
+          "` can't be used on non-numbers, like "
+          (humanize-sequence (bad-types info)) "."))
 
    :undeclared-var
    (fn [type {missing-name :suffix
-         :keys [macro-present?]}]
-           (if macro-present?
-             (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
-             (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")))
+              :keys        [macro-present?]}]
+     (if macro-present?
+       (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
+       (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")))
 
    :overload-arity
    (fn [type info]
@@ -167,4 +170,4 @@
   (when-not (ignored-warning-types (:type warning))
     [:div
      (ana/error-message (:type warning) (:extra warning))
-     [:.o-50.i "(" (str (:type warning)) ")"]]))
+     [:.o-50.i.mv2 "(" (str (:type warning)) ")"]]))

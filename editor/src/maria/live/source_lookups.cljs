@@ -65,7 +65,9 @@
   (or (some->> intermediate-values
                (keep (partial js-match js-value js-source))
                (first))
-      (or (when-let [i (some-> compiled-js (str/index-of js-source))]
+      (or (when-let [i (and source-map
+                            (some-> compiled-js (str/index-of js-source)))]
+            (prn :source-map source-map)
             (source-of-form-at-position source
                                         (-> (live-eval/mapped-cljs-position (index-position i compiled-js) source-map)
                                             (update :line inc)

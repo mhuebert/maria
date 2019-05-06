@@ -18,8 +18,11 @@
             [lark.tree.nav :as nav]
             [clojure.string :as str]
             [maria.views.cards :as repl-ui]
-            [applied-science.js-interop :as j])
+            [applied-science.js-interop :as j]
+            [chia.view.hooks :as hooks])
   (:import [goog.async Deferred]))
+
+(def ^:dynamic *format-depth-limit* 3)
 
 (defn highlights-for-position
   "Return ranges for appropriate highlights for a position within given Clojure source."
@@ -50,18 +53,6 @@
 (declare format-function)
 (declare display-result)
 
-(extend-protocol hiccup/IElement
-  shapes/Shape
-  (-to-element [this]
-    (v/to-element
-     (shapes/to-hiccup this)))
-  cell/Cell
-  (-to-element [this]
-    (display-result {:value (cell/view this)}))
-  function
-  (-to-element [this]
-    (format-function nil this)))
-
 (v/defclass display-deferred
   {:view/did-mount (fn [{:keys [deferred view/state]}]
                      (-> deferred
@@ -77,8 +68,6 @@
 
 (def expander-outter :.dib.bg-darken.ph2.pv1.mh1.br2)
 (def inline-centered :.inline-flex.items-center)
-
-(def ^:dynamic *format-depth-limit* 3)
 
 (defn expanded? [{:keys [view/state]} depth]
   (if (boolean? (:collection-expanded? @state))
@@ -127,15 +116,24 @@
                   (distinct)
                   (keep identity)) warnings))
 
-(def error-divider [:.bb.b--red.o-20.bw2])
+(v/defn show-stack [error]
+  (when (instance? js/Error error)
+    (let [expanded? (hooks/use-atom false)
+          stack (or (some-> (ex-cause error)
+                            (j/get :stack))
+                    (j/get error :stack))]
+      [:div
+       [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
+        (repl-ui/arrow (if @expanded? :down :right))
+        "stacktrace"]
+       (when @expanded? [:pre stack])])))
 
-(v/defclass show-stack [{:keys     [stack]
-                         expanded? :view/state}]
-  [:div
-   [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
-    (repl-ui/arrow (if @expanded? :down :right))
-    "stacktrace"]
-   (when @expanded? [:pre stack])])
+(v/defn show-error
+  [{:keys [error messages]}]
+  (let [messages (or messages (messages/error-messages error))
+        sections (cond-> (mapv #(vector :.mv2 %) messages)
+                         (instance? js/Error error) (conj (show-stack error)))]
+    (interpose [:.bb.b--red.o-20.bw2] sections)))
 
 (defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
   [:div
@@ -144,22 +142,16 @@
      (display-source result))
    [:.ws-prewrap.relative.nt3
     [:.ph3.overflow-auto
-     (->> (for [message (->> (concat (or formatted-warnings
-                                         (format-warnings warnings))
-                                     (messages/reformat-error result))
-                             (filter #(and %
-                                           (if (string? %)
-                                             (not (str/blank? %))
-                                             true)))
-                             (distinct))
-                :when (and message (not (str/blank? message)))]
-            [:.mv2 message])
-          (interpose error-divider))
-     (when-let [stack (or (some-> (ex-cause error)
-                                  (j/get :stack))
-                          (j/get error :stack))]
-       (list error-divider
-             (show-stack {:stack (str stack)})))]]])
+     (show-error
+      {:messages (->> (concat (or formatted-warnings
+                                  (format-warnings warnings))
+                              (some-> error (messages/error-messages)))
+                      (filter #(and %
+                                    (if (string? %)
+                                      (not (str/blank? %))
+                                      true)))
+                      (distinct))
+       :error    error})]]])
 
 (v/defclass display-result
   {:key :id}
@@ -197,3 +189,43 @@
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
+
+(defn cell-status-view
+  "Experimental: cells that implement IStatus can 'show' themselves differently depending on status."
+  [this]
+  (prn :status-view this)
+  (cond
+    (:async/loading? this) ^:hiccup [:.cell-status
+                                     [:.circle-loading
+                                      [:div]
+                                      [:div]]]
+
+    (:async/error this) ^:hiccup [:div.pa3.bg-darken-red.br2.inline-flex.items-center
+                                  #_[:.circle-error
+                                     [:div]
+                                     [:div]]
+                                  (str (:async/error this))]))
+
+(defn cell-view [cell]
+  (cond
+    (cell/error cell) (display-result {:error (cell/error cell)})
+    (cell/loading? cell) (hiccup/to-element
+                          [:.cell-status
+                           [:.circle-loading
+                            [:div]
+                            [:div]]])
+    :else (display-result {:value @cell})))
+
+(extend-protocol hiccup/IElement
+  shapes/Shape
+  (-to-element [this]
+    (v/to-element
+     (shapes/to-hiccup this)))
+  cell/Cell
+  (-to-element [this] (cell-view this))
+  function
+  (-to-element [this]
+    (format-function nil this))
+  js/Error
+  (-to-element [error]
+    (show-error {:error error})))

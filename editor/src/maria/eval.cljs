@@ -24,7 +24,6 @@
 (def add-error-position e/add-error-position)
 
 (defn handle-block-error [block-id error]
-  (js/console.error "handle-block-error/error" error)
   (let [eval-log (get @-block-eval-log block-id)
         result (-> (first eval-log)
                    (assoc :error (or error (js/Error. "Unknown error"))

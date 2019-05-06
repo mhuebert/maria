@@ -17,19 +17,26 @@
   nil)
 
 (def ^:dynamic ^:private *read-log*
-  "Track cell dependencies during eval"
-  nil)
+  "Track cell dependencies during eval" nil)
 
 (def ^:dynamic *tx-log*
   "Track cell changes during tx"
   nil)
+
+(def ^:dynamic *error-handler*
+  (fn [error] (throw error)))
+
+(def ^:dynamic *default-view* identity)
+
+(defn handle-error [error]
+  (prn :handle-error error)
+  (*error-handler* (ex-info "Error evaluating cell" {:cell *cell*} error)))
 
 (defn- tx-cell [cell]
   (when (some? *tx-log*)
     (get @*tx-log* cell)))
 
 (defn- notify-cell-changed! [cell oldval newval]
-  (prn :notifiy-changed! cell oldval newval)
   (r/invalidate-readers! cell)
   (-notify-watches cell oldval newval))
 
@@ -83,10 +90,28 @@
   (tx! #(c/assoc! cell .-async [true nil])))
 
 (defn error! [cell error]
+  (handle-error error)
   (tx! #(c/assoc! cell .-async [false error])))
 
 (defn complete! [cell]
   (tx! #(c/assoc! cell .-async [false nil])))
+
+(defn- async-state [cell]
+  (log-read! cell)
+  (c/read cell .-async))
+
+(defn loading? [cell]
+  (some-> (async-state cell) (nth 0)))
+
+(defn error [cell]
+  (some-> (async-state cell) (nth 1)))
+
+(def error? (comp boolean error))
+
+(defn complete? [cell]
+  (let [[loading? error] (async-state cell)]
+    (and (not loading?)
+         (nil? error))))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -161,10 +186,9 @@
 (defn- eval-cell [cell]
   (let [f (c/read cell .-f)]
     (try (f cell)
-         (catch js/Error e
+         (catch :default e
            (owner/dispose! tx-cell)
-           #_(error! cell e)
-           (throw e)))))
+           (error! cell e)))))
 
 (defn- eval-and-set! [cell]
   (if (identical? cell *cell*)
@@ -194,34 +218,12 @@
 ;;
 ;; Cell views
 
-(defn status-view
-  "Experimental: cells that implement IStatus can 'show' themselves differently depending on status."
-  [this]
-  (prn :status-view this)
-  (cond
-    (:async/loading? this) ^:hiccup [:.cell-status
-                                     [:.circle-loading
-                                      [:div]
-                                      [:div]]]
 
-    (:async/error this) ^:hiccup [:div.pa3.bg-darken-red.br2.inline-flex.items-center
-                                  #_[:.circle-error
-                                   [:div]
-                                   [:div]]
-                                  (str (:async/error this))]))
-
-(defn default-view [cell]
-  (if (or (:async/loading? cell)
-          (:async/error cell))
-    (status-view cell)
-    @cell))
+(defn get-view [cell]
+  (get (meta cell) :cell/view *default-view*))
 
 (defn view [cell]
-  (let [view-fn (get (meta cell) :cell/view default-view)
-        formatted-cell (view-fn cell)]
-    (prn :view-fn view-fn)
-    (prn :formatted-cell formatted-cell)
-    formatted-cell))
+  ((get-view cell) cell))
 
 (defn with-view
   "Attaches `view-fn` to cell"
@@ -280,7 +282,6 @@
   IDeref
   (-deref [this]
     (log-read! this)
-    (prn :derefed-value (c/read this .-value))
     (c/read this .-value))
 
   IReset
@@ -359,8 +360,6 @@
 
 ;; WIP
 (defn cell
-  [{:keys [key]} value]
+  [key value]
   (assert key "Cells created by functions require a :key")
-  (let [c (cell* (constantly value) {:memo-key (str "#" (hash key))})]
-    (prn :key key c)
-    c))
+  (cell* (constantly value) {:memo-key (str "#" (hash key))}))

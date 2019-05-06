@@ -24,7 +24,8 @@
             [maria.frames.live-actions :as user-actions]
 
             [chia.db :as d]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [maria.friendly.messages :as messages]))
 
 (extend-protocol kinds/IDoc
   shapes/Shape
@@ -63,6 +64,8 @@
 (defn ^:export init []
 
   @e/compiler-ready
+
+  (messages/override-analyzer-messages!)
 
   (render)
 

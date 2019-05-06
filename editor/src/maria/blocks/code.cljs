@@ -21,7 +21,8 @@
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [maria.views.icons :as icons]
-            [cells.owner :as owner]))
+            [cells.owner :as owner]
+            [cells.cell :as cell]))
 
 
 
@@ -51,62 +52,62 @@
       (str "http://share.maria.cloud/gist/" id "/" version "/" index))))
 
 (v/defclass ShareLink
-            [{:keys [view/state doc block block-list]}]
-            (let [{:keys [hovered]} @state]
-              (when (= :gist (get-in doc [:project :persisted :persistence/provider]))
-                (let [unsaved-changes (and hovered (doc/unsaved-changes? doc))
-                      url (when (and hovered (not unsaved-changes))
-                            (get-share-url doc block block-list))]
-                  [(if url :a :div)
-                   {:class          (str "share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
-                                         (if unsaved-changes "o-50" "pointer"))
-                    :href           url
-                    :target         (when url "_blank")
-                    :on-mouse-enter #(swap! state assoc :hovered true)
-                    :on-mouse-leave #(swap! state dissoc :hovered)}
-                   (if unsaved-changes
-                     "please save first!"
-                     "share")]))))
+  [{:keys [view/state doc block block-list]}]
+  (let [{:keys [hovered]} @state]
+    (when (= :gist (get-in doc [:project :persisted :persistence/provider]))
+      (let [unsaved-changes (and hovered (doc/unsaved-changes? doc))
+            url (when (and hovered (not unsaved-changes))
+                  (get-share-url doc block block-list))]
+        [(if url :a :div)
+         {:class          (str "share absolute top-0 right-0 bg-darken pa1 hover-bg-darken-more f7 z-5 black no-underline"
+                               (if unsaved-changes "o-50" "pointer"))
+          :href           url
+          :target         (when url "_blank")
+          :on-mouse-enter #(swap! state assoc :hovered true)
+          :on-mouse-leave #(swap! state dissoc :hovered)}
+         (if unsaved-changes
+           "please save first!"
+           "share")]))))
 
 (v/defclass CodeRow
-            {:key                :id
-             :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
-             :view/did-mount     Editor/mount
-             :view/will-unmount  Editor/unmount
-             :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
-            [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
-            (let [doc (:current-doc @exec/context)]
-              [:.flex.pv2.cursor-text.flex-column.flex-row-ns
-               {:on-click #(when (= (.-target %) (.-currentTarget %))
-                             (Editor/focus! (.getEditor this)))}
-               [:.w-100.w-50-ns.flex-none.relative.cm-s-maria-light
-                [:.absolute.bottom-0.right-0.pa2.z-3.dib.dn-ns.pointer
-                 {:on-click #(Block/eval! block)}
-                 (-> icons/Play
-                     (icons/size 18)
-                     (icons/class "cm-variable"))]
-                (error/error-boundary
-                 {:on-error (fn [{:keys [error info]}]
-                              (e/handle-block-error (:id block) error))}
-                 (code/CodeView {:class                 "pa3 bg-white"
-                                 :ref                   #(v/swap-silently! state assoc :editor-view %)
-                                 :value                 (str (:block this))
-                                 :on-ast                (fn [node]
-                                                          (.splice block-list block [(assoc block :node node)]))
-                                 :before-change         before-change
-                                 :on-selection-activity on-selection-activity
-                                 :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                             :block-view this})
-                                 :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                             :block-view nil})}))]
+  {:key                :id
+   :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
+   :view/did-mount     Editor/mount
+   :view/will-unmount  Editor/unmount
+   :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
+  [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
+  (let [doc (:current-doc @exec/context)]
+    [:.flex.pv2.cursor-text.flex-column.flex-row-ns
+     {:on-click #(when (= (.-target %) (.-currentTarget %))
+                   (Editor/focus! (.getEditor this)))}
+     [:.w-100.w-50-ns.flex-none.relative.cm-s-maria-light
+      [:.absolute.bottom-0.right-0.pa2.z-3.dib.dn-ns.pointer
+       {:on-click #(Block/eval! block)}
+       (-> icons/Play
+           (icons/size 18)
+           (icons/class "cm-variable"))]
+      (error/error-boundary
+       {:on-error (fn [{:keys [error info]}]
+                    (e/handle-block-error (:id block) error))}
+        (code/CodeView {:class                 "pa3 bg-white"
+                        :ref                   #(v/swap-silently! state assoc :editor-view %)
+                        :value                 (str (:block this))
+                        :on-ast                (fn [node]
+                                                 (.splice block-list block [(assoc block :node node)]))
+                        :before-change         before-change
+                        :on-selection-activity on-selection-activity
+                        :capture-event/focus   #(exec/set-context! {:block/code true
+                                                                    :block-view this})
+                        :capture-event/blur    #(exec/set-context! {:block/code nil
+                                                                    :block-view nil})}))]
 
-               [:.w-100.w-50-ns.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result.pt3.pt0-ns
-                #_(ShareLink {:doc        doc
-                              :block      block
-                              :block-list block-list})
-                (some-> (first (Block/eval-log block))
-                        (assoc :block-id (:id block))
-                        (value-views/display-result))]]))
+     [:.w-100.w-50-ns.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result.pt3.pt0-ns
+      #_(ShareLink {:doc        doc
+                    :block      block
+                    :block-list block-list})
+      (some-> (first (Block/eval-log block))
+              (assoc :block-id (:id block))
+              (value-views/display-result))]]))
 
 (extend-type Block/CodeBlock
 
@@ -134,11 +135,6 @@
       (f))
     (vswap! -dispose-callbacks dissoc (:id this)))
 
-  ;; was used in conjunction with cell bound-fn
-  #_owner/IHandleError
-  #_(handle-error [this error]
-                  (e/handle-block-error (:id this) error))
-
   Block/IEval
   (eval-log! [this value]
     (vswap! e/-block-eval-log update (:id this) #(take 2 (cons value %)))
@@ -163,7 +159,10 @@
      true)
     ([this mode form]
      (owner/dispose! this)
-     (binding [owner/*owner* this]
+     (binding [owner/*owner* this
+               cell/*error-handler* (fn [error]
+                                      (prn :block-handler error)
+                                      (e/handle-block-error (:id this) error))]
        (Block/eval-log! this ((case mode :form e/eval-form
                                          :string e/eval-str) form)))
      true)))

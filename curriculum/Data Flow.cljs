@@ -23,7 +23,7 @@
 
 ;; Once that comes back, let's poke at it a bit. That's the best way to get to know some new data. Let's look at just one of the results:
 
-(first @birds)
+(cell (first @birds))
 
 ;; OK, so we've got some birdwatching data. Maybe we can guess about what each attribute means.
 
@@ -58,7 +58,7 @@
 
 ;; Let's try it out. First, let's get a look at the kind of term it will work for:
 
-(:sciName (rand-nth @birds))
+(cell (:sciName (rand-nth @birds)))
 
 ;; Wrap that `:sciName` in a `find-image` call and evaluate it.
 
@@ -98,16 +98,6 @@
 (cell (cell/message bad-request))
 
 ;; could also do something like `cell/error?` and `cell/loading?`.
-
-;; ## Dependencies
-
-;; See what cells depend on:
-
-(cell/dependents birds)
-
-(cell/dependents location)
-
-;; This can be useful for debugging.
 
 ;; ## Anonymous cells
 

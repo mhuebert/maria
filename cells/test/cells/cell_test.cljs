@@ -62,39 +62,39 @@
 
   (testing "anonymous-cells"
 
-    (let [h (cell {:key :h} 1)
-          i (cell {:key :i} @h)
-          j (cell (str @h @i))]
+    le 1
+    i (cell :i @h)
+    j (cell (str @h @i))
 
-      (= (set (cell/immediate-dependents h)) (dep-set #{i}))
-      (is (= 1 @i))
+    (= (set (cell/immediate-dependents h)) (dep-set #{i}))
+    (is (= 1 @i))
 
-      (is (= "11" @j))
+    (is (= "11" @j))
 
-      (reset! h 2)
-      (is (= "22" @j))
+    (reset! h 2)
+    (is (= "22" @j))
 
-      #_(doseq [key ["a" :b 1 {} []]]
-          (let [c (cell {:key key} nil)]
-            (is (str/includes? (name c)
-                               (str (hash key)))
-                "cell contains hash of name argument")))
+    #_(doseq [key ["a" :b 1 {} []]]
+        (let [c (cell key nil)]
+          (is (str/includes? (name c)
+                             (str (hash key)))
+              "cell contains hash of name argument")))
 
-      (testing "Anonymous cells in a loop"
-        (let [multi (for [n [1 2 3 4 5]]
-                      (cell {:key n} n))]
-          (is (= (list 1 2 3 4 5)
-                 (map deref multi)))))))
+    (testing "Anonymous cells in a loop"
+      (let [multi (for [n [1 2 3 4 5]]
+                    (cell n n))]
+        (is (= (list 1 2 3 4 5)
+               (map deref multi))))))
 
   (testing "cell-function"
 
-    (let [o (cell (mapv cell (map (partial hash-map :key) (range)) [:a :b]))]
+    (let [o (cell (mapv cell (range) [:a :b]))]
       (is (= (mapv deref @o) [:a :b])
           "When given unique keys, cell function returns unique cells"))
 
     (let [p (cell
              (mapv cell
-                   (map (partial hash-map :key) (repeat 1))
+                   (repeat 1)
                    [:c :d]))]
       (is (= (mapv deref @p) [:c :c])
           "When given same key, cell function returns existing cell")))
@@ -182,7 +182,7 @@
 
     (binding [lifecycle/*owner* ctx-3]
       (defn f1 [x]
-        (cell @(cell {:key x} (str x 1)))))
+        (cell @(cell x (str x 1)))))
 
     (defn f2 []
       (def f3 (cell @(f1 "X"))))

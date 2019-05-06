@@ -50,7 +50,7 @@
            (let ~lib-bindings
              (~'cells.cell/cell*
               (fn [~'self] ~@body)
-              {:def? true
+              {:def?      true
                :prev-cell prev-cell#})))))))
 
 (defmacro cell
@@ -59,26 +59,22 @@
   hoisted into scope, as is `self`, which refers to the current cell."
   ([expr]
    `(~'cells.cell/cell nil ~expr))
-  ([{:as options
-     :keys [key]} & body]
-   (assert (or (map? options)
-               (nil? options)))
-   (let [body (if (and (map? options) (seq body))
-                body
-                (cons options body))
-         id (util/unique-id)]
+  ([key expr]
+   (let [id (util/unique-id)]
      `(let ~lib-bindings
         (~'cells.cell/cell*
-         (fn [~'self] ~@body)
+         (fn [~'self] ~expr)
          {:memo-key (str ~id "#" (hash ~key))})))))
 
 (defmacro bound-fn
   "Returns an anonymous function which will evaluate with the current cell in the stack.
   Similar to Clojure's `bound-fn`, but only cares about the currently bound cell."
   [& body]
-  `(let [the-cell# ~'cells.cell/*cell*]
+  `(let [cell# ~'cells.cell/*cell*
+         error-handler# ~'cells.cell/*error-handler*]
      (fn [& args#]
-       (binding [~'cells.cell/*cell* the-cell#]
+       (binding [~'cells.cell/*cell* cell#
+                 ~'cells.cell/*error-handler* error-handler#]
          (try (apply (fn ~@body) args#)
               (catch ~'js/Error e#
-                (~'cells.cell/error! the-cell# e#)))))))
+                (~'cells.cell/error! cell# e#)))))))

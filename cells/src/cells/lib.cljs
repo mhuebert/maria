@@ -5,7 +5,8 @@
             [goog.net.ErrorCode :as errors]
             [cells.util]
             [applied-science.js-interop :as j]
-            [cells.owner :as owner])
+            [cells.owner :as owner]
+            [chia.util :as u])
   (:require-macros [cells.lib])
   (:import [goog Uri]))
 
@@ -48,9 +49,9 @@
    :json      js/JSON.parse
    :text      identity})
 
-(defn- xhrio-error-message [xhrio]
-  (when-not (j/get xhrio :isSuccess)
-    (str (-> (j/call xhrio :getLastErrorCode)
+(defn- xhrio-error-message [^js xhrio]
+  (when-not (.isSuccess xhrio)
+    (str (-> (.getLastErrorCode xhrio)
              (errors/getDebugMessage))
          \newline
          "(check your browser console for more details)")))
@@ -80,8 +81,9 @@
                  (let [xhrio (j/get event :target)]
                    (if-let [error-message (xhrio-error-message xhrio)]
                      (cell/error! self error-message)
-                     (let [formatted-value (-> (j/call xhrio :getResponseText)
-                                               (parse))]
+                     (let [formatted-value (some-> (j/call xhrio :getResponseText)
+                                                   u/some-str
+                                                   (parse))]
                        (cell/complete! self)
                        (reset! self formatted-value))))))
      @self)))
@@ -102,15 +104,25 @@
                 (cell/bound-fn [error]
                   (cell/error! self (str error)))))))
 
-(defn loading? [cell] (:async/loading? cell))
-(defn error [cell] (:async/error cell))
+
+;; Referrals from cells/cell
 
 (def loading! cell/loading!)
 (def error! cell/error!)
 (def complete! cell/complete!)
 
-(defn status [cell] (cond (:async/error cell) :error
-                          (:async/loading? cell) :loading
+(def loading? cell/loading?)
+(def error? cell/error?)
+(def complete? cell/complete?)
+
+(def error cell/error)
+(def message (comp str error))
+
+(def dependents cell/dependents)
+(def dependencies cell/dependencies)
+
+(defn status [cell] (cond (error? cell) :error
+                          (loading? cell) :loading
                           :else nil))
 
 

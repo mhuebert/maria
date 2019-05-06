@@ -25,10 +25,3 @@
 
 #?(:cljs (def ^:dynamic *owner* (simple-owner)))
 
-(comment
-
- (defprotocol IHandleError
-   (handle-error [_ error]))
-
- IHandleError
- (handle-error [_ e] (throw e)))
