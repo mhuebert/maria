@@ -1,6 +1,6 @@
 (ns maria.friendly.messages
-  (:require [maria.friendly.kinds :as kinds]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
+            [clojure.set :as set]
             [cljs.analyzer :as ana]))
 
 
@@ -81,7 +81,7 @@
 
 (defn reformat-error
   "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [source error error/position]}]
+  [{:keys [error]}]
       (list (some-> (ex-message (ex-cause error)) (prettify-error-message))
             (some-> (ex-message error) (prettify-error-message))))
 
@@ -122,8 +122,9 @@
 (defn bad-types [info]
   (map type-to-name (remove (partial = 'number) (:types info))))
 
-(defmethod ana/error-message :fn-arity
-  [type info]
+(def analyzer-messages
+  {:fn-arity
+   (fn [type info]
   (str "The function `"
        (or (:ctor info)
            (:name info))
@@ -133,29 +134,37 @@
          "a different number of")
        " arguments."))
 
-(defmethod ana/error-message :invalid-arithmetic
-  [type info]
+   :invalid-arithmetic
+   (fn [type info]
   (str "The arithmetic operator `"
        (name (:js-op info))
        "` can't be used on non-numbers, like "
        (humanize-sequence (bad-types info)) "."))
 
-(defmethod ana/error-message :undeclared-var
-  [type {missing-name :suffix
+   :undeclared-var
+   (fn [type {missing-name :suffix
          :keys [macro-present?]}]
            (if macro-present?
              (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
              (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?")))
 
-(defmethod ana/error-message :overload-arity
-  [type info]
-  "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")
+   :overload-arity
+   (fn [type info]
+     "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")})
+
+(defn override-analyzer-messages! []
+  (doseq [[k f] analyzer-messages]
+    (-add-method ana/error-message k f)))
+
+(comment
+ ;; missing messages
+ (set/difference (set (keys ana/*cljs-warnings*))
+                 (set (keys analyzer-messages))))
 
 (def ignored-warning-types #{:infer-warning})
 
 (defn reformat-warning [warning]
-  (if (ignored-warning-types (:type warning))
-    nil
+  (when-not (ignored-warning-types (:type warning))
     [:div
      (ana/error-message (:type warning) (:extra warning))
      [:.o-50.i "(" (str (:type warning)) ")"]]))
