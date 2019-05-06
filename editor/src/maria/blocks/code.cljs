@@ -160,9 +160,7 @@
     ([this mode form]
      (owner/dispose! this)
      (binding [owner/*owner* this
-               cell/*error-handler* (fn [error]
-                                      (prn :block-handler error)
-                                      (e/handle-block-error (:id this) error))]
+               cell/*error-handler* (partial e/handle-block-error (:id this))]
        (Block/eval-log! this ((case mode :form e/eval-form
                                          :string e/eval-str) form)))
      true)))

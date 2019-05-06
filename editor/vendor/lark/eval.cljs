@@ -12,7 +12,8 @@
             [cljs.source-map :as sm]
             [clojure.string :as str]
             [cljs.env :as env]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [applied-science.js-interop :as j])
   (:require-macros [lark.eval :refer [defspecial]]))
 
 (def ^:dynamic *cljs-warnings* nil)
@@ -146,9 +147,10 @@
                          :form             form}))))
 
 (defn stack-error-position [error]
-  (let [[line column] (->> (re-find #"<anonymous>:(\d+)(?::(\d+))" (.-stack error))
-                           (rest)
-                           (map js/parseInt))]
+  (let [[line column] (some->> (j/get error :stack)
+                               (re-find #"<anonymous>:(\d+)(?::(\d+))")
+                               (rest)
+                               (map js/parseInt))]
     {:line   line
      :column column}))
 

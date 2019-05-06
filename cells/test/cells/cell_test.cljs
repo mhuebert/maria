@@ -21,14 +21,14 @@
           d (cell c)]
 
       (are [cell immediate-dependencies]
-        (= (set (cell/immediate-dependencies cell))
+        (= (set (cell/-immediate-dependencies cell))
            (dep-set immediate-dependencies))
         b #{a}
         c #{b}
         d #{})
 
       (are [cell immediate-dependents]
-        (= (set (cell/immediate-dependents cell))
+        (= (set (cell/-immediate-dependents cell))
            (dep-set immediate-dependents))
         a #{b}
         b #{c}
@@ -66,7 +66,7 @@
     i (cell :i @h)
     j (cell (str @h @i))
 
-    (= (set (cell/immediate-dependents h)) (dep-set #{i}))
+    (= (set (cell/-immediate-dependents h)) (dep-set #{i}))
     (is (= 1 @i))
 
     (is (= "11" @j))

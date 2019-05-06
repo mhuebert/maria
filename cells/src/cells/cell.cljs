@@ -1,96 +1,85 @@
 (ns cells.cell
-  (:require [cells.util :as util]
-            [cells.owner :as owner]
+  (:require [cells.owner :as owner]
             [chia.util :as u]
             [chia.reactive :as r]
             [applied-science.js-interop :as j]
-            [goog.object :as gobj]
-            [clojure.set :as set])
+            [clojure.set :as set]
+            [chia.util.perf :as perf])
   (:require-macros [cells.cell :as c]))
 
-;;;;;;;;;;;;;;;;;;
-;;
-;; Dynamic state
+(def ^:dynamic *cell* nil)
 
-(def ^:dynamic *cell*
-  "Currently evaluating cell"
-  nil)
-
-(def ^:dynamic ^:private *read-log*
-  "Track cell dependencies during eval" nil)
-
-(def ^:dynamic *tx-log*
-  "Track cell changes during tx"
-  nil)
-
-(def ^:dynamic *error-handler*
-  (fn [error] (throw error)))
+(defn self
+  "Returns currently evaluating cell"
+  []
+  *cell*)
 
 (def ^:dynamic *default-view* identity)
 
-(defn handle-error [error]
-  (prn :handle-error error)
-  (*error-handler* (ex-info "Error evaluating cell" {:cell *cell*} error)))
+(def ^:dynamic *error-handler*
+  "Optionally catch errors occurring cell evaluation (and within cell/bound-fn)"
+  (fn [error]
+    (throw (ex-info "Error evaluating cell" {:cell *cell*} error))))
 
-(defn- tx-cell [cell]
-  (when (some? *tx-log*)
-    (get @*tx-log* cell)))
+;;;;;;;;;;;;;;;
+;;
+;; simple STM
+;;
 
-(defn- notify-cell-changed! [cell oldval newval]
-  (r/invalidate-readers! cell)
-  (-notify-watches cell oldval newval))
+(def ^:private ^:dynamic *tx-changes*
+  ;; map of {cell, change-obj} for current transaction
+  nil)
 
-(defn- mutate-cell! [cell attr-obj]
-  {:pre [(object? attr-obj)]}
-  (if *tx-log*
-    (vswap! *tx-log* update cell #(j/extend! % attr-obj))
-    (j/extend! (.-state cell) attr-obj)))
+(defn- write-cell! [cell attrs-obj]
+  (if *tx-changes*
+    ;; adds `attr-obj` to pending changes for `cell` within current transaction
+    (vswap! *tx-changes* update cell #(if (some? %) (j/extend! % attrs-obj) attrs-obj))
+    (j/extend! (.-state cell) attrs-obj)))
+
+(defn- cell-changed? [cell changes]
+  ;; compares async metadata + value
+  (or (and (j/contains? changes .-async)
+           (not= (j/get changes .-async)
+                 (c/read cell .-async)))
+      (and (j/contains? changes .-value)
+           (not= (j/get changes .-value)
+                 (c/read cell .-value)))))
 
 (defn- tx! [f]
-  (let [tx-log (binding [*tx-log* (volatile! {})]
-                 (f)
-                 @*tx-log*)]
-    (doseq [[cell changes] tx-log]
-      (let [oldval (c/read cell .-value)
-            newval (j/get changes .-value)
-            changed? (or (and (j/contains? changes .-async)
-                              (not= (j/get changes .-async)
-                                    (c/read cell .-async)))
-                         (and (j/contains? changes .-value)
-                              (not= (j/get changes .-value)
-                                    (c/read cell .-value))))]
-        (mutate-cell! cell changes)
+  ;; evaluates `f` for cell side effects - commits changes to cell graph atomically
+  (if (some? *tx-changes*)
+    (f)
+    (doseq [[cell changes] (binding [*tx-changes* (volatile! {})] (f) @*tx-changes*)]
+      (let [changed? (cell-changed? cell changes)]
+        (write-cell! cell changes)
         (when changed?
-          (notify-cell-changed! cell oldval newval))))
-    nil))
+          (r/invalidate-readers! cell))))))
+
+
+;;;;;;;;;;;;;;;
+;;
+;; Read logging
+
+(def ^:private ^:dynamic *read-log* nil)
+
+(declare maybe-activate)
 
 (defn log-read! [cell]
+  (maybe-activate cell)
   (when-not (identical? cell *cell*)
-    (when *read-log*
-      (vswap! *read-log* conj cell))
+    (some-> *read-log* (vswap! conj cell))
     (r/log-read! cell))
   cell)
 
-
-;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;
 ;;
-;; Cell status
-
-(declare eval-dependents!)
-
-(defn update-internal! [cell f & args]
-  (c/update! cell .-internal #(apply f % args))
-
-  ;; do not propagate?
-  #_(tx! #(eval-dependents! cell))
-
-  (r/invalidate-readers! cell))
+;; Async metadata
 
 (defn loading! [cell]
   (tx! #(c/assoc! cell .-async [true nil])))
 
 (defn error! [cell error]
-  (handle-error error)
+  (*error-handler* error)
   (tx! #(c/assoc! cell .-async [false error])))
 
 (defn complete! [cell]
@@ -100,13 +89,19 @@
   (log-read! cell)
   (c/read cell .-async))
 
+(defn status [cell]
+  (let [st (async-state cell)]
+    (cond (some? (nth st 1)) :error
+          (true? (nth st 0)) :loading)))
+
 (defn loading? [cell]
-  (some-> (async-state cell) (nth 0)))
+  (perf/identical? :loading (status cell)))
 
 (defn error [cell]
   (some-> (async-state cell) (nth 1)))
 
 (def error? (comp boolean error))
+(def message (comp str error))
 
 (defn complete? [cell]
   (let [[loading? error] (async-state cell)]
@@ -119,11 +114,13 @@
 
 (def set-conj (fnil conj #{}))
 
-(defn immediate-dependencies [cell]
-  (c/read cell .-dependencies))
-
-(defn immediate-dependents [cell]
-  (c/read cell .-dependents))
+(defprotocol IGraph
+  (-add-dependency! [cell dep])
+  (-remove-dependency! [cell dep])
+  (-add-dependent! [cell dep])
+  (-remove-dependent! [cell dep])
+  (-immediate-dependencies [cell])
+  (-immediate-dependents [cell]))
 
 (defn transitive-sorted [f]
   (fn -transitive-sorted
@@ -140,39 +137,63 @@
                     (into new))]
                new)))))
 
-(def dependents (transitive-sorted immediate-dependents))
-(def dependencies (transitive-sorted immediate-dependencies))
+(def dependencies (transitive-sorted -immediate-dependencies))
+(def dependents (transitive-sorted -immediate-dependents))
 
 (defn depend! [cell dep]
-  (c/assoc! cell .-dependencies
-            (set-conj (immediate-dependencies cell) dep))
-  (c/assoc! dep .-dependents
-            (set-conj (immediate-dependents dep) cell)))
+  (-add-dependency! cell dep)
+  (-add-dependent! dep cell))
 
-(defn remove-edge! [cell dep]
-  (c/assoc! cell .-dependencies
-            (disj (immediate-dependencies cell) dep))
-  (c/assoc! dep .-dependents
-            (disj (immediate-dependents dep) cell)))
+(defn un-depend! [cell dep]
+  (-remove-dependency! cell dep)
+  (-remove-dependent! dep cell))
 
 (defn transition-deps! [cell next-dependency-nodes]
   (let [prev-dependencies (c/read cell .-dependencies)]
     (doseq [added (set/difference next-dependency-nodes prev-dependencies)]
       (depend! cell added))
     (doseq [removed (set/difference prev-dependencies next-dependency-nodes)]
-      (remove-edge! cell removed))
+      (un-depend! cell removed))
     nil))
+
+(defn active? [cell]
+  (c/read cell .-active))
+
+(defn isolated? [cell]
+  (and (false? (c/read cell .-has_readers))
+       (empty? (-immediate-dependents cell))))
+
+(defn maybe-deactivate [cell]
+  (when (and (active? cell) (isolated? cell))
+    (doseq [dep (-immediate-dependencies cell)]
+      (un-depend! cell dep))
+    (owner/-dispose! cell)
+    (c/assoc! cell .-active false))
+  cell)
+
+(declare eval-and-set!)
+
+(defn maybe-activate [cell]
+  (when (not (active? cell))
+    (c/assoc! cell .-active true)
+    (tx! #(eval-and-set! cell)))
+  cell)
 
 ;;;;;;;;;;;;;;;;;;
 ;;
-;; Cell evaluation
+;; Promises
 
 (defn handle-promise! [cell promise]
-  ;; how to 'dispose' of a promise?
-  (when-let [old-promise (c/read cell .-promise)]
-    (c/assoc! cell .-promise promise))
+
+  (comment
+   (when-let [old-promise (c/read cell .-promise)]
+     ;; how to 'dispose' of a promise?
+     ))
+
+  (c/assoc! cell .-promise promise)
   (let [done? (volatile! false)
         wrap-cb (fn [f]
+                  (reset! done? true)
                   (when (identical? (c/read cell .-promise)
                                     promise)
                     (f)))]
@@ -183,12 +204,21 @@
       (loading! cell)
       (-reset! cell nil))))
 
+;;;;;;;;;;;;;;;;;;
+;;
+;; Cell evaluation
+
 (defn- eval-cell [cell]
   (let [f (c/read cell .-f)]
     (try (f cell)
          (catch :default e
-           (owner/dispose! tx-cell)
+           (owner/dispose! cell)
            (error! cell e)))))
+
+(defn handle-value [cell value]
+  (if (u/promise? value)
+    (handle-promise! cell value)
+    (-reset! cell value)))
 
 (defn- eval-and-set! [cell]
   (if (identical? cell *cell*)
@@ -200,9 +230,7 @@
       (let [value (eval-cell cell)
             next-deps (disj @*read-log* cell)]
         (transition-deps! cell next-deps)
-        (if (u/promise? value)
-          (handle-promise! cell value)
-          (-reset! cell value)))
+        (handle-value cell value))
       cell)))
 
 (def ^:dynamic ^:private *computing-dependents* false)
@@ -210,14 +238,18 @@
 (defn- eval-dependents! [cell]
   (when-not *computing-dependents*
     (binding [*computing-dependents* true]
-      (doseq [cell (dependents cell)]
-        (eval-and-set! cell))))
+      (doseq [dep (dependents cell)]
+        (eval-and-set! dep))))
   cell)
 
 ;;;;;;;;;;;;;;;;;;
 ;;
 ;; Cell views
 
+(defn with-view
+  "Attaches `view-fn` to cell"
+  [cell view-fn]
+  (vary-meta cell assoc :cell/view view-fn))
 
 (defn get-view [cell]
   (get (meta cell) :cell/view *default-view*))
@@ -225,20 +257,34 @@
 (defn view [cell]
   ((get-view cell) cell))
 
-(defn with-view
-  "Attaches `view-fn` to cell"
-  [cell view-fn]
-  (vary-meta cell assoc :cell/view view-fn))
-
 ;;;;;;;;;;;;;;;;;;
 ;;
 ;; Cell type
 
 (deftype Cell [state meta]
 
-  Object
-  (equiv [this other]
-    (-equiv this other))
+  IGraph
+  (-add-dependency! [this dep]
+    (c/assoc! this .-dependencies (set-conj (-immediate-dependencies this) dep)))
+  (-remove-dependency! [this dep]
+    (c/assoc! this .-dependencies (disj (-immediate-dependencies this) dep)))
+  (-add-dependent! [this dep]
+    (c/assoc! this .-dependents (set-conj (-immediate-dependents this) dep)))
+  (-remove-dependent! [this dep]
+    (-> this
+        (c/assoc! .-dependents (disj (-immediate-dependents this) dep))
+        (maybe-deactivate)))
+  (-immediate-dependencies [this]
+    (c/read this .-dependencies))
+  (-immediate-dependents [this]
+    (c/read this .-dependents))
+
+  r/ITransition
+  (on-transition [this transition]
+    (c/assoc! this .-has_readers (case transition :added true :removed false))
+    (case transition
+      :added (maybe-activate this)
+      :removed (maybe-deactivate this)))
 
   IEquiv
   (-equiv [this other]
@@ -261,23 +307,12 @@
 
   owner/IDispose
   (on-dispose [this key f]
-    (c/update! this .-internal update ::on-dispose assoc key f))
+    (c/update! this .-internal update :on-dispose assoc key f))
   (-dispose! [this]
-    (doseq [f (vals (::on-dispose (c/read this .-internal)))]
+    (doseq [f (vals (:on-dispose (c/read this .-internal)))]
       (f))
-    (c/update! this .-internal dissoc ::on-dispose)
+    (c/update! this .-internal dissoc :on-dispose)
     this)
-
-  ;; Atom behaviour
-
-  IWatchable
-  (-notify-watches [this oldval newval]
-    (doseq [f (vals (::watches (c/read this .-internal)))]
-      (f this oldval newval)))
-  (-add-watch [this key f]
-    (c/update! this .-internal update ::watches assoc key f))
-  (-remove-watch [this key]
-    (c/update! this .-internal update ::watches dissoc key))
 
   IDeref
   (-deref [this]
@@ -290,7 +325,7 @@
       (tx!
        (fn []
          #_(complete! this)
-         (mutate-cell! this (j/obj .-value newval))
+         (write-cell! this (j/obj .-value newval))
          (eval-dependents! this))))
     newval)
 
@@ -298,17 +333,7 @@
   (-swap! [this f] (-reset! this (f (c/read this .-value))))
   (-swap! [this f a] (-reset! this (f (c/read this .-value) a)))
   (-swap! [this f a b] (-reset! this (f (c/read this .-value) a b)))
-  (-swap! [this f a b xs] (-reset! this (apply f (c/read this .-value) a b xs)))
-
-  ILookup
-  (-lookup [this k]
-    (-lookup this k nil))
-  (-lookup [this k not-found]
-    (r/log-read! this)
-    (case k
-      :async/loading? (some-> (c/read this .-async) (nth 0))
-      :async/error (some-> (c/read this .-async) (nth 1))
-      (throw (js/Error. (str "Unknown key on cell: " k))))))
+  (-swap! [this f a b xs] (-reset! this (apply f (c/read this .-value) a b xs))))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -323,10 +348,6 @@
                            .-internal {})
                     nil)]
 
-    (when owner
-      (owner/on-dispose owner cell #(owner/-dispose! cell)))
-
-    (tx! #(eval-and-set! cell))
     cell))
 
 (defn cell*
@@ -345,8 +366,8 @@
     (assert (or def? memo-key) "Anonymous cells must provide `memo-key`")
 
     (cond prev-cell
-          (do (mutate-cell! prev-cell (j/obj .-f f
-                                             .-value nil))
+          (do (write-cell! prev-cell (j/obj .-f f
+                                            .-value nil))
               (tx! #(eval-and-set! prev-cell))
               prev-cell)
 
@@ -357,8 +378,6 @@
 
           :else (throw (js/Error. (str "Invalid arguments to `cell*` " options))))))
 
-
-;; WIP
 (defn cell
   [key value]
   (assert key "Cells created by functions require a :key")

@@ -190,31 +190,15 @@
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
 
-(defn cell-status-view
-  "Experimental: cells that implement IStatus can 'show' themselves differently depending on status."
-  [this]
-  (prn :status-view this)
-  (cond
-    (:async/loading? this) ^:hiccup [:.cell-status
-                                     [:.circle-loading
-                                      [:div]
-                                      [:div]]]
-
-    (:async/error this) ^:hiccup [:div.pa3.bg-darken-red.br2.inline-flex.items-center
-                                  #_[:.circle-error
-                                     [:div]
-                                     [:div]]
-                                  (str (:async/error this))]))
-
 (defn cell-view [cell]
-  (cond
-    (cell/error cell) (display-result {:error (cell/error cell)})
-    (cell/loading? cell) (hiccup/to-element
-                          [:.cell-status
-                           [:.circle-loading
-                            [:div]
-                            [:div]]])
-    :else (display-result {:value @cell})))
+  (case (cell/status cell)
+    :loading (hiccup/to-element
+              [:.cell-status
+               [:.circle-loading
+                [:div]
+                [:div]]])
+    :error (display-result {:error (cell/error cell)})
+    (display-result {:value @cell})))
 
 (extend-protocol hiccup/IElement
   shapes/Shape

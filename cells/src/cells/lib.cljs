@@ -13,7 +13,7 @@
 (defn -on-frame
   ([f] (-on-frame f nil))
   ([f initial-value]
-   (let [self cell/*cell*
+   (let [self (cell/self)
          stop? (volatile! false)
          interval-f (cell/bound-fn frame-f []
                       (reset! self (f @self))
@@ -28,7 +28,7 @@
   ([n f initial-value]
    (if (= n :frame)
      (-on-frame f initial-value)
-     (let [self cell/*cell*
+     (let [self (cell/self)
            clear-key (volatile! nil)
            _ (owner/on-dispose self :interval #(some-> @clear-key (js/clearInterval)))
            interval-f (cell/bound-fn [] (reset! self (f @self)))]
@@ -37,7 +37,7 @@
 
 (defn delay
   [n value]
-  (let [self cell/*cell*
+  (let [self (cell/self)
         clear-key (volatile! nil)
         _ (owner/on-dispose self :delay #(some-> @clear-key (js/clearTimeout)))
         timeout-f (cell/bound-fn [] (reset! self value))]
@@ -69,7 +69,7 @@
    (fetch url {}))
   ([url {:keys [format query]
          :or   {format :json->clj}}]
-   (let [self cell/*cell*
+   (let [self (cell/self)
          url (cond-> url
                      query (str "?" (query-string query)))
          parse (get parse-fns format)]
@@ -80,7 +80,7 @@
                (cell/bound-fn [event]
                  (let [xhrio (j/get event :target)]
                    (if-let [error-message (xhrio-error-message xhrio)]
-                     (cell/error! self error-message)
+                     (cell/error! self (ex-info error-message {:cell self}))
                      (let [formatted-value (some-> (j/call xhrio :getResponseText)
                                                    u/some-str
                                                    (parse))]
@@ -90,8 +90,7 @@
 
 (defn geo-location
   []
-  (let [self cell/*cell*]
-    (prn :self self)
+  (let [self (cell/self)]
     (cell/loading! self)
     (-> (j/get js/navigator :geolocation)
         (j/call :getCurrentPosition
@@ -104,32 +103,10 @@
                 (cell/bound-fn [error]
                   (cell/error! self (str error)))))))
 
-
-;; Referrals from cells/cell
-
-(def loading! cell/loading!)
-(def error! cell/error!)
-(def complete! cell/complete!)
-
-(def loading? cell/loading?)
-(def error? cell/error?)
-(def complete? cell/complete?)
-
-(def error cell/error)
-(def message (comp str error))
-
-(def dependents cell/dependents)
-(def dependencies cell/dependencies)
-
-(defn status [cell] (cond (error? cell) :error
-                          (loading? cell) :loading
-                          :else nil))
-
-
 (defn -timeout
   ([n f] (-timeout n f nil))
   ([n f initial-value]
-   (let [self cell/*cell*
+   (let [self (cell/self)
          _ (cell/loading! self)
          clear-key (js/setTimeout (cell/bound-fn []
                                     (cell/complete! self)
