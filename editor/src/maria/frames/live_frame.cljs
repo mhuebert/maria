@@ -2,6 +2,7 @@
   (:require [maria.pages.live-layout :as repl]
             [maria.eval :as e]
             [maria.friendly.kinds :as kinds]
+            [maria.friendly.messages :as messages]
             [shapes.core :as shapes]
 
             [cells.cell :as cell]
@@ -77,6 +78,8 @@
 (defn init []
 
   @e/compiler-ready
+
+  (messages/override-analyzer-messages!)
 
   (render)
 
