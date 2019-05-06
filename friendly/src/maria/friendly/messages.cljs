@@ -158,9 +158,9 @@
 
    :fn-deprecated
    (fn [_type info]
-     (str "The function `" (or (:ctor info)
-                               (:name info))
-          "` is deprecated, so it should not and cannot be used."))})
+     (str "The function `" (or (-> info :fexpr :form)
+                               (-> info :fexpr :name))
+          "` is deprecated, meaning it is not intended to be used."))})
 
 (defn override-analyzer-messages! []
   (doseq [[k f] analyzer-messages]
