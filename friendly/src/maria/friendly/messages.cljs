@@ -150,7 +150,11 @@
 
    :overload-arity
    (fn [type info]
-     "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")})
+     "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")
+
+   :dynamic
+   (fn [_type info]
+     (str "You're not allowed to dynamically change the value of `" (:name info) "`, because it is a static var. Consider redefining it to be `^:dynamic`."))})
 
 (defn override-analyzer-messages! []
   (doseq [[k f] analyzer-messages]
