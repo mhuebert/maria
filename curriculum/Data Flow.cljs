@@ -65,10 +65,10 @@
 ;; Now let's do that for a bunch of bird pictures!
 
 (defcell bird-pics
-  (->> @birds 
-       (keep (fn [bird] 
-               (some->> (:sciName bird)
-                        (find-image)
+  (->> @birds
+       (keep (fn [bird]
+           (some->> (:sciName bird)
+                    (find-image)
                         (image 100))))
        (doall)))
 
