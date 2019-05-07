@@ -260,13 +260,12 @@
 ;; Cell construction
 
 (defn- make-cell [f owner]
-  (do 'maybe-activate
-   (Cell. (j/obj .-f f
-                 .-value nil
-                 .-dependencies #{}
-                 .-dependents #{}
-                 .-owner owner)
-          nil)))
+  (Cell. (j/obj .-f f
+                .-value nil
+                .-dependencies #{}
+                .-dependents #{}
+                .-owner owner)
+         nil))
 
 (defn cell*
   "Returns a cell for function `f` and `options`, an object of optional properties:
