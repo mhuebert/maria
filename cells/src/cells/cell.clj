@@ -1,29 +1,8 @@
 (ns cells.cell
-  (:refer-clojure :exclude [bound-fn assoc! get])
+  (:refer-clojure :exclude [bound-fn])
   (:require [clojure.core :as core]
             [cells.util :as util]
             [applied-science.js-interop :as j]))
-
-(defn- read* [cell k not-found]
-  `(let [cell# ~cell
-         tx-cell# (when (some? ~'cells.cell/*tx-changes*)
-                    (core/get @~'cells.cell/*tx-changes* cell#))]
-     (j/get tx-cell# ~k
-            (j/get-in cell# [~'.-state ~k] ~not-found))))
-
-(defmacro ^:private get
-  ([cell k]
-   (read* cell k nil))
-  ([cell k not-found]
-   (read* cell k not-found)))
-
-(defmacro ^:private assoc! [cell k v]
-  `(~'cells.cell/write-cell! ~cell
-    (~'applied-science.js-interop/obj ~k ~v)))
-
-(defmacro ^:private update! [cell k f & args]
-  `(let [cell# ~cell]
-     (assoc! cell# ~k (~f (get cell# ~k) ~@args))))
 
 (defmacro defcell
   "Defines a named cell."
@@ -42,7 +21,7 @@
            ~@(when docstring (list docstring))
            (~'cells.cell/cell*
             (fn [~'self] ~@body)
-            (j/obj .-def? true .-update-existing prev-cell#)))))))
+            (~'applied-science.js-interop/obj .-def? true .-update-existing prev-cell#)))))))
 
 (defmacro cell
   "Returns an anonymous cell. Only one cell will be returned per lexical instance of `cell`,
@@ -53,7 +32,7 @@
    (let [id (util/unique-id)]
      `(~'cells.cell/cell*
        (fn [~'self] ~expr)
-       (j/obj .-memo-key (str ~id "#" (hash ~key)))))))
+       (~'applied-science.js-interop/obj .-memo-key (str ~id "#" (hash ~key)))))))
 
 (defmacro bound-fn
   "Returns an anonymous function which will evaluate in the context of the current cell
@@ -67,3 +46,13 @@
          (try (apply (fn ~@body) args#)
               (catch ~'js/Error e#
                 (~'cells.cell/error! cell# e#)))))))
+
+(defmacro set-watched! [cell k value]
+  `(let [cell# ~cell
+         state# (.-state cell#)
+         before# (~k state#)
+         after# ~value]
+     (when (not= before# after#)
+       (set! (~k state#) after#)
+       (~'-notify-watches cell# before# after#))
+     cell#))

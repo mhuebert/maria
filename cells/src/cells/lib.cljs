@@ -12,7 +12,7 @@
 (defn -on-frame
   ([f] (-on-frame f nil))
   ([f initial-value]
-   (let [self (cell/self)
+   (let [self cell/*self*
          stop? (volatile! false)
          interval-f (cell/bound-fn frame-f []
                       (reset! self (f @self))
@@ -27,7 +27,7 @@
   ([n f initial-value]
    (if (= n :frame)
      (-on-frame f initial-value)
-     (let [self (cell/self)
+     (let [self cell/*self*
            clear-key (volatile! nil)
            _ (cell/on-dispose self :interval #(some-> @clear-key (js/clearInterval)))
            interval-f (cell/bound-fn [] (reset! self (f @self)))]
@@ -36,7 +36,7 @@
 
 (defn delay
   [n value]
-  (let [self (cell/self)
+  (let [self cell/*self*
         clear-key (volatile! nil)
         _ (cell/on-dispose self :delay #(some-> @clear-key (js/clearTimeout)))
         timeout-f (cell/bound-fn [] (reset! self value))]
@@ -68,7 +68,7 @@
    (fetch url {}))
   ([url {:keys [format query]
          :or   {format :json->clj}}]
-   (let [self (cell/self)
+   (let [self cell/*self*
          url (cond-> url
                      query (str "?" (query-string query)))
          parse (get parse-fns format)]
@@ -89,7 +89,7 @@
 
 (defn geo-location
   []
-  (let [self (cell/self)]
+  (let [self cell/*self*]
     (cell/loading! self)
     (-> (j/get js/navigator :geolocation)
         (j/call :getCurrentPosition
@@ -105,7 +105,7 @@
 (defn -timeout
   ([n f] (-timeout n f nil))
   ([n f initial-value]
-   (let [self (cell/self)
+   (let [self cell/*self*
          _ (cell/loading! self)
          clear-key (js/setTimeout (cell/bound-fn []
                                     (cell/complete! self)

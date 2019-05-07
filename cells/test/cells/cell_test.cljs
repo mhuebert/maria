@@ -10,9 +10,6 @@
             [cells.lib]
             [clojure.string :as str]))
 
-(defn dep-set [cells]
-  (set cells))
-
 (deftest cells
   (testing "dependencies-test"
     (let [a (cell 1)
@@ -20,16 +17,18 @@
           c (cell @b)
           d (cell c)]
 
+      (mapv deref [a b c d])
+
       (are [cell immediate-dependencies]
-        (= (set (cell/-immediate-dependencies cell))
-           (dep-set immediate-dependencies))
+        (= (set (cell/immediate-dependencies cell))
+           immediate-dependencies)
         b #{a}
         c #{b}
         d #{})
 
       (are [cell immediate-dependents]
-        (= (set (cell/-immediate-dependents cell))
-           (dep-set immediate-dependents))
+        (= (set (cell/immediate-dependents cell))
+           immediate-dependents)
         a #{b}
         b #{c}
         c #{}
@@ -37,7 +36,7 @@
 
       (are [cell transitive-dependents]
         (= (set (cell/dependents cell))
-           (dep-set transitive-dependents))
+           transitive-dependents)
         a #{b c}
         b #{c}
         c #{}
@@ -62,11 +61,11 @@
 
   (testing "anonymous-cells"
 
-    le 1
-    i (cell :i @h)
-    j (cell (str @h @i))
+    (let [h (cell {:key :h} 1)
+          i (cell {:key :i} @h)
+          j (cell (str @h @i))]
 
-    (= (set (cell/-immediate-dependents h)) (dep-set #{i}))
+    (= (set (cell/immediate-dependents h)) #{i})
     (is (= 1 @i))
 
     (is (= "11" @j))
@@ -84,7 +83,7 @@
       (let [multi (for [n [1 2 3 4 5]]
                     (cell n n))]
         (is (= (list 1 2 3 4 5)
-               (map deref multi))))))
+                 (map deref multi)))))))
 
   (testing "cell-function"
 
