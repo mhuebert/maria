@@ -126,7 +126,8 @@
   "Map of common misspellings to their correct spellings"
   ;; FIXME this is a maximally naive approach; TODO circle back with fuzzy-matching later
   {"defun" "defn"
-   "define" "defn"})
+   "define" "defn"
+   "cirlce" "circle"})
 
 (def analyzer-messages
   {:fn-arity
@@ -153,7 +154,7 @@
      (if macro-present?
        (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
        (if-let [proposed-spelling (get misspellings (str missing-name))]
-         (str "Did you mean `" proposed-spelling "`? `" missing-name "` hasn't been defined! Or maybe this expression depends on a name that has not yet been evaluated.")
+         (str "Did you mean `" proposed-spelling "`? `" missing-name "` hasn't been defined, or maybe its definition has not yet been evaluated.")
          (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))))
    
    :overload-arity
