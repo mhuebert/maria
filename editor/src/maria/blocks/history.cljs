@@ -1,8 +1,5 @@
 (ns maria.blocks.history
-  (:require [lark.editor :as editor]
-            [clojure.set :as set]
-            [cells.owner :as owner]
-            [chia.reactive :as r]
+  (:require [clojure.set :as set]
             [chia.view :as v]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
@@ -82,7 +79,7 @@
                                (set (map :id next-version)))
         blocks (filter (comp ids :id) prev-version)]
     (doseq [block blocks]
-      (owner/dispose! block))))
+      (Block/dispose! block))))
 
 (defn clear! [state]
   (v/swap-silently! state dissoc :history/redo-stack :history))

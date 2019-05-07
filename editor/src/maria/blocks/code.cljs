@@ -21,7 +21,6 @@
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [maria.views.icons :as icons]
-            [cells.owner :as owner]
             [cells.cell :as cell]))
 
 
@@ -127,7 +126,7 @@
     (or (get node :source)
         (emit/string node)))
 
-  owner/IDispose
+  Block/IDispose
   (on-dispose [this key f]
     (vswap! -dispose-callbacks update (:id this) assoc key f))
   (-dispose! [this]
@@ -158,9 +157,8 @@
        (Block/eval! this :string source))
      true)
     ([this mode form]
-     (owner/dispose! this)
-     (binding [owner/*owner* this
-               cell/*error-handler* (partial e/handle-block-error (:id this))]
+     (Block/dispose! this)
+     (binding [cell/*error-handler* (partial e/handle-block-error (:id this))]
        (Block/eval-log! this ((case mode :form e/eval-form
                                          :string e/eval-str) form)))
      true)))

@@ -5,7 +5,6 @@
             [goog.net.ErrorCode :as errors]
             [cells.util]
             [applied-science.js-interop :as j]
-            [cells.owner :as owner]
             [chia.util :as u])
   (:require-macros [cells.lib])
   (:import [goog Uri]))
@@ -19,7 +18,7 @@
                       (reset! self (f @self))
                       (when-not @stop?
                         (.requestAnimationFrame js/window frame-f)))]
-     (owner/on-dispose self :on-frame #(vreset! stop? true))
+     (cell/on-dispose self :on-frame #(vreset! stop? true))
      (reset! self initial-value)
      (.requestAnimationFrame js/window interval-f))))
 
@@ -30,7 +29,7 @@
      (-on-frame f initial-value)
      (let [self (cell/self)
            clear-key (volatile! nil)
-           _ (owner/on-dispose self :interval #(some-> @clear-key (js/clearInterval)))
+           _ (cell/on-dispose self :interval #(some-> @clear-key (js/clearInterval)))
            interval-f (cell/bound-fn [] (reset! self (f @self)))]
        (vreset! clear-key (js/setInterval interval-f n))
        (reset! self (f initial-value))))))
@@ -39,7 +38,7 @@
   [n value]
   (let [self (cell/self)
         clear-key (volatile! nil)
-        _ (owner/on-dispose self :delay #(some-> @clear-key (js/clearTimeout)))
+        _ (cell/on-dispose self :delay #(some-> @clear-key (js/clearTimeout)))
         timeout-f (cell/bound-fn [] (reset! self value))]
     (vreset! clear-key (js/setTimeout timeout-f n))
     nil))
@@ -111,5 +110,5 @@
          clear-key (js/setTimeout (cell/bound-fn []
                                     (cell/complete! self)
                                     (reset! self (f @self))) n)]
-     (owner/on-dispose self #js{} #(js/clearTimeout clear-key))
+     (cell/on-dispose self #js{} #(js/clearTimeout clear-key))
      initial-value)))

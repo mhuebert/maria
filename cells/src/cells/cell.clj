@@ -1,16 +1,17 @@
 (ns cells.cell
-  (:require [cells.util :as util]
-            [applied-science.js-interop :as j])
-  (:refer-clojure :exclude [bound-fn assoc! read]))
+  (:refer-clojure :exclude [bound-fn assoc! get])
+  (:require [clojure.core :as core]
+            [cells.util :as util]
+            [applied-science.js-interop :as j]))
 
 (defn- read* [cell k not-found]
   `(let [cell# ~cell
          tx-cell# (when (some? ~'cells.cell/*tx-changes*)
-                    (get @~'cells.cell/*tx-changes* cell#))]
+                    (core/get @~'cells.cell/*tx-changes* cell#))]
      (j/get tx-cell# ~k
             (j/get-in cell# [~'.-state ~k] ~not-found))))
 
-(defmacro ^:private read
+(defmacro ^:private get
   ([cell k]
    (read* cell k nil))
   ([cell k not-found]
@@ -22,8 +23,7 @@
 
 (defmacro ^:private update! [cell k f & args]
   `(let [cell# ~cell]
-     (assoc! cell# ~k
-             (~f (read cell# ~k) ~@args))))
+     (assoc! cell# ~k (~f (get cell# ~k) ~@args))))
 
 (defmacro defcell
   "Defines a named cell."
@@ -35,14 +35,14 @@
                          [(first body) (rest body)]
                          [nil body])]
     `(do
+       ;; support re-evaluation without breaking links
        (declare ~the-name)
        (let [prev-cell# ~the-name]
          (def ~(with-meta the-name options)
            ~@(when docstring (list docstring))
            (~'cells.cell/cell*
             (fn [~'self] ~@body)
-            {:def?      true
-             :prev-cell prev-cell#}))))))
+            (j/obj .-def? true .-update-existing prev-cell#)))))))
 
 (defmacro cell
   "Returns an anonymous cell. Only one cell will be returned per lexical instance of `cell`,
@@ -53,16 +53,16 @@
    (let [id (util/unique-id)]
      `(~'cells.cell/cell*
        (fn [~'self] ~expr)
-       {:memo-key (str ~id "#" (hash ~key))}))))
+       (j/obj .-memo-key (str ~id "#" (hash ~key)))))))
 
 (defmacro bound-fn
   "Returns an anonymous function which will evaluate in the context of the current cell
    (useful for handling async-state)"
   [& body]
-  `(let [cell# ~'cells.cell/*cell*
+  `(let [cell# ~'cells.cell/*self*
          error-handler# ~'cells.cell/*error-handler*]
      (fn [& args#]
-       (binding [~'cells.cell/*cell* cell#
+       (binding [~'cells.cell/*self* cell#
                  ~'cells.cell/*error-handler* error-handler#]
          (try (apply (fn ~@body) args#)
               (catch ~'js/Error e#

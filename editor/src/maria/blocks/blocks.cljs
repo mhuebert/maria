@@ -16,8 +16,16 @@
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
-            [lark.tree.reader :as rd]
-            [cells.owner :as owner]))
+            [lark.tree.reader :as rd]))
+
+(defprotocol IDispose
+  (on-dispose [context key f]
+              "Register a callback to be fired when context is disposed.")
+  (-dispose! [context]))
+
+(defn dispose! [owner]
+  (when (satisfies? IDispose owner)
+    (-dispose! owner)))
 
 (defprotocol IBlock
 
@@ -184,8 +192,8 @@
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
-         (when (satisfies? owner/IDispose block)
-           (owner/dispose! block))))
+         (when (satisfies? IDispose block)
+           (dispose! block))))
      result)))
 
 (defcommand :doc/print-to-console
