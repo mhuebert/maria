@@ -130,7 +130,38 @@
    "cirlce" "circle"})
 
 (def analyzer-messages
-  {:fn-arity
+  {;; :preamble-missing ::pass
+   ;; :invoke-ctor ::pass
+   ;; :extending-base-js-type ::pass
+   ;; :unsupported-preprocess-value ::pass
+   ;; :redef ::pass
+   ;; :js-shadowed-by-local ::pass
+   ;; :unsupported-js-module-type ::pass
+   ;; :invalid-protocol-symbol ::pass
+   ;; :private-var-access ::pass
+   ;; :munged-namespace ::pass
+   ;; :single-segment-namespace ::pass
+   ;; :infer-warning ::pass
+   ;; :variadic-max-arity ::pass
+   ;; :protocol-with-variadic-method ::pass
+   ;; :declared-arglists-mismatch ::pass
+   ;; :undeclared-protocol-symbol ::pass
+   ;; :invalid-array-access ::pass
+   ;; :unprovided ::pass
+   ;; :ns-var-clash ::pass
+   ;; :undeclared-ns ::pass
+   :non-dynamic-earmuffed-var ::pass ;; the out-of-the-box error message is pretty good!
+   ;; :undeclared-ns-form ::pass
+   ;; :fn-var ::pass
+   ;; :protocol-impl-recur-with-target ::pass
+   ;; :protocol-multiple-impls ::pass
+   ;; :redef-in-file ::pass
+   ;; :protocol-invalid-method ::pass
+   ;; :extend-type-invalid-method-shape ::pass
+   ;; :multiple-variadic-overloads ::pass
+   ;; :protocol-impl-with-variadic-method ::pass
+   
+   :fn-arity
    (fn [type info]
      (str "The function `"
           (or (:ctor info)
@@ -169,11 +200,20 @@
    (fn [_type info]
      (str "The function `" (or (-> info :fexpr :form)
                                (-> info :fexpr :name))
-          "` is deprecated, meaning it is not intended to be used."))})
+          "` is deprecated, meaning it is not intended to be used."))
+
+   :protocol-deprecated
+   (fn [_type info]
+     (str "The protocol `" (:protocol info) "` is deprecated. That means you shouldn't use or implement it."))
+
+   :protocol-duped-method
+   (fn [_type info]
+     (str "Your implementation of protocol `" (:protocol info) "` has two versions of the method `" (:fname info) "`. Consider deleting one."))})
 
 (defn override-analyzer-messages! []
   (doseq [[k f] analyzer-messages]
-    (-add-method ana/error-message k f)))
+    (when-not (= ::pass f)
+      (-add-method ana/error-message k f))))
 
 (comment
  ;; missing messages
