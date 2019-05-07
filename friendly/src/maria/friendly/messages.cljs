@@ -137,15 +137,11 @@
    ;; :redef ::pass
    ;; :js-shadowed-by-local ::pass
    ;; :unsupported-js-module-type ::pass
-   ;; :invalid-protocol-symbol ::pass
    ;; :private-var-access ::pass
    ;; :munged-namespace ::pass
    ;; :single-segment-namespace ::pass
    ;; :infer-warning ::pass
-   ;; :variadic-max-arity ::pass
-   ;; :protocol-with-variadic-method ::pass
    ;; :declared-arglists-mismatch ::pass
-   ;; :undeclared-protocol-symbol ::pass
    ;; :invalid-array-access ::pass
    ;; :unprovided ::pass
    ;; :ns-var-clash ::pass
@@ -153,13 +149,19 @@
    :non-dynamic-earmuffed-var ::pass ;; the out-of-the-box error message is pretty good!
    ;; :undeclared-ns-form ::pass
    ;; :fn-var ::pass
-   ;; :protocol-impl-recur-with-target ::pass
-   ;; :protocol-multiple-impls ::pass
    ;; :redef-in-file ::pass
-   ;; :protocol-invalid-method ::pass
    ;; :extend-type-invalid-method-shape ::pass
    ;; :multiple-variadic-overloads ::pass
+   ;; :protocol-with-variadic-method ::pass
+   ;; :undeclared-protocol-symbol ::pass
+   ;; :protocol-impl-recur-with-target ::pass
+   ;; :protocol-multiple-impls ::pass
+   ;; :protocol-invalid-method ::pass
    ;; :protocol-impl-with-variadic-method ::pass
+   ;; :invalid-protocol-symbol ::pass
+
+
+   ;; :variadic-max-arity ::pass
    
    :fn-arity
    (fn [type info]
