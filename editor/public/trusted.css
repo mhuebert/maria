@@ -1,0 +1,75 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    background: #eee;
+}
+
+#maria-index {
+    height: 100%;
+    display: flex;
+}
+.maria-editor-frame {
+    background: #eee;
+    height: 100%;
+    border: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    display: -webkit-box; display: -ms-flexbox; display: flex;
+    -webkit-box-align: stretch; -ms-flex-align: stretch; align-items: stretch;
+}
+
+
+.progress-indeterminate, .progress-indeterminate:before {
+    height: 3px;
+    width: 100%;
+    margin: 0;
+}
+
+.progress-indeterminate {
+    background-color: #b3d4fc;
+    display: -webkit-flex;
+    display: flex;
+
+}
+.progress-indeterminate:before {
+
+    background-color: #3f51b5;
+    content: '';
+    -webkit-animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    animation: running-progress 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+
+}
+
+@-webkit-keyframes running-progress {
+    0% {
+        margin-left: 0px;
+        margin-right: 100%;
+    }
+    50% {
+        margin-left: 25%;
+        margin-right: 0%;
+    }
+    100% {
+        margin-left: 100%;
+        margin-right: 0;
+    }
+}
+
+@keyframes running-progress {
+    0% {
+        margin-left: 0px;
+        margin-right: 100%;
+    }
+    50% {
+        margin-left: 25%;
+        margin-right: 0%;
+    }
+    100% {
+        margin-left: 100%;
+        margin-right: 0;
+    }
+}

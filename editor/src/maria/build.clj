@@ -6,5 +6,5 @@
 (defn release
   []
   (api/release :live)
-  (api/release :trusted)
-  (api/release :bootstrap))
+  (api/release :bootstrap)
+  (api/release :trusted))
