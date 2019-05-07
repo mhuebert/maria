@@ -133,7 +133,6 @@
 (defn set-preserve-cursor!
   "If value is different from editor's current value, set value, retain cursor position"
   [editor value]
-      (prn :set-preserve! value)
   (when-not (identical? value (.getValue editor))
     (let [cursor-pos (get-cursor editor)]
       (.setValue editor (str value))

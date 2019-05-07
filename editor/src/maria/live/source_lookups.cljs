@@ -67,13 +67,13 @@
                (first))
       (or (when-let [i (and source-map
                             (some-> compiled-js (str/index-of js-source)))]
-            (prn :source-map source-map)
             (source-of-form-at-position source
                                         (-> (live-eval/mapped-cljs-position (index-position i compiled-js) source-map)
                                             (update :line inc)
                                             (update :column inc))))
           (comment
-           ;; unsure if this is a good idea - leads to some false positives
+           ;; unsure if this is a good idea - shows the entire block that
+           ;; produced the value
            (when (identical? js-value value)
              source)))))
 

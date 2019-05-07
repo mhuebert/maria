@@ -61,55 +61,12 @@
   [{:keys [editor block/code]}]
   false)
 
-(comment
- (defn init-select-by-click [editor]
-       (let [in-progress? (volatile! true)
-             last-sel (volatile! {:pos nil
-                                  :loc nil})
-             listeners (volatile! [])
-             clear-listeners! #(do (doseq [key @listeners]
-                                          (events/unlistenByKey key))
-                                   (when @in-progress?
-                                     (vreset! in-progress? false)))]
-            (vswap! listeners into [(events/listen js/window "mousemove"
-                                                   (fn [e]
-                                                     (let [cm-pos (Editor/coords-cursor editor (.-clientX e) (.-clientY e))]
-                                                          (when-not (.-outside cm-pos)
-                                                            (let [pos (cm/pos->boundary cm-pos)]
-                                                                 (when-not (= pos (:pos @last-sel))
-                                                                   (let [loc (some-> (:zipper editor)
-                                                                                     (nav/navigate pos))
-                                                                         loc (some->> loc
-                                                                                      (cm/sexp-near pos))]
-                                                                        (when (and loc (not (= loc (:loc @last-sel))))
-
-                                                                          (swap! exec/WHICH_KEY_STATE exec/clear-which-key)
-
-                                                                          (cm/temp-select-node! editor (z/node loc))
-                                                                          (vreset! last-sel {:pos pos
-                                                                                             :loc loc})))))))))
-                                    (events/listen js/window "mouseup" #(when @in-progress?
-                                                                          (when-let [node (some-> (:loc @last-sel)
-                                                                                                  (z/node))]
-
-                                                                            (cm/unset-temp-marker! editor)
-                                                                            (.preventDefault %)
-                                                                            (.stopPropagation %)
-                                                                            (cm/select-range editor node))) true)
-                                    (events/listen js/window "keyup" #(when-not (registry/M1-down? %)
-                                                                        (clear-listeners!)))
-                                    (events/listen js/window "blur" #(clear-listeners!))
-                                    (events/listen js/window "focus" #(clear-listeners!))])
-
-            (events/listenOnce js/window "keydown" clear-listeners! true))))
-
 (defcommand :select/form-at-cursor
   {:bindings ["M1"]
    :when :block/code}
   [{:keys [editor]}]
   (when-not (cm/selection? editor)
-    (cm/select-at-cursor editor false))
-  #_(init-select-by-click editor))
+    (cm/select-at-cursor editor false)))
 
 
 (defcommand :highlight/parent-collection

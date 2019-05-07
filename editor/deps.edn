@@ -12,9 +12,9 @@
 
            appliedscience/js-interop           {:mvn/version "0.1.20"}
 
-           chia                                {:local/root "../../chia"
-                                                #_#_:git/url "https://github.com/mhuebert/chia.git"
-                                                :sha        "79494c27a6fad8d160657eef7da2486316ee1546"}
+           chia                                {#_#_:local/root "../../chia"
+                                                :git/url "https://github.com/mhuebert/chia.git"
+                                                :sha        "da6ceb2989b712ab59c654679e1eb7b2e4c6ef02"}
 
            ;; user fun
            maria/friendly                      {:local/root "../friendly"}

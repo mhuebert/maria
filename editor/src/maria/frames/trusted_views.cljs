@@ -7,10 +7,6 @@
 
 (v/defclass frame-view
   {:view/initial-state #(do {:frame-id (str (gensym))})
-   #_#_:spec/props {:id {:spec string?
-                     :doc "unique ID for frame"}
-                :on-message {:spec :Function
-                             :doc "Function to be called with messages from iFrame."}}
    :send (fn [{:keys [view/state]} message]
            (frame/send (:frame-id @state) message))
    :send-transactions (fn [{:keys [db/transactions view/state]}]
@@ -35,7 +31,6 @@
     :src (str frame/child-origin "/live.html#frame_" (:frame-id @state))}])
 
 (v/defclass editor-frame-view
-  {#_#_:spec/props {:default-value :String}}
   [{:keys [current-entity db/transactions db/queries]
     :or {queries []}}]
   (let [username (d/get :auth-public :username)

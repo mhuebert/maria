@@ -29,8 +29,6 @@
                                 (p/do @e/compiler-ready
                                       (exec/exec-command-name :eval/doc))))
    :view/will-unmount       #(exec/set-context! {:block-list nil})
-   ;; NOTE for debugging
-   ;; this used to be will-receive-props
    :view/did-update (fn [{value :value
                                   source-id                   :source-id
                                   {prev-source-id :source-id} :view/prev-props

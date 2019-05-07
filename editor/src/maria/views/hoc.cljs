@@ -7,17 +7,17 @@
 
 (v/defclass bind-atom
                  "Calls component with value of atom & re-renders when atom changes."
-                 {:key (fn [_ _ prop-atom]
-                         (let [args @prop-atom
-                               {:keys [key id name]} (if (map? args)
-                                                       args
-                                                       (first args))]
-                           (or key id name)))
-                  :view/did-mount (fn [this component atom]
-                                    (some-> atom
-                                            (add-watch this (fn [_ _ old new]
-                                                              (when (not= old new)
-                                                                (v/force-update! this))))))
+                 {:key               (fn [_ _ prop-atom]
+                                       (let [args @prop-atom
+                                             {:keys [key id name]} (if (map? args)
+                                                                     args
+                                                                     (first args))]
+                                         (or key id name)))
+                  :view/did-mount    (fn [this component atom]
+                                       (some-> atom
+                                               (add-watch this (fn [_ _ old new]
+                                                                 (when (not= old new)
+                                                                   (v/force-update this))))))
                   :view/will-unmount (fn [this _ atom]
                                        (some-> atom
                                                (remove-watch this)))}
