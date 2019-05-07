@@ -454,9 +454,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; color name dictionary
 
-(def color-names
+(def color-swatches
   "Recognized SVG color keyword names, mapped to their RGB value."
-  (mapv (fn [[color-name _]]
+  (into {} (mapv (fn [[color-name _]]
           [color-name (colorize color-name (square 25))])
         {"aliceblue"            [240, 248, 255]
          "antiquewhite"         [250, 235, 215]
@@ -610,14 +610,19 @@
          "white"                [255, 255, 255]
          "whitesmoke"           [245, 245, 245]
          "yellow"               [255, 255, 0]
-         "yellowgreen"          [154, 205, 50]}))
+                  "yellowgreen"          [154, 205, 50]})))
+
+(def color-names
+  "Set of valid color names"
+  (set (keys color-swatches)))
 
 (defn colors-named
   "Subset of `color-names` whose names include the given String `s`"
   [s]
-  (mapv (fn [c] [c (colorize c (square 25))])
-        (filter (fn [cn] (clojure.string/includes? cn s))
-                (map first color-names))))
+  (->> color-names
+       (filter (fn [cn] (clojure.string/includes? cn s)))
+       (mapv (fn [c] [c (colorize c (square 25))]))
+       (into {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; random helpers to be moved somewhere else

@@ -99,6 +99,16 @@
 
 ;; could also do something like `cell/error?` and `cell/loading?`.
 
+;; ## Dependencies
+
+;; See what cells depend on:
+
+(cell/dependents birds)
+
+(cell/dependents location)
+
+;; This can be useful for debugging.
+
 ;; ## Anonymous cells
 
 ;; Cells created using `defcell` are named after their var.
