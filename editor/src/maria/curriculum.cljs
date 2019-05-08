@@ -1,5 +1,4 @@
-(ns maria.curriculum
-  (:require [clojure.set :as set]))
+(ns maria.curriculum)
 
 (defn repo-path [path]
   (js/encodeURIComponent (str "https://raw.githubusercontent.com/mhuebert/maria/master/" path)))

@@ -86,7 +86,7 @@
            (icons/size 18)
            (icons/class "cm-variable"))]
       (error/error-boundary
-       {:on-error (fn [{:keys [error info]}]
+       {:on-error (fn [error info]
                     (e/handle-block-error (:id block) error))}
         (code/CodeView {:class                 "pa3 bg-white"
                         :ref                   #(v/swap-silently! state assoc :editor-view %)

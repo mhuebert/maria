@@ -165,15 +165,15 @@
             compiled-js]
     result :view/props
     :as    this}]
-  (error-view/error-boundary {:key           id
-                              :on-error      (fn [{:keys [error]}]
-                                               (e/handle-block-error block-id error))
-                              :error-content (fn [{:keys [error info]}]
-                                               (-> result
-                                                   (assoc :error (or error (js/Error. "Unknown error"))
-                                                          :error/kind :eval)
-                                                   (e/add-error-position)
-                                                   (render-error-result)))}
+  (error-view/error-boundary {:key      id
+                              :on-error (fn [error _]
+                                          (e/handle-block-error block-id error))
+                              :fallback (fn [error info]
+                                          (-> result
+                                              (assoc :error (or error (js/Error. "Unknown error"))
+                                                     :error/kind :eval)
+                                              (e/add-error-position)
+                                              (render-error-result)))}
     (let [warnings (format-warnings warnings)
           error? (or error (seq warnings))]
       (when error
