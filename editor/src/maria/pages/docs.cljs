@@ -16,33 +16,33 @@
 
 
 (v/defclass file-edit
-  {:doc-editor (fn [{:keys [view/state]}] (:doc-editor @state))
-   :init-doc (fn [{:keys [id] :as this}]
-               (doc/locals-push! :local/recents id)
-               (local/init-storage id)
-               (let [the-doc (d/entity id)]
-                 ;; add persisted version of doc to localStorage
-                 ;; (this should be done somewhere else)
-                 (when-let [provider (or (:persistence/provider the-doc)
-                                         (:persistence/provider (:persisted the-doc))
-                                         (:persistence/provider (:local the-doc)))]
-                   (d/transact! [[:db/update-attr id :local merge
-                                  {:persistence/provider provider}
-                                  {:files (or (:files (:local the-doc))
-                                              (:files (:persisted the-doc)))
-                                   :owner (or (:owner (:local the-doc))
-                                              (:owner (:persisted the-doc)))}]]))))
+  {:doc-editor      (fn [{:keys [view/state]}] (:doc-editor @state))
+   :init-doc        (fn [{:keys [id] :as this}]
+                      (doc/locals-push! :local/recents id)
+                      (local/init-storage id)
+                      (let [the-doc (d/entity id)]
+                        ;; add persisted version of doc to localStorage
+                        ;; (this should be done somewhere else)
+                        (when-let [provider (or (:persistence/provider the-doc)
+                                                (:persistence/provider (:persisted the-doc))
+                                                (:persistence/provider (:local the-doc)))]
+                          (d/transact! [[:db/update-attr id :local merge
+                                         {:persistence/provider provider}
+                                         {:files (or (:files (:local the-doc))
+                                                     (:files (:persisted the-doc)))
+                                          :owner (or (:owner (:local the-doc))
+                                                     (:owner (:persisted the-doc)))}]]))))
    :view/did-update (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
-                              (when-not (= id prev-id)
-                                (.initDoc this)))
-   :view/did-mount (fn [this]
+                      (when-not (= id prev-id)
+                        (.initDoc this)))
+   :view/did-mount  (fn [this]
                       (.initDoc this))
-   :project-files (fn [{:keys [id]}]
-                    (-> (concat (keys (d/get-in id [:persisted :files]))
-                                (keys (d/get-in id [:local :files])))
-                        (distinct)))
-   :current-file (fn [{:keys [filename] :as this}]
-                   (or filename (first (.projectFiles this))))}
+   :project-files   (fn [{:keys [id]}]
+                      (-> (concat (keys (d/get-in id [:persisted :files]))
+                                  (keys (d/get-in id [:local :files])))
+                          (distinct)))
+   :current-file    (fn [{:keys [filename] :as this}]
+                      (or filename (first (.projectFiles this))))}
   [{:keys [view/state local? id] :as this}]
   (let [{:keys [default-value
                 loading-message
