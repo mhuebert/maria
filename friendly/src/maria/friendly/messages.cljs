@@ -2,9 +2,8 @@
   (:require [clojure.string :as string]
             [clojure.set :as set]
             [cljs.analyzer :as ana]
+            #_ [cljs.repl]
             [maria.live.ns-utils :as ns-utils]))
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error message prettifier
@@ -180,32 +179,42 @@
     (map #(identity %2) (cons nil b) (range)) 
     a)))
 
-(defn similar-to-vars
+(defn similar-to-vars ;; TODO improve this name
   "Finds `n` (default 4) Maria-relevant Clojure vars (as Strings) named similarly to the given String `s`."
   ([s] (similar-to-vars s 4))
   ([s n]
    (->> (concat (keys (ns-utils/core-publics))
-                (map name (keys (ns-publics 'shapes.core))))
+                (map name (keys (ns-publics 'shapes.core)))
+                #_ (map name (keys cljs.repl/special))
+                ;; Special forms that aren't in `core-publics`: (TODO would be nice to have these automatically enumerated)
+                ["if" "def" "quote" "var" "do" "recur" "throw" "." "try"])
         (map name)
-        (sort-by (partial levenshtein-distance s))
+        (map (juxt (partial levenshtein-distance s) identity))
+        (sort-by first)
+        (take-while (comp (partial >= 3) first)) ;; we only want strong matches, defined as Levenshtein distance <= 3
+        (map second) ;; we're done with Levenshtein calculation
         (take n))))
 
 (comment
-  (similar-to-vars "defun")
-  (similar-to-vars "define")
-  (similar-to-vars "def")
+  (similar-to-vars "define" 20) ;; it would be nice to prioritize `def` higher
+  (similar-to-vars "defun") 
+  (similar-to-vars "def") ;; XXX not known!
   (similar-to-vars "cirlce")
   (similar-to-vars "whatis")
   (similar-to-vars "js-source1") ;; <-- TODO
 
+  ;; It's hard to find the right match with short names:
+  (similar-to-vars "tryy")
+  (similar-to-vars "tyr") ;; we'd like to see `try` but it's tied with all the rest
+  (similar-to-vars "tyr" 10)
+
   )
 
-(def similar-concepts ;; TODO improve name
-  "Map of possibly-commonly-reached-for functions that do not exist in Clojure, and one of their nearest Clojure counterparts."
-  ;; TODO consider using vector or set for vals
-  {"fold" "reduce"
-   "curry" "partial"
-   "function" "fn"})
+;; Maybe return to this idea later?
+#_(def similar-concepts ;; TODO improve name
+  "Map of possibly-commonly-reached-for functions that do not exist in Clojure, and some of their nearest Clojure counterparts."
+  {"curry" #{"partial"}
+   "function" #{"fn"}})
 
 (def analyzer-messages
   {;; :preamble-missing ::pass
@@ -238,7 +247,6 @@
    ;; :protocol-impl-with-variadic-method ::pass
    ;; :invalid-protocol-symbol ::pass
 
-
    ;; :variadic-max-arity ::pass
    
    :fn-arity
@@ -264,12 +272,14 @@
              :keys        [macro-present?]}]
      (if macro-present?
        (str "`" missing-name "` is a macro, which can only be used in the first position of a list. A macro doesn't have a value on its own, so it doesn't make sense in this position.")
-       (if-let [proposed (or (get similar-concepts (str missing-name))
-                             (when (> (count (str missing-name)) 3)
-                               (similar-to-vars (str missing-name) 3)))]
-         (str "Did you mean `" (first proposed) ;; (interpose ", " proposed)
-              "`? `" missing-name "` hasn't been defined, or maybe its definition has not yet been evaluated.")
-         (str "`" missing-name "` hasn't been defined! Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))))
+       (if-let [proposed (when (<= 3 (count (str missing-name)))
+                           (seq (similar-to-vars (str missing-name))))]
+         (str "`" missing-name "` hasn't been defined."
+              " Did you mean `" (if (> (count proposed) 1)
+                                 (str (string/join "`, `" (butlast proposed)) "`, or `" (last proposed) "`")
+                                 (first proposed))
+              "? Or maybe the definition of `" missing-name "` has not yet been evaluated.")
+         (str "`" missing-name "` hasn't been defined. Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))))
    
    :overload-arity
    (fn [type info]
@@ -299,6 +309,8 @@
       (-add-method ana/error-message k f))))
 
 (comment
+  (override-analyzer-messages!)
+
  ;; missing messages
  (set/difference (set (keys ana/*cljs-warnings*))
                  (set (keys analyzer-messages))))
