@@ -1,11 +1,11 @@
 (ns maria.views.top-bar
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.commands.exec :as exec]
             [maria.views.text :as text]
             [maria.frames.frame-communication :as frame]
             [maria.views.icons :as icons]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [lark.commands.registry :as registry]
@@ -46,7 +46,7 @@
         (toolbar-button [nil else-icon nil tooltip])))))
 
 
-(defview fixed-top
+(v/defclass fixed-top
   {:view/did-mount (fn [{:keys [view/state]}]
                      (->> (events/listen js/window "scroll"
                                          (gf/throttle (fn [e]
@@ -59,15 +59,16 @@
        (cond-> (d/get :ui/globals :sidebar?)
                (assoc-in [:style :left] (d/get :ui/globals :sidebar-width)))) child])
 
-(defview doc-toolbar
+(v/defclass doc-toolbar
   {:view/did-mount (fn [this]
                      (.updateWindowTitle this)
-                     (some->> (:id this) (doc/locals-push! :local/recents)))
+                     (some->> (:id this) (doc/locals-push! :local/recents))
+                     (exec/set-context! {:current-doc this}))
    :view/will-unmount (fn [this]
                         (when (= (:current-doc @exec/context) this)
                           (exec/set-context! {:current-doc nil})))
-   :view/will-mount (fn [this] (exec/set-context! {:current-doc this}))
-   :view/will-receive-props (fn [{filename :filename
+   ;; NOte - was will-receive-props
+   :view/did-update (fn [{filename :filename
                                   props :view/props
                                   {prev-filename :filename :as prev-props} :view/prev-props
                                   :as this}]
@@ -103,18 +104,15 @@
         {:keys [persistence/provider remote-url]} persisted
         persistence-mode (doc/persistence-mode this)
         sidebar? (d/get :ui/globals :sidebar?)]
-    [:div
-     (fixed-top
+    [fixed-top
       {:when-scrolled {:style {:background-color "#e7e7e7"
                                :border-bottom "2px solid #e2e2e2"}}}
-      [:.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2
-
+     [:#top-bar.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2.mb2
        (when-not sidebar?
-         (list
-          (toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
+        [toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
                            icons/Docs
                            nil
-                           (if sidebar? "Hide Sidebar" "Docs")])))
+                         (if sidebar? "Hide Sidebar" "Docs")]])
 
        (command-button command-context :doc/new {:text "New"
                                                  :tooltip false})
@@ -170,8 +168,6 @@
        (if (d/get :auth-public :signed-in?)
          (toolbar-button [#(doc/send [:auth/sign-out]) icons/SignOut nil "Sign out"])
          (toolbar-button [#(frame/send frame/trusted-frame [:auth/sign-in]) nil "Sign in with GitHub"]))
-       [:.ph1]])
-     [:.h2]
-     ]))
+      [:.ph1]]]))
 
 ;; (str "/gists/" (d/get :auth-public :username))

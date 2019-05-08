@@ -1,16 +1,14 @@
 (ns maria.views.values
-  (:require [goog.object :as gobj]
-            [shapes.core :as shapes]
+  (:require [shapes.core :as shapes]
             [cells.cell :as cell]
             [maria.friendly.messages :as messages]
             [maria.views.icons :as icons]
-            [re-view.util :as v-util]
-            [re-view.core :as v :refer [defview]]
+            [chia.view :as v]
             [maria.editors.code :as code]
             [maria.live.source-lookups :as source-lookups]
             [maria.views.repl-specials :as special-views]
             [maria.views.error :as error-view]
-            [re-view.hiccup.core :as hiccup]
+            [chia.view.hiccup :as hiccup]
             [maria.util :refer [space]]
             [maria.eval :as e]
             [lark.value-viewer.core :as views]
@@ -20,8 +18,11 @@
             [lark.tree.nav :as nav]
             [clojure.string :as str]
             [maria.views.cards :as repl-ui]
-            [applied-science.js-interop :as j])
+            [applied-science.js-interop :as j]
+            [chia.view.hooks :as hooks])
   (:import [goog.async Deferred]))
+
+(def ^:dynamic *format-depth-limit* 3)
 
 (defn highlights-for-position
   "Return ranges for appropriate highlights for a position within given Clojure source."
@@ -49,58 +50,43 @@
    [:div.v-top value]
    [:.flex.items-end.nowrap rb]])
 
-(extend-protocol hiccup/IEmitHiccup
-  shapes/Shape
-  (to-hiccup [this] (shapes/to-hiccup this)))
-
-(extend-protocol cell/IRenderHiccup
-  object
-  (render-hiccup [this] (hiccup/element this)))
-
 (declare format-function)
-(extend-protocol views/IView
-  cell/Cell
-  (view [this] (cell/view this))
-  function
-  (view [this] (format-function this)))
+(declare display-result)
 
-(declare format-value)
-
-(defview display-deferred
-  {:view/will-mount (fn [{:keys [deferred view/state]}]
-                      (-> deferred
-                          (.addCallback #(swap! state assoc :value %1))
-                          (.addErrback #(swap! state assoc :error %))))}
+(v/defclass display-deferred
+  {:view/did-mount (fn [{:keys [deferred view/state]}]
+                     (-> deferred
+                         (.addCallback #(swap! state assoc :value %1))
+                         (.addErrback #(swap! state assoc :error %))))}
   [{:keys [view/state]}]
   (let [{:keys [value error] :as s} @state]
     [:div
      [:.gray.i "goog.async.Deferred"]
      [:.pv3 (cond (nil? s) [:.progress-indeterminate]
                   error (str error)
-                  :else (or (some-> value (format-value)) [:.gray "Finished."]))]]))
+                  :else (or (some-> value (views/format-value)) [:.gray "Finished."]))]]))
 
 (def expander-outter :.dib.bg-darken.ph2.pv1.mh1.br2)
 (def inline-centered :.inline-flex.items-center)
-
-(def ^:dynamic *format-depth-limit* 3)
 
 (defn expanded? [{:keys [view/state]} depth]
   (if (boolean? (:collection-expanded? @state))
     (:collection-expanded? @state)
     (and depth (< depth *format-depth-limit*))))
 
-(defview format-function
-  {:view/initial-state (fn [_ value] {:expanded? false})}
-  [{:keys [view/state]} value]
-  (let [{:keys [expanded?]} @state
-        fn-name (some-> (source-lookups/fn-name value) (symbol) (name))]
+(def ^:private partial-str (.toString (partial +)))
 
+(v/defclass format-function
+  {:view/initial-state (fn [_ value] {:expanded? false})}
+  [{:keys [view/state]} f]
+  (let [{:keys [expanded?]} @state
+        fn-name (some-> (source-lookups/fn-name f) (symbol) (name))]
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)
                        :class    "pointer hover-opacity-parent"}
       [inline-centered
        (if (and fn-name (not= "" fn-name))
-         (some-> (source-lookups/fn-name value) (symbol) (name))
+         (some-> (source-lookups/fn-name f) (symbol) (name))
          [:span.o-50.mr1 "ƒ"])
        (-> icons/ArrowPointingDown
            (icons/size 20)
@@ -109,14 +95,13 @@
                          :transform  (when-not expanded?
                                        "rotate(90deg)")}))]
       (when expanded?
-        (or (some-> (source-lookups/js-source->clj-source (.toString value))
-                    (code/viewer))
-            (some-> (source-lookups/fn-var value)
+        (or (some-> (source-lookups/fn-var f)
                     (special-views/var-source))
-            [:div.pre
-             (code/viewer (.toString value))]))]]))
+            (some-> (source-lookups/js-source->clj-source f (.toString f))
+                    (code/viewer))
 
-(def format-value views/format-value)
+            [:div.pre
+             (code/viewer (.toString f))]))]]))
 
 (defn display-source [{:keys [source error error/position warnings]}]
   [:.code.overflow-auto.pre.gray.mv3.ph3
@@ -131,15 +116,24 @@
                   (distinct)
                   (keep identity)) warnings))
 
-(def error-divider [:.bb.b--red.o-20.bw2])
+(v/defn show-stack [error]
+  (when (instance? js/Error error)
+    (let [expanded? (hooks/use-atom false)
+          stack (or (some-> (ex-cause error)
+                            (j/get :stack))
+                    (j/get error :stack))]
+      [:div
+       [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
+        (repl-ui/arrow (if @expanded? :down :right))
+        "stacktrace"]
+       (when @expanded? [:pre stack])])))
 
-(v/defview show-stack [{:keys     [stack]
-                        expanded? :view/state}]
-  [:div
-   [:a.pv2.flex.items-center.nl2.pointer.hover-underline.gray {:on-click #(swap! expanded? not)}
-    (repl-ui/arrow (if @expanded? :down :right))
-    "stacktrace"]
-   (when @expanded? [:pre stack])])
+(v/defn show-error
+  [{:keys [error messages]}]
+  (let [messages (or messages (messages/error-messages error))
+        sections (cond-> (mapv #(vector :.mv2 %) messages)
+                         (instance? js/Error error) (conj (show-stack error)))]
+    (interpose [:.bb.b--red.o-20.bw2] sections)))
 
 (defn render-error-result [{:keys [error source show-source? formatted-warnings warnings] :as result}]
   [:div
@@ -148,26 +142,21 @@
      (display-source result))
    [:.ws-prewrap.relative.nt3
     [:.ph3.overflow-auto
-     (->> (for [message (->> (concat (or formatted-warnings
-                                         (format-warnings warnings))
-                                     (messages/reformat-error result))
-                             (filter #(and %
-                                           (if (string? %)
-                                             (not (str/blank? %))
-                                             true)))
-                             (distinct))
-                :when (and message (not (str/blank? message)))]
-            [:.mv2 message])
-          (interpose error-divider))
-     (when-let [stack (or (some-> (ex-cause error)
-                                  (j/get :stack))
-                          (j/get error :stack))]
-       (list error-divider
-             (show-stack {:stack stack})))]]])
+     (show-error
+      {:messages (->> (concat (or formatted-warnings
+                                  (format-warnings warnings))
+                              (some-> error (messages/error-messages)))
+                      (filter #(and %
+                                    (if (string? %)
+                                      (not (str/blank? %))
+                                      true)))
+                      (distinct))
+       :error    error})]]])
 
-(defview display-result
+(v/defclass display-result
   {:key :id}
-  [{:keys  [value
+  [{:keys  [id
+            value
             error
             warnings
             show-source?
@@ -176,7 +165,8 @@
             compiled-js]
     result :view/props
     :as    this}]
-  (error-view/error-boundary {:on-error      (fn [{:keys [error]}]
+  (error-view/error-boundary {:key           id
+                              :on-error      (fn [{:keys [error]}]
                                                (e/handle-block-error block-id error))
                               :error-content (fn [{:keys [error info]}]
                                                (-> result
@@ -195,20 +185,31 @@
          (when (and source show-source?)
            (display-source result))
          [:.ws-prewrap.relative
-          [:.ph3 (format-value value)]]]))))
+          [:.ph3 [views/format-value value]]]]))))
 
 (defn repl-card [& content]
   (into [:.sans-serif.bg-white.shadow-4.ma2] content))
 
-(comment
+(defn cell-view [cell]
+  (case (cell/status cell)
+    :loading (hiccup/to-element
+              [:.cell-status
+               [:.circle-loading
+                [:div]
+                [:div]]])
+    :error (display-result {:error (cell/error cell)})
+    (display-result {:value @cell})))
 
- ;; for future stacktrace parsing.
- ;; I found cljs.stacktrace unable to parse chrome stacktraces.
- (defn detect-ua-product []
-   ;; https://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser
-   (cond (exists? js/chrome) :chrome
-         (exists? js/InstallTrigger) :firefox
-         (or (.test #"(?i)constructor" (j/get js/window :HTMLElement))
-             (and (some-> (j/get js/window [:safari :pushNotification])
-                          (.toString)
-                          (= "[object SafariRemoteNotification]")))) :safari)))
+(extend-protocol hiccup/IElement
+  shapes/Shape
+  (-to-element [this]
+    (v/to-element
+     (shapes/to-hiccup this)))
+  cell/Cell
+  (-to-element [this] (cell-view this))
+  function
+  (-to-element [this]
+    (format-function nil this))
+  js/Error
+  (-to-element [error]
+    (show-error {:error error})))

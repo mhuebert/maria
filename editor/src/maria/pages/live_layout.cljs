@@ -1,7 +1,7 @@
 (ns maria.pages.live-layout
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.views.floating.tooltip :as tooltip]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.commands.which-key :as which-key]
             [maria.repl-specials]
             [cljs.core.match :refer-macros [match]]
@@ -15,7 +15,8 @@
             [maria.views.icons :as icons]
             [bidi.bidi :as bidi]
             [clojure.string :as str]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [chia.view.props :as props]))
 
 (defonce _
          (d/transact! [[:db/add :ui/globals :sidebar-width 250]
@@ -26,7 +27,8 @@
 
 (defn landing []
   [:.w-100
-   (toolbar/doc-toolbar {})
+   [toolbar/doc-toolbar {}]
+   [:.h2]
    [:.tc.serif.center.ph3
     {:style {:max-width 600}}
     [:.f1.mb3.pt5 "Welcome to Maria,"]
@@ -49,13 +51,14 @@
                                :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
    ])
 
-(defview sidebar
+(v/defn sidebar
   [{:keys [visible? id]}]
   (let [width (d/get :ui/globals :sidebar-width)]
     [:.fixed.f7.z-5.top-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
      {:style {:width      width
               :transition "all ease 0.2s"
               :left       (if visible? 0 (- width))}}
+
      [:.flex.items-stretch.pl1.flex-none.bg-darken-lightly
       #_(toolbar/toolbar-button [{:on-click #(d/transact! [[:db/add :ui/globals :sidebar? nil]])}
                                  icons/Docs
@@ -107,10 +110,10 @@
                   "home"                       landing
                   ["doc/" [#".*" :id]]         docs/file-edit
                   ["gists/" [#".*" :username]] docs/gists-list
-                  ["local/" [#".*" :id]]       (v/partial docs/file-edit {:local? true})
-                  "local"                      (v/partial docs/gists-list {:username "local"})}])
+                  ["local/" [#".*" :id]]       (props/partial docs/file-edit {:local? true})
+                  "local"                      (props/partial docs/gists-list {:username "local"})}])
 
-(defview remote-progress []
+(v/defclass remote-progress []
   (let [active? (> (d/get :remote/status :in-progress) 0)]
     [:div {:style {:height   (if active? 10 0)
                    :left     0
@@ -121,7 +124,7 @@
      (when active?
        [:.progress-indeterminate])]))
 
-(defview layout
+(v/defclass layout
   [{:keys []}]
   (let [sidebar? (d/get :ui/globals :sidebar?)
         path (str "/" (str/join "/" (d/get :router/location :segments)))
@@ -138,14 +141,14 @@
                  :padding-bottom 140
                  :transition     "padding-left ease 0.2s"
                  :padding-left   (when sidebar? (d/get :ui/globals :sidebar-width))}}
-     (remote-progress)
-     (hint/show-floating-view)
-     (sidebar {:visible? sidebar?
-               :id       (:id route-params)})
+     [remote-progress]
+     [hint/show-floating-view]
+     [sidebar {:visible? sidebar?
+               :id (:id route-params)}]
      [:.relative.w-100
       (when handler
         (handler route-params))]
 
-     (which-key/show-commands)
-     (dock/BottomBar {})
-     (tooltip/Tooltip)]))
+     [which-key/show-commands]
+     [dock/BottomBar {}]
+     [tooltip/Tooltip]]))

@@ -1,5 +1,5 @@
 (ns lark.editor
-  (:require [re-view.core :as v]))
+  (:require [chia.view :as v]))
 
 (def view-index (volatile! {}))
 

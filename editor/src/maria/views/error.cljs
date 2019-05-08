@@ -1,8 +1,9 @@
 (ns maria.views.error
-  (:require [re-view.core :as v :refer [defview]]
-            [maria.eval :as e]))
+  (:require [chia.view :as v]
+            [maria.eval :as e]
+            [applied-science.js-interop :as j]))
 
-(defview error-boundary
+(v/defclass error-boundary
   "Error boundary, per React 16"
   {:view/did-catch (fn [{:keys [block-id on-error view/state] :as this} error info]
                      (.log js/console "error-info" info)

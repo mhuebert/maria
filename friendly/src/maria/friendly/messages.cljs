@@ -80,11 +80,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn reformat-error
-  "Takes the exception text `e` and tries to make it a bit more human friendly."
-  [{:keys [error]}]
-  (list (some-> (ex-message (ex-cause error)) (prettify-error-message))
-        (some-> (ex-message error) (prettify-error-message))))
+(defn error-messages
+  "Returns friendly variants of messages from `error` and its cause"
+  [error]
+  (if (instance? js/Error error)
+    (->> [(some-> (ex-message (ex-cause error)) (prettify-error-message))
+          (some-> (ex-message error) (prettify-error-message))]
+         (keep identity))
+    [(str "Error: " error)]))
 
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
@@ -306,4 +309,4 @@
   (when-not (ignored-warning-types (:type warning))
     [:div
      (ana/error-message (:type warning) (:extra warning))
-     [:.o-50.i "(" (str (:type warning)) ")"]]))
+     [:.o-50.i.mv2 "(" (str (:type warning)) ")"]]))

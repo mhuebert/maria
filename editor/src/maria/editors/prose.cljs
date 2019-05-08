@@ -1,17 +1,16 @@
 (ns maria.editors.prose
-  (:require [re-view.core :as v :refer [defview]]
-            [re-view.prosemirror.commands :as commands]
-            [re-view.prosemirror.commands :refer [apply-command]]
+  (:require [chia.view :as v]
+            [prosemirror.commands :as commands]
+            [prosemirror.commands :refer [apply-command]]
             [maria.views.floating.float-ui :as hint]
             [maria.views.icons :as icons]
-            [re-view.prosemirror.core :as pm]
-            [re-view.prosemirror.markdown :as markdown]
-            [applied-science.js-interop :as j]
+            [prosemirror.core :as pm]
+            [prosemirror.markdown :as markdown]
             [goog.dom.classes :as classes]
             [maria.blocks.blocks :as Block]
 
             [maria.commands.prose :as prose-commands]
-            [re-view.routing :as r]
+            [chia.routing :as r]
 
 
             [lark.commands.exec :as exec]
@@ -19,10 +18,12 @@
             ["prosemirror-view" :refer [EditorView]]
             ["prosemirror-state" :as state :refer [EditorState]]
             ["prosemirror-inputrules" :as input-rules]
-            [maria.util :as util]))
+            [maria.util :as util]
+            [lark.editor :as editor]
+            [applied-science.js-interop :as j]))
 
 
-(defview link-dropdown [{:keys [href editor]}]
+(v/defclass link-dropdown [{:keys [href editor]}]
   [:.flex.items-center.bg-white.br2.shadow-4.overflow-hidden
    [:.dib.pointer.hover-bg-darken.pa2.bg-darken-lightly
     {:on-mouse-down (fn [e]
@@ -46,7 +47,8 @@
 
 (defn make-editor-view [{:keys [before-change editor-props on-dispatch on-selection-activity view/state] :as component}
                         editor-state]
-  (EditorView. (v/dom-node component) (->> (merge editor-props
+  (new EditorView (v/dom-node component)
+       (->> (merge editor-props
                                                   {:state                   editor-state
                                                    :spellcheck              false
                                                    :attributes              {:class "outline-0"}
@@ -64,13 +66,8 @@
                                                                                   (on-selection-activity pm-view (.-selection (.-state pm-view))))))})
                                            (clj->js))))
 
-(defview ProseEditor
-  {:spec/props              {:on-dispatch   :Function
-                             :before-change :Function
-                             :input-rules   :Object
-                             :doc           :Object
-                             :editor-props  :Map}
-   :view/did-mount          (fn [{:keys [view/state
+(v/defclass ProseEditor
+  {:view/did-mount          (fn [{:keys [view/state
                                          input-rules
                                          doc] :as this}]
                               (let [editor-view (make-editor-view this (make-editor-state doc input-rules))]
@@ -84,7 +81,7 @@
                                                                         "schema"  markdown/schema
                                                                         "plugins" (j/get-in view [:state :plugins])}))))
 
-   :view/will-receive-props (fn [{:keys [doc block view/state]
+   :view/did-update (fn [{:keys [doc block view/state]
                                   :as   this}]
                               (when (not= doc (.-doc (.-state (:pm-view @state))))
                                 (.resetDoc this doc)))
@@ -93,9 +90,14 @@
 
    :view/will-unmount       (fn [{:keys [view/state]}]
                               (pm/destroy! (:pm-view @state)))}
-  [this]
+  [{:keys [view/props]}]
   [:.prosemirror-content
-   (-> (v/pass-props this)
+   (-> props
+       (dissoc :on-dispatch
+               :before-change
+               :input-rules
+               :doc
+               :editor-props)
        (assoc :dangerouslySetInnerHTML {:__html ""}))])
 
 (comment
@@ -117,7 +119,8 @@
 
               (map (fn [menu-item] (menu-item state dispatch))))]))))
 
-(defview ProseRow
+
+(v/defclass ProseRow
   {:key                :id
    :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
@@ -129,7 +132,6 @@
                            (exec/set-context! {:block/prose nil
                                                :block-view  nil})))}
   [{:keys [view/state block-list block before-change] :as this}]
-  [:div
    (ProseEditor {:doc           (Block/state block)
                  :editor-props  {:handleDOMEvents #js {:focus #(exec/set-context! {:block/prose true
                                                                                    :block-view  this})
@@ -158,7 +160,7 @@
 
                                   (when (not= (.-doc (.-state pm-view))
                                               (.-doc prev-state))
-                                    (.splice block-list block [(Block/update-prose-block-state block (.-doc (.-state pm-view)))])))})])
+                                 (.splice block-list block [(Block/update-prose-block-state block (.-doc (.-state pm-view)))])))}))
 
 (specify! (.-prototype EditorView)
 

@@ -3,7 +3,7 @@
             [cljs.core.match :refer-macros [match]]
             [clojure.string :as string]
             [maria.frames.frame-communication :as frame]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.views.icons :as icons]
             [maria.persistence.github :as github]
             [maria.persistence.local :as local]
