@@ -8,14 +8,21 @@
 
 (def ^:dynamic *self* nil)
 
-(def ^:dynamic *default-view* identity)
+(def ^:dynamic *default-view*
+  "Views are implemented as metadata on cells. A rendering environment
+   (such as a notebook) can override the default view for cells
+   without affecting views attached to particular cells."
+  identity)
 
 (def ^:dynamic *error-handler*
   (fn [error]
     (throw (ex-info "Error evaluating cell" {:cell *self*} error))))
 
-(defprotocol ICell)
-(defn cell? [x] (satisfies? ICell x))
+(defprotocol ICell
+  "Marker protocol to determine if a thing is a cell")
+
+(defn cell? [x]
+  (satisfies? ICell x))
 
 ;;;;;;;;;;;;;;;
 ;;
@@ -23,10 +30,10 @@
 
 (def ^:private ^:dynamic *read-log* nil)
 
-(declare maybe-activate)
+(declare ensure-active)
 
-(defn log-read! [cell]
-  (maybe-activate cell)
+(defn- log-read! [cell]
+  (ensure-active cell)
   (when-not (identical? cell *self*)
     (some-> *read-log* (vswap! conj cell))
     (r/log-read! cell))
@@ -35,6 +42,8 @@
 ;;;;;;;;;;;;;;;
 ;;
 ;; Async metadata
+;;
+;; async-state is represented as a [loading? error] tuple.
 
 (defn loading! [cell]
   (c/set-watched! cell .-async [true nil]))
@@ -47,21 +56,27 @@
   (c/set-watched! cell .-async [false nil]))
 
 (defn- async-state [cell]
+  ;; reading async-state is equivalent to reading a cell's value,
+  ;; as reactivity is concerned.
   (log-read! cell)
   (j/get-in cell [.-state .-async]))
 
-(defn status [cell]
+(defn status
+  "Returns :error, :loading, or nil"
+  [cell]
   (let [st (async-state cell)]
     (cond (some? (nth st 1)) :error
           (true? (nth st 0)) :loading)))
 
 (defn loading? [cell]
-  (perf/identical? :loading (status cell)))
+  (= :loading (status cell)))
 
 (defn error [cell]
   (some-> (async-state cell) (nth 1)))
 
 (def error? (comp boolean error))
+
+;;backwards-compat
 (def message (comp str error))
 
 (defn complete? [cell]
@@ -69,13 +84,21 @@
     (and (not loading?)
          (nil? error))))
 
-(defn dispose! [cell]
+;;;;;;;;;;;;;;;;;;
+;;
+;; Lifecycle cleanup
+
+(defn dispose!
+  "Cleans up when a cell is deactivated."
+  [cell]
   (doseq [f (vals (.. cell -state -on-dispose))]
     (f))
   (j/assoc-in! cell [.-state .-on-dispose] nil)
   cell)
 
-(defn on-dispose [cell key f]
+(defn on-dispose
+  "Registers function `f` at `key` to be called when cell is deactivated."
+  [cell key f]
   (j/update-in! cell [.-state .-on-dispose] assoc key f))
 
 ;;;;;;;;;;;;;;;;;;
@@ -85,20 +108,22 @@
 (defn active? [cell]
   (boolean (j/get-in cell [.-state .-active])))
 
-(defn isolated?
-  "Returns true if cell has no dependents"
+(defn necessary?
+  "Returns true if there is a path from `cell` to a watched cell"
   [cell]
-  (empty? (g/immediate-dependents cell)))
+  (not (empty? (g/immediate-dependents cell))))
 
 (defn watched?
-  "Returns true if cell has any number of watchers"
+  "Returns true if `cell` has at least one watcher"
   [cell]
   (some? (j/get-in cell [.-state .-watches])))
 
-(defn- maybe-deactivate
+(defn- deactivate
   "When a cell has no more observors, deactivate"
   [cell]
-  (when (and (active? cell) (not (watched? cell)) (isolated? cell))
+  (when (and (active? cell)
+             (not (watched? cell))
+             (not (necessary? cell)))
     (doseq [dep (g/immediate-dependencies cell)]
       (g/un-depend! cell dep))
     (dispose! cell)
@@ -107,8 +132,8 @@
 
 (declare eval-and-set!)
 
-(defn- maybe-activate
-  "When a cell gains a new observor, make sure it is active"
+(defn- ensure-active
+  "When a cell gains an observor, make sure it is active"
   [cell]
   (when-not (active? cell)
     (j/assoc-in! cell [.-state .-active] true)
@@ -120,15 +145,14 @@
 ;; Evaluation
 
 (defn- eval-cell [cell]
-  {:pre [(cell? cell)]}
   (let [f (j/get-in cell [.-state .-f])]
     (try (f cell)
          (catch :default e
+           ;; always clean up after an error
            (dispose! cell)
            (error! cell e)))))
 
 (defn- eval-and-set! [cell]
-  {:pre [(cell? cell)]}
   (when-not (identical? cell *self*)
     (binding [*self* cell
               *read-log* (volatile! #{})]
@@ -139,13 +163,16 @@
         (-reset! cell value))))
   cell)
 
+;; marker, to avoid duplicate computation
 (def ^:dynamic ^:private *computing-dependents* false)
 
 (defn- eval-dependents! [cell]
-  {:pre [(cell? cell)] :post [(cell? %)]}
   (when (false? *computing-dependents*)
     (binding [*computing-dependents* true]
       (doseq [dep (g/dependents cell)]
+        ;; POSSIBLE IMPROVEMENT
+        ;; instead of eagerly computing the entire tree of dependent cells,
+        ;; only follow cells that have changed in a given cycle.
         (eval-and-set! dep))))
   cell)
 
@@ -154,22 +181,19 @@
 ;; Cell views
 
 (defn with-view
-  "Attaches `view-fn` to cell"
+  "Attaches `view-fn` to the metadata of `cell`"
   [cell view-fn]
-  {:pre [(cell? cell)]}
   (vary-meta cell assoc :cell/view view-fn))
 
-(defn get-view
+(defn view-fn
   "Returns current view-fn for cell"
   [cell]
-  {:pre [(cell? cell)]}
   (get (meta cell) :cell/view *default-view*))
 
 (defn view
-  "Returns view of cell"
+  "Returns view of `cell`"
   [cell]
-  {:pre [(cell? cell)]}
-  ((get-view cell) cell))
+  ((view-fn cell) cell))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -194,7 +218,7 @@
     (j/update! state .-dependents set-conj dep))
   (remove-dependent! [this dep]
     (-> (j/update! state .-dependents disj dep)
-        (maybe-deactivate)))
+        (deactivate)))
   (immediate-dependencies [this]
     (.-dependencies state))
   (immediate-dependents [this]
@@ -206,10 +230,10 @@
       :observed (do
                   (-add-watch this ::r/transition
                               (fn [_ _ _ _] (r/invalidate-readers! this)))
-                  (maybe-activate this))
+                  (ensure-active this))
       :un-observed (do
                      (-remove-watch this ::r/transition)
-                     (maybe-deactivate this))))
+                     (deactivate this))))
 
   IEquiv
   (-equiv [this other]
@@ -234,7 +258,7 @@
     (j/update! state .-watches (fnil assoc {}) key f))
   (-remove-watch [this key]
     (-> (j/update! state .-watches dissoc-empty key)
-        (maybe-deactivate)))
+        (deactivate)))
 
   IDeref
   (-deref [this]
@@ -243,7 +267,7 @@
 
   IReset
   (-reset! [this newval]
-    (when (not (identical? newval (.-value state)))
+    (when-not (= newval (.-value state))
       (c/set-watched! this .-value newval)
       (eval-dependents! this))
     newval)
@@ -265,37 +289,32 @@
                 .-dependencies #{}
                 .-dependents #{}
                 .-owner owner)
+
          nil))
+
+(defn update-cell* [cell f]
+  (j/assoc! (.-state cell) .-f f .-value nil)
+  (eval-and-set! cell))
 
 (defn cell*
   "Returns a cell for function `f` and `options`, an object of optional properties:
   - memo: string key for memoizing cell on current parent
   - def: true if cell is standalone, not memoized to any parent
   - updateExisting: an existing cell that should be updated with new function `f`"
-  [f options]
-  {:pre [(object? options)]}
-  (let [def? (.-def? options)
-        existing-cell (.-update-existing options)
-        memo-key (.-memo-key options)
-        owner (when-not def?
-                ;; cells are either standalone (created via `defcell`)
-                ;; or they are memoized on an "owner"
-                (or *self*
-                    r/*reader*))]
-
-    (cond existing-cell
-          (do (j/assoc! (.-state existing-cell) .-f f .-value nil)
-              (eval-and-set! existing-cell))
-
-          memo-key (u/memoized-on owner memo-key
-                     (make-cell f owner))
-
-          :else (make-cell f owner))))
+  ([f] (cell* f nil))
+  ([f memo-key]
+   (let [owner (or *self*
+                   r/*reader*)]
+     (if (some? memo-key)
+       (u/memoized-on owner memo-key (make-cell f owner))
+       (make-cell f owner)))))
 
 (defn cell
   [key value]
   (assert key "Cells created by functions require a key")
-  (cell* (constantly value) (j/obj .-memo-key (str "#" (hash key)))))
+  ;; TODO -
+  ;; `hash` does not guarantee uniqueness
+  (cell* (constantly value) (str "#" (hash key))))
 
 ;; Expose graph fns
 

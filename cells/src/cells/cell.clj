@@ -1,5 +1,5 @@
 (ns cells.cell
-  (:refer-clojure :exclude [bound-fn])
+  (:refer-clojure :exclude [bound-fn get])
   (:require [clojure.core :as core]
             [cells.util :as util]
             [applied-science.js-interop :as j]))
@@ -12,16 +12,17 @@
                            [nil body])
         [options body] (if (and (map? (first body)) (> (count body) 1))
                          [(first body) (rest body)]
-                         [nil body])]
+                         [nil body])
+        f `(fn [~'self] ~@body)]
     `(do
        ;; support re-evaluation without breaking links
        (declare ~the-name)
        (let [prev-cell# ~the-name]
          (def ~(with-meta the-name options)
            ~@(when docstring (list docstring))
-           (~'cells.cell/cell*
-            (fn [~'self] ~@body)
-            (~'applied-science.js-interop/obj .-def? true .-update-existing prev-cell#)))))))
+           (if (some? prev-cell#)
+             (~'cells.cell/update-cell* prev-cell# ~f)
+             (~'cells.cell/cell* ~f)))))))
 
 (defmacro cell
   "Returns an anonymous cell. Only one cell will be returned per lexical instance of `cell`,
@@ -32,7 +33,7 @@
    (let [id (util/unique-id)]
      `(~'cells.cell/cell*
        (fn [~'self] ~expr)
-       (~'applied-science.js-interop/obj .-memo-key (str ~id "#" (hash ~key)))))))
+       (str ~id "#" (hash ~key))))))
 
 (defmacro bound-fn
   "Returns an anonymous function which will evaluate in the context of the current cell
@@ -56,3 +57,6 @@
        (set! (~k state#) after#)
        (~'-notify-watches cell# before# after#))
      cell#))
+
+(defmacro get [cell k]
+  `(-> cell .-state ~k))
