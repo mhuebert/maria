@@ -248,7 +248,6 @@
    ;; :munged-namespace ::pass
    ;; :single-segment-namespace ::pass
    ;; :infer-warning ::pass
-   ;; :declared-arglists-mismatch ::pass
    ;; :invalid-array-access ::pass
    ;; :unprovided ::pass
    ;; :ns-var-clash ::pass
@@ -321,7 +320,15 @@
 
    :protocol-duped-method
    (fn [_type info]
-     (str "Your implementation of protocol `" (:protocol info) "` has two versions of the method `" (:fname info) "`. Consider deleting one."))})
+     (str "Your implementation of protocol `" (:protocol info) "` has two versions of the method `" (:fname info) "`. Consider deleting one."))
+
+   :declared-arglists-mismatch
+   (fn [_type info]
+     (comment ;; Sample `info`:
+       {:ns-name maria.user, :sym foo, :declared ([x y]), :defined ([x y z])})
+     (str "`" (:sym info) "` cannot be defined with arglist `" (:defined info)
+          "` because it was declared with arglist `" (:declared info) "`."
+          "\n\nEarlier, you declared `" (:sym info) "` as a function with one arglist. This expression defines that function with an incompatible arglist, which is not allowed. Make the declaration match the definition."))})
 
 (defn override-analyzer-messages! []
   (doseq [[k f] analyzer-messages]
