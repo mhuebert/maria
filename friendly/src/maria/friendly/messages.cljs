@@ -12,12 +12,13 @@
   "Recursively walk down the search `trie` matching `tokens` along `path`, returning the matching message template and match context."
   ([trie tokens] (match-in-tokens trie tokens []))
   ([trie [token & remaining-tokens] context]
-   (let [capture (first (filter (partial = "%") (keys trie)))
-         context (if capture
-                   (conj context token)
-                   context)]
+   (let [capture (first (filter (partial = "%") (keys trie)))]
      (if-let [trie-match (or (trie token) (trie capture))]
-       (let [next-match (match-in-tokens trie-match remaining-tokens context)]
+       ;; if we calculate `context` without `(not (trie token))` then we get captures from other branches
+       (let [context (if (and capture (not (trie token)))
+                       (conj context token)
+                       context)
+             next-match (match-in-tokens trie-match remaining-tokens context)]
          (if (:message trie-match)
            (assoc trie-match :context context)
            next-match))
