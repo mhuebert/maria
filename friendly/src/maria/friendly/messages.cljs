@@ -89,7 +89,7 @@
     ["let requires an even number"
      "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
     ["Index out of bounds"
-     "Somehow you're trying to get a non-existent part of a collection.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
+     "You're trying to get a non-existent part of a sequence.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
     ["nth not supported on this type %"
      "It looks like you're trying to iterate over something that isn't sequential.\n\nThis could be a couple things, but probably involves trying to treat something like a map, set, or keyword as if it were a vector, list, or string. Double-check that you're passing the arguments you think you are. 🤔 Are you passing a map or set parameter to a function expecting a vector or list? Or perhaps you're trying to destructure something that is not a sequence?"]
     ["illegal character"
@@ -280,7 +280,7 @@
      (str "The function `"
           (str-sanitizer-fns (or (:ctor info)
                                  (:name info)))
-          "` needs "
+          "` needs to be called with "
           (if (= 0 (:argc info)) ; TODO get arity from meta
             "more"
             "a different number of")
@@ -309,7 +309,8 @@
    
    :overload-arity
    (fn [type info]
-     "This is a 'multiple-arity' function, which has more than one expression accepting same number of arguments.")
+     (str "Function `" (:name info) "` is not allowed to have multiple definitions for the same number of arguments."
+          "\n\nFunctions which can alternately take more than one number of arguments must ensure that these argument lists (arglists) do not overlap. This is called 'overloading arities' and is not permitted because it is unclear which definition to use when receiving that number of arguments."))
 
    :dynamic
    (fn [_type info]
