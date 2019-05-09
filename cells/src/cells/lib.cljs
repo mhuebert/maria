@@ -13,12 +13,12 @@
   ([f] (-on-frame f nil))
   ([f initial-value]
    (let [self cell/*self*
-         stop? (volatile! false)
+         disposed? (volatile! false)
          interval-f (cell/bound-fn frame-f []
-                      (reset! self (f @self))
-                      (when-not @stop?
+                      (when (false? @disposed?)
+                        (reset! self (f @self))
                         (.requestAnimationFrame js/window frame-f)))]
-     (cell/on-dispose self :on-frame #(vreset! stop? true))
+     (cell/on-dispose self :on-frame #(vreset! disposed? true))
      (reset! self initial-value)
      (.requestAnimationFrame js/window interval-f))))
 

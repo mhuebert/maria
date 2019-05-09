@@ -47,16 +47,3 @@
          (try (apply (fn ~@body) args#)
               (catch ~'js/Error e#
                 (~'cells.cell/error! cell# e#)))))))
-
-(defmacro set-watched! [cell k value]
-  `(let [cell# ~cell
-         state# (.-state cell#)
-         before# (~k state#)
-         after# ~value]
-     (when (not= before# after#)
-       (set! (~k state#) after#)
-       (~'-notify-watches cell# before# after#))
-     cell#))
-
-(defmacro get [cell k]
-  `(-> cell .-state ~k))

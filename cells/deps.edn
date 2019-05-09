@@ -6,6 +6,4 @@
          chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                               :sha     "da6ceb2989b712ab59c654679e1eb7b2e4c6ef02"}}
 
- :aliases
-        {:test
-         {:extra-paths ["test"]}}}
+ :aliases {:test {:extra-paths ["test"]}}}

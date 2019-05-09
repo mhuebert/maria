@@ -4,7 +4,9 @@
             [chia.reactive :as r]
             [applied-science.js-interop :as j]
             [chia.util.perf :as perf])
-  (:require-macros [cells.cell :as c]))
+  (:require-macros cells.cell))
+
+(declare invalidate!)
 
 (def ^:dynamic *self* nil)
 
@@ -43,46 +45,51 @@
 ;;
 ;; Async metadata
 ;;
-;; async-state is represented as a [loading? error] tuple.
+
+(defn- get-async [cell]
+  (log-read! cell)
+  (.. cell -state -async))
+
+(defn- set-async! [cell v]
+  (let [state (.-state cell)
+        before (.-async state)]
+    (when (not= before v)
+      (set! (.-async state) v)
+      (invalidate! cell before v))
+    cell))
 
 (defn loading! [cell]
-  (c/set-watched! cell .-async [true nil]))
+  (set-async! cell :loading))
 
 (defn error! [cell error]
+  (set-async! cell error)
   (*error-handler* error)
-  (c/set-watched! cell .-async [false error]))
+  cell)
 
 (defn complete! [cell]
-  (c/set-watched! cell .-async [false nil]))
-
-(defn- async-state [cell]
-  ;; reading async-state is equivalent to reading a cell's value,
-  ;; as reactivity is concerned.
-  (log-read! cell)
-  (j/get-in cell [.-state .-async]))
+  (set-async! cell :complete))
 
 (defn status
   "Returns :error, :loading, or nil"
   [cell]
-  (let [st (async-state cell)]
-    (cond (some? (nth st 1)) :error
-          (true? (nth st 0)) :loading)))
+  (let [st (get-async cell)]
+    (if (keyword? st) st :error)))
 
 (defn loading? [cell]
-  (= :loading (status cell)))
+  (perf/identical? :loading (get-async cell)))
+
+(defn complete? [cell]
+  (perf/identical? :complete (get-async cell)))
 
 (defn error [cell]
-  (some-> (async-state cell) (nth 1)))
+  (let [st (get-async cell)]
+    (when-not (keyword? st) st)))
 
-(def error? (comp boolean error))
+(defn error? [cell]
+  (some? (error cell)))
 
 ;;backwards-compat
 (def message (comp str error))
-
-(defn complete? [cell]
-  (let [[loading? error] (async-state cell)]
-    (and (not loading?)
-         (nil? error))))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -93,12 +100,14 @@
   [cell]
   (doseq [f (vals (.. cell -state -on-dispose))]
     (f))
-  (j/assoc-in! cell [.-state .-on-dispose] nil)
+  (-> cell .-state .-on-dispose (set! nil))
   cell)
 
 (defn on-dispose
   "Registers function `f` at `key` to be called when cell is deactivated."
   [cell key f]
+  (assert (not (contains? (.. cell -state -on-dispose) key))
+          "`on-dispose` was called with a key that already exists")
   (j/update-in! cell [.-state .-on-dispose] assoc key f))
 
 ;;;;;;;;;;;;;;;;;;
@@ -106,28 +115,29 @@
 ;; Activation
 
 (defn active? [cell]
-  (boolean (j/get-in cell [.-state .-active])))
+  (.. cell -state -active))
 
 (defn necessary?
-  "Returns true if there is a path from `cell` to a watched cell"
+  "Returns true if there is a path from `cell` to any watched cell"
   [cell]
   (not (empty? (g/immediate-dependents cell))))
 
 (defn watched?
-  "Returns true if `cell` has at least one watcher"
+  "Returns true if `cell` is watched directly"
   [cell]
-  (some? (j/get-in cell [.-state .-watches])))
+  (some? (.. cell -state -watches)))
 
 (defn- deactivate
-  "When a cell has no more observors, deactivate"
+  "When a cell is unwatched and unnecessary, deactivate"
   [cell]
+  {:pre [(cell? cell)]}
   (when (and (active? cell)
              (not (watched? cell))
              (not (necessary? cell)))
     (doseq [dep (g/immediate-dependencies cell)]
       (g/un-depend! cell dep))
     (dispose! cell)
-    (j/assoc-in! cell [.-state .-active] false))
+    (-> cell .-state .-active (set! false)))
   cell)
 
 (declare eval-and-set!)
@@ -136,7 +146,7 @@
   "When a cell gains an observor, make sure it is active"
   [cell]
   (when-not (active? cell)
-    (j/assoc-in! cell [.-state .-active] true)
+    (-> cell .-state .-active (set! true))
     (eval-and-set! cell))
   cell)
 
@@ -175,6 +185,10 @@
         ;; only follow cells that have changed in a given cycle.
         (eval-and-set! dep))))
   cell)
+
+(defn invalidate! [cell before after]
+  (-notify-watches cell before after)
+  (eval-dependents! cell))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -217,8 +231,8 @@
   (add-dependent! [this dep]
     (j/update! state .-dependents set-conj dep))
   (remove-dependent! [this dep]
-    (-> (j/update! state .-dependents disj dep)
-        (deactivate)))
+    (j/update! state .-dependents disj dep)
+    (deactivate this))
   (immediate-dependencies [this]
     (.-dependencies state))
   (immediate-dependents [this]
@@ -257,8 +271,8 @@
   (-add-watch [this key f]
     (j/update! state .-watches (fnil assoc {}) key f))
   (-remove-watch [this key]
-    (-> (j/update! state .-watches dissoc-empty key)
-        (deactivate)))
+    (j/update! state .-watches dissoc-empty key)
+    (deactivate this))
 
   IDeref
   (-deref [this]
@@ -267,9 +281,10 @@
 
   IReset
   (-reset! [this newval]
-    (when-not (= newval (.-value state))
-      (c/set-watched! this .-value newval)
-      (eval-dependents! this))
+    (let [oldval (.-value state)]
+      (when (not= oldval newval)
+        (j/assoc! state .-value newval)
+        (invalidate! this oldval newval)))
     newval)
 
   ISwap
@@ -288,7 +303,9 @@
                 .-value nil
                 .-dependencies #{}
                 .-dependents #{}
-                .-owner owner)
+                .-owner owner
+                .-active false
+                .-async :complete)
 
          nil))
 
