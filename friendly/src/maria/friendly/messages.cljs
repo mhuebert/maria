@@ -70,7 +70,9 @@
   ;; TODO verify these are working. On spot-check several are broken.
   "A search trie for matching error messages to templates."
   (build-error-message-trie
-   [["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
+   [["f is null"
+     "`nil` is not a valid function."]
+    ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
      "It looks like you're trying to call a function that has not been defined yet. 🙀"]
     ["invalid arity %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
      "%1 is the wrong number of arguments for this function.\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments."]
