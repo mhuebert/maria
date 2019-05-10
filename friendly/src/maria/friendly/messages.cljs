@@ -41,7 +41,7 @@
   
   )
 
-(defn str-sanitizer-fns [s]
+(defn sanitize-js-error [s]
   (-> (str s) ;; we ensure Stringiness here because we also want to handle raw vars
       (string/replace "(...).call" "")
       (string/replace ".call" "")
@@ -57,7 +57,7 @@
   [s]
   (->> (-> s
            string/lower-case
-           str-sanitizer-fns
+           sanitize-js-error
            (string/split #"[^a-z%0-9%\.%:]"))
        (remove empty?)
        (into [])))
@@ -294,7 +294,7 @@
    :fn-arity
    (fn [type info]
      (str "The function `"
-          (str-sanitizer-fns (or (:ctor info)
+          (sanitize-js-error (or (:ctor info)
                                  (:name info)))
           "` needs to be called with "
           (if (= 0 (:argc info)) ; TODO get arity from meta
