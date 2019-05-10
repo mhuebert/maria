@@ -31,30 +31,34 @@
      "No protocol method ICollection.-conj defined for type cljs.core/Keyword: :a"
      "No protocol method ICollection.-conj defined for type number: 7"
      "5.call is not a function"
+     "cljs.core.list(...).call is not a function"
      "shapes.core.circle.call(...).call is not a function"
      "No item 5 in vector of length 0"])
   
   (tokenize "shapes.core.circle.call(...).call is not a function")
 
-  (map tokenize sample-error-messages)
+  (map (juxt identity tokenize) sample-error-messages)
   
   )
 
 (defn str-sanitizer-fns [s]
   (-> (str s) ;; we ensure Stringiness here because we also want to handle raw vars
+      (string/replace "(...).call" "")
       (string/replace ".call" "")
       (string/replace "cljs.core/" "")
       (string/replace "shapes.core/" "")
-      (string/replace "maria.user/" "")))
+      (string/replace "maria.user/" "")
+      (string/replace "cljs.core." "")
+      (string/replace "shapes.core." "")
+      (string/replace "maria.user." "")))
 
 (defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z] and numbers [0-9]."
+  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.] and colon [:]."
   [s]
   (->> (-> s
            string/lower-case
            str-sanitizer-fns
-           (string/split #"[^a-z%0-9]"))
-       (map #(string/replace % "." ""))
+           (string/split #"[^a-z%0-9%\.%:]"))
        (remove empty?)
        (into [])))
 
