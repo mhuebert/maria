@@ -75,14 +75,14 @@
   "A search trie for matching error messages to templates."
   (build-error-message-trie
    [["f is null"
-     "`nil` is not a valid function."]
+     "`nil` is not a valid function.\n\nAt some point I expected a function but found `nil` instead."]
     ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
      "It looks like you're trying to call a function that has not been defined yet. 🙀"]
-    ["invalid arity %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
+    ["invalid arity: %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
      "%1 is the wrong number of arguments for this function.\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments."]
     ["no item % in vector of length %" ;; TODO combine message with that of "Index out of bounds" case
      "Couldn't find element %1 in vector of length %2.\n\nThis is an 'index out of bounds' error. You're trying to access (probably with `nth`) something in a vector at a place that doesn't exist."]
-    ["no protocol method icollection % defined for type % %"
+    ["no protocol method icollection. % defined for type % %"
      "`%3` is not a collection, but you're treating it like one.\n\n`%1` is trying to use the %2 `%3` as a collection, but `%3` can't be interpreted as a collection."]
     ["% is not iseqable"
      "The value `%1` can't be used as a sequence.\n\n`%1` does not implement the 'ISeqable' protocol, which is used when a value can be interpreted sequentially."]
@@ -96,8 +96,18 @@
      "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
     ["Index out of bounds"
      "You're trying to get a non-existent part of a sequence.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
-    ["nth not supported on this type %"
-     "It looks like you're trying to iterate over something that isn't sequential.\n\nThis could be a couple things, but probably involves trying to treat something like a map, set, or keyword as if it were a vector, list, or string. Double-check that you're passing the arguments you think you are. 🤔 Are you passing a map or set parameter to a function expecting a vector or list? Or perhaps you're trying to destructure something that is not a sequence?"]
+    
+    ["nth not supported on this type % % % %"
+     ;; Warning: these `%`s are hairy.
+     ;;  - there could be one e.g.  "persistenthashmap"
+     ;;  - or there could be four e.g. "function boolean native code"
+     ;;  - the error message doesn't include the value that caused the problem
+     ;; Because the trie uses mere string pattern matching, we can't
+     ;; use `type-to-name` to turn them into human-readable terms
+     ;; without significant refactoring. Therefore we currently drop
+     ;; it on the floor.
+     (str "You're treating a non-sequential value like a sequence."
+          "\n\nIt seems like you're trying to iterate over a value that isn't sequential. This could be a couple things, but probably involves trying to treat a value (like a keyword) or a collection (like a map or set) as if it were a sequential value (like a vector, list, or String). This can happen by destructuring or by using `nth` on a non-sequence.")]
     ["illegal character"
      "One of the names in that expression contains an 'illegal character'. Often this is because the name contains an emoji, which JavaScript (the programming language your browser uses) doesn't allow."]]))
 ;;"It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"
