@@ -1,41 +1,44 @@
 (ns maria.views.floating.float-ui
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [lark.commands.registry :refer-macros [defcommand]]
-            [re-db.d :as d]
-            [re-view.routing :as r]
+            [chia.db :as d]
+            [chia.routing :as routing]
             [goog.events :as events]
-            [maria.views.error :as error])
+            [maria.views.error :as error]
+            [chia.reactive :as r])
   (:import [goog.events EventType]))
 
-(defview FloatingContainer
-  {:teardown                (fn [{:keys [view/state]}]
+(defn tear-down! [{:keys [view/state]}]
                               (when-let [teardown (:teardown @state)]
                                 (teardown)))
-   :setupListener           (fn [{:keys [view/state cancel-events] :as this
+
+(defn setup-listener! [{:keys [view/state cancel-events] :as this
                                   :or   {cancel-events ["mousedown" "focus" "scroll"]}}]
-                              (.teardown this)
+  (tear-down! this)
                               (let [the-events (to-array cancel-events)
-                                    this-node (v/dom-node this)
+        this-node (v/dom-node this)
                                     callback (fn [e]
-                                               (when (and (not (r/closest (.-target e) (partial = this-node)))
+                   (when (and (not (routing/closest (.-target e) (partial = this-node)))
                                                           (or (not= (.-type e) "scroll")
                                                               (= (.-target e) js/document)))
-                                                 (.teardown this)
+                     (tear-down! this)
                                                  (d/transact! [[:db/retract-attr :ui/globals :floating-hint]])))]
                                 (events/listen js/window the-events callback true)
-                                (v/swap-silently! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
-                                                                             (v/swap-silently! state dissoc :teardown)))))
-   :view/did-mount          (fn [this] (.setupListener this))
-   :view/will-receive-props (fn [{cancel-events                       :cancel-events
+    (r/silently (swap! state assoc :teardown #(do (events/unlisten js/window the-events callback true)
+                                                  (r/silently (swap! state dissoc :teardown)))))))
+
+(v/defclass FloatingContainer
+  {:view/did-mount (fn [this] (setup-listener! this))
+   :view/did-update (fn [{cancel-events :cancel-events
                                   {prev-cancel-events :cancel-events} :view/prev-props :as this}]
                               (when-not (= cancel-events prev-cancel-events)
-                                (.setupListener this)))
-   :view/will-unmount       (fn [this] (.teardown this))}
+                        (setup-listener! this)))
+   :view/will-unmount (fn [this] (tear-down! this))}
   [{:keys [component props element float/offset]
     [left top] :float/pos
     :or   {offset [0 0]}}]
-  (error/error-boundary
-    {:on-error (fn [result])}
+  [error/error-boundary
+    {:on-error (fn [_ _])}
     (let [left (+ left (first offset))
           top (+ top (second offset))
           BOTTOM_PADDING (or (-> (.getElementById js/document "bottom-bar")
@@ -50,7 +53,7 @@
            (component (merge props
                              #:ui {:top        top
                                    :left       left
-                                   :max-height max-height})))])))
+                                  :max-height max-height})))])])
 
 (defn show-floating-view []
   (some-> (d/get :ui/globals :floating-hint)

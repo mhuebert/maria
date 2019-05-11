@@ -1,14 +1,13 @@
 (ns maria.views.floating.tooltip
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.views.floating.float-ui :as ui]
-            [re-db.d :as d]
             [goog.events :as events]
             [goog.dom.dataset :as data]
-            [re-view.routing :as r]
+            [chia.routing :as r]
             [maria.util :as util]
             [cljs.tools.reader.edn :as edn]))
 
-(defview Tooltip
+(v/defclass Tooltip
   {:view/did-mount
    (fn [{:keys [view/state]}]
      (let [the-events #js ["mouseover" "mouseout" "mousedown" "mouseenter" "mouseleave"]

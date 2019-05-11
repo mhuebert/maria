@@ -62,7 +62,7 @@
 }
 
 .cm-s-maria-light .cm-error {
-    background: #c66;
+    background: #cc666629;
     color: #969896
 }
 
@@ -362,7 +362,7 @@ div.CodeMirror .cm-comment {
 }
 
 .prosemirror-content h1, .prosemirror-content h2 {
-    margin-top: 3rem;
+    margin: 1.5rem 0 0.5rem;
     font-weight: 400
 }
 

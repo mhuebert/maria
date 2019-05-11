@@ -1,13 +1,8 @@
 (ns cells.cell
-  (:require [cells.util :as util]))
-
-(def lib-bindings
-  (reduce (fn [bindings sym]
-            (into bindings [(symbol (name sym)) sym]))
-          []
-          '[cells.lib/interval
-            cells.lib/timeout
-            cells.lib/fetch]))
+  (:refer-clojure :exclude [bound-fn get])
+  (:require [clojure.core :as core]
+            [cells.util :as util]
+            [applied-science.js-interop :as j]))
 
 (defmacro defcell
   "Defines a named cell."
@@ -15,42 +10,40 @@
   (let [[docstring body] (if (string? (first body))
                            [(first body) (rest body)]
                            [nil body])
-        [meta body] (if (and (map? (first body)) (> (count body) 1))
-                      [(first body) (rest body)]
-                      [nil body])
-        cell-name (keyword (str *ns*) (str the-name))]
-    `(def ~the-name
-       ~@(when docstring (list docstring))
-       (let ~lib-bindings
-         (cond-> (~'cells.cell/cell* ~cell-name (fn [~'self] ~@body))
-                 ~meta (with-meta ~meta))))))
-
-(defn- cell-name
-  "Construct a cell-name, incorporating the runtime-value of `key` if provided."
-  [key]
-  (let [uuid (str "_" (util/unique-id))
-        namespace-segment (str *ns*)]
-    (if key `(keyword ~namespace-segment (str ~uuid "._" (hash ~key)))
-            (keyword namespace-segment uuid))))
+        [options body] (if (and (map? (first body)) (> (count body) 1))
+                         [(first body) (rest body)]
+                         [nil body])
+        f `(fn [~'self] ~@body)]
+    `(do
+       ;; support re-evaluation without breaking links
+       (declare ~the-name)
+       (let [prev-cell# ~the-name]
+         (def ~(with-meta the-name options)
+           ~@(when docstring (list docstring))
+           (if (some? prev-cell#)
+             (~'cells.cell/update-cell* prev-cell# ~f)
+             (~'cells.cell/cell* ~f)))))))
 
 (defmacro cell
   "Returns an anonymous cell. Only one cell will be returned per lexical instance of `cell`,
-  unless a unique `key` is provided. Helper functions in `lib-bindings` (eg. interval) are
-  hoisted into scope, as is `self`, which refers to the current cell."
+  unless a unique `key` is provided. `self` is brought into scope, referring to the current cell."
   ([expr]
    `(~'cells.cell/cell nil ~expr))
   ([key expr]
-   `(let ~lib-bindings
-      (~'cells.cell/cell* ~(cell-name key) (fn [~'self] ~expr)))))
+   (let [id (util/unique-id)]
+     `(~'cells.cell/cell*
+       (fn [~'self] ~expr)
+       (str ~id "#" (hash ~key))))))
 
-(defmacro cell-fn
-  "Returns an anonymous function which will evaluate with the current cell in the stack.
-  Similar to Clojure's `bound-fn`, but only cares about the currently bound cell."
+(defmacro bound-fn
+  "Returns an anonymous function which will evaluate in the context of the current cell
+   (useful for handling async-state)"
   [& body]
-  `(let [the-cell# (first ~'cells.cell/*cell-stack*)
-         context# ~'cells.cell/*eval-context*]
+  `(let [cell# ~'cells.cell/*self*
+         error-handler# ~'cells.cell/*error-handler*]
      (fn [& args#]
-       (binding [~'cells.cell/*cell-stack* (cons the-cell# ~'cells.cell/*cell-stack*)]
+       (binding [~'cells.cell/*self* cell#
+                 ~'cells.cell/*error-handler* error-handler#]
          (try (apply (fn ~@body) args#)
-              (catch ~'js/Error error#
-                (~'cells.eval-context/handle-error context# error#)))))))
+              (catch ~'js/Error e#
+                (~'cells.cell/error! cell# e#)))))))

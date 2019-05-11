@@ -6,20 +6,26 @@
             [lark.commands.registry :refer-macros [defcommand]]
             [lark.editor :as Editor]
 
-            [re-view.core :as v]
-            [re-db.d :as d]
+            [chia.view :as v]
+            [chia.db :as d]
 
-            [re-view.prosemirror.markdown :as markdown]
+            [prosemirror.markdown :as markdown]
 
-            [cells.cell :as cell]
             [maria.util :as util]
 
-            [cells.eval-context :as eval-context]
-            [fast-zip.core :as z]
             [lark.tree.node :as node]
             [lark.tree.emit :as emit]
             [lark.tree.ext :as ext]
             [lark.tree.reader :as rd]))
+
+(defprotocol IDispose
+  (on-dispose [context key f]
+              "Register a callback to be fired when context is disposed.")
+  (-dispose! [context]))
+
+(defn dispose! [owner]
+  (when (satisfies? IDispose owner)
+    (-dispose! owner)))
 
 (defprotocol IBlock
 
@@ -186,8 +192,8 @@
      (let [removed-blocks (->> replaced-blocks*
                                (filterv (comp (complement (set (mapv :id values))) :id)))]
        (doseq [block removed-blocks]
-         (when (satisfies? eval-context/IDispose block)
-           (eval-context/dispose! block))))
+         (when (satisfies? IDispose block)
+           (dispose! block))))
      result)))
 
 (defcommand :doc/print-to-console

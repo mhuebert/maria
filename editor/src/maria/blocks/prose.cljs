@@ -1,10 +1,8 @@
 (ns maria.blocks.prose
-  (:require [re-view.core :as v :refer [defview]]
-            [re-view.prosemirror.core :as pm]
+  (:require [prosemirror.core :as pm]
             [maria.util :as util]
             [maria.blocks.blocks :as Block]
-            [lark.tree.core :as tree]
-            [re-view.prosemirror.markdown :as markdown]
+            [prosemirror.markdown :as markdown]
             [maria.editors.prose :refer [ProseRow]]
             [lark.editor :as Editor]
             [lark.tree.emit :as emit]
@@ -139,7 +137,7 @@
 ;; does not work due to probable bug in ProseMirror where .focus() sets the cursor position to zero.
 #_(defn get-pm [editor-view]
     (:prose-editor-view @(:view/state editor-view)))
-#_(defview markdown
+#_(defclass markdown
     {:view/initial-state {:editing? false
                           :pm-view nil}}
     [{:keys [view/state view/prev-state]} s]

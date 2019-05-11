@@ -1,10 +1,8 @@
 (ns maria.persistence.github
   (:require [goog.net.XhrIo :as xhr]
-            [goog.object :as gobj]
             [maria.persistence.tokens :as tokens]
-            [re-db.d :as d]
+            [chia.db :as d]
             [maria.curriculum :as curriculum]
-            [maria.persistence.local :as local]
             [clojure.string :as string]
             [applied-science.js-interop :as j]))
 

@@ -1,5 +1,5 @@
 (ns maria.user
-  (:require [re-view.core]))
+  (:require [chia.view]))
 
 (defmacro user-macro [& body]
   `[~@body])

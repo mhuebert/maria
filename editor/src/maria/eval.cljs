@@ -2,9 +2,8 @@
   (:refer-clojure :exclude [macroexpand eval])
   (:require [lark.eval :as e :refer [defspecial]]
             [shadow.cljs.bootstrap.browser :as boot]
-            [re-db.d :as d]
-            [kitchen-async.promise :as p]
-            [cljs.analyzer :as ana]))
+            [chia.db :as d]
+            [kitchen-async.promise :as p]))
 
 (def bootstrap-path "/js/compiled/bootstrap")
 
@@ -16,18 +15,15 @@
 (defonce c-env e/c-env)
 (defonce resolve-var e/resolve-var)
 
-(def var-value e/var-value)
 ;;;;;;;;;;;;;
 ;;
 ;; Block error handling
 
 (defonce -block-eval-log (volatile! {}))
 
-
 (def add-error-position e/add-error-position)
 
 (defn handle-block-error [block-id error]
-  (js/console.error "handle-block-error/error" error)
   (let [eval-log (get @-block-eval-log block-id)
         result (-> (first eval-log)
                    (assoc :error (or error (js/Error. "Unknown error"))
@@ -51,17 +47,17 @@
 (def compile-str
   (partial e/compile-str c-state c-env))
 
-(defn macroexpand-n
-  ([form] (macroexpand-n 1000 form))
-  ([depth-limit form]
-   (loop [form form
-          n 0]
-     (if (>= n depth-limit)
-       form
-       (let [expanded (ana/macroexpand-1 c-state form)]
-         (if (= form expanded)
-           expanded
-           (recur expanded (inc n))))))))
+#_(defn macroexpand-n
+    ([form] (macroexpand-n 1000 form))
+    ([depth-limit form]
+     (loop [form form
+            n 0]
+       (if (>= n depth-limit)
+         form
+         (let [expanded (ana/macroexpand-1 c-state form)]
+           (if (= form expanded)
+             expanded
+             (recur expanded (inc n))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -84,23 +80,22 @@
 (defonce compiler-ready
          (delay
           (p/promise [resolve reject]
-                     (boot/init
-                      c-state
-                      {:path bootstrap-path
-                       :load-on-init '#{maria.user
-                                        cljs.spec.alpha
-                                        cljs.spec.test.alpha}}
-                      (fn []
-                        (eval-form* '(inject 'cljs.core '{what-is       maria.friendly.kinds/what-is
-                                                          load-gist     maria.user.loaders/load-gist
-                                                          load-js       maria.user.loaders/load-js
-                                                          load-npm      maria.user.loaders/load-npm
-                                                          html          re-view.hiccup.core/element
-                                                          macroexpand-n maria.eval/macroexpand-n
-                                                          eval          maria.eval/eval*}))
-                        (doseq [form ['(in-ns cljs.spec.test.alpha$macros)
-                                      '(in-ns maria.user)]]
-                          (eval-form* form))
-                        (resolve))))))
+            (boot/init
+             c-state
+             {:path         bootstrap-path
+              :load-on-init '#{maria.user
+                               cljs.spec.alpha
+                               cljs.spec.test.alpha}}
+             (fn []
+               (eval-form* '(inject 'cljs.core '{what-is   maria.friendly.kinds/what-is
+                                                 load-gist maria.user.loaders/load-gist
+                                                 load-js   maria.user.loaders/load-js
+                                                 load-npm  maria.user.loaders/load-npm
+                                                 html      chia.view.hiccup/element
+                                                 #_#_macroexpand-n maria.eval/macroexpand-n}))
+               (doseq [form ['(in-ns cljs.spec.test.alpha$macros)
+                             '(in-ns maria.user)]]
+                 (eval-form* form))
+               (resolve))))))
 
 (set! cljs.core/*eval* eval*)

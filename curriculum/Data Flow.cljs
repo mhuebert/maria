@@ -18,12 +18,12 @@
          {:query {:lat (:latitude @location "52.4821146")
                   :lng (:longitude @location "13.4121388")
                   :maxResults 10
-                  :key "inplsc863h7a"
+                  :key "inplsc863h7a" 
                   :fmt "json"}}))
 
 ;; Once that comes back, let's poke at it a bit. That's the best way to get to know some new data. Let's look at just one of the results:
 
-(first @birds)
+(cell (first @birds))
 
 ;; OK, so we've got some birdwatching data. Maybe we can guess about what each attribute means.
 
@@ -58,7 +58,7 @@
 
 ;; Let's try it out. First, let's get a look at the kind of term it will work for:
 
-(:sciName (rand-nth @birds))
+(cell (:sciName (rand-nth @birds)))
 
 ;; Wrap that `:sciName` in a `find-image` call and evaluate it.
 

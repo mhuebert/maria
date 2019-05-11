@@ -1,7 +1,6 @@
 (ns maria.blocks.history
   (:require [clojure.set :as set]
-            [cells.eval-context :as eval-context]
-            [re-view.core :as v]
+            [chia.view :as v]
             [maria.blocks.blocks :as Block]
             [lark.editor :as Editor]
             [lark.commands.exec :as exec]))
@@ -65,8 +64,8 @@
             (Editor/of-block)
             (Editor/focus! :start))
     (v/swap-silently! state update :history update-first-meta merge
-                      {:selections-before selections
-                       :selections-after  selections
+            {:selections-before selections
+             :selections-after selections
                        :timestamp         (.now js/Date)})
     (before-change)))
 
@@ -80,7 +79,7 @@
                                (set (map :id next-version)))
         blocks (filter (comp ids :id) prev-version)]
     (doseq [block blocks]
-      (eval-context/dispose! block))))
+      (Block/dispose! block))))
 
 (defn clear! [state]
   (v/swap-silently! state dissoc :history/redo-stack :history))

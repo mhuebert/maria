@@ -263,6 +263,10 @@
     (swap! cm assoc :cursor/handle
            (.setBookmark cm (range->Pos cursor) #js {:widget (cursor-bookmark)})))
 
+(defn set-value-and-refresh! [editor value]
+      (set-preserve-cursor! editor value)
+      (.refresh editor))
+
 (defn set-zipper!
   ([editor zipper & [{:keys [decorate?]
                       :or {decorate? true}}]]

@@ -1,12 +1,12 @@
 (ns maria.frames.trusted-actions
-  (:require [re-db.d :as d]
+  (:require [chia.db :as d]
             [maria.persistence.firebase :as remote]
             [clojure.string :as string]
-            [re-view.routing :as routing]
+            [chia.routing :as routing]
             [cljs.core.match :refer-macros [match]]
             [maria.persistence.github :as github]
             [maria.frames.frame-communication :as frame]
-            [re-view.routing :as r]))
+            [chia.routing :as r]))
 
 (defn navigate! [url opts]
   (if (string/starts-with? url "/")

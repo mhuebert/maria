@@ -1,7 +1,8 @@
 (ns maria.persistence.firebase
-  (:require [re-view.core :as v :refer [defview]]
+  (:require [chia.view :as v]
             [maria.persistence.tokens :as tokens]
-            [re-db.d :as d]
+            [chia.db :as d]
+            [goog.object :as gobj]
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
             ["firebase/app" :as firebase]
