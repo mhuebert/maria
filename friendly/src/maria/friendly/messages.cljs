@@ -75,7 +75,6 @@
           templates))
 
 (def error-message-trie
-  ;; TODO verify these are working. On spot-check several are broken.
   "A search trie for matching error messages to templates."
   (build-error-message-trie
    [["f is null"
