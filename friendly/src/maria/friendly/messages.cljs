@@ -56,7 +56,7 @@
       (string/replace "maria.user." "")))
 
 (defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.], underscore [_], and colon [:]."
+  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.], dash [-] (including converted underscore [_]), and colon [:]."
   [s]
   (->> (-> s
            string/lower-case
