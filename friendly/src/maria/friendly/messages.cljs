@@ -35,10 +35,11 @@
      "shapes.core.circle.call(...).call is not a function"
      "No item 5 in vector of length 0"
      "maria.user.a_fn.call(...).call is not a function"
-     "maria.user.a_b_c_d_fn.call(...).call is not a function"])
+     "maria.user.a_b_c_d_fn.call(...).call is not a function"
+     "(new cljs.core.Keyword(...)).cljs$core$IFn$_invoke$arity$3 is not a function"])
 
-  (tokenize "maria.user.a_fn.call(...).call is not a function")
-
+  (tokenize "(new cljs.core.Keyword(...)).cljs$core$IFn$_invoke$arity$3 is not a function")
+  
   (map (juxt identity tokenize) sample-error-messages)
   
   )
@@ -124,7 +125,10 @@
     ;; don't split on `_`.
     ["% is not a function"
      "The value `%1` isn't a function, but it's being called like one."]
-    
+    ["new keyword % % % % % % % is not a function"
+     (str "A keyword is being called as a function on %7 arguments."
+          "\n\nKeywords can act as functions on a single collection (such as a map or set), but keywords-as-functions can't take %7 arguments.")]
+
     ["Could not compile"
      (str "Compile error."
           "\n\nWe were unable to turn this expression into JavaScript. 😰")]    
