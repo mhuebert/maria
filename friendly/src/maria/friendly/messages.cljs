@@ -33,9 +33,11 @@
      "5.call is not a function"
      "cljs.core.list(...).call is not a function"
      "shapes.core.circle.call(...).call is not a function"
-     "No item 5 in vector of length 0"])
-  
-  (tokenize "shapes.core.circle.call(...).call is not a function")
+     "No item 5 in vector of length 0"
+     "maria.user.a_fn.call(...).call is not a function"
+     "maria.user.a_b_c_d_fn.call(...).call is not a function"])
+
+  (tokenize "maria.user.a_fn.call(...).call is not a function")
 
   (map (juxt identity tokenize) sample-error-messages)
   
@@ -53,12 +55,13 @@
       (string/replace "maria.user." "")))
 
 (defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.] and colon [:]."
+  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.], underscore [_], and colon [:]."
   [s]
   (->> (-> s
            string/lower-case
            sanitize-js-error
-           (string/split #"[^a-z%0-9%\.%:]"))
+           (string/split #"[^a-z%0-9%\.%:%_]"))
+       (map #(string/replace % "_" "-")) ;; this must happen in post-processing so we don't split on underscores-turned-to-dashes
        (remove empty?)
        (into [])))
 
@@ -75,19 +78,31 @@
   "A search trie for matching error messages to templates."
   (build-error-message-trie
    [["f is null"
-     "`nil` is not a valid function.\n\nAt some point I expected a function but found `nil` instead."]
+     (str "`nil` is not a valid function."
+          "\n\nAt some point I expected a function but found `nil` instead.")]
     ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
      "It looks like you're trying to call a function that has not been defined yet. 🙀"]
     ["invalid arity: %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
-     "%1 is the wrong number of arguments for this function.\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments."]
+     (str "%1 is the wrong number of arguments for this function."
+          "\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments.")]
     ["no item % in vector of length %" ;; TODO combine message with that of "Index out of bounds" case
-     "Couldn't find element %1 in vector of length %2.\n\nThis is an 'index out of bounds' error. You're trying to access (probably with `nth`) something in a vector at a place that doesn't exist."]
+     (str "Couldn't find element %1 in vector of length %2."
+          "\n\nThis is an 'index out of bounds' error. You're trying to access (probably with `nth`) something in a vector at a place that doesn't exist.")]
     ["no protocol method icollection. % defined for type % %"
-     "`%3` is not a collection, but you're treating it like one.\n\n`%1` is trying to use the %2 `%3` as a collection, but `%3` can't be interpreted as a collection."]
+     (str "`%3` is not a collection, but you're treating it like one."
+          "\n\n`%1` is trying to use the %2 `%3` as a collection, but `%3` can't be interpreted as a collection.")]
     ["% is not iseqable"
-     "The value `%1` can't be used as a sequence.\n\n`%1` does not implement the 'ISeqable' protocol, which is used when a value can be interpreted sequentially."]
+     (str "The value `%1` can't be used as a sequence."
+          "\n\n`%1` does not implement the 'ISeqable' protocol, which is used when a value can be interpreted sequentially.")]
+
+    ;; NB: depending on the tokenizer's splitting strategy, this error
+    ;; may need to be manually split into several multi-wildcard-token
+    ;; matching strings (or we could switch to a more robust matcher,
+    ;; like bidi). Currently this is not necessary (AFAIK) b/c we
+    ;; don't split on `_`.
     ["% is not a function"
      "The value `%1` isn't a function, but it's being called like one."]
+
     ["Parameter declaration missing" ;; FIXME can't replicate
      "This function is missing its 'parameter declaration', the vector of arguments that comes after its name or docstring."]
     ["Could not compile"
@@ -95,7 +110,8 @@
     ["let requires an even number"
      "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
     ["Index out of bounds"
-     "You're trying to get a non-existent part of a sequence.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
+     (str "You're trying to get a non-existent part of a sequence."
+          "\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error.")]
     
     ["nth not supported on this type % % % %"
      ;; Warning: these `%`s are hairy.
