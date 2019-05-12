@@ -78,8 +78,15 @@
   "A search trie for matching error messages to templates."
   (build-error-message-trie
    [["f is null"
-     (str "`nil` is not a valid function."
-          "\n\nAt some point I expected a function but found `nil` instead.")]
+     (str "Expected a function but found `nil`."
+          "\n\nAt some point I found `nil` where a function should be, such as in a higher-order function like `map` or `keep`. `nil` is not a valid function.")]
+    ["pred is null"
+     (str "Expected a predicate function but found `nil`."
+          "\n\nAt some point I found `nil` where a predicate function should be, like in a `filter` or `some`. Predicate functions cannot be `nil`.")]
+    ["% is null"
+     (str "Expected a composable function but found `nil`."
+          "\n\nAt some point I found `nil` where a function should be passed to a higher-order composition function, like a `comp` or `juxt`. It was found at position `%1`. `nil` is not a valid part of function composition.")]
+
     ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
      "It looks like you're trying to call a function that has not been defined yet. 🙀"]
     ["invalid arity: %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
