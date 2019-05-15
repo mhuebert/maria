@@ -6,9 +6,9 @@
             [chia.util.perf :as perf])
   (:require-macros cells.cell))
 
-(declare invalidate!)
-
-(def ^:dynamic *self* nil)
+(def ^:dynamic *self*
+  "Tracks the currently-evaluating cell."
+  nil)
 
 (def ^:dynamic *default-view*
   "Views are implemented as metadata on cells. A rendering environment
@@ -17,13 +17,18 @@
   identity)
 
 (def ^:dynamic *error-handler*
+  "Errors are caught during evaluation of cells and their bound-fns.
+   By default, we re-throw the error with information about where it
+   originated. This behaviour can be overridden here."
   (fn [error]
     (throw (ex-info "Error evaluating cell" {:cell *self*} error))))
 
 (defprotocol ICell
   "Marker protocol to determine if a thing is a cell")
 
-(defn cell? [x]
+(defn cell?
+  "Returns true of `x` is a cell."
+  [x]
   (satisfies? ICell x))
 
 ;;;;;;;;;;;;;;;
@@ -32,13 +37,13 @@
 
 (def ^:private ^:dynamic *read-log* nil)
 
-(declare ensure-active)
+(declare maybe-activate)
 
-(defn- log-read! [cell]
-  (ensure-active cell)
+(defn- log-observation! [cell]
+  (maybe-activate cell)
   (when-not (identical? cell *self*)
     (some-> *read-log* (vswap! conj cell))
-    (r/log-read! cell))
+    (r/observe-simple! cell))
   cell)
 
 ;;;;;;;;;;;;;;;
@@ -47,15 +52,17 @@
 ;;
 
 (defn- get-async [cell]
-  (log-read! cell)
+  (log-observation! cell)
   (.. cell -state -async))
+
+(declare mark-changed!)
 
 (defn- set-async! [cell v]
   (let [state (.-state cell)
         before (.-async state)]
-    (when (not= before v)
+    (when-not (identical? before v)
       (set! (.-async state) v)
-      (invalidate! cell before v))
+      (mark-changed! cell))
     cell))
 
 (defn loading! [cell]
@@ -67,28 +74,31 @@
   cell)
 
 (defn complete! [cell]
-  (set-async! cell :complete))
+  (set-async! cell nil))
 
 (defn status
   "Returns :error, :loading, or nil"
   [cell]
   (let [st (get-async cell)]
-    (if (keyword? st) st :error)))
+    (if (or (nil? st) (keyword? st)) st :error)))
 
 (defn loading? [cell]
   (perf/identical? :loading (get-async cell)))
 
 (defn complete? [cell]
-  (perf/identical? :complete (get-async cell)))
+  (nil? (get-async cell)))
+
+(defn- error-st? [st]
+  (and (some? st)
+       (not (perf/identical? :loading st))))
 
 (defn error [cell]
-  (let [st (get-async cell)]
-    (when-not (keyword? st) st)))
+  (-> (get-async cell)
+      (u/guard error-st?)))
 
 (defn error? [cell]
-  (some? (error cell)))
+  (error-st? (get-async cell)))
 
-;;backwards-compat
 (def message (comp str error))
 
 ;;;;;;;;;;;;;;;;;;
@@ -127,7 +137,7 @@
   [cell]
   (some? (.. cell -state -watches)))
 
-(defn- deactivate
+(defn- maybe-deactivate
   "When a cell is unwatched and unnecessary, deactivate"
   [cell]
   {:pre [(cell? cell)]}
@@ -142,7 +152,7 @@
 
 (declare eval-and-set!)
 
-(defn- ensure-active
+(defn- maybe-activate
   "When a cell gains an observor, make sure it is active"
   [cell]
   (when-not (active? cell)
@@ -158,9 +168,12 @@
   (let [f (j/get-in cell [.-state .-f])]
     (try (f cell)
          (catch :default e
-           ;; always clean up after an error
-           (dispose! cell)
+           (dispose! cell)                                  ;; always dispose on error
            (error! cell e)))))
+
+(def ^:dynamic ^:private *to-evaluate* nil)
+(def ^:dynamic ^:private *changed* nil)
+(def ^:dynamic ^:private *evaluated* nil)
 
 (defn- eval-and-set! [cell]
   (when-not (identical? cell *self*)
@@ -173,22 +186,35 @@
         (-reset! cell value))))
   cell)
 
-;; marker, to avoid duplicate computation
-(def ^:dynamic ^:private *computing-dependents* false)
+(defn notify-watches [cell]
+  (let [st (.-state cell)
+        value (.-value st)]
+    (-notify-watches cell (.-prev-value st) value)
+    (set! (.-prev-value st) value)))
 
-(defn- eval-dependents! [cell]
-  (when (false? *computing-dependents*)
-    (binding [*computing-dependents* true]
-      (doseq [dep (g/dependents cell)]
-        ;; POSSIBLE IMPROVEMENT
-        ;; instead of eagerly computing the entire tree of dependent cells,
-        ;; only follow cells that have changed in a given cycle.
-        (eval-and-set! dep))))
+(defn- stabilize!
+  "Recomputes transitive dependents of `cell`.
+   Returns set of changed cells."
+  [cell]
+  (binding [*to-evaluate* (volatile! (vec (g/immediate-dependents cell)))
+            *changed* (volatile! #{cell})
+            *evaluated* (volatile! #{})]
+    (loop [i 0]
+      (when-some [cell (nth @*to-evaluate* i nil)]
+        (when (and (not (@*changed* cell))
+                   (not (@*evaluated* cell)))
+          (vswap! *evaluated* conj cell)
+          (eval-and-set! cell))
+        (recur (inc i))))
+    @*changed*))
+
+(defn- mark-changed! [cell]
+  (if (nil? *to-evaluate*)
+    (doseq [changed (stabilize! cell)]
+      (notify-watches changed))
+    (do (vswap! *changed* conj cell)
+        (vswap! *to-evaluate* into (g/immediate-dependents cell))))
   cell)
-
-(defn invalidate! [cell before after]
-  (-notify-watches cell before after)
-  (eval-dependents! cell))
 
 ;;;;;;;;;;;;;;;;;;
 ;;
@@ -232,22 +258,22 @@
     (j/update! state .-dependents set-conj dep))
   (remove-dependent! [this dep]
     (j/update! state .-dependents disj dep)
-    (deactivate this))
+    (maybe-deactivate this))
   (immediate-dependencies [this]
     (.-dependencies state))
   (immediate-dependents [this]
     (.-dependents state))
 
-  r/ITransition
-  (on-transition [this transition]
-    (case transition
-      :observed (do
-                  (-add-watch this ::r/transition
-                              (fn [_ _ _ _] (r/invalidate-readers! this)))
-                  (ensure-active this))
-      :un-observed (do
-                     (-remove-watch this ::r/transition)
-                     (deactivate this))))
+  r/ITransitionSimple
+  (on-transition [this observed?]
+    (if observed?
+      (do
+        (-add-watch this ::r/transition
+                    (fn [_ _ _ _] (r/invalidate-readers! this)))
+        (maybe-activate this))
+      (do
+        (-remove-watch this ::r/transition)
+        (maybe-deactivate this))))
 
   IEquiv
   (-equiv [this other]
@@ -272,11 +298,11 @@
     (j/update! state .-watches (fnil assoc {}) key f))
   (-remove-watch [this key]
     (j/update! state .-watches dissoc-empty key)
-    (deactivate this))
+    (maybe-deactivate this))
 
   IDeref
   (-deref [this]
-    (log-read! this)
+    (log-observation! this)
     (.-value state))
 
   IReset
@@ -284,7 +310,7 @@
     (let [oldval (.-value state)]
       (when (not= oldval newval)
         (j/assoc! state .-value newval)
-        (invalidate! this oldval newval)))
+        (mark-changed! this)))
     newval)
 
   ISwap
@@ -305,19 +331,18 @@
                 .-dependents #{}
                 .-owner owner
                 .-active false
-                .-async :complete)
+                .-async nil)
 
          nil))
 
 (defn update-cell* [cell f]
-  (j/assoc! (.-state cell) .-f f .-value nil)
+  (-> (.-state cell)
+      (j/assoc! .-f f .-value nil))
   (eval-and-set! cell))
 
 (defn cell*
-  "Returns a cell for function `f` and `options`, an object of optional properties:
-  - memo: string key for memoizing cell on current parent
-  - def: true if cell is standalone, not memoized to any parent
-  - updateExisting: an existing cell that should be updated with new function `f`"
+  "Returns cell for function `f`. Optional `memo-key`, a string, will cause cell to
+   be memoized on the currently-evaluating cell or reactive reader."
   ([f] (cell* f nil))
   ([f memo-key]
    (let [owner (or *self*

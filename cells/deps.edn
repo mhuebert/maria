@@ -4,6 +4,7 @@
          appliedscience/js-interop           {:mvn/version "0.1.20"}
          com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
          chia                                {:git/url "https://github.com/mhuebert/chia.git"
-                                              :sha     "da6ceb2989b712ab59c654679e1eb7b2e4c6ef02"}}
+                                              :sha     "8ba5931a73db745107afb68304226628c7a9838c"}}
 
- :aliases {:test {:extra-paths ["test"]}}}
+ :aliases {:test {:extra-paths ["test"]
+                  :override-deps {chia {:local/root "../../chia"}}}}}

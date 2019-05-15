@@ -14,7 +14,7 @@
            appliedscience/js-interop           {:mvn/version "0.1.20"}
 
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
-                                                :sha     "05b3476821684a605f16314b812c7381dd39247d"}
+                                                :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
            mhuebert/cljs-static                {:git/url "https://github.com/mhuebert/cljs-static.git"
                                                 :sha     "3aadc9c0821d4af3febd2af464de325e937449ec"}
 

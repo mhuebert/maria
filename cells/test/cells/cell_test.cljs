@@ -11,101 +11,126 @@
             [clojure.string :as str]))
 
 (deftest cells
-  (testing "dependencies-test"
-    (let [a (cell 1)
-          b (cell @a)
-          c (cell @b)
-          d (cell c)]
 
-      (mapv deref [a b c d])
+  (testing "render-counts"
+    (let [counts (atom {})
+          a (cell (do (swap! counts update self (fnil inc 0)) 0))
+          b (cell (do (swap! counts update self (fnil inc 0)) @a))
+          c (cell (do (swap! counts update self (fnil inc 0)) @b 0))
+          d (cell (do (swap! counts update self (fnil inc 0)) @c))
+          cells [a b c d]
+          eval-counts (fn [] (mapv #(get @counts %) [a b c d]))]
 
-      (are [cell immediate-dependencies]
-        (= (set (cell/immediate-dependencies cell))
-           immediate-dependencies)
-        b #{a}
-        c #{b}
-        d #{})
+      ;; activate all cells
+      (mapv deref cells)
 
-      (are [cell immediate-dependents]
-        (= (set (cell/immediate-dependents cell))
-           immediate-dependents)
-        a #{b}
-        b #{c}
-        c #{}
-        d #{})
+      (is (= [1 1 1 1] (eval-counts))
+          "Deref causes cell to eval")
+      (reset! a 1)
+      (is (= [1 1 0 0] (mapv deref cells))
+          "Cell values propagate")
+      (is (= [1 2 2 1] (eval-counts))
+          "Cells re-render according to dependency and change")
+      (reset! b 2)
+      (is (= [1 2 0 0] (mapv deref cells)))
+      (is (= [1 2 3 1] (eval-counts))
+          "Cells re-render according to dependency and change")))
 
-      (are [cell transitive-dependents]
-        (= (set (cell/dependents cell))
-           transitive-dependents)
-        a #{b c}
-        b #{c}
-        c #{}
-        d #{})))
+    (testing "dependencies-test"
+      (let [a (cell 1)
+            b (cell @a)
+            c (cell @b)
+            d (cell c)]
 
-  (testing "value-propagation"
+        (mapv deref [a b c d])
 
-    (let [e (cell 1)]
+        (are [cell immediate-dependencies]
+          (= (set (cell/immediate-dependencies cell))
+             immediate-dependencies)
+          b #{a}
+          c #{b}
+          d #{})
 
-      (is (= 1 @e))
+        (are [cell immediate-dependents]
+          (= (set (cell/immediate-dependents cell))
+             immediate-dependents)
+          a #{b}
+          b #{c}
+          c #{}
+          d #{})
 
-      (reset! e 2)
-      (is (= 2 @e))
+        (are [cell transitive-dependents]
+          (= (set (cell/dependents cell))
+             transitive-dependents)
+          a #{b c}
+          b #{c}
+          c #{}
+          d #{})))
+
+    (testing "value-propagation"
+
+      (let [e (cell 1)]
+
+        (is (= 1 @e))
+
+        (reset! e 2)
+        (is (= 2 @e))
 
 
-      (let [f (cell @e)
-            g (cell @f)]
-        (is (= @e @f @g 2))
+        (let [f (cell @e)
+              g (cell @f)]
+          (is (= @e @f @g 2))
 
-        (reset! e 3)
-        (is (= @e @f @g 3)))))
+          (reset! e 3)
+          (is (= @e @f @g 3)))))
 
-  (testing "anonymous-cells"
+    (testing "anonymous-cells"
 
-    (let [h (cell {:key :h} 1)
-          i (cell {:key :i} @h)
-          j (cell (str @h @i))]
+      (let [h (cell :h 1)
+            i (cell :i @h)
+            j (cell (str @h @i))]
 
-    (= (set (cell/immediate-dependents h)) #{i})
-    (is (= 1 @i))
+        (= (set (cell/immediate-dependents h)) #{i})
+        (is (= 1 @i))
 
-    (is (= "11" @j))
+        (is (= "11" @j))
 
-    (reset! h 2)
-    (is (= "22" @j))
+        (reset! h 2)
+        (is (= "22" @j))
 
-    #_(doseq [key ["a" :b 1 {} []]]
-        (let [c (cell key nil)]
-          (is (str/includes? (name c)
-                             (str (hash key)))
-              "cell contains hash of name argument")))
+        #_(doseq [key ["a" :b 1 {} []]]
+            (let [c (cell key nil)]
+              (is (str/includes? (name c)
+                                 (str (hash key)))
+                  "cell contains hash of name argument")))
 
-    (testing "Anonymous cells in a loop"
-      (let [multi (for [n [1 2 3 4 5]]
-                    (cell n n))]
-        (is (= (list 1 2 3 4 5)
-                 (map deref multi)))))))
+        (testing "Anonymous cells in a loop"
+          (let [multi (for [n [1 2 3 4 5]]
+                        (cell n n))]
+            (is (= (list 1 2 3 4 5)
+                   (map deref multi)))))))
 
-  (testing "cell-function"
+    (testing "cell-function"
 
-    (let [o (cell (mapv cell (range) [:a :b]))]
-      (is (= (mapv deref @o) [:a :b])
-          "When given unique keys, cell function returns unique cells"))
+      (let [o (cell (mapv cell (range) [:a :b]))]
+        (is (= (mapv deref @o) [:a :b])
+            "When given unique keys, cell function returns unique cells"))
 
-    (let [p (cell
-             (mapv cell
-                   (repeat 1)
-                   [:c :d]))]
-      (is (= (mapv deref @p) [:c :c])
-          "When given same key, cell function returns existing cell")))
+      (let [p (cell
+               (mapv cell
+                     (repeat 1)
+                     [:c :d]))]
+        (is (= (mapv deref @p) [:c :c])
+            "When given same key, cell function returns existing cell")))
 
-  (testing "metadata"
-    (let [a1 (cell nil)
-          a2 (with-meta a1 {:hello true})]
-      (reset! a1 ::hello)
-      (is (= @a1 @a2))
-      (is (not= (meta a1) (meta a2)))
-      (is (= {:hello true} (meta a2)))
-      (is (nil? (meta a1))))))
+    (testing "metadata"
+      (let [a1 (cell nil)
+            a2 (with-meta a1 {:hello true})]
+        (reset! a1 ::hello)
+        (is (= @a1 @a2))
+        (is (not= (meta a1) (meta a2)))
+        (is (= {:hello true} (meta a2)))
+        (is (nil? (meta a1))))))
 
 
 
@@ -121,14 +146,14 @@
        (cell (prn @p))))
 
    (defcell birds
-            (lib/fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
-                       {:query {:lat "52.4821146"
-                                :lng "13.4121388"
-                                :maxResults 10
-                                :fmt "json"}}))
+     (lib/fetch "https://ebird.org/ws1.1/data/obs/geo/recent"
+                {:query {:lat        "52.4821146"
+                         :lng        "13.4121388"
+                         :maxResults 10
+                         :fmt        "json"}}))
 
    (defcell first-bird
-            (first @birds)))
+     (first @birds)))
 #_(deftest contexts
     ;; We keep track of the "evaluation context" of a cell, such as the
     ;; code editor window where the cell is defined, to facilitate
