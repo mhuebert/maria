@@ -33,10 +33,13 @@
      "5.call is not a function"
      "cljs.core.list(...).call is not a function"
      "shapes.core.circle.call(...).call is not a function"
-     "No item 5 in vector of length 0"])
-  
-  (tokenize "shapes.core.circle.call(...).call is not a function")
+     "No item 5 in vector of length 0"
+     "maria.user.a_fn.call(...).call is not a function"
+     "maria.user.a_b_c_d_fn.call(...).call is not a function"
+     "(new cljs.core.Keyword(...)).cljs$core$IFn$_invoke$arity$3 is not a function"])
 
+  (tokenize "(new cljs.core.Keyword(...)).cljs$core$IFn$_invoke$arity$3 is not a function")
+  
   (map (juxt identity tokenize) sample-error-messages)
   
   )
@@ -53,12 +56,13 @@
       (string/replace "maria.user." "")))
 
 (defn tokenize
-  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.] and colon [:]."
+  "Returns lowercase tokens from `s`, limited to the letters [a-z], numbers [0-9], full stop [.], dash [-] (including converted underscore [_]), and colon [:]."
   [s]
   (->> (-> s
            string/lower-case
            sanitize-js-error
-           (string/split #"[^a-z%0-9%\.%:]"))
+           (string/split #"[^a-z%0-9%\.%:%_]"))
+       (map #(string/replace % "_" "-")) ;; this must happen in post-processing so we don't split on underscores-turned-to-dashes
        (remove empty?)
        (into [])))
 
@@ -71,33 +75,30 @@
           templates))
 
 (def error-message-trie
-  ;; TODO verify these are working. On spot-check several are broken.
   "A search trie for matching error messages to templates."
   (build-error-message-trie
    [["f is null"
-     "`nil` is not a valid function.\n\nAt some point I expected a function but found `nil` instead."]
-    ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
-     "It looks like you're trying to call a function that has not been defined yet. 🙀"]
+     (str "Expected a function but found `nil`."
+          "\n\nAt some point I found `nil` where a function should be, such as in a higher-order function like `map` or `keep`. `nil` is not a valid function.")]
+    ["pred is null"
+     (str "Expected a predicate function but found `nil`."
+          "\n\nAt some point I found `nil` where a predicate function should be, like in a `filter` or `some`. Predicate functions cannot be `nil`.")]
+    ["% is null"
+     (str "Expected a composable function but found `nil`."
+          "\n\nAt some point I found `nil` where a function should be passed to a higher-order composition function, like a `comp` or `juxt`. It was found at position `%1`. `nil` is not a valid part of function composition.")]
+
     ["invalid arity: %" ;; NB: a similar situation is handled by `:fn-arity` analyzer message case
-     "%1 is the wrong number of arguments for this function.\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments."]
+     (str "%1 is the wrong number of arguments for this function."
+          "\n\nSomething is being called like a function, but that function doesn't know how to handle %1 arguments. This is called an 'invalid arity' error, which can be caused by passing too few or too many arguments, or by putting something like a vector or set (which can be called like a function) in the function position without any arguments.")]
+
+    ;; The next few errors are all of a kind:
     ["no item % in vector of length %" ;; TODO combine message with that of "Index out of bounds" case
-     "Couldn't find element %1 in vector of length %2.\n\nThis is an 'index out of bounds' error. You're trying to access (probably with `nth`) something in a vector at a place that doesn't exist."]
-    ["no protocol method icollection. % defined for type % %"
-     "`%3` is not a collection, but you're treating it like one.\n\n`%1` is trying to use the %2 `%3` as a collection, but `%3` can't be interpreted as a collection."]
-    ["% is not iseqable"
-     "The value `%1` can't be used as a sequence.\n\n`%1` does not implement the 'ISeqable' protocol, which is used when a value can be interpreted sequentially."]
-    ["% is not a function"
-     "The value `%1` isn't a function, but it's being called like one."]
-    ["Parameter declaration missing" ;; FIXME can't replicate
-     "This function is missing its 'parameter declaration', the vector of arguments that comes after its name or docstring."]
-    ["Could not compile"
-     "Compile error: we were unable to turn this code into JavaScript. 😰"] ;; FIXME
-    ["let requires an even number"
-     "`let` requires an even number of forms in its binding vector."] ;; FIXME improve
+     (str "Couldn't find element %1 in vector of length %2."
+          "\n\nThis expression tries to access (probably with `nth`) a non-existent place in some vector. This is an 'index out of bounds' error.")]
     ["Index out of bounds"
-     "You're trying to get a non-existent part of a sequence.\n\nThis is like trying to make an appointment on the fortieth day of November. 📆 There is no fortieth day, so we get what's called an \"index out of bounds\" error."]
-    
-    ["nth not supported on this type % % % %"
+     (str "This expression tries to access a non-existent part of a sequence."
+          "\n\nThis expression is looking for a non-existent place in some list. This is an 'index out of bounds' error.")]
+    ["nth not supported on this type % % % % % %"
      ;; Warning: these `%`s are hairy.
      ;;  - there could be one e.g.  "persistenthashmap"
      ;;  - or there could be four e.g. "function boolean native code"
@@ -107,10 +108,39 @@
      ;; without significant refactoring. Therefore we currently drop
      ;; it on the floor.
      (str "You're treating a non-sequential value like a sequence."
-          "\n\nIt seems like you're trying to iterate over a value that isn't sequential. This could be a couple things, but probably involves trying to treat a value (like a keyword) or a collection (like a map or set) as if it were a sequential value (like a vector, list, or String). This can happen by destructuring or by using `nth` on a non-sequence.")]
-    ["illegal character"
-     "One of the names in that expression contains an 'illegal character'. Often this is because the name contains an emoji, which JavaScript (the programming language your browser uses) doesn't allow."]]))
-;;"It looks like you're declaring a function, but something isn't right. Most of the time a function declaration looks like this, for the function named \"foo\":\n\n(defn foo [a b c]\n  (* a b c))\n\nOr like this, with a docstring:\n\n(defn foo \"Returns the product of its three arguments.\"\n  [a b c]\n  (* a b c))"
+          "\n\nIt seems like you're trying to iterate over a value that isn't sequential. This probably means you are treating a value (like a keyword) or a collection (like a map or set) as if it were a sequential value (like a vector, list, or String). This can happen by destructuring or by using `nth` on a non-sequence.")]
+
+    ["no protocol method icollection. % defined for type % %"
+     (str "`%3` is not a collection, but you're treating it like one."
+          "\n\n`%1` is trying to use the %2 `%3` as a collection, but `%3` can't be interpreted as a collection.")]
+    ["% is not iseqable"
+     (str "The value `%1` can't be used as a sequence."
+          "\n\nThis expression tries to use `%1` as a sequential value, but `%1` isn't sequential. That value doesn't implement the `ISeqable` protocol, which lets a value be interpreted as a sequence.")]
+
+    ;; NB: depending on the tokenizer's splitting strategy, this error
+    ;; may need to be manually split into several multi-wildcard-token
+    ;; matching strings (or we could switch to a more robust matcher,
+    ;; like bidi). Currently this is not necessary (AFAIK) b/c we
+    ;; don't split on `_`.
+    ["% is not a function"
+     "The value `%1` isn't a function, but it's being called like one."]
+    ["new keyword % % % % % % % is not a function"
+     (str "A keyword is being called as a function on %7 arguments."
+          "\n\nKeywords can act as functions on a single collection (such as a map or set), but keywords-as-functions can't take %7 arguments.")]
+
+    ["Could not compile"
+     (str "Compile error."
+          "\n\nWe were unable to turn this expression into JavaScript. 😰")]    
+    
+    ["illegal character %"
+     "This expression contains an illegal character. Often this is because a name contains an emoji, which is not allowed in JavaScript and therefore ClojureScript."]
+    
+    ["cannot read property call of %" ;; FIXME can't replicate -- appears to come from JS-land?
+     "It looks like you're trying to call a function that has not been defined yet. 🙀"]
+    ["Parameter declaration missing" ;; FIXME can't replicate
+     "This function is missing its 'parameter declaration', the vector of arguments that comes after its name or docstring."]
+    ["let requires an even number" ;; FIXME can't replicate; always "Compile error"
+     "`let` requires an even number of forms in its binding vector."]]))
 
 (defn prettify-error-message
   "Take an error `message` string and return a prettified version."
@@ -288,7 +318,6 @@
    ;; :protocol-invalid-method ::pass
    ;; :protocol-impl-with-variadic-method ::pass
    ;; :invalid-protocol-symbol ::pass
-
    ;; :variadic-max-arity ::pass
    
    :fn-arity
@@ -317,11 +346,11 @@
        (if-let [proposed (when (<= 3 (count (str missing-name)))
                            (seq (similar-to-vars (str missing-name))))]
          (str "`" missing-name "` hasn't been defined."
-              " Did you mean `" (if (> (count proposed) 1)
+              "\n\nDid you mean `" (if (> (count proposed) 1)
                                  (str (string/join "`, `" (butlast proposed)) "`, or `" (last proposed) "`")
                                  (first proposed))
               "? Or maybe the definition of `" missing-name "` has not yet been evaluated.")
-         (str "`" missing-name "` hasn't been defined. Perhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))))
+         (str "`" missing-name "` hasn't been defined.\n\nPerhaps there is a misspelling, or this expression depends on a name that has not yet been evaluated?"))))
    
    :overload-arity
    (fn [type info]
