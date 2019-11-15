@@ -26,6 +26,7 @@
            cells                               {:local/root "../cells"}
 
            ;; 3rd party utils
+           hiccup                              {:mvn/version "2.0.0-alpha2"}
            net.cgrand/macrovich                {:mvn/version "0.2.1"}
            com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
            fast-zip                            {:mvn/version "0.7.0"}

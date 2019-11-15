@@ -1,42 +1,43 @@
-
-{:deps     true
+{:deps true
  :dev-http {8701 "public"
             8702 "public"}
  :jvm-opts ["-Xmx2G"]
- :nrepl    {:port 9000}
- :ssl      {}                                               ;; password for certificate is "shadow-cljs"
+ :nrepl {:port 9000}
+ :ssl {}                                               ;; password for certificate is "shadow-cljs"
  :builds
-           {:live
-            {:target     :browser
-             :release    {:compiler-options
-                          {:optimizations  :simple
-                           :language-in    :ecmascript5
-                           :output-wrapper false}}
-             :output-dir "public/js/compiled/live"
-             :asset-path "/js/compiled/live"
-             :modules    {:shadow-live {:init-fn maria.frames.live-frame/init}}
-             :devtools   {:loader-mode :eval
-                          :after-load  maria.frames.live-frame/render}}
+ {:live
+  {:target :browser
+   :release {:compiler-options
+             {:optimizations :simple
+              :language-in :ecmascript5
+              :output-wrapper false}}
+   :build-hooks [(cljs-static.shadow/write-assets!
+                   {:public-path "public" "/live.html" (maria.static/live)})]
+   :output-dir "public/js/compiled/live"
+   :module-hash-names true
+   :asset-path "/js/compiled/live"
+   :modules {:shadow-live {:init-fn maria.frames.live-frame/init}}
+   :devtools {:loader-mode :eval
+              :after-load maria.frames.live-frame/render}}
 
-            :bootstrap
-            {:target            :bootstrap
-             :output-dir        "public/js/compiled/bootstrap"
-             :entries           [maria.user]
-             :exclude           [cljs.js]
-             :module-hash-names true}
+  :bootstrap
+  {:target :bootstrap
+   :output-dir "public/js/compiled/bootstrap"
+   :module-hash-names true
+   :entries [maria.user]
+   :exclude [cljs.js]}
 
-            :trusted
-            {:target      :browser
-             :output-dir  "public/js/compiled/trusted"
-             :asset-path  "/js/compiled/trusted"
-             :build-hooks [(cljs-static.shadow/write-assets!
-                             {:public-path "public"
-                              "/index.html" maria.static/index
-                              "/live.html"  maria.static/live})]
-             :modules     {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
-             :devtools    {:autoload true}
-             :compiler-options
-                          {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
-                                     "node_modules/firebase/externs/firebase-auth-externs.js"
-                                     "externs/react.ext.js"
-                                     "externs/reactDom.ext.js"]}}}}
+  :trusted
+  {:target :browser
+   :output-dir "public/js/compiled/trusted"
+   :asset-path "/js/compiled/trusted"
+   :build-hooks [(cljs-static.shadow/write-assets!
+                   {:public-path "public" "/index.html" (maria.static/index)})]
+   :modules {:shadow-trusted {:entries [maria.frames.trusted-frame]}}
+   :devtools {:autoload true}
+   :module-hash-names true
+   :compiler-options
+   {:externs ["node_modules/firebase/externs/firebase-app-externs.js"
+              "node_modules/firebase/externs/firebase-auth-externs.js"
+              "externs/react.ext.js"
+              "externs/reactDom.ext.js"]}}}}
