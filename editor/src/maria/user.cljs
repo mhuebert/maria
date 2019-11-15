@@ -23,6 +23,7 @@
                                             ;; are these internal only? -jar
                                             ;;assure-shape-seq shape-bounds bounds shape->vector
                                             ]]
-            [chia.view :include-macros true]
             [cljs.spec.alpha :include-macros true]
-            [cljs.spec.test.alpha :include-macros true]))
+            [cljs.spec.test.alpha :include-macros true]
+            chia.view
+            applied-science.js-interop.destructure))
