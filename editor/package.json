@@ -17,6 +17,7 @@
     "jss-global": "3.0.0",
     "jss-preset-default": "4.5.0",
     "konan": "1.2.1",
+    "md5": "^2.2.1",
     "module-deps": "4.1.1",
     "prosemirror-commands": "0.24.0",
     "prosemirror-history": "0.24.0",

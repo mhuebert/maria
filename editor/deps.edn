@@ -18,7 +18,7 @@
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                                 :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
            mhuebert/cljs-static                {:git/url "https://github.com/mhuebert/cljs-static.git"
-                                                :sha     "3aadc9c0821d4af3febd2af464de325e937449ec"}
+                                                :sha     "d36058f0de7b2b0c2d2ca079efc2f66d73134076"}
 
            ;; user fun
            maria/friendly                      {:local/root "../friendly"}

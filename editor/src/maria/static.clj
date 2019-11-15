@@ -2,14 +2,14 @@
   (:require [cljs-static.page :as page]))
 
 (def index
-  (page/html-page "Maria"
+  (page/root "Maria"
     {:meta         {:viewport "width=device-width, initial-scale=1"}
      :styles       [{:href "/trusted.css"}]
      :body         [:div#maria-index]
      :scripts/body [{:src "/js/compiled/trusted/shadow-trusted.js"}]}))
 
 (def live
-  (page/html-page "Maria"
+  (page/root "Maria"
     {:meta         {:viewport "width=device-width, initial-scale=1"}
      :styles       [{:href "/tachyons.min.css"}
                     {:href "/codemirror.css"}
