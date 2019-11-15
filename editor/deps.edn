@@ -13,7 +13,7 @@
 
            appliedscience/js-interop           {#_#_:mvn/version "0.1.20"
                                                 :git/url "https://github.com/appliedsciencestudio/js-interop"
-                                                :sha "038c038ebb5453b327e2237eb1f1c573854567d5"}
+                                                :sha "706fb6f16ec8fd45df3e267f39627d3f33b2df9d"}
 
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                                 :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
