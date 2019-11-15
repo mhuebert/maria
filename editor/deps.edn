@@ -13,7 +13,7 @@
 
            appliedscience/js-interop           {#_#_:mvn/version "0.1.20"
                                                 :git/url "https://github.com/appliedsciencestudio/js-interop"
-                                                :sha "3b808d26329735dc47d3d7d1a38c765a92a2ddb3"}
+                                                :sha "038c038ebb5453b327e2237eb1f1c573854567d5"}
 
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                                 :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
@@ -33,6 +33,8 @@
            cider/cider-nrepl                   {:mvn/version "0.16.0"}}
  :aliases {:watch
            {:override-deps
-            {chia {:local/root "../../chia"}
-             appliedscience/js-interop {:local/root "../../js-interop"}
-             mhuebert/cljs-static {:local/root "../../cljs-static"}}}}}
+            {
+             ;chia {:local/root "../../chia"}
+             ;mhuebert/cljs-static {:local/root "../../cljs-static"}
+             ;appliedscience/js-interop {:local/root "../../js-interop"}
+             }}}}
