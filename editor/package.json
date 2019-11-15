@@ -12,7 +12,7 @@
     "codemirror": "5.46.0",
     "core-js": "3.0.1",
     "firebase": "5.10.1",
-    "firebase-tools": "6.7.1",
+    "firebase-tools": "7.7.0",
     "jss": "9.8.7",
     "jss-global": "3.0.0",
     "jss-preset-default": "4.5.0",
