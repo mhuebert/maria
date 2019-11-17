@@ -12,7 +12,7 @@
                                                 :sha     "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
 
            appliedscience/js-interop           {:git/url "https://github.com/appliedsciencestudio/js-interop"
-                                                :sha "9321b2cab11d6aa34dcc20b291ab776550c45103"}
+                                                :sha "9927230e238cd3dd044f8a9f00059ab9e92f19a7"}
 
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                                 :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
