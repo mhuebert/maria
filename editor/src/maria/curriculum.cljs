@@ -13,6 +13,7 @@
    ["data-flow" "Data Flow" (repo-path "curriculum/Data Flow.cljs")]
    ["shannons-entropy" "Shannon's Entropy" (repo-path "curriculum/Shannon's Entropy.cljs")]
    ["cb-intro" "Learn Clojure with Shapes (ClojureBridge)" (repo-path "curriculum/Learn Clojure with Shapes (ClojureBridge).cljs")]
+   ["cb-london" "London ClojureBridge" (js/encodeURIComponent "https://gist.githubusercontent.com/londonclojurians/9afbc2adf3638f1bcf6a6c08b6f33226/raw/c6f7f957d2bf293185b1dc6fc532d282f411e886/clojurebridge-shapes.cljs")]
    ["cb-coaches" "ClojureBridge Coaches' Copy" (repo-path "curriculum/ClojureBridge Coaches' Copy.cljs")]])
 
 (def owner {:username  "curriculum"
