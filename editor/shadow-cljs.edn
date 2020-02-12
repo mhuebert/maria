@@ -3,7 +3,8 @@
             8702 "public"}
  :jvm-opts ["-Xmx2G"]
  :nrepl {:port 9000}
- :ssl {}                                               ;; password for certificate is "shadow-cljs"
+ :ssl {:keystore "ssl/keystore.jks"
+       :password "shadow-cljs"}
  :builds
  {:live
   {:target :browser

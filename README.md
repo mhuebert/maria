@@ -49,14 +49,14 @@ Like Clojure itself, the Maria curriculum is open-source, but is not primarily a
 
 ## Development
 
-From the `/editor` directory:
+First, copy to your local machine and navigate to the `editor` directory:
 
 ```
 git clone https://github.com/mhuebert/maria.git;
-cd editor;
+cd maria/editor
 ```
 
-First, install javascript dependencies and compile stylesheets:
+Now, within the `editor` directory, install javascript dependencies and compile stylesheets:
 
 ```
 npm install;
@@ -68,7 +68,8 @@ npm install;
 npm run watch;
 ```
 
-When these builds have completed, open your web browser to http://localhost:8701.
+When these builds have completed, open your web browser to https://localhost:8701
+(note that dev servers are run via **https**)
 
 ### running a REPL
 
