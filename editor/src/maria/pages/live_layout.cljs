@@ -39,8 +39,8 @@
      "Your journey begins here: "
      [:a.br2.bg-white.shadow-4.pa3.ml3.sans-serif.black.no-underline.f5.b.pointer.hover-underline.hover-shadow-5 {:href "/intro"} "Learn Clojure with Shapes"]
      [:.flex-auto]]
-
-    [:.tc.i.f3.mv3 "More reading:"]
+    
+    [:.tc.i.f3.mv3 "Further reading:"]
 
     [:ul.f-body.tl.lh-copy
      [:li "The " [:a {:href "/quickstart"} "Editor Quickstart"] ", if you're already familiar with Clojure."]
@@ -48,8 +48,12 @@
      [:li "Understand the " [:a {:target "_blank"
                                  :href   "https://github.com/mhuebert/maria/wiki/Curriculum"} "Pedagogy"] " behind Maria's curriculum."]
      [:li "Discover the " [:a {:target "_blank"
-                               :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]]
-   ])
+                               :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]
+    
+    [:.tc.i.f3.mv3 "Events:"]
+
+    [:ul.f-body.tl.lh-copy
+     [:li "Feb 2020, London ClojureBridge: " [:a {:href "/cb-london"} "start here"] "."]]]])
 
 (v/defn sidebar
   [{:keys [visible? id]}]
