@@ -26,4 +26,4 @@
             [cljs.spec.alpha :include-macros true]
             [cljs.spec.test.alpha :include-macros true]
             [chia.view :include-macros true]
-            [applied-science.js-interop.destructure :include-macros true]))
+            [applied-science.js-interop :include-macros true]))
