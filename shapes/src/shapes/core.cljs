@@ -273,7 +273,7 @@
     (doseq [[x y] (partition 2 pts)]
       (set! (.-x1 box) (min x (.-x1 box)))
       (set! (.-y1 box) (min y (.-y1 box)))
-      (set! (.-x2 box) (max x (.-y2 box)))
+      (set! (.-x2 box) (max x (.-x2 box)))
       (set! (.-y2 box) (max y (.-y2 box))))
     box))
 
@@ -282,7 +282,7 @@
     (doseq [b boxes]
       (set! (.-x1 box) (min (.-x1 b) (.-x1 box)))
       (set! (.-y1 box) (min (.-y1 b) (.-y1 box)))
-      (set! (.-x2 box) (max (.-x2 b) (.-y2 box)))
+      (set! (.-x2 box) (max (.-x2 b) (.-x2 box)))
       (set! (.-y2 box) (max (.-y2 b) (.-y2 box))))
     box))
 
