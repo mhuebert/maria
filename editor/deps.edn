@@ -10,10 +10,7 @@
 
            athos/kitchen-async                 {:git/url "https://github.com/athos/kitchen-async.git"
                                                 :sha     "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
-
-           appliedscience/js-interop           {:mvn/version "0.2.4"
-                                                #_#_:git/url "https://github.com/appliedsciencestudio/js-interop"
-                                                :sha "0c962fc662f87410e328c08e18e70e532d4fde6e"}
+           applied-science/js-interop          {:mvn/version "0.2.7"}
 
            chia                                {:git/url "https://github.com/mhuebert/chia.git"
                                                 :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
