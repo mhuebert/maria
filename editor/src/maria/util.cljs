@@ -1,5 +1,6 @@
 (ns maria.util
   (:require [goog.events :as events]
+            [goog.dom :as gdom]
             [chia.view :as v]
             [clojure.string :as string]
             [applied-science.js-interop :as j])
@@ -152,7 +153,7 @@
 
 (defn closest
   "Return element or first ancestor of element that matches predicate, like jQuery's .closest()."
-  [^js el pred]
+  [el pred]
   (if (pred el)
     el
-    (some-> (.-parentNode ^js el) (guard-> #(instance? js/HTMLElement %)) pred)))
+    (gdom/getAncestor el pred)))
