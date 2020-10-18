@@ -2,7 +2,6 @@
   (:require ["react" :as react]
             ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
-            [chia.view.fps :as fps]
             [chia.view.impl :as impl]
             [chia.util :as u]))
 

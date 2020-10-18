@@ -2,7 +2,6 @@
   (:require [clojure.string :as str]
             ["react" :as react]
             [applied-science.js-interop :as j]
-            [chia.util.perf :as perf]
             [chia.util :as u]
             [goog.object :as gobj]))
 

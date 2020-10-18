@@ -2,8 +2,7 @@
   (:require [cells.linked-graph :as g]
             [chia.util :as u]
             [chia.reactive :as r]
-            [applied-science.js-interop :as j]
-            [chia.util.perf :as perf])
+            [applied-science.js-interop :as j])
   (:require-macros cells.cell))
 
 (def ^:dynamic *self*

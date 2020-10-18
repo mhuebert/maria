@@ -5,8 +5,7 @@
             [clojure.set :as set]
             [chia.db.patterns :as patterns]
             [chia.reactive :as r]
-            [clojure.core :as core]
-            [chia.util.perf :as perf])
+            [clojure.core :as core])
   (:require-macros [chia.db.core :as d]))
 
 (enable-console-print!)
@@ -35,20 +34,20 @@
 (defn many?
   "Returns true for attributes with cardinality `many`, which store a set of values for each attribute."
   ([schema]
-   (perf/identical? :db.cardinality/many (core/get schema :db/cardinality)))
+   (keyword-identical? :db.cardinality/many (core/get schema :db/cardinality)))
   ([db-snap a]
    (many? (get-schema db-snap a))))
 
 (defn unique?
   "Returns true for attributes where :db/index is :db.index/unique."
   ([schema]
-   (perf/identical? :db.index/unique (core/get schema :db/index)))
+   (keyword-identical? :db.index/unique (core/get schema :db/index)))
   ([db-snap a]
    (unique? (get-schema db-snap a))))
 
 (defn ref?
   [schema]
-  (perf/identical? :db.type/ref (core/get schema :db/type)))
+  (keyword-identical? :db.type/ref (core/get schema :db/type)))
 
 (defn resolve-id*
   "Returns id, resolving lookup refs (vectors of the form `[attribute value]`) to ids.
@@ -130,7 +129,7 @@
 
 (defn- add-index [db-snap id a v schema]
   (let [index (core/get schema :db/index)]
-    (when (perf/identical? :db.index/unique index)
+    (when (keyword-identical? :db.index/unique index)
       (assert-uniqueness db-snap id a v))
     (cond-> db-snap
             (not (nil? index)) (update-in [:ave a v] conj-set id)
@@ -202,7 +201,7 @@
 
 (defn- add
   [[db-snap datoms :as state] id attr val]
-  {:pre [(not (perf/identical? :db/id attr))]}
+  {:pre [(not (keyword-identical? :db/id attr))]}
   (let [schema (get-schema db-snap attr)
         prev-val (d/get-in* db-snap [:eav id attr])]
     (if (many? schema)

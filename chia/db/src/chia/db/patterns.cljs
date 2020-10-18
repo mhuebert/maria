@@ -1,7 +1,6 @@
 (ns chia.db.patterns
   (:require [chia.reactive :as r]
-            [clojure.set :as set]
-            [chia.util.perf :as perf]))
+            [clojure.set :as set]))
 
 (def ^:private empty-patterns
   "Map for building sets of patterns."
@@ -60,10 +59,10 @@
 (defn- lookup-ref?
   "Returns true if pattern has lookup ref in id position."
   [kind pattern]
-  (or (and (perf/identical? :e__ kind)
+  (or (and (keyword-identical? :e__ kind)
            (vector? pattern)
            pattern)
-      (and (perf/identical? :ea_ kind)
+      (and (keyword-identical? :ea_ kind)
            (vector? (first pattern))
            (first pattern))))
 

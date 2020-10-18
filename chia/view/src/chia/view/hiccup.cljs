@@ -2,7 +2,6 @@
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
             [chia.view.hiccup.impl :as hiccup]
-            [chia.util.perf :as perf]
             [chia.util :as u]))
 
 (def -react-element react/createElement)
@@ -60,7 +59,7 @@
   (cond (vector? form) (let [tag (-nth form 0)]
                          (cond (fn? tag) (to-element (apply tag (rest form)))
                                (keyword? tag)
-                               (if (perf/identical? :<> tag)
+                               (if (keyword-identical? :<> tag)
                                  (make-element -react-fragment nil form 1)
                                  (let [parsed-key (hiccup/parse-key-memo (name tag))
                                        props (get-props form 1)
