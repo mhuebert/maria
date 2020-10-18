@@ -7,8 +7,9 @@
             [cljs.spec.alpha :as s]
             [chia.view.legacy.view-specs]
             [chia.view.legacy.util :as class-util]
-            [chia.util :as u])
-  (:require-macros [chia.view.legacy :as class]))
+            [chia.util :as u]
+            chia.view.props)
+  (:require-macros [chia.view.legacy :as legacy]))
 
 (def Component react/Component)
 (def -create-element react/createElement)
@@ -28,7 +29,7 @@
 (defn- bind [f]
   (fn []
     (this-as ^js this
-      (class/apply-fn f this))))
+      (legacy/apply-fn f this))))
 
 
 (def default-methods
@@ -79,18 +80,18 @@
       :view/will-unmount
       (fn []
         (this-as this
-          (class/apply-fn f this)
+          (legacy/apply-fn f this)
           (.call (default-methods :view/will-unmount) this)))
       :view/render
       (fn []
         (this-as this
           (j/assoc! this .-chia$toUpdate false)             ;; avoids double-render in render loop
           (r/with-dependency-tracking! {:reader this}
-            (class/apply-fn f this))))
+            (legacy/apply-fn f this))))
       :view/did-update
       (fn []
         (this-as this
-          (class/apply-fn f this)
+          (legacy/apply-fn f this)
           (.call (default-methods :view/did-update) this)))
       :view/did-catch
       (fn [error info]
@@ -281,7 +282,7 @@
 ;;
 ;; Contexts
 
-(class/defclass context-observer
+(legacy/defclass context-observer
                 {:view/should-update (constantly true)}
                 [{:keys [view-fn
                          context-value]}]
