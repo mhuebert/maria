@@ -12,11 +12,6 @@
                                                 :sha     "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
            applied-science/js-interop          {:mvn/version "0.2.7"}
 
-           chia                                {:git/url "https://github.com/mhuebert/chia.git"
-                                                :sha     "8ba5931a73db745107afb68304226628c7a9838c"}
-           mhuebert/cljs-static                {:git/url "https://github.com/mhuebert/cljs-static.git"
-                                                :sha     "d36058f0de7b2b0c2d2ca079efc2f66d73134076"}
-
            ;; user fun
            maria/friendly                      {:local/root "../friendly"}
            maria/shapes                        {:local/root "../shapes"}

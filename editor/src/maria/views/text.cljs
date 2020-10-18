@@ -1,7 +1,6 @@
 (ns maria.views.text
   (:require [chia.view :as v]
-            [goog.events :as events]
-            [chia.routing :refer [closest]])
+            [goog.events :as events])
   (:import [goog.dom ViewportSizeMonitor]
            [goog.events EventType]))
 

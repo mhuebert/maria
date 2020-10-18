@@ -116,7 +116,7 @@
                   (distinct)
                   (keep identity)) warnings))
 
-(v/defn show-stack [error]
+(v/defview show-stack [error]
   (when (instance? js/Error error)
     (let [expanded? (hooks/use-atom false)
           stack (or (some-> (ex-cause error)
@@ -128,7 +128,7 @@
         "stacktrace"]
        (when @expanded? [:pre stack])])))
 
-(v/defn show-error
+(v/defview show-error
   [{:keys [error messages]}]
   (let [messages (or messages (messages/error-messages error))
         sections (cond-> (mapv #(vector :.mv2 %) messages)

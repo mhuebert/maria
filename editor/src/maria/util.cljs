@@ -150,3 +150,10 @@
 
 (defn guard->> [f x]
   (when (f x) x))
+
+(defn closest
+  "Return element or first ancestor of element that matches predicate, like jQuery's .closest()."
+  [^js el pred]
+  (if (pred el)
+    el
+    (some-> (.-parentNode ^js el) pred)))

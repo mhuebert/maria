@@ -23,7 +23,7 @@
                                    ;; mouseenter and mouseleave only trigger on currentTarget (body)
                                    (when (or (= "mouseover" (.-type e))
                                              (some-> (.-relatedTarget e)
-                                                     (r/closest #(and (not= % js/document)
+                                                     (util/closest #(and (not= % js/document)
                                                                       (data/has % "tooltip")))))
                                      {:float/pos (util/rect->abs-pos (.getBoundingClientRect target)
                                                                      [:center :bottom])

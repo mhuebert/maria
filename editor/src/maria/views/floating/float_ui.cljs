@@ -5,6 +5,7 @@
             [chia.routing :as routing]
             [goog.events :as events]
             [maria.views.error :as error]
+            [maria.util :as util]
             [chia.reactive :as r])
   (:import [goog.events EventType]))
 
@@ -18,7 +19,8 @@
                               (let [the-events (to-array cancel-events)
         this-node (v/dom-node this)
                                     callback (fn [e]
-                   (when (and (not (routing/closest (.-target e) (partial = this-node)))
+                   (when (and (not (util/closest (.-target e)
+                                              (partial = this-node)))
                                                           (or (not= (.-type e) "scroll")
                                                               (= (.-target e) js/document)))
                      (tear-down! this)

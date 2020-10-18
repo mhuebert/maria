@@ -174,7 +174,7 @@
 (defprotocol IView
              (view [this] "Returns a view for `this`"))
 
-(v/defn format-value
+(v/defview format-value
   ([value] (format-value 1 value))
   ([depth value]
    (when (> depth 200)

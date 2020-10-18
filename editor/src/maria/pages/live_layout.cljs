@@ -55,7 +55,7 @@
     [:ul.f-body.tl.lh-copy
      [:li "Feb 2020, London ClojureBridge: " [:a {:href "/cb-london"} "start here"] "."]]]])
 
-(v/defn sidebar
+(v/defview sidebar
   [{:keys [visible? id]}]
   (let [width (d/get :ui/globals :sidebar-width)]
     [:.fixed.f7.z-5.top-0.bottom-0.flex.flex-column.bg-white.b--moon-gray.bw1.br
