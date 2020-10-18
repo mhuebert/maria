@@ -83,14 +83,14 @@
     (if (or (nil? st) (keyword? st)) st :error)))
 
 (defn loading? [cell]
-  (perf/identical? :loading (get-async cell)))
+  (keyword-identical? :loading (get-async cell)))
 
 (defn complete? [cell]
   (nil? (get-async cell)))
 
 (defn- error-st? [st]
   (and (some? st)
-       (not (perf/identical? :loading st))))
+       (not (keyword-identical? :loading st))))
 
 (defn error [cell]
   (-> (get-async cell)

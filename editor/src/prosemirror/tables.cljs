@@ -1,6 +1,5 @@
 (ns prosemirror.tables
-  (:require [goog.object :as gobj]
-            [prosemirror.core :as pm]
+  (:require [prosemirror.core :as pm]
             [clojure.string :as string]
             [applied-science.js-interop :as j]))
 
@@ -62,4 +61,4 @@
      schema
      (js/markdownit "default" #js {"html" false})
      (-> (j/get parser :tokens)
-         (doto (gobj/extend (clj->js token->node)))))))
+         (doto (j/extend! (clj->js token->node)))))))

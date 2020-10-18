@@ -142,7 +142,7 @@
                  :input-rules   (prose-commands/input-rules this)
 
                  :on-click      (fn [e]
-                                  (when-let [a (.closest ^js (.-target e) "a")]
+                                  (when-let [a (r/closest ^js (.-target e) "a")]
                                     (when-not (classes/has a "pm-link")
                                       (do (.stopPropagation e)
                                           (hint/floating-view! {:float/pos    (util/rect->abs-pos (.getBoundingClientRect a)

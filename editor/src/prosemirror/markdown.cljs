@@ -1,9 +1,7 @@
 (ns prosemirror.markdown
-  (:require [chia.view :as v]
+  (:require [applied-science.js-interop :as j]
             [prosemirror.base :as base]
             [prosemirror.tables :as tables]
-            [prosemirror.core :as pm]
-            [goog.object :as gobj]
             ["prosemirror-markdown" :as pm-md]
             [chia.view.props :as props]))
 
@@ -15,8 +13,8 @@
 (def defaultMarkdownParser pm-md/defaultMarkdownParser)
 (def MarkdownSerializerState pm-md/MarkdownSerializerState)
 
-(def default-serializer-nodes (gobj/get defaultMarkdownSerializer "nodes"))
-(def default-serializer-marks (gobj/get defaultMarkdownSerializer "marks"))
+(def default-serializer-nodes (j/get defaultMarkdownSerializer :nodes))
+(def default-serializer-marks (j/get defaultMarkdownSerializer :marks))
 
 (defn patch-state
   "Patch markdown serializer state to emit tight lists."
@@ -32,8 +30,8 @@
 (defn MarkdownSerializer [nodes marks]
   #js {:serialize (fn [content]
                     (let [state (patch-state (MarkdownSerializerState.
-                                              (doto default-serializer-nodes (gobj/extend (clj->js (or nodes #js {}))))
-                                              (doto default-serializer-marks (gobj/extend (clj->js (or marks #js {})))) nil))]
+                                              (doto default-serializer-nodes (j/extend! (clj->js (or nodes #js {}))))
+                                              (doto default-serializer-marks (j/extend! (clj->js (or marks #js {})))) nil))]
                       (.renderContent state content)
                       (.-out state)))})
 

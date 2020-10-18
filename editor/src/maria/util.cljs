@@ -1,6 +1,5 @@
 (ns maria.util
   (:require [goog.events :as events]
-            [goog.object :as gobj]
             [chia.view :as v]
             [clojure.string :as string]
             [applied-science.js-interop :as j])
@@ -156,4 +155,4 @@
   [^js el pred]
   (if (pred el)
     el
-    (some-> (.-parentNode ^js el) pred)))
+    (some-> (.-parentNode ^js el) (guard-> #(instance? js/HTMLElement %)) pred)))

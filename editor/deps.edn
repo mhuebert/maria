@@ -17,17 +17,16 @@
            maria/shapes                        {:local/root "../shapes"}
            cells                               {:local/root "../cells"}
 
+           ;; view + data layer
+           chia/view                           {:local/root "../chia/view"}
+           chia/db                             {:local/root "../chia/db"}
+           chia/reactive                       {:local/root "../chia/reactive"}
+           chia/routing                        {:local/root "../chia/routing"}
+
            ;; 3rd party utils
            hiccup                              {:mvn/version "2.0.0-alpha2"}
            net.cgrand/macrovich                {:mvn/version "0.2.1"}
            com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
            fast-zip                            {:mvn/version "0.7.0"}
            bidi                                {:mvn/version "2.1.5"}
-           cider/cider-nrepl                   {:mvn/version "0.16.0"}}
- :aliases {:watch
-           {:override-deps
-            {
-             ;chia {:local/root "../../chia"}
-             ;mhuebert/cljs-static {:local/root "../../cljs-static"}
-             ;appliedscience/js-interop {:local/root "../../js-interop"}
-             }}}}
+           cider/cider-nrepl                   {:mvn/version "0.16.0"}}}

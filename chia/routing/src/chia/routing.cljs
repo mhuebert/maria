@@ -1,6 +1,7 @@
 (ns chia.routing
   (:require [clojure.string :as str]
-            [applied-science.js-interop :as j]))
+            [applied-science.js-interop :as j]
+            [clojure.edn :as edn]))
 
 (defonce ^:private listeners (atom {}))
 (declare ^:private fire!)
@@ -115,8 +116,7 @@
        (not= (.-hash js/location) (.-hash link))
        (.getElementById js/document (subs (.-hash link) 1))))
 
-(defn guard [x f]
-  (when (f x) x))
+(defn guard [x f] (when (f x) x))
 
 (defn click-event-handler
   "Intercept clicks on links with valid pushstate hrefs. Callback is passed the link's href value."

@@ -3,7 +3,6 @@
   (:require [cells.cell :as cell :refer [cell]]
             [goog.net.XhrIo :as xhr]
             [goog.net.ErrorCode :as errors]
-            [cells.util]
             [applied-science.js-interop :as j]
             [chia.util :as u])
   (:require-macros [cells.lib])

@@ -41,14 +41,14 @@
 
 (events/listen js/window "click"
                (fn [^js e]
-                 (when-let [a (.closest (.-target e) "a")]
+                 (when-let [a (r/closest (.-target e) "a")]
                    (.preventDefault e)
                    (when (util/some-str (.-href a))
                      (navigate a)))))
 
 (events/listen js/window "mousedown"
                (fn [e]
-                 (when-let [a (.closest ^js (.-target e) "a")]
+                 (when-let [a (r/closest (.-target e) "a")]
                    (when (= (.-origin a) (.. js/window -location -origin))
                      (let [href (.-href a)]
                        (prn :set-once (str/replace href (.-origin a) (d/get :window/location :origin)))
