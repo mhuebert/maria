@@ -1,3 +1,2 @@
 {:paths ["src"]
- :deps {applied-science/js-interop {:mvn/version "0.1.20"
-                                    :scope "provided"}}}
+ :deps {applied-science/js-interop {:mvn/version "0.2.7"}}}
