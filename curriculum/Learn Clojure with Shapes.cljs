@@ -286,7 +286,7 @@ color-names
               (colorize c (rectangle 300 20))) 
             rainbow))
 
-;; The `above` function needs its arguments to be shapes, and it is willing to accept any number of them. We used `apply` as a bridge between between a function that wants many arguments and a collection of those arguments as a single value.
+;; The `above` function needs its arguments to be shapes, and it is willing to accept any number of them. We used `apply` as a bridge between a function that wants many arguments and a collection of those arguments as a single value.
 
 ;; We've explored the problem (step 1) and now we're ready to turn our exploration into a solution (step 2). To make a solution, we need to make our flag have the right proportions not just for `rainbow` colors, but for other numbers of colors as well. Right now, using fewer colors just looks thin and off-balance compared to the familiar 3:2 ratio we had earlier:
 
