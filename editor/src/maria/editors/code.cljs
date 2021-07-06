@@ -45,6 +45,7 @@
                                           :on-select! (fn [[alias completion full-name]]
                                                         (hint/clear!)
                                                         (cm/replace-range! editor completion node))
+                                          :select-on-enter true
                                           :items (for [[alias completion full-name] (ns-utils/ns-completions completion-data)]
                                                    {:value [alias completion full-name]
                                                     :label [:.flex.items-center.w-100.monospace.f7.ma2.ml0
