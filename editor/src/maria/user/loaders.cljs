@@ -69,7 +69,7 @@
   [url]
   (let [start-globals (set (js->clj (.keys js/Object js/window)))
         url (trustedResourceUrlFromString url)]
-    (-> (jsl/safeLoad url)
+    (-> ^js (jsl/safeLoad url)
         (.addCallback (fn []
                         (when-let [new-globals (seq (set/difference (set (js->clj (.keys js/Object js/window)))
                                                                     start-globals))]

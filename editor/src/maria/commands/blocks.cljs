@@ -120,7 +120,7 @@
 (defcommand :navigate/focus-start
   {:private true}
   [context]
-  (some-> (filter (complement Block/whitespace?) (.getBlocks (:block-list context)))
+  (some-> (filter (complement Block/whitespace?) (.getBlocks ^clj (:block-list context)))
           (first)
           (Editor/of-block)
           (Editor/focus! :start)))
@@ -129,7 +129,7 @@
   {:private true
    :when    :block-list}
   [context]
-  (some-> (filter (complement Block/whitespace?) (.getBlocks (:block-list context)))
+  (some-> (filter (complement Block/whitespace?) (.getBlocks ^clj (:block-list context)))
           (last)
           (Editor/of-block)
           (Editor/focus! :end)))

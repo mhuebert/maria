@@ -2,10 +2,13 @@
   (:require [chia.view :as v]
             [maria.views.floating.float-ui :as ui]
             [goog.events :as events]
-            [goog.dom.dataset :as data]
             [chia.routing :as r]
             [maria.util :as util]
-            [cljs.tools.reader.edn :as edn]))
+            [cljs.tools.reader.edn :as edn]
+            [applied-science.js-interop :as j]))
+
+(j/defn data-get [^js {:keys [dataset]} k]
+  (j/get dataset (name k)))
 
 (v/defclass Tooltip
   {:view/did-mount
@@ -18,16 +21,16 @@
                         (if body-event
 
                           (swap! state dissoc :tooltip)
-                          (when (data/has target "tooltip")
+                          (when-let [tooltip (data-get target :tooltip)]
                             (swap! state assoc :tooltip
                                    ;; mouseenter and mouseleave only trigger on currentTarget (body)
                                    (when (or (= "mouseover" (.-type e))
                                              (some-> (.-relatedTarget e)
-                                                     (util/closest #(data/has % "tooltip"))))
+                                                     (util/closest #(data-get % :tooltip))))
                                      {:float/pos (util/rect->abs-pos (.getBoundingClientRect target)
                                                                      [:center :bottom])
                                       :float/offset [0 5]
-                                      :content (edn/read-string (data/get target "tooltip"))}))))))]
+                                      :content (edn/read-string tooltip)}))))))]
        (events/listen body the-events callback)
        (v/swap-silently! state assoc :unlisten #(events/unlisten body the-events callback))))
    :view/will-unmount #((:unlisten @(:view/state %)))}

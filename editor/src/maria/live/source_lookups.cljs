@@ -110,7 +110,7 @@
 (defn fetch-source [path meta cb]
   (xhr/send path
             (fn [e]
-              (let [target (.-target e)]
+              (let [^js target (.-target e)]
                 (if (.isSuccess target)
                   (let [source (.getResponseText target)]
                     ;; strip source to line/col from meta

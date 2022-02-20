@@ -55,7 +55,7 @@
 (defn get-gist [id cb]
   (send (str "https://api.github.com/gists/" id)
         (fn [e]
-          (let [target (.-target e)]
+          (let [^js target (.-target e)]
             (if (.isSuccess target)
               (cb {:value (gist->project (js->clj (.getResponseJson target) :keywordize-keys true))})
               (cb {:error (.getLastError target)}))))
@@ -65,7 +65,7 @@
 
 (defn get-url [url cb]
   (send url (fn [e]
-              (let [target (.-target e)]
+              (let [^js target (.-target e)]
                 (if (.isSuccess target)
                   (cb {:value (.getResponseText target)})
                   (cb {:error (.getLastError target)}))))
@@ -96,7 +96,7 @@
 (defn get-user-gists [username cb]
   (send (str "https://api.github.com/users/" username "/gists")
         (fn [e]
-          (let [target (.-target e)]
+          (let [^js target (.-target e)]
             (if (.isSuccess target)
               (cb {:value (keep gist->project (js->clj (.getResponseJson target) :keywordize-keys true))})
               (cb nil))))
@@ -121,7 +121,7 @@
 (defn patch-gist [gist-id gist-data cb]
   (send (str "https://api.github.com/gists/" gist-id)
         (fn [e]
-          (let [target (.-target e)]
+          (let [^js target (.-target e)]
             (if (.isSuccess target)
               (cb {:value (-> (.getResponseJson target)
                               (js->clj :keywordize-keys true)
@@ -134,7 +134,7 @@
 (defn create-gist [gist-data cb]
   (send (str "https://api.github.com/gists")
         (fn [e]
-          (let [target (.-target e)]
+          (let [^js target (.-target e)]
             (if (.isSuccess target)
               (cb {:value (-> (.getResponseJson target)
                               (js->clj :keywordize-keys true)
@@ -160,7 +160,7 @@
 (defn get-username [id cb]
   (send (str "https://api.github.com/user/" id)
         (fn [e]
-          (let [target (.-target e)]
+          (let [^js target (.-target e)]
             (if (.isSuccess target)
               (cb {:value (j/get (.getResponseJson target) :login)})
               (cb {:error (.getLastError target)}))))

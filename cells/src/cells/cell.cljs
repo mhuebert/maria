@@ -107,15 +107,15 @@
 (defn dispose!
   "Cleans up when a cell is deactivated."
   [cell]
-  (doseq [f (vals (.. cell -state -on-dispose))]
+  (doseq [f (vals (j/get-in cell [.-state .-on-dispose]))]
     (f))
-  (-> cell .-state .-on-dispose (set! nil))
+  (j/assoc-in! cell [.-state .-on-dispose] nil)
   cell)
 
 (defn on-dispose
   "Registers function `f` at `key` to be called when cell is deactivated."
   [cell key f]
-  (assert (not (contains? (.. cell -state -on-dispose) key))
+  (assert (not (contains? (j/get-in cell [.-state .-on-dispose]) key))
           "`on-dispose` was called with a key that already exists")
   (j/update-in! cell [.-state .-on-dispose] assoc key f))
 
@@ -134,7 +134,7 @@
 (defn watched?
   "Returns true if `cell` is watched directly"
   [cell]
-  (some? (.. cell -state -watches)))
+  (some? (j/get-in cell [.-state .-watches])))
 
 (defn- maybe-deactivate
   "When a cell is unwatched and unnecessary, deactivate"
@@ -186,7 +186,7 @@
   cell)
 
 (defn notify-watches [cell]
-  (let [st (.-state cell)
+  (let [^clj st (.-state cell)
         value (.-value st)]
     (-notify-watches cell (.-prev-value st) value)
     (set! (.-prev-value st) value)))
@@ -244,7 +244,7 @@
 
 (def set-conj (fnil conj #{}))
 
-(deftype Cell [state meta]
+(deftype Cell [^clj state meta]
 
   ICell
 

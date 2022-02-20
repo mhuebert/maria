@@ -37,7 +37,7 @@
                            (= :base (:tag (:node block)))
                            (-> :children first))
           the-string (emit/string the-node)
-          ast (->> (Block/emit-list (.getBlocks block-list))
+          ast (->> (Block/emit-list (.getBlocks ^clj block-list))
                    (tree/ast)
                    (:children)
                    (remove #(or (node/whitespace? %)

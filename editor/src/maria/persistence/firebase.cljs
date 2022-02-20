@@ -6,49 +6,47 @@
             [maria.persistence.local :as local]
             [maria.persistence.github :as github]
             ["firebase/app" :as firebase]
-            ["firebase/auth"]
-            [applied-science.js-interop :as j]))
+            ["firebase/auth" :as auth :refer [GithubAuthProvider
+                                              signInWithPopup]]
+            [applied-science.js-interop :as j]
+            [kitchen-async.promise :as p]))
 
 ;(def firebase js/firebase)
 
 (def CONNECT_ERR_MESSAGE "Could not initialize Firebase auth")
 
-(defonce _init_firebase_
+(defonce ^js App
+         (firebase/initializeApp (j/obj
+                                  :apiKey "AIzaSyCu4fEYMcfW6vzQWB0TS--Jphv3hzBqUyo",
+                                  :authDomain "maria-d04a7.firebaseapp.com",
+                                  :databaseURL "https://maria-d04a7.firebaseio.com",
+                                  :projectId "maria-d04a7",
+                                  :storageBucket "maria-d04a7.appspot.com",
+                                  :messagingSenderId "832199278239")))
 
-         (.initializeApp firebase #js {:apiKey "AIzaSyCu4fEYMcfW6vzQWB0TS--Jphv3hzBqUyo",
-                                       :authDomain "maria-d04a7.firebaseapp.com",
-                                       :databaseURL "https://maria-d04a7.firebaseio.com",
-                                       :projectId "maria-d04a7",
-                                       :storageBucket "maria-d04a7.appspot.com",
-                                       :messagingSenderId "832199278239"}))
+(defonce ^js Auth (auth/getAuth))
 
-(defonce ^js firebase-auth
-         (try (.auth firebase)
-              (catch js/Error e
-                (prn CONNECT_ERR_MESSAGE))))
-
-(defonce providers (try {"github.com" (doto (new (.. firebase -auth -GithubAuthProvider))
-                                        (.addScope "gist"))}
-                        (catch js/Error e
-                          (prn CONNECT_ERR_MESSAGE))))
+(defonce providers {"github.com" (doto (new GithubAuthProvider)
+                                   (.addScope "gist"))})
 
 (defn sign-in [provider]
-  (->
-   (.signInWithPopup firebase-auth (get providers provider))
-   (.then (fn [result]
-            (tokens/put-token provider (j/get-in result [:credential :accessToken]))))))
+  (p/let [result (signInWithPopup Auth (get providers provider))]
+    (->> result
+         (.credentialFromResult GithubAuthProvider)
+         ((j/get :accessToken))
+         (tokens/put-token provider))))
 
 
 (defn sign-out []
   (local/local-put! "auth/accessToken" nil)
   (tokens/clear-tokens)
-  (.signOut firebase-auth))
+  (.signOut Auth))
 
 
 (defonce _auth_callback_
          (try
            (.onAuthStateChanged
-            ^js firebase-auth
+            Auth
             (fn [user]
               (d/transact! (if-let [{:keys [displayName uid providerData]} (some-> user (.toJSON) (js->clj :keywordize-keys true))]
                              (let [github-id (get-in providerData [0 :uid])]
@@ -69,7 +67,7 @@
                              [[:db/retract-entity :auth-public]
                               [:db/add :auth-public :signed-in? false]
                               [:db/retract-entity :auth-secret]]))))
-           (catch js/Error e
+           #_(catch js/Error e
              (.error js/console e)
              (prn CONNECT_ERR_MESSAGE))))
 

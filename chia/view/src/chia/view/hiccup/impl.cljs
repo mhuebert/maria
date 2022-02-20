@@ -59,7 +59,7 @@
   "Returns a React-conformant javascript object. An alternative to clj->js,
   allowing for key renaming without an extra loop through every prop map."
   ([props] (props->js #js{} props))
-  ([parsed-key props]
+  ([^clj parsed-key props]
    (->> (cond-> (if (some? props) props {})
                 (some? *wrap-props*) (*wrap-props* (.-tag parsed-key))
 

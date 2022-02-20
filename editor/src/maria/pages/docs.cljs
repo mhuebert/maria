@@ -6,7 +6,7 @@
             [maria.commands.doc :as doc]
             [maria.util :as util]
             [maria.persistence.local :as local]
-            [maria.pages.block_list :as block-list]
+            [maria.pages.block-list :as block-list]
             [maria.curriculum :as curriculum]
             [maria.frames.frame-communication :as frame]
             [applied-science.js-interop :as j]))
@@ -34,9 +34,9 @@
                                                      (:owner (:persisted the-doc)))}]]))))
    :view/did-update (fn [{:keys [id] {prev-id :id} :view/prev-props :as this}]
                       (when-not (= id prev-id)
-                        (.initDoc this)))
+                        (.initDoc ^clj this)))
    :view/did-mount  (fn [this]
-                      (.initDoc this))
+                      (.initDoc ^clj this))
    :project-files   (fn [{:keys [id]}]
                       (-> (concat (keys (d/get-in id [:persisted :files]))
                                   (keys (d/get-in id [:local :files])))

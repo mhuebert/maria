@@ -156,7 +156,7 @@
                                    (when-let [editor (:editor @state)]
                                      (cm/set-preserve-cursor! editor value)))
              :reset-value        (fn [{:keys [default-value value view/state]}]
-                                   (.setValueAndRefresh (:editor @state) (or value default-value)))
+                                   (.setValueAndRefresh ^js (:editor @state)  (or value default-value)))
              :view/should-update (fn [{:keys [value] :as this}]
                                    (let [editor (.getEditor this)]
                                         (if (not= value (.getValue editor))

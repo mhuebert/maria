@@ -55,7 +55,7 @@
          "(check your browser console for more details)")))
 
 (defn- query-string [query]
-  (-> Uri
+  (-> ^js Uri
       .-QueryData
       (.createFromMap (clj->js query)) (.toString)))
 

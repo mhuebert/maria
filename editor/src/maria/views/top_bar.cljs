@@ -61,7 +61,7 @@
 
 (v/defclass doc-toolbar
   {:view/did-mount (fn [this]
-                     (.updateWindowTitle this)
+                     (.updateWindowTitle ^clj this)
                      (some->> (:id this) (doc/locals-push! :local/recents))
                      (exec/set-context! {:current-doc this}))
    :view/will-unmount (fn [this]

@@ -122,7 +122,7 @@
 
 (v/defclass ProseRow
   {:key                :id
-   :get-editor         #(.pmView (:prose-editor-view @(:view/state %)))
+   :get-editor         #(.pmView ^js (:prose-editor-view @(:view/state %)))
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
    :view/did-mount     Editor/mount
    :view/will-unmount  (fn [this]

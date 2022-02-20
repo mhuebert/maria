@@ -14,9 +14,9 @@
 
 (def peek r/peek-char)
 
-(defn current-offset [indexing-pushback-reader]
-  (let [pushback-reader (.-rdr indexing-pushback-reader)
-        indexing-reader (.-rdr pushback-reader)
+(defn current-offset [^r/IndexingPushbackReader indexing-pushback-reader]
+  (let [^r/PushbackReader pushback-reader (.-rdr indexing-pushback-reader)
+        ^r/IndexingReader indexing-reader (.-rdr pushback-reader)
         pushback (- (.-buf_len pushback-reader)
                     (.-buf_pos pushback-reader))]
     (- (.-s_pos indexing-reader)

@@ -100,7 +100,7 @@
                                           true)))
              :select             (fn [this]
                                    (let [selection (:selection @(:view/state this))]
-                                        (.selectN this selection)))
+                                        (.selectN ^js this selection)))
              :view/did-update    (fn [{:as   this
                                        :keys [props prev-props]}]
                                    (when (not= props prev-props)

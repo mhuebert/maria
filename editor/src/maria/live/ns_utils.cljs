@@ -67,7 +67,7 @@
         :else
         (let [ns (cond
                    (some? (get-in namespaces [ns :macros sym])) ns
-                   (ana/core-name? env sym) ana/CLJS_CORE_MACROS_SYM)]
+                   (ana/core-name? env sym) 'cljs.core$macros)]
           (when (some? ns)
             (get-in namespaces [(add-$macros-suffix ns) :defs sym])))))))
 

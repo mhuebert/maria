@@ -55,7 +55,7 @@
 
 (v/defclass display-deferred
   {:view/did-mount (fn [{:keys [deferred view/state]}]
-                     (-> deferred
+                     (doto ^js deferred
                          (.addCallback #(swap! state assoc :value %1))
                          (.addErrback #(swap! state assoc :error %))))}
   [{:keys [view/state]}]

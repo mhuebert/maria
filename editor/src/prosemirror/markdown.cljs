@@ -43,7 +43,7 @@
                                        (.closeBlock state node))
                         :bullet_list (fn [state node]
                                        (.renderList state node "    " (fn []
-                                                                        (str (or (.. node -attrs -bullet) "*") " "))))})
+                                                                        (str (j/get node [:attrs :bullet] "*") " "))))})
 
 
 (def schema (-> markdown-schema

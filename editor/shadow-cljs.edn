@@ -3,8 +3,9 @@
             8702 "public"}
  :jvm-opts ["-Xmx2G"]
  :nrepl {:port 9000}
- :ssl {:keystore "ssl/keystore.jks"
-       :password "shadow-cljs"}
+ ;; 1. https://medium.com/@jonsamp/how-to-set-up-https-on-localhost-for-macos-b597bcf935ee
+ ;; 2. https://help.univention.com/t/q-a-how-to-convert-a-crt-certificate-to-pfx-p12-pkcs12-format/10605
+ :ssl {}
  :builds
  {:live
   {:target :browser
