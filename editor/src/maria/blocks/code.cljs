@@ -69,11 +69,15 @@
            "share")]))))
 
 (v/defclass CodeRow
-  {:key                :id
+  {:key :id
    :view/should-update #(not= (:block %) (:block (:view/prev-props %)))
-   :view/did-mount     Editor/mount
-   :view/will-unmount  Editor/unmount
-   :get-editor         #(.getEditor (:editor-view @(:view/state %)))}
+   :view/did-mount Editor/mount
+   :view/will-unmount (fn [this]
+                        (Editor/unmount this)
+                        (when (= (:block-view @exec/context) this)
+                          (exec/set-context! {:block/code nil
+                                              :block-view nil})))
+   :get-editor #(.getEditor (:editor-view @(:view/state %)))}
   [{:keys [view/state block-list block before-change on-selection-activity] :as this}]
   (let [doc (:current-doc @exec/context)]
     [:.flex.pv2.cursor-text.flex-column.flex-row-ns
@@ -88,17 +92,17 @@
       (error/error-boundary
        {:on-error (fn [error info]
                     (e/handle-block-error (:id block) error))}
-        (code/CodeView {:class                 "pa3 bg-white"
-                        :ref                   #(v/swap-silently! state assoc :editor-view %)
-                        :value                 (str (:block this))
-                        :on-ast                (fn [node]
-                                                 (.splice block-list block [(assoc block :node node)]))
-                        :before-change         before-change
+        (code/CodeView {:class "pa3 bg-white"
+                        :ref #(v/swap-silently! state assoc :editor-view %)
+                        :value (str (:block this))
+                        :on-ast (fn [node]
+                                  (.splice block-list block [(assoc block :node node)]))
+                        :before-change before-change
                         :on-selection-activity on-selection-activity
-                        :capture-event/focus   #(exec/set-context! {:block/code true
-                                                                    :block-view this})
-                        :capture-event/blur    #(exec/set-context! {:block/code nil
-                                                                    :block-view nil})}))]
+                        :capture-event/focus #(exec/set-context! {:block/code true
+                                                                  :block-view this})
+                        :capture-event/blur #(exec/set-context! {:block/code nil
+                                                                 :block-view nil})}))]
 
      [:.w-100.w-50-ns.flex-none.code.overflow-y-hidden.overflow-x-auto.f6.relative.code-block-result.pt3.pt0-ns
       #_(ShareLink {:doc        doc

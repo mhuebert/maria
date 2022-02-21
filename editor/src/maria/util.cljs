@@ -32,9 +32,9 @@
 
 (defn handle-captured-events [{:keys [view/props] :as this}]
   (let [dom-node (v/dom-node this)]
-    (doseq [[key f] props]
-      (when (= (namespace key) "capture-event")
-        (events/listen dom-node (name key) #(f % this) true)))))
+    (doseq [[key f] props
+            :when (= (namespace key) "capture-event")]
+      (events/listen dom-node (name key) #(f % this) true))))
 
 (defn vector-splice
   "Splice items into vector at index, replacing n items"

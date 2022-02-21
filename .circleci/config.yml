@@ -57,11 +57,9 @@ jobs:
       - save_cache:
           paths:
             - ~/project/editor/node_modules
-            - ~/project/editor/target
             - ~/project/editor/.shadow-cljs
             - ~/project/editor/.cpcache
             - ~/.m2
-            - ~/.clojure/.cpcache
           key: v6-dependencies-{{ checksum "editor/package.json" }}--{{ checksum "editor/deps.edn"}}
 
 

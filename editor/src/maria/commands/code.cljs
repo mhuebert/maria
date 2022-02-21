@@ -21,7 +21,8 @@
             [lark.tree.range :as range]
             [lark.tree.reader :as rd]
             [lark.tree.cursor :as cursor]
-            [lark.tree.emit :as emit]))
+            [lark.tree.emit :as emit]
+            [applied-science.js-interop :as j]))
 
 (def pass #(do :lark.commands/Pass))
 
