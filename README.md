@@ -59,13 +59,13 @@ cd maria/editor
 Now, within the `editor` directory, install javascript dependencies and compile stylesheets:
 
 ```
-npm install;
+yarn;
 ```
 
 ### build in development mode, start a local server, and live-reload changes:
 
 ```shell
-npm run watch;
+yarn watch;
 ```
 
 When these builds have completed, open your web browser to https://localhost:8701
@@ -91,7 +91,7 @@ to directly enter the `live` environment (provided you've opened up your browser
 ### make a production build:
 
 ```shell
-npm run release;
+yarn release;
 ```
 
 ## License
