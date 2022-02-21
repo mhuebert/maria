@@ -11,6 +11,27 @@
         "source": "**",
         "destination": "/index.html"
       }
+    ],
+    "headers": [
+      {
+        "source": "/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=0, s-maxage=604800"
+          }
+        ]
+      },
+      {
+        "source":
+        "**/*.@(jpg|jpeg|gif|png|svg|webp|wasm|js|css|eot|otf|ttf|ttc|woff|woff2|font.css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=604800"
+          }
+        ]
+      }
     ]
   }
 }
