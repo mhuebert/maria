@@ -5,7 +5,8 @@
             [maria.curriculum :as curriculum]
             [maria.persistence.github :as github]
             [chia.db :as d]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [clojure.string :as str]))
 
 (defn sanitized-location
   "Do not share more information than necessary with live frame."
@@ -27,6 +28,7 @@
                      segments)]
       (when current-username
         (github/load-user-gists current-username))
+
       (match segments
              []
              (trusted-views/editor-frame-view {:db/transactions [route-tx]})
@@ -41,8 +43,11 @@
              ["curriculum"]
              (match-route-segments ["gists" "curriculum"])
 
-             ["http-text" id]
-             (let [url (js/decodeURIComponent id)]
+             (["http-text" & parts] :seq)
+             (let [[id url] (if (= 1 (count parts))
+                              [(first parts) (js/decodeURIComponent (first parts))]
+                              (let [url (str/join "/" parts)]
+                                [(js/encodeURIComponent url) url]))]
                (github/load-url-text url)
                (trusted-views/editor-frame-view {:db/transactions [(assoc route-tx :segments ["doc" id])]
                                                  :current-entity id}))
