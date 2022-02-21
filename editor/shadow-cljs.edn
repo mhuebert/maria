@@ -14,7 +14,8 @@
               :language-in :ecmascript5
               :output-wrapper false}}
    :build-hooks [(cljs-static.shadow/write-assets!
-                   {:public-path "public" "/live.html" (maria.static/live)})]
+                   {:public-path "public"
+                    "/live.html" (maria.static/live)})]
    :output-dir "public/js/compiled/live"
    :module-hash-names true
    :asset-path "/js/compiled/live"

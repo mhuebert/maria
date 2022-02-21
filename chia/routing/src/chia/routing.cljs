@@ -76,7 +76,8 @@
 (defn get-route
   "In a browsing environment, reads the current location."
   []
-  (let [{:keys [pathname search hash]} (j/lookup js/location)]
+      (js/console.log js/location)
+  (j/let [^js {:keys [pathname search hash]} js/location]
     (if history-support?
       (str pathname search hash)
       (if (= pathname "/")
