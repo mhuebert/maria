@@ -277,16 +277,16 @@
       (set! (.-y2 box) (max y (.-y2 box))))
     box))
 
-(defn max-bbox [boxes]
+(defn max-bbox ^BBox [boxes]
   (let [box (->BBox js/Number.MAX_SAFE_INTEGER js/Number.MAX_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER js/Number.MIN_SAFE_INTEGER)]
-    (doseq [b boxes]
+    (doseq [^BBox b boxes]
       (set! (.-x1 box) (min (.-x1 b) (.-x1 box)))
       (set! (.-y1 box) (min (.-y1 b) (.-y1 box)))
       (set! (.-x2 box) (max (.-x2 b) (.-x2 box)))
       (set! (.-y2 box) (max (.-y2 b) (.-y2 box))))
     box))
 
-(defn bbox [shape]
+(defn ^BBox bbox ^BBox [^Shape shape]
   ;; TODO should expand bounds as stroke-width grows
   (case (.-kind shape)
     :circle   (->BBox (- (.-cx shape) (.-r shape)) (- (.-cy shape) (.-r shape)) (+ (.-cx shape) (.-r shape)) (+ (.-cy shape) (.-r shape))) 
@@ -299,7 +299,7 @@
     :svg      (.-bbox shape) ; no need to re-compute
     (throw (js/Error. (str "Can't take bbox of non-shape: " (pr-str shape))))))
 
-(defn center-point [shape]
+(defn center-point [^Shape shape]
   ;; TODO we'll need special handling for triangles, otherwise they
   ;; wobble
   (let [b (bbox shape)]
@@ -337,7 +337,7 @@
                                          shape))
                     :widths (butlast (state :widths))})
                  {:out    '()
-                  :widths (map #(.-x2 %) (map bbox (butlast shapes)))})
+                  :widths (map #(.-x2 ^BBox %) (map bbox (butlast shapes)))})
          :out
          (apply layer))))
 
@@ -359,7 +359,7 @@
                                              shape))
                     :heights (butlast (state :heights))})
                  {:out     '()
-                  :heights (map #(.-y2 %) (map bbox (butlast shapes)))})
+                  :heights (map #(.-y2 ^BBox %) (map bbox (butlast shapes)))})
          :out
          (apply layer))))
 
@@ -371,7 +371,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; output formatting
 
-(defn shape->vector [shape]
+(defn shape->vector [^Shape shape]
   (into [(.-kind shape)
          (reduce
           (fn [m [k v]]
@@ -390,7 +390,7 @@
          (.-text shape)]
         (mapv shape->vector (.-children shape))))
 
-(defn to-hiccup [shape]
+(defn to-hiccup [^Shape shape]
   (if (= (.-kind shape) :svg)
     (shape->vector shape)
     (let [bbox (bbox shape)]
@@ -629,7 +629,7 @@
 
 ;; TODO generalize (current forces numeric types) and probably rename
 (defn value-to-cell! [the-cell & cell-path]
-  (fn [event]
+  (fn [^js event]
     (let [v (js/parseFloat (.-value (.-target event)))]
       (swap! the-cell (if cell-path
                         #(assoc-in % cell-path v)

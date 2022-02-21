@@ -3,7 +3,6 @@
     "server": "shadow-cljs server;",
     "watch": "shadow-cljs -A:watch watch live trusted bootstrap;",
     "release": "shadow-cljs -A:release clj-run maria.build/release;",
-    "postinstall": "ln -svf ./.shadow-cljs/nrepl.port ./.nrepl-port;",
     "deploy": "./script/deploy.sh"
   },
   "dependencies": {
@@ -11,7 +10,7 @@
     "codemirror": "5.46.0",
     "core-js": "3.0.1",
     "firebase": "^9.6.7",
-    "firebase-tools": "7.7.0",
+    "firebase-tools": "^10.2.1",
     "jss": "^9.8.7",
     "jss-global": "^3.0.0",
     "jss-preset-default": "^4.5.0",

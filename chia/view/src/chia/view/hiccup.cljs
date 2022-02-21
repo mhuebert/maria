@@ -35,8 +35,6 @@
               (.push out (to-element (nth form i)))
               (recur (inc i)))))))))
 
-(defonce sentinel #js{})
-
 (defn props? [props]
   (not (identical? props sentinel)))
 

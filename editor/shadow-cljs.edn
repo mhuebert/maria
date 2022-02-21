@@ -11,7 +11,7 @@
   {:target :browser
    :release {:compiler-options
              {:optimizations :simple
-              :language-in :ecmascript5
+              ;:language-in :ecmascript5
               :output-wrapper false}}
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
