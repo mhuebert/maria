@@ -1,9 +1,0 @@
-{:paths ["src"]
-
- :aliases {:test
-           {:extra-paths ["test"]}}
-
- :deps {org.clojure/clojurescript {:mvn/version "1.10.520"}
-        chia/reactive {:local/root "../reactive"}
-        chia/util {:local/root "../util"}
-        applied-science/js-interop {:mvn/version "0.2.7"}}}

@@ -4,9 +4,11 @@
             [goog.net.XhrIo :as xhr]
             [goog.net.ErrorCode :as errors]
             [applied-science.js-interop :as j]
-            [chia.util :as u])
+            [clojure.string :as str])
   (:require-macros [cells.lib])
   (:import [goog Uri]))
+
+(defn some-str [s] (when-not (str/blank? s) s))
 
 (defn -on-frame
   ([f] (-on-frame f nil))
@@ -80,7 +82,7 @@
                    (if-let [error-message (xhrio-error-message xhrio)]
                      (cell/error! self (ex-info error-message {:cell self}))
                      (let [formatted-value (some-> (j/call xhrio :getResponseText)
-                                                   u/some-str
+                                                   some-str
                                                    (parse))]
                        (cell/complete! self)
                        (reset! self formatted-value))))))

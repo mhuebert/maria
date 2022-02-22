@@ -1,5 +1,0 @@
-{:paths ["src"]
-
- :deps {org.clojure/clojurescript  {:mvn/version "1.10.520"}
-        com.stuartsierra/dependency {:mvn/version "0.2.0"}
-        chia/util {:local/root "../util"}}}

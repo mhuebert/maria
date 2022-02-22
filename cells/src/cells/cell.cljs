@@ -1,9 +1,10 @@
 (ns cells.cell
   (:require [cells.linked-graph :as g]
-            [chia.util :as u]
             [chia.reactive :as r]
             [applied-science.js-interop :as j])
-  (:require-macros cells.cell))
+  (:require-macros [cells.cell :as cell]))
+
+(defn guard [x f] (when (f x) x))
 
 (def ^:dynamic *self*
   "Tracks the currently-evaluating cell."
@@ -93,7 +94,7 @@
 
 (defn error [cell]
   (-> (get-async cell)
-      (u/guard error-st?)))
+      (guard error-st?)))
 
 (defn error? [cell]
   (error-st? (get-async cell)))
@@ -347,7 +348,7 @@
    (let [owner (or *self*
                    r/*reader*)]
      (if (some? memo-key)
-       (u/memoized-on owner memo-key (make-cell f owner))
+       (cell/memoized-on owner memo-key (make-cell f owner))
        (make-cell f owner)))))
 
 (defn cell

@@ -8,20 +8,14 @@
         org.clojure/data.json {:mvn/version "2.4.0"}
         org.clojure/test.check {:mvn/version "1.1.1"}
 
-        athos/kitchen-async {:git/url "https://github.com/athos/kitchen-async.git"
-                             :sha "68eca4b37e796cf0d3c1850a15560a1f71d47879"}
+        mhuebert/kitchen-async {:mvn/version "0.1.0"}
         applied-science/js-interop {:mvn/version "0.3.2"}
         thheller/shadow-cljs {:mvn/version "2.17.3"}
+
         ;; user fun
         maria/friendly {:local/root "../friendly"}
         maria/shapes {:local/root "../shapes"}
         cells/cells {:local/root "../cells"}
-
-        ;; view + data layer
-        chia/view {:local/root "../chia/view"}
-        chia/db {:local/root "../chia/db"}
-        chia/reactive {:local/root "../chia/reactive"}
-        chia/routing {:local/root "../chia/routing"}
 
         ;; 3rd party utils
         hiccup/hiccup {:mvn/version "2.0.0-alpha2"}
@@ -29,4 +23,5 @@
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         fast-zip/fast-zip {:mvn/version "0.7.0"}
         bidi/bidi {:mvn/version "2.1.5"}
-        cider/cider-nrepl {:mvn/version "0.28.2"}}}
+        cider/cider-nrepl {:mvn/version "0.28.2"}
+        com.stuartsierra/dependency {:mvn/version "0.2.0"}}}

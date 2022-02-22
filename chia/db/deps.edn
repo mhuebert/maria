@@ -1,7 +1,0 @@
-{:paths ["src"]
-
- :deps
- {org.clojure/clojurescript  {:mvn/version "1.10.520"}
-  chia/reactive {:local/root "../reactive"}
-  chia/util {:local/root "../util"}
-  com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}}}

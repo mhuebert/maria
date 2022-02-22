@@ -47,3 +47,10 @@
          (try (apply (fn ~@body) args#)
               (catch ~'js/Error e#
                 (~'cells.cell/error! cell# e#)))))))
+
+(defmacro memoized-on [o k & body]
+  `(let [o# ~o]
+     (~'applied-science.js-interop/get o# ~k
+      (let [v# (do ~@body)]
+        (~'applied-science.js-interop/assoc! o# ~k)
+        v#))))

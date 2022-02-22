@@ -250,13 +250,13 @@
   (assert-number "x must be a number!" x)
   (assert-number "y must be a number!" y)
   (case (:kind shape)
-    :circle   (assoc shape :cx x :cy y)
-    :ellipse  (assoc shape :cx x :cy y)
-    :polygon  (-> (move-points shape x y) (assoc :x x :y y))
-    :polyline (-> (move-points shape x y) (assoc :x x :y y))
-    :rect     (assoc shape :x x :y y)
-    :text     (assoc shape :x x :y y)
-    :image    (assoc shape :x x :y y)
+    (:circle
+     :ellipse) (assoc shape :cx x :cy y)
+    (:polygon
+     :polyline) (-> (move-points shape x y) (assoc :x x :y y))
+    (:rect
+     :text
+     :image) (assoc shape :x x :y y)
     (throw (js/Error. (str "Can't position non-shape: " (pr-str shape))))))
 
 (defn opacity
@@ -289,7 +289,7 @@
 (defn ^BBox bbox ^BBox [^Shape shape]
   ;; TODO should expand bounds as stroke-width grows
   (case (.-kind shape)
-    :circle   (->BBox (- (.-cx shape) (.-r shape)) (- (.-cy shape) (.-r shape)) (+ (.-cx shape) (.-r shape)) (+ (.-cy shape) (.-r shape))) 
+    :circle   (->BBox (- (.-cx shape) (.-r shape)) (- (.-cy shape) (.-r shape)) (+ (.-cx shape) (.-r shape)) (+ (.-cy shape) (.-r shape)))
     :ellipse  (->BBox (- (.-cx shape) (.-rx shape)) (- (.-cy shape) (.-ry shape)) (+ (.-cx shape) (.-rx shape)) (+ (.-cy shape) (.-ry shape)))
     :polygon  (points-bbox (.-points shape))
     :polyline (points-bbox (.-points shape))
