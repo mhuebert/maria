@@ -44,13 +44,16 @@
              (match-route-segments ["gists" "curriculum"])
 
              (["http-text" & parts] :seq)
-             (let [[id url] (if (= 1 (count parts))
-                              [(first parts) (js/decodeURIComponent (first parts))]
-                              (let [url (str/join "/" parts)]
-                                [(js/encodeURIComponent url) url]))]
+             (let [url (if (= 1 (count parts))
+                         (js/decodeURIComponent (first parts))
+                         (str/join "/" parts))
+                   url (if (str/starts-with? url "http")
+                         url
+                         (str "https://" url))
+                   encoded-url (js/encodeURIComponent url)]
                (github/load-url-text url)
-               (trusted-views/editor-frame-view {:db/transactions [(assoc route-tx :segments ["doc" id])]
-                                                 :current-entity id}))
+               (trusted-views/editor-frame-view {:db/transactions [(assoc route-tx :segments ["doc" encoded-url])]
+                                                 :current-entity encoded-url}))
 
 
              ;; re/ :current-entity
