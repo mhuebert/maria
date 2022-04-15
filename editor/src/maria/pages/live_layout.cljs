@@ -25,6 +25,11 @@
 (defn last-n [n v]
   (subvec v (max 0 (- (count v) n))))
 
+(defn link [title href]
+  [:a (cond-> {:href href}
+              (str/starts-with? title "http")
+              (assoc :target "_blank")) title])
+
 (defn landing []
   [:.w-100
    [toolbar/doc-toolbar {}]
@@ -39,21 +44,15 @@
      "Your journey begins here: "
      [:a.br2.bg-white.shadow-4.pa3.ml3.sans-serif.black.no-underline.f5.b.pointer.hover-underline.hover-shadow-5 {:href "/intro"} "Learn Clojure with Shapes"]
      [:.flex-auto]]
-    
+
     [:.tc.i.f3.mv3 "Further reading:"]
 
     [:ul.f-body.tl.lh-copy
-     [:li "The " [:a {:href "/quickstart"} "Editor Quickstart"] ", if you're already familiar with Clojure."]
-     [:li "An " [:a {:href "/gallery?eval=true"} "Example Gallery"] " of user creations."]
-     [:li "Understand the " [:a {:target "_blank"
-                                 :href   "https://github.com/mhuebert/maria/wiki/Curriculum"} "Pedagogy"] " behind Maria's curriculum."]
-     [:li "Discover the " [:a {:target "_blank"
-                               :href   "https://github.com/mhuebert/maria/wiki/Background-reading"} "Sources of Inspiration"] " for the project."]]
-    
-    [:.tc.i.f3.mv3 "Events:"]
+     [:li "An " (link "Example Gallery" "/gallery?eval=true") " of user creations."]
+     [:li "The " (link "Editor Quickstart" "/quickstart") " explains how to use Maria."]
 
-    [:ul.f-body.tl.lh-copy
-     [:li "Feb 2020, London ClojureBridge: " [:a {:href "/cb-london"} "start here"] "."]]]])
+     [:li "Understand the " (link "Pedagogy" "https://github.com/mhuebert/maria/wiki/Curriculum") " behind Maria's curriculum."]
+     [:li "Discover " (link "Sources of Inspiration" "https://github.com/mhuebert/maria/wiki/Background-reading") " for the project."]]]])
 
 (v/defview sidebar
   [{:keys [visible? id]}]

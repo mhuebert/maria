@@ -7,6 +7,7 @@
 
 (defn handle-message [_ message]
   (match message
+         [:new] (doc/init-new!)
          [:auth/sign-out] (d/transact! [[:db/retract-entity :auth-public]
                                         [:db/add :auth-public :signed-in? false]])
          [:db/transactions txs] (d/transact! txs)

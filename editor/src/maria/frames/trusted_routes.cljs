@@ -79,5 +79,6 @@
              ["gist" id filename]
              (do (github/load-gist id)
                  (trusted-views/editor-frame-view {:current-entity id
-                                                   :db/transactions [(assoc route-tx :segments ["doc" id])]}))))))
+                                                   :db/transactions [(assoc route-tx :segments ["doc" id])]}))
+             ["new"] (trusted-views/editor-frame-view {:action [:new]})))))
 
