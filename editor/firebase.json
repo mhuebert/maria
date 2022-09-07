@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "target": "maria-editor",
+    "site": "maria-d04a7",
     "public": "public",
     "ignore": [
       "js/compiled/out**",

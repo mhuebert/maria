@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "target": "maria-editor2",
+    "site": "maria-editor2",
     "public": "public",
     "ignore": [
       "firebase.json",
