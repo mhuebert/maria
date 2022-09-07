@@ -46,6 +46,7 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         with:
+          entryPoint: ${{env.dir}}
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MARIA_D04A7 }}'
           projectId: maria-d04a7
@@ -55,6 +56,7 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         if: github.event_name == 'push'
         with:
+          entryPoint: ${{env.dir}}
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MARIA_D04A7 }}'
           channelId: live
