@@ -11,6 +11,7 @@
         mhuebert/kitchen-async {:mvn/version "0.1.0"}
         applied-science/js-interop {:mvn/version "0.3.2"}
         thheller/shadow-cljs {:mvn/version "2.17.3"}
+        maria/tools {:local/root "../tools"}
 
         ;; user fun
         maria/friendly {:local/root "../friendly"}
@@ -18,7 +19,6 @@
         cells/cells {:local/root "../cells"}
 
         ;; 3rd party utils
-        hiccup/hiccup {:mvn/version "2.0.0-alpha2"}
         net.cgrand/macrovich {:mvn/version "0.2.1"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         fast-zip/fast-zip {:mvn/version "0.7.0"}

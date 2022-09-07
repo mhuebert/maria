@@ -1,0 +1,12 @@
+{:paths ["src/main"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        org.clojure/clojurescript {:mvn/version "1.11.60"}
+        thheller/shadow-cljs {:mvn/version "2.20.1"}
+        reagent/reagent {:mvn/version "1.1.1"}
+        applied-science/js-interop {#_#_:mvn/version "0.3.3"
+                                    :local/root "../../js-interop"}
+        mhuebert/re-db {:git/url "https://github.com/mhuebert/re-db"
+                        :git/sha "5b682571945d0e88de64376bcb3cc16504e9bf16"}
+
+        maria/tools {:local/root "../tools"}
+        com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}}}

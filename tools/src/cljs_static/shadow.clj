@@ -1,6 +1,5 @@
 (ns cljs-static.shadow
   (:require [cljs-static.assets :as a]
-            [com.stuartsierra.dependency :as dep]
             [clojure.tools.reader.edn :as edn]
             [shadow.cljs.devtools.config :as config]
             [clojure.java.shell :refer [sh]]))
@@ -45,15 +44,6 @@
       (-> build-state
           (assoc-in [::generated assets] true)))))
 
-(defn transitive-module-deps
-  "Give shadow module config, return sorted transitive dependencies, including ks."
-  [module-ks modules]
-  (let [graph (reduce-kv (fn [graph k {:keys [depends-on]}]
-                           (reduce #(dep/depend %1 k %2) graph depends-on))
-                         (dep/graph) modules)
-        deps (mapcat (partial dep/transitive-dependencies graph) module-ks)]
-    (sort (dep/topo-comparator graph) (set (into module-ks deps)))))
-
 (defn read-manifest [{:as   build
                       :keys [output-dir]}]
   (edn/read-string (slurp (str output-dir "/manifest.edn"))))
@@ -77,12 +67,4 @@
   "Script tag for module `k`"
   [build-id k]
   [:script {:src (module-path build-id k)}])
-
-(defn modules
-  "Sorted list of script tags for modules `ks` and their transitive dependencies."
-  [build-id ks & {:keys [exclude]}]
-  {:pre [(keyword? build-id) (vector? ks)]}
-  (->> (cond->> (transitive-module-deps ks (:modules (config/get-build! build-id)))
-                exclude (remove exclude))
-       (map (partial module build-id))))
 
