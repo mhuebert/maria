@@ -10,13 +10,15 @@ jobs:
       dir: './editor2'
     steps:
       - uses: actions/checkout@v3
-      - name: Install clojure tools
+      - name: clojure tools
         uses: DeLaGuardo/setup-clojure@9.5
         with:
           bb: 0.9.162
           cli: 1.11.1.1155 # Clojure CLI based on tools.deps
           github-token: ${{ secrets.GITHUB_TOKEN }}
-
+      - name: yarn deps
+        working-directory: ${{env.dir}}
+        run: yarn install
       - name: Cache clojure dependencies
         uses: actions/cache@v3
         with:
