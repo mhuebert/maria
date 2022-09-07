@@ -2,7 +2,7 @@
 # https://github.com/firebase/firebase-tools
 
 name: Deploy to Firebase Hosting on PR
-'on': [pull_request, push]
+'on': [pull_request, push, merge]
 jobs:
   build_and_preview:
     runs-on: ubuntu-latest
@@ -47,7 +47,7 @@ jobs:
 
       # LIVE deploys
       - uses: FirebaseExtended/action-hosting-deploy@v0
-        if: github.event_name == 'merge'
+        if: github.event_name == 'push' || github.event_name == 'merge'
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MARIA_D04A7 }}'
