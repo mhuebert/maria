@@ -107,7 +107,7 @@
     [fixed-top
       {:when-scrolled {:style {:background-color "#e7e7e7"
                                :border-bottom "2px solid #e2e2e2"}}}
-     [:#top-bar.flex.sans-serif.items-stretch.f7.flex-none.overflow-hidden.pl2.mb2
+     [:#top-bar.flex.sans-serif.items-stretch.f6.flex-none.overflow-hidden.pl2.mb2
        (when-not sidebar?
         [toolbar-button [{:on-click #(d/transact! [[:db/update-attr :ui/globals :sidebar? (comp not boolean)]])}
                            icons/Docs

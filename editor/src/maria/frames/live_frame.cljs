@@ -51,7 +51,6 @@
                  (when-let [a (r/closest (.-target e) "a")]
                    (when (= (.-origin a) (.. js/window -location -origin))
                      (let [href (.-href a)]
-                       (prn :set-once (str/replace href (.-origin a) (d/get :window/location :origin)))
                        (set! (.-href a) (str/replace href (.-origin a) (d/get :window/location :origin)))
                        (events/listenOnce js/window "mouseup" #(set! (.-href a) href)))))))
 

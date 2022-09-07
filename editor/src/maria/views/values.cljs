@@ -84,10 +84,9 @@
     [:span
      [expander-outter {:on-click #(swap! state update :expanded? not)
                        :class    "pointer hover-opacity-parent"}
-      [inline-centered
+      [inline-centered [:span.o-50.mr1 "ƒ "]
        (if (and fn-name (not= "" fn-name))
-         (some-> (source-lookups/fn-name f) (symbol) (name))
-         [:span.o-50.mr1 "ƒ"])
+         (some-> (source-lookups/fn-name f) (symbol) (name)))
        (-> icons/ArrowPointingDown
            (icons/size 20)
            (icons/class "mln1 mrn1 hover-opacity-child")

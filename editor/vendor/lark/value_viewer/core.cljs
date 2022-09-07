@@ -1,5 +1,5 @@
 (ns lark.value-viewer.core
-  (:require [goog.object :as gobj]
+  (:require [applied-science.js-interop :as j]
             [chia.view :as v]
             [chia.view.hiccup :as hiccup])
   (:import [goog.async Deferred]))
@@ -160,11 +160,11 @@
 (v/defclass format-function
   {:view/initial-state (fn [_ value] {:expanded? false})}
   [{:keys [view/state]} value]
-  (let [{:keys [expanded?]} @state
-        fn-name (gobj/get value "name" "ƒ")]
+  (let [{:keys [expanded?]} @state]
        [:span
+        "Fun"
         [expander-outter {:on-click #(swap! state update :expanded? not)}
-         [inline-centered [:span.o-50.mr1 fn-name]
+         [inline-centered [:span.o-50.mr1 (str "ƒ " (j/get value :name))]
           (-> (if expanded? ArrowPointingUp
                             ArrowPointingDown)
               (update 1 assoc :width 20 :height 20 :class "mln1 mrn1 o-50"))]
@@ -202,7 +202,7 @@
                :function [format-function value]
 
                :atom (wrap-value [[:span.gray.mr1 "#Atom"] nil]
-                                 (format-value depth (gobj/get value "state")))
+                                 (format-value depth (j/get value :state)))
 
                (cond
                  (v/element? value) value
