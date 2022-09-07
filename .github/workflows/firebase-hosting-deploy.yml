@@ -22,6 +22,12 @@ jobs:
             ~/.deps.clj
           key: cljdeps-${{ hashFiles('${{env.dir}}/deps.edn', '${{env.dir}}/bb.edn') }}
           restore-keys: cljdeps-
+      - name: Cache yarn
+        uses: actions/cache@v3
+        with:
+          path: ${{env.dir}}/node_modules
+          key: yarn-${{ hashFiles('${{env.dir}}/yarn.lock') }}
+          restore-keys: yarn-
       - name: clojure tools
         uses: DeLaGuardo/setup-clojure@9.5
         with:
