@@ -5,7 +5,6 @@ name: Deploy to Firebase Hosting on PR
 'on': [pull_request, push]
 jobs:
   build_and_preview:
-    if: '${{ github.event.pull_request.head.repo.full_name == github.repository }}'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -34,7 +33,7 @@ jobs:
 
       # PREVIEW deploys
       - uses: FirebaseExtended/action-hosting-deploy@v0
-        if: ${{ github.event_name }} == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MARIA_D04A7 }}'
@@ -43,7 +42,7 @@ jobs:
 
       # LIVE deploys
       - uses: FirebaseExtended/action-hosting-deploy@v0
-        if: ${{ github.event_name }} == 'merge'
+        if: github.event_name == 'merge'
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_MARIA_D04A7 }}'
