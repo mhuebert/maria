@@ -30,7 +30,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: yarn deps
         working-directory: ${{env.dir}}
-        run: yarn install
+        run: yarn
 
       - name: Build static site
         working-directory: ${{env.dir}}
