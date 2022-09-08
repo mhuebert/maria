@@ -20,26 +20,40 @@
 
 (defn comment? [s] (str/starts-with? s ";"))
 
-(defn toplevel-groups [source]
+(defn source-blocks
+  "Returns a vector "
+  [source]
   (->> source
        parse-clj
        program-nodes
-       (into []
-             (comp (map (fn [^js node] (subs source (.-from node) (.-to node))))
-                   (partition-by comment?)
-                   (mapcat
-                    (fn [sources]
-                      (if (comment? (first sources))
-                        [{:type :prose
-                          :source (->> sources
-                                       (map #(str/replace % #"^;+\s*" ""))
-                                       (str/join \newline))}]
-                        (map (fn [source]
-                               {:type :code
-                                :source source}) sources))))))))
+       (eduction
+        (map (fn [^js node] (subs source (.-from node) (.-to node))))
+        (partition-by comment?)
+        (mapcat
+         (fn [sources]
+           (if (comment? (first sources))
+             [{:type :prose
+               :source (->> sources
+                            (map #(str/replace % #"^;+\s*" ""))
+                            (str/join \newline))}]
+             (map (fn [source]
+                    {:type :code
+                     :source source}) sources)))))))
 
-(comment
- (= (toplevel-groups "(ns my.app)
+(defn blocks-as-markdown [blocks]
+  (->> blocks
+       (map (fn [{:keys [type source]}]
+              (case type
+                :code  (str "```clj"
+                            \newline
+                            source
+                            \newline
+                            "```")
+                :prose source)))
+       (str/join (str \newline \newline))))
+
+(def sample-source
+  "(ns my.app)
 
 ;; # Hello, world.
 ;;
@@ -48,6 +62,9 @@
 (+ 1 2)
 
 ;; Another paragraph.")
+
+(comment
+ (= (vec (source-blocks sample-source))
     [{:type :code
       :source "(ns my.app)"}
      {:type :prose
@@ -56,3 +73,21 @@
       :source "(+ 1 2)"}
      {:type :prose
       :source "Another paragraph."}]))
+
+(comment
+ (= (-> sample-source
+        source-blocks
+        blocks-as-markdown)
+    "```clj
+(ns my.app)
+```
+
+# Hello, world.
+
+This is a paragraph.
+
+```clj
+(+ 1 2)
+```
+
+Another paragraph."))
