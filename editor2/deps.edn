@@ -4,9 +4,12 @@
         thheller/shadow-cljs {:mvn/version "2.20.1"}
         reagent/reagent {:mvn/version "1.1.1"}
         applied-science/js-interop {#_#_:mvn/version "0.3.3"
-                                    :git/url "https://github.com/applied-science/js-interop"
+                                    #_#_#_#_:git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "3caeea48f3170e140ca4d0d838787432370956f8"
-                                    #_#_:local/root "../../js-interop"}
+                                    :local/root "../../js-interop"}
+        nextjournal/clojure-mode {:local/root "../../clojure-mode"
+                                  #_#_#_#_:git/url "https://github.com/nextjournal/clojure-mode"
+                                  :git/sha "a408a8cb2154107e80bb8deae0cda48be911571f"}
         mhuebert/re-db {:git/url "https://github.com/mhuebert/re-db"
                         :git/sha "5b682571945d0e88de64376bcb3cc16504e9bf16"}
 

@@ -1,9 +1,10 @@
 (ns cloud.maria
   (:require ["react-dom/client" :as react.client]
-            [tools.maria.dom :as dom]
+            [applied-science.js-interop :as j]
             [cloud.maria.markdown :as markdown]
-            [reagent.core :as reagent]
-            [applied-science.js-interop :as j]))
+            cloud.maria.parse-clojure
+            [tools.maria.dom :as dom]
+            [reagent.core :as reagent]))
 
 
 (defonce !root (delay (react.client/createRoot
