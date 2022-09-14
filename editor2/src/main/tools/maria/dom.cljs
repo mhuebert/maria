@@ -6,5 +6,6 @@
   (let [selector (strip-prefix (name id) "#")]
     (or (j/get js/window selector)
         (doto (js/document.createElement "div")
-          (j/call :setAttribute :id selector)
+          (j/call :setAttribute "id" selector)
           (js/document.body.appendChild)))))
+

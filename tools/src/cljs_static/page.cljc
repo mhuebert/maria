@@ -55,7 +55,7 @@
           charset "UTF-8"}}]
    (hiccup/html {:mode :html}
                 (hu/raw-string doctype)
-                [:html {:lang lang}
+                [:html (merge {:lang lang} (:props/html page-props))
                  [:head
 
                   (map<> (fn [[k v]] (meta-tag k v)) meta)
@@ -70,7 +70,7 @@
                   (map<> element-tag head)
                   (map<> script-tag head-scripts)]
 
-                 [:body
+                 [:body (:props/body page-props {})
                   (map<> element-tag body)
                   (map<> script-tag body-scripts)]])))
 

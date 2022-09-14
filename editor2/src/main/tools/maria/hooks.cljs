@@ -2,7 +2,7 @@
   (:require [applied-science.js-interop :as j]
             ["react" :as react]))
 
-(defn ref [init]
+(defn volatile [init]
   (j/let [^js {:keys [current] :as ref} (react/useRef init)]
     (reify
       IDeref

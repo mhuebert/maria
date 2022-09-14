@@ -1,4 +1,5 @@
 {:deps {}
  :tasks
  {dev (shell "yarn shadow-cljs watch editor")
+  dev-local (shell "yarn shadow-cljs -A:local watch editor")
   release (shell "yarn shadow-cljs release editor")}}

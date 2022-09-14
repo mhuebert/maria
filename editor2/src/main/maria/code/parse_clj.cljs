@@ -1,6 +1,5 @@
-(ns cloud.maria.parse-clojure
+(ns maria.code.parse-clj
   (:require ["lezer-clojure" :as lezer-clj]
-            [applied-science.js-interop :as j]
             [clojure.string :as str]))
 
 ;; This namespace splits Clojure files into prose and code blocks using nextjournal/clojure-mode lezer parser.
