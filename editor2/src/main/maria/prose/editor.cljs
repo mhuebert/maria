@@ -3,9 +3,10 @@
             [tools.maria.component :refer [with-element]]
             [tools.maria.hooks :as hooks]
             [maria.prose.input-rules :as input-rules]
-            [maria.code.keymap :as keys]
+            [maria.keymap :as keys]
             [maria.code.editor :as code-editor]
             [maria.style :as style]
+            [maria.code.parse-clj :as parse-clj]
             ["react" :as re]
             ["react-dom/client" :refer [createRoot]]
             ["prosemirror-view" :refer [EditorView]]
@@ -17,12 +18,12 @@
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]))
 
-(defn parse [source] (.parse md/defaultMarkdownParser source))
-(defn serialize [doc] (.serialize md/defaultMarkdownSerializer doc))
+(defn md->doc [source] (.parse md/defaultMarkdownParser source))
+(defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
 
 (defn plugins []
   #js[keys/default-keys
-      keys/maria-keys
+      keys/prose-keys
       input-rules/maria-rules
       (dropCursor)
       (gapCursor)
@@ -30,10 +31,12 @@
 
 (defn editor [{:keys [source]}]
   (with-element {:el style/prose-element}
-   (fn [element]
-     (j/js
-       (let [state (.create EditorState {:doc (parse source)
-                                         :plugins (plugins)})
-             view (EditorView. element {:state state
-                                        :nodeViews {:code_block code-editor/editor}})]
-         #(j/call view :destroy))))))
+    (fn [element]
+      (j/js
+        (let [state (.create EditorState {:doc (-> source
+                                                   parse-clj/source->md
+                                                   md->doc)
+                                          :plugins (plugins)})
+              view (EditorView. element {:state state
+                                         :nodeViews {:code_block code-editor/editor}})]
+          #(j/call view :destroy))))))

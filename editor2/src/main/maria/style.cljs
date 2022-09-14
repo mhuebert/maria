@@ -64,6 +64,8 @@
        into-array
        (.define highlight/HighlightStyle)))
 
+(def code-theme
+  (j/lit {".cm-content" {:padding "1rem"}}))
 
 (def tailwind
   [:style {:type "text/tailwindcss"}
@@ -77,13 +79,11 @@
  pre, h1, h2, h3, h4 {
   @apply mb-4;
  }
- .cm-editor {
-  @apply bg-white -ml-4 mb-4 p-4;
- }
+
  .cm-content {
-  @apply text-base;
-  color: #c9c9c9;
+ @apply p-4
  }
+
  h1 {
   @apply text-4xl;
   }

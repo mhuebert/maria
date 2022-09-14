@@ -19,7 +19,7 @@
 
 (defn comment? [s] (str/starts-with? s ";"))
 
-(defn source-blocks
+(defn clj->blocks
   "Returns a vector "
   [source]
   (->> source
@@ -39,7 +39,7 @@
                     {:type :code
                      :source source}) sources)))))))
 
-(defn blocks-as-markdown [blocks]
+(defn blocks->md [blocks]
   (->> blocks
        (map (fn [{:keys [type source]}]
               (case type
@@ -50,6 +50,8 @@
                             "```")
                 :prose source)))
        (str/join (str \newline \newline))))
+
+(def source->md (comp blocks->md clj->blocks))
 
 (def sample-source
   "(ns my.app)
@@ -63,7 +65,7 @@
 ;; Another paragraph.")
 
 (comment
- (= (vec (source-blocks sample-source))
+ (= (vec (clj->blocks sample-source))
     [{:type :code
       :source "(ns my.app)"}
      {:type :prose
@@ -75,8 +77,8 @@
 
 (comment
  (= (-> sample-source
-        source-blocks
-        blocks-as-markdown)
+        clj->blocks
+        blocks->md)
     "```clj
 (ns my.app)
 ```

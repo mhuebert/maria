@@ -27,7 +27,7 @@
 
   (def extensions
     [default-extensions
-     ;(.theme EditorView style/code-theme)
+     (.theme EditorView style/code-theme)
      (cmd/history)
      (.. EditorState -allowMultipleSelections (of true))
      (lang/syntaxHighlighting style/code-highlight-style)

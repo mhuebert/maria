@@ -8,7 +8,8 @@
             ["@codemirror/commands" :as cmd]
             ["react-dom/client" :as react.client]
             ["react" :as react]
-            [reagent.core :as reagent]))
+            [reagent.core :as reagent]
+            [tools.maria.react-roots :as roots]))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]
@@ -18,11 +19,19 @@
        #(remove-watch ref set-value!)))
     value))
 
-(defn result-viewer [!result]
-  (let [[_ value :as w] (use-watch !result)]
-    [:div {:on-click #(swap! !result (fnil inc 0))} "Count!"
-     " "
-     value]))
+(defn result-viewer [!result code-dom]
+  (let [value (second (use-watch !result))]
+    [:div.-mx-4.mb-4.md:flex
+     [:div {:class "md:w-1/2 text-base bg-white"
+            :style {:color "#c9c9c9"}
+            :ref #(when % (.appendChild % code-dom))}]
+
+     [:div
+      {:class "md:w-1/2 text-sm bg-slate-300"
+       :on-click #(swap! !result (fnil inc 0))}
+      "Count!"
+      " "
+      value]]))
 
 (j/js
 
@@ -74,7 +83,7 @@
       #(.dispatch code-view {:selection {:anchor anchor
                                          :head head}})))
 
-  (defn maybe-escape
+  (defn code-arrow-handler
     "Moves cursor out of code block when navigating out of an edge"
     [{:keys [prose-pos
              code-view
@@ -135,16 +144,16 @@
     (.focus code-view))
 
   (defn code-keymap [{:as this prose-view :prose-view}]
-    (let [maybe-escape (partial maybe-escape this)]
+    (let [code-arrow-handler (partial code-arrow-handler this)]
       (.of view/keymap
            [{:key :ArrowUp
-             :run #(maybe-escape :line -1)}
+             :run #(code-arrow-handler :line -1)}
             {:key :ArrowLeft
-             :run #(maybe-escape :char -1)}
+             :run #(code-arrow-handler :char -1)}
             {:key :ArrowDown
-             :run #(maybe-escape :line 1)}
+             :run #(code-arrow-handler :line 1)}
             {:key :ArrowRight
-             :run #(maybe-escape :char 1)}
+             :run #(code-arrow-handler :char 1)}
             {:key :Ctrl-Enter
              :run (fn [] (if (cmd/exitCode (.-state prose-view) (.-dispatch prose-view))
                            (do (.focus prose-view)
@@ -165,13 +174,9 @@
 
 
   (defn init [this code-view]
-
     (let [!result (atom nil)
           parent (js/document.createElement "div")
-          _ (.appendChild parent (.-dom code-view))
-          right-panel (js/document.createElement "div")
-          _ (.appendChild parent right-panel)
-          right-panel-root (react.client/createRoot right-panel)
+          root (react.client/createRoot parent)
           this (j/extend! this
                  {:!result !result
                   ;; NodeView API
@@ -182,34 +187,26 @@
                   :setSelection (partial handle-set-selection this)
                   :stopEvent (constantly true)
                   :destroy #(do (.destroy code-view)
-                                (.unmount right-panel-root))
+                                (roots/unmount! root))
 
                   ;; Internal
                   :updating? false
                   :code-view code-view})]
       ;; TODO - implement eval, putting results into right-panel
-      (.render right-panel-root (reagent/as-element ^:clj [result-viewer !result]))
+      (roots/init! root #(reagent/as-element ^:clj [result-viewer !result (.-dom code-view)]))
       this))
 
-  (defn arrow-handler [dir]
-    (fn [prose-state prose-dispatch prose-view]
+  (defn prose-arrow-handler [dir]
+    (fn [state dispatch view]
       (boolean
-       (when (and (.. prose-state -selection -empty)
-                  (.endOfTextBlock prose-view dir))
-         (let [$head (.. prose-state -selection -$head)
-               next-pos (.near Selection
-                               (.. prose-state -doc (resolve
-                                                     (if (pos? dir)
-                                                       (.after $head)
-                                                       (.before $head)))))]
-           (when (and (.. next-pos -$head)
-                      (= :code_block (.. next-pos -$head -parent -type -name)))
-             (prose-dispatch (.. prose-state -tr (setSelection next-pos)))
-             true))))))
-
-  (def prose-keymap
-    (pk/keymap
-     {[:ArrowLeft
-       :ArrowUp] (arrow-handler -1)
-      [:ArrowRight
-       :ArrowDown] (arrow-handler 1)})))
+       (when (and (.. state -selection -empty) (.endOfTextblock view dir))
+         (let [$head (.. state -selection -$head)
+               {:keys [doc]} state
+               pos (if (pos? dir)
+                     (.after $head)
+                     (.before $head))
+               next-pos (.near Selection (.resolve doc pos) dir)]
+           (j/log :name (j/get-in next-pos [:$head :parent :type :name]) (= :code_block (j/get-in next-pos [:$head :parent :type :name])))
+           (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
+             (dispatch (.. state -tr (setSelection next-pos)))
+             true)))))))

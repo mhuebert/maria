@@ -1,6 +1,7 @@
-(ns maria.code.keymap
+(ns maria.keymap
   (:require [applied-science.js-interop :as j]
             [maria.prose.schema :refer [schema]]
+            [maria.code.node-view :as node-view]
             ["prosemirror-commands" :as cmd :refer [baseKeymap]]
             ["prosemirror-keymap" :refer [keymap]]
             ["prosemirror-schema-list" :as cmd-list]))
@@ -8,7 +9,7 @@
 (def default-keys (keymap baseKeymap))
 
 (j/js
-  (def maria-keys
+  (def prose-keys
     (let [mac? (and (exists? js/navigator)
                     (.test #"Mac|iPhone|iPad|iPod" js/navigator.platform))
           {{:keys [strong em code]} :marks
@@ -49,7 +50,12 @@
                           :Shift-Ctrl-3 (cmd/setBlockType heading {:level 3})
                           :Shift-Ctrl-4 (cmd/setBlockType heading {:level 4})
                           :Shift-Ctrl-5 (cmd/setBlockType heading {:level 5})
-                          :Shift-Ctrl-6 (cmd/setBlockType heading {:level 6})}
+                          :Shift-Ctrl-6 (cmd/setBlockType heading {:level 6})
+
+                          [:ArrowLeft
+                           :ArrowUp] (node-view/prose-arrow-handler -1)
+                          [:ArrowRight
+                           :ArrowDown] (node-view/prose-arrow-handler 1)}
 
                 {:Mod-z cmd/undo
                  :Shift-Mod-z cmd/redo}

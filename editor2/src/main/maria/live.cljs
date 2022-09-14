@@ -6,7 +6,8 @@
             [reagent.core :as reagent]
             [clojure.string :as str]
             [maria.style :as style]
-            maria.scratch))
+            maria.scratch
+            [tools.maria.react-roots :as roots]))
 
 (defonce !root (delay (react.client/createRoot
                        (dom/find-or-create-element :maria-live))))
@@ -21,8 +22,8 @@
 
 (def example
   [prose/editor {:source "
-# Hello, world...
-```clj
+;; # Hello, world...
+
 (ns my-ns
   (:require [x.y :as z]))
 
@@ -38,15 +39,12 @@
  \"string\"
  \\c ;; character
   ...)
-```
 
-Another Paragraph
+;; Another Paragraph
 
-```clj
 (prn 10)
-```
 
-More text"}])
+;; More text"}])
 
 (defn landing []
   [:div
@@ -54,6 +52,5 @@ More text"}])
    style/tailwind]
   )
 
-(defn ^:dev/after-load render []
-  (j/call @!root :render
-    (reagent/as-element [landing])))
+(defn render []
+  (roots/init! @!root #(reagent/as-element [landing])))
