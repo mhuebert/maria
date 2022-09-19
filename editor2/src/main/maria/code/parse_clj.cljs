@@ -43,15 +43,17 @@
   (->> blocks
        (map (fn [{:keys [type source]}]
               (case type
-                :code  (str "```clj"
+                :code  (str \newline
+                            "```clj"
                             \newline
                             source
                             \newline
-                            "```")
+                            "```"
+                            \newline)
                 :prose source)))
-       (str/join (str \newline \newline))))
+       (str/join \newline)))
 
-(def source->md (comp blocks->md clj->blocks))
+(def clj->md (comp blocks->md clj->blocks))
 
 (def sample-source
   "(ns my.app)
