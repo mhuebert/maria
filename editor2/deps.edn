@@ -6,12 +6,16 @@
         applied-science/js-interop {#_#_:mvn/version "0.3.3"
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "d4c7bbcfd37c1418855e3c794fb0cd9adb6ad5a3"}
-        nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
-                                  :git/sha "9516d08a6a3f69f59bdda032c255e5535e46a217"}
+        nextjournal/clojure-mode {#_#_:local/root "../../clojure-mode"
+                                  :git/url "https://github.com/nextjournal/clojure-mode"
+                                  :git/sha "9a810262661fb4ce830f4fd2c5e260fedc73070f"}
         mhuebert/re-db {:git/url "https://github.com/mhuebert/re-db"
                         :git/sha "5b682571945d0e88de64376bcb3cc16504e9bf16"}
+        com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
+        org.babashka/sci {:mvn/version "0.4.33"}
         maria/tools {:local/root "../tools"}
-        com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}}
+        maria/shapes {:local/root "../shapes"}
+        maria/friendly {:local/root "../friendly"}}
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}}}}}

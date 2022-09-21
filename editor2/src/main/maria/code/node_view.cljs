@@ -9,7 +9,8 @@
             ["react-dom/client" :as react.client]
             ["react" :as react]
             [reagent.core :as reagent]
-            [tools.maria.react-roots :as roots]))
+            [tools.maria.react-roots :as roots]
+            [maria.sci :as sci]))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]
@@ -19,19 +20,21 @@
        #(remove-watch ref set-value!)))
     value))
 
-(defn result-viewer [!result code-dom]
-  (let [value (second (use-watch !result))]
-    [:div.-mx-4.mb-4.md:flex
-     [:div {:class "md:w-1/2 text-base bg-white"
-            :style {:color "#c9c9c9"}
-            :ref #(when % (.appendChild % code-dom))}]
+(defn value-viewer [!result]
+  (when-let [result (second (use-watch !result))]
+    (if-let [error (:error result)]
+      (str "Error: " error) ;; TODO  format error
+      (pr-str (:value result)))))
 
-     [:div
-      {:class "md:w-1/2 text-sm bg-slate-300"
-       :on-click #(swap! !result (fnil inc 0))}
-      "Count!"
-      " "
-      value]]))
+(defn code-row [!result code-dom]
+  [:div.-mx-4.mb-4.md:flex
+   [:div {:class "md:w-1/2 text-base bg-white"
+          :style {:color "#c9c9c9"}
+          :ref #(when % (.appendChild % code-dom))}]
+
+   [:div
+    {:class "md:w-1/2 text-sm bg-slate-300"}
+    [value-viewer !result]]])
 
 (j/js
 
@@ -166,20 +169,13 @@
             {:key :Ctrl-y :mac :Cmd-y
              :run (fn [] (history/redo (.-state prose-view) (.-dispatch prose-view)))}])))
 
-  (defn extensions [this]
-    [(code-keymap this)
-     (.. EditorView
-         -updateListener
-         (of (partial handle-forward-update this)))])
-
 
   (defn init [this code-view]
-    (let [!result (atom nil)
-          parent (js/document.createElement "div")
+    (let [parent (js/document.createElement "div")
           root (react.client/createRoot parent)
+          {:keys [!result]} this
           this (j/extend! this
-                 {:!result !result
-                  ;; NodeView API
+                 {;; NodeView API
                   :dom parent
                   :forwardUpdate (partial handle-forward-update this)
                   :update (partial handle-update this)
@@ -193,7 +189,7 @@
                   :updating? false
                   :code-view code-view})]
       ;; TODO - implement eval, putting results into right-panel
-      (roots/init! root #(reagent/as-element ^:clj [result-viewer !result (.-dom code-view)]))
+      (roots/init! root #(reagent/as-element ^:clj [code-row !result (.-dom code-view)]))
       this))
 
   (defn prose-arrow-handler [dir]
