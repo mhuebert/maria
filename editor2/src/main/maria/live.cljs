@@ -24,8 +24,9 @@
   [prose/editor {:source "
 ;; # Hello, world...
 
-(ns my-ns
-  (:require [x.y :as z]))
+(doc circle)
+
+(dir shapes.core)
 
 #_(do 10)
 

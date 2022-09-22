@@ -1,4 +1,4 @@
-(ns maria.sci
+(ns maria.eval.sci
   (:refer-clojure :exclude [eval])
   (:require ["@codemirror/view" :as view]
             [clojure.string :as str]
@@ -6,8 +6,9 @@
             [shadow.resource :as resource]
             shapes.core
             maria.friendly.kinds
-            [maria.eval.repl :refer [*context*]])
-  (:require-macros [maria.sci :refer [require-namespaces]]))
+            [maria.eval.repl :refer [*context*]]
+            sci.impl.resolve)
+  (:require-macros [maria.eval.sci :refer [require-namespaces]]))
 
 (defn eval-string
   ([source] (eval-string @*context* source))
@@ -20,10 +21,11 @@
 (def eval (comp eval-string pr-str))
 
 (def sci-opts
-  {:namespaces (merge (require-namespaces shapes.core
-                                          maria.friendly.kinds
-                                          maria.friendly.messages
-                                          [maria.eval.repl :exclude [*context*]])
+  {:namespaces (merge (require-namespaces 'shapes.core
+                                          'maria.friendly.kinds
+                                          'maria.friendly.messages
+                                          'maria.eval.repl
+                                          '[sci.impl.resolve :include [resolve-symbol]])
                       {'user {'println println
                               'prn prn
                               'pr pr
@@ -31,4 +33,4 @@
 
 (reset! *context*  (sci/init sci-opts))
 
-(eval-string (resource/inline "user.cljs")) ;; bring REPL/curriculum utilities into namespace scope
+(eval-string (resource/inline "user.cljs")) ;; sets up scope for repl

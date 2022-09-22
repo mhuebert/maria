@@ -9,8 +9,7 @@
             ["react-dom/client" :as react.client]
             ["react" :as react]
             [reagent.core :as reagent]
-            [tools.maria.react-roots :as roots]
-            [maria.sci :as sci]))
+            [tools.maria.react-roots :as roots]))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]

@@ -10,7 +10,7 @@
             [nextjournal.clojure-mode :as clj-mode]
             [maria.code.node-view :as node-view]
             [maria.style :as style]
-            [maria.sci :as sci]))
+            [maria.eval.sci :as sci]))
 
 (defn eval-string! [!result source]
   ;; TODO - handle errors
