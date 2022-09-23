@@ -20,8 +20,7 @@
               (str/starts-with? title "http")
               (assoc :target "_blank")) title])
 
-(def example
-  [prose/editor {:source "
+(def syntax-example "
 ;; # Hello, world...
 
 (doc circle)
@@ -45,7 +44,10 @@
 
 (prn 10)
 
-;; More text"}])
+;; More text")
+
+(def example
+  [prose/editor {:source syntax-example}])
 
 (defn landing []
   [:div

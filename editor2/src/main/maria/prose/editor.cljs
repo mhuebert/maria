@@ -93,8 +93,8 @@
     "a\n\nb"))
 
 (defn plugins []
-  #js[keys/default-keys
-      keys/prose-keys
+  #js[keys/prose-keys
+      keys/default-keys
       input-rules/maria-rules
       (dropCursor)
       (gapCursor)
@@ -102,15 +102,23 @@
 
 (defn editor [{:keys [source]}]
   (with-element {:el style/prose-element}
-    (fn [element]
-      (j/js
-        (let [state (.create EditorState {:doc (-> source
+    (fn [^js element]
+
+      (let [state (j/js
+                    (.create EditorState {:doc (-> source
                                                    parse-clj/clj->md
                                                    md->doc)
-                                          :plugins (plugins)})
-              view (EditorView. element {:state state
-                                         :nodeViews {:code_block code-editor/editor}})]
-          #(j/call view :destroy))))))
+                                          :plugins (plugins)}))
+            view (j/js
+                   (EditorView. element {:state state
+                                         :nodeViews {:code_block code-editor/editor}
+
+                                         ;; no-op tx for debugging
+                                         #_#_:dispatchTransaction (fn [tx]
+                                                                (this-as ^js view
+                                                                  (let [state (.apply (.-state view) tx)]
+                                                                    (.updateState view state))))}))]
+        (fn [] (j/call view :destroy))))))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

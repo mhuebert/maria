@@ -4,12 +4,12 @@
             ["prosemirror-state" :refer [TextSelection Selection]]
             ["@codemirror/view" :as view :refer [EditorView]]
             ["prosemirror-history" :as history]
-            ["prosemirror-keymap" :as pk]
             ["@codemirror/commands" :as cmd]
             ["react-dom/client" :as react.client]
             ["react" :as react]
             [reagent.core :as reagent]
-            [tools.maria.react-roots :as roots]))
+            [tools.maria.react-roots :as roots]
+            [nextjournal.clojure-mode.util :as u]))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]
@@ -25,36 +25,57 @@
       (str "Error: " error) ;; TODO  format error
       (pr-str (:value result)))))
 
-(defn code-row [!result code-dom]
-  [:div.-mx-4.mb-4.md:flex
-   [:div {:class "md:w-1/2 text-base bg-white"
-          :style {:color "#c9c9c9"}
-          :ref #(when % (.appendChild % code-dom))}]
+(j/js
+  (defn focus! [{:keys [code-view on-mount]}]
+    (on-mount #(.focus code-view))))
 
-   [:div
-    {:class "md:w-1/2 text-sm bg-slate-300"}
-    [value-viewer !result]]])
+(j/js
+  (defn set-initial-focus!
+    "If ProseMirror cursor is within code view, focus it."
+    [{:as this :keys [get-node-pos prose-view code-view]}]
+    (let [cursor (dec (.. prose-view -state -selection -$anchor -pos))
+          start (get-node-pos)
+          length (.. code-view -state -doc -length)
+          end (+ (get-node-pos) length)]
+      (when (and (>= cursor start)
+                 (< cursor end))
+        (focus! this)))))
+
+(j/defn code-row [!result ^js {:as this :keys [code-view prose-view mounted!]}]
+  (let [ref (react/useCallback (fn [^js el]
+                                 (when el
+                                   (.appendChild (.-firstChild el) (.-dom code-view))
+                                   (set-initial-focus! this)
+                                   (mounted!))))]
+    [:div.-mx-4.mb-4.md:flex
+     {:ref ref}
+     [:div {:class "md:w-1/2 text-base bg-white"
+            :style {:color "#c9c9c9"}}]
+
+     [:div
+      {:class "md:w-1/2 text-sm bg-slate-300"}
+      [value-viewer !result]]]))
 
 (j/js
 
-  (defn handle-forward-update
+  (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
-    [{:as this :keys [code-view prose-view prose-pos updating?]} code-update]
+    [{:as this :keys [code-view prose-view get-node-pos updating?]} code-update]
     (let [{prose-state :state} prose-view]
       (when (and (.-hasFocus code-view) (not updating?))
-        (let [!offset (volatile! (inc (prose-pos)))
+        (let [start-pos (inc (get-node-pos))
               {from' :from to' :to} (.. code-update -state -selection -main)
               {code-changed? :docChanged
                code-changes :changes} code-update
-              {prose-selection :selection
-               :keys [tr]} prose-state
-              prose-selection' (.create TextSelection
-                                        (.-doc prose-state)
-                                        (+ @!offset from')
-                                        (+ @!offset to'))
-              selection-changed? (not (.eq prose-selection prose-selection'))]
-          (when (or code-changed? selection-changed?)
-            (let [tr (.setSelection tr prose-selection')]
+              {:keys [tr doc]} prose-state]
+          (when (or code-changed? (not (.eq (.. prose-state -selection)
+                                            (.create TextSelection
+                                                     doc
+                                                     (+ start-pos from')
+                                                     (+ start-pos to')))))
+
+            ;; handle code changes
+            (let [!offset (volatile! start-pos)]
               (.iterChanges code-changes
                             (fn [from-a to-a from-b to-b {:as text :keys [length]}]
                               (let [offset @!offset]
@@ -69,45 +90,29 @@
                               ;; adjust offset for changes in length caused by the change,
                               ;; so further steps are in correct position
                               (vswap! !offset + (- (- to-b from-b)
-                                                   (- to-a from-a)))))
-              (.dispatch prose-view tr)))))))
+                                                   (- to-a from-a))))))
+
+            ;; handle selection changes
+            (.setSelection tr (.create TextSelection
+                                       (.-doc tr)
+                                       (+ start-pos from')
+                                       (+ start-pos to')))
+            (.dispatch prose-view tr))))))
 
   (defn- controlled-update [this f]
     (j/!set this :updating? true)
     (f)
     (j/!set this :updating? false))
 
-  (defn handle-set-selection
+  (defn code-text [code-view] (.. code-view -state -doc (toString)))
+
+  (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
     [{:as this :keys [code-view]} anchor head]
-    (.focus code-view)
     (controlled-update this
-      #(.dispatch code-view {:selection {:anchor anchor
-                                         :head head}})))
-
-  (defn code-arrow-handler
-    "Moves cursor out of code block when navigating out of an edge"
-    [{:keys [prose-pos
-             code-view
-             prose-node
-             prose-view]} unit dir]
-    (let [{{:keys [doc selection]} :state} code-view
-          {:keys [main]} selection
-          {:keys [from to]} (if (= unit "line")
-                              (.lineAt doc (.-head main))
-                              main)]
-      (cond (not (.-empty main)) false ;; something is selected
-            (and (neg? dir) (pos? from)) false ;; moving backwards but not at beginning
-            (and (pos? dir) (< to (.-length doc))) false ;; moving forwards, not at end
-            :else
-            (let [prose-pos' (+ (prose-pos) (if (neg? dir) 0 (.-nodeSize prose-node)))
-                  {:keys [doc tr]} (.-state prose-view)
-                  selection (.near Selection (.resolve doc prose-pos') dir)]
-              (doto prose-view
-                (.dispatch (.. tr
-                               (setSelection selection)
-                               (scrollIntoView)))
-                (.focus))))))
+      #(do (.dispatch code-view {:selection {:anchor anchor
+                                             :head head}})
+           (focus! this))))
 
   (defn text-diff [old-text new-text]
     (let [old-end (.-length old-text)
@@ -130,44 +135,21 @@
            :to old-end
            :insert (.slice new-text start new-end)}))))
 
-  (defn handle-update [{:as this :keys [code-view]} prose-node]
+  (defn prose:forward-update [{:as this :keys [code-view]} prose-node]
+    (j/!set this :prose-node prose-node)
     (boolean
      (when (= (.-type (j/get this :prose-node)) (.-type prose-node))
-       (j/!set this :prose-node prose-node)
        (let [new-text (.-textContent prose-node)
-             old-text (.. code-view -state -doc (toString))]
+             old-text (code-text code-view)]
          (when (not= new-text old-text)
            (controlled-update this
              (fn []
-               (.dispatch code-view {:changes (text-diff old-text new-text)})))))
+               (.dispatch code-view {:changes (text-diff old-text new-text)
+                                     :annotations [(u/user-event-annotation "noformat")]})))))
        true)))
 
-  (defn select-node [{:keys [code-view]}]
+  (defn prose:select-node [{:keys [code-view]}]
     (.focus code-view))
-
-  (defn code-keymap [{:as this prose-view :prose-view}]
-    (let [code-arrow-handler (partial code-arrow-handler this)]
-      (.of view/keymap
-           [{:key :ArrowUp
-             :run #(code-arrow-handler :line -1)}
-            {:key :ArrowLeft
-             :run #(code-arrow-handler :char -1)}
-            {:key :ArrowDown
-             :run #(code-arrow-handler :line 1)}
-            {:key :ArrowRight
-             :run #(code-arrow-handler :char 1)}
-            {:key :Ctrl-Enter
-             :run (fn [] (if (cmd/exitCode (.-state prose-view) (.-dispatch prose-view))
-                           (do (.focus prose-view)
-                               true)
-                           false))}
-            {:key :Ctrl-z :mac :Cmd-z
-             :run (fn [] (history/undo (.-state prose-view) (.-dispatch prose-view)))}
-            {:key :Shift-Ctrl-z :mac :Shift-Cmd-z
-             :run (fn [] (history/redo (.-state prose-view) (.-dispatch prose-view)))}
-            {:key :Ctrl-y :mac :Cmd-y
-             :run (fn [] (history/redo (.-state prose-view) (.-dispatch prose-view)))}])))
-
 
   (defn init [this code-view]
     (let [parent (js/document.createElement "div")
@@ -176,10 +158,10 @@
           this (j/extend! this
                  {;; NodeView API
                   :dom parent
-                  :forwardUpdate (partial handle-forward-update this)
-                  :update (partial handle-update this)
-                  :selectNode (partial select-node this)
-                  :setSelection (partial handle-set-selection this)
+                  :update (partial prose:forward-update this)
+                  :selectNode (partial prose:select-node this)
+                  :deselectNode (fn [] (prn :not-implemented--deselect-node))
+                  :setSelection (partial prose:set-selection this)
                   :stopEvent (constantly true)
                   :destroy #(do (.destroy code-view)
                                 (roots/unmount! root))
@@ -188,20 +170,5 @@
                   :updating? false
                   :code-view code-view})]
       ;; TODO - implement eval, putting results into right-panel
-      (roots/init! root #(reagent/as-element ^:clj [code-row !result (.-dom code-view)]))
-      this))
-
-  (defn prose-arrow-handler [dir]
-    (fn [state dispatch view]
-      (boolean
-       (when (and (.. state -selection -empty) (.endOfTextblock view dir))
-         (let [$head (.. state -selection -$head)
-               {:keys [doc]} state
-               pos (if (pos? dir)
-                     (.after $head)
-                     (.before $head))
-               next-pos (.near Selection (.resolve doc pos) dir)]
-           (j/log :name (j/get-in next-pos [:$head :parent :type :name]) (= :code_block (j/get-in next-pos [:$head :parent :type :name])))
-           (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
-             (dispatch (.. state -tr (setSelection next-pos)))
-             true)))))))
+      (roots/init! root #(reagent/as-element ^:clj [code-row !result this]))
+      this)))

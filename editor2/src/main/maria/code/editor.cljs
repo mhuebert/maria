@@ -10,7 +10,8 @@
             [nextjournal.clojure-mode :as clj-mode]
             [maria.code.node-view :as node-view]
             [maria.style :as style]
-            [maria.eval.sci :as sci]))
+            [maria.eval.sci :as sci]
+            [maria.keymap :as keys]))
 
 (defn eval-string! [!result source]
   ;; TODO - handle errors
@@ -18,12 +19,20 @@
 
 (j/js
 
-  (defn editor [{:as prose-node :keys [textContent]} prose-view prose-pos]
-    (let [{:as this :keys [!result]} {:prose-pos prose-pos
+  (defn editor [{:as prose-node :keys [textContent]} prose-view get-node-pos]
+    (let [on-mounts []
+          {:as this :keys [!result]} {:get-node-pos get-node-pos
                                       :prose-view prose-view
                                       :prose-node prose-node
                                       :eval-value (atom nil)
                                       :!result (atom nil)}
+          _ (j/extend! this {:mounted? false
+                             :mounted! (fn []
+                                         (j/!set this :mounted? true)
+                                         ^:clj (doseq [f on-mounts] (f)))
+                             :on-mount (fn [f] (if (j/get this :mounted?)
+                                                 (f)
+                                                 (j/push! on-mounts f)))})
           eval-modifier "Alt"
           cm (new EditorView
                   {:state
@@ -37,18 +46,21 @@
                                           (clj-mode/match-brackets)
                                           (clj-mode/close-brackets)
                                           (clj-mode/selection-history)
+
                                           (clj-mode/format-changed-lines)
-                                          (clj-mode/eval-region ^:clj {:modifier eval-modifier
-                                                                       :eval-string! (partial eval-string! !result)})
                                           (.theme EditorView style/code-theme)
                                           (cmd/history)
                                           (.. EditorState -allowMultipleSelections (of true))
                                           (lang/syntaxHighlighting style/code-highlight-style)
                                           (lang/syntaxHighlighting lang/defaultHighlightStyle)
+
+                                          (clj-mode/eval-region ^:clj {:modifier eval-modifier
+                                                                       :eval-string! (partial eval-string! !result)})
+                                          (keys/code-keys this)
                                           (.of view/keymap clj-mode/complete-keymap)
                                           (.of view/keymap cmd/historyKeymap)
-                                          (node-view/code-keymap this)
+
                                           (.. EditorView
                                               -updateListener
-                                              (of (partial node-view/handle-forward-update this)))]})})]
+                                              (of #(node-view/code:forward-update this %)))]})})]
       (node-view/init this cm))))

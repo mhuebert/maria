@@ -16,3 +16,21 @@
   [form]
   (eval-string (pr-str form)))
 
+(defn ^:macro doc
+  "Show documentation for given symbol"
+  [&form &env sym]
+  (-> (sci.impl.resolve/resolve-symbol @maria.eval.repl/*context* sym)
+      meta
+      :doc))
+
+(defn ^:macro dir
+  "Display public vars in namespace (symbol)"
+  [&form &env ns]
+  `'~(some->> @maria.eval.repl/*context*
+              :env
+              deref
+              :namespaces
+              (#(% ns))
+              keys
+              (filter symbol?)
+              sort))
