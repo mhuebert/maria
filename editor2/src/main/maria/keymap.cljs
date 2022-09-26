@@ -1,7 +1,6 @@
 (ns maria.keymap
   (:require [applied-science.js-interop :as j]
             [maria.prose.schema :refer [schema]]
-            [maria.code.node-view :as node-view]
             [maria.code.commands :as commands]
             ["prosemirror-state" :refer [NodeSelection TextSelection Selection]]
             ["prosemirror-commands" :as pm.cmd :refer [baseKeymap]]
@@ -87,7 +86,7 @@
                    true)})))))
 
 (j/js
-  (defn code-keys [{:as this :keys [prose-view get-node-pos]}]
+  (defn code-keys [this]
     (.of cm.view/keymap
          [{:key :ArrowUp
            :run #(commands/code:arrow-handler this :line -1)}
@@ -97,18 +96,15 @@
            :run #(commands/code:arrow-handler this :line 1)}
           {:key :ArrowRight
            :run #(commands/code:arrow-handler this :char 1)}
-          {:key :Ctrl-Enter
-           :run (fn [] (if (pm.cmd/exitCode (.-state prose-view) (.-dispatch prose-view))
-                         (do (.focus prose-view)
-                             true)
-                         false))}
           {:key :Ctrl-z :mac :Cmd-z
-           :run (fn [] (pm.history/undo (.-state prose-view) (.-dispatch prose-view)))}
+           :run (commands/bind-prose-command this pm.history/undo)}
           {:key :Shift-Ctrl-z :mac :Shift-Cmd-z
-           :run (fn [] (pm.history/redo (.-state prose-view) (.-dispatch prose-view)))}
+           :run (commands/bind-prose-command this pm.history/redo)}
           {:key :Ctrl-y :mac :Cmd-y
-           :run (fn [] (pm.history/redo (.-state prose-view) (.-dispatch prose-view)))}
-          #_{:key :Enter
+           :run (commands/bind-prose-command this pm.history/redo)}
+          {:key :Shift-Enter
+           :run (partial commands/code:eval-block! this)}
+          {:key :Enter
            :doc "Convert empty code block to paragraph"
            :run (partial commands/code:convert-to-paragraph this)}
           {:key :Enter

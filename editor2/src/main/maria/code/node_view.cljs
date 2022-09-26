@@ -1,15 +1,23 @@
 (ns maria.code.node-view
   (:require [applied-science.js-interop :as j]
             [maria.prose.schema :as prose-schema]
+            ["lezer-clojure" :as lezer-clojure]
             ["prosemirror-state" :refer [TextSelection Selection]]
-            ["@codemirror/view" :as view :refer [EditorView]]
+            ["@codemirror/language" :as lang]
+            ["@codemirror/state" :refer [EditorState]]
+            ["@codemirror/view" :as cm.view :refer [EditorView]]
             ["prosemirror-history" :as history]
             ["@codemirror/commands" :as cmd]
             ["react-dom/client" :as react.client]
             ["react" :as react]
             [reagent.core :as reagent]
             [tools.maria.react-roots :as roots]
-            [nextjournal.clojure-mode.util :as u]))
+            [nextjournal.clojure-mode.util :as u]
+            [nextjournal.clojure-mode :as clj-mode]
+            [maria.style :as style]
+            [maria.keymap :as keys]
+            [maria.eval.sci :as sci]
+            [maria.code.commands :as commands]))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]
@@ -26,25 +34,25 @@
       (pr-str (:value result)))))
 
 (j/js
-  (defn focus! [{:keys [code-view on-mount]}]
-    (on-mount #(.focus code-view))))
+  (defn focus! [{:keys [codeView on-mount]}]
+    (on-mount #(.focus codeView))))
 
 (j/js
   (defn set-initial-focus!
     "If ProseMirror cursor is within code view, focus it."
-    [{:as this :keys [get-node-pos prose-view code-view]}]
-    (let [cursor (dec (.. prose-view -state -selection -$anchor -pos))
-          start (get-node-pos)
-          length (.. code-view -state -doc -length)
-          end (+ (get-node-pos) length)]
+    [{:as this :keys [getPos proseView codeView]}]
+    (let [cursor (dec (.. proseView -state -selection -$anchor -pos))
+          start (getPos)
+          length (.. codeView -state -doc -length)
+          end (+ (getPos) length)]
       (when (and (>= cursor start)
                  (< cursor end))
         (focus! this)))))
 
-(j/defn code-row [!result ^js {:as this :keys [code-view prose-view mounted!]}]
+(j/defn code-row [^js {:as this :keys [!result codeView mounted!]}]
   (let [ref (react/useCallback (fn [^js el]
                                  (when el
-                                   (.appendChild (.-firstChild el) (.-dom code-view))
+                                   (.appendChild (.-firstChild el) (.-dom codeView))
                                    (set-initial-focus! this)
                                    (mounted!))))]
     [:div.-mx-4.mb-4.md:flex
@@ -60,10 +68,10 @@
 
   (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
-    [{:as this :keys [code-view prose-view get-node-pos updating?]} code-update]
-    (let [{prose-state :state} prose-view]
-      (when (and (.-hasFocus code-view) (not updating?))
-        (let [start-pos (inc (get-node-pos))
+    [{:keys [codeView proseView getPos code-updating?]} code-update]
+    (let [{prose-state :state} proseView]
+      (when (and (.-hasFocus codeView) (not code-updating?))
+        (let [start-pos (inc (getPos))
               {from' :from to' :to} (.. code-update -state -selection -main)
               {code-changed? :docChanged
                code-changes :changes} code-update
@@ -97,21 +105,21 @@
                                        (.-doc tr)
                                        (+ start-pos from')
                                        (+ start-pos to')))
-            (.dispatch prose-view tr))))))
+            (.dispatch proseView tr))))))
 
   (defn- controlled-update [this f]
-    (j/!set this :updating? true)
+    (j/!set this :code-updating? true)
     (f)
-    (j/!set this :updating? false))
+    (j/!set this :code-updating? false))
 
-  (defn code-text [code-view] (.. code-view -state -doc (toString)))
+  (defn code-text [codeView] (.. codeView -state -doc (toString)))
 
   (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
-    [{:as this :keys [code-view]} anchor head]
+    [{:as this :keys [codeView]} anchor head]
     (controlled-update this
-      #(do (.dispatch code-view {:selection {:anchor anchor
-                                             :head head}})
+      #(do (.dispatch codeView {:selection {:anchor anchor
+                                            :head head}})
            (focus! this))))
 
   (defn text-diff [old-text new-text]
@@ -135,40 +143,94 @@
            :to old-end
            :insert (.slice new-text start new-end)}))))
 
-  (defn prose:forward-update [{:as this :keys [code-view]} prose-node]
-    (j/!set this :prose-node prose-node)
+  (defn prose:forward-update [{:as this :keys [codeView]
+                               prev-node :proseNode} new-node]
     (boolean
-     (when (= (.-type (j/get this :prose-node)) (.-type prose-node))
-       (let [new-text (.-textContent prose-node)
-             old-text (code-text code-view)]
+     (when (= (.-type prev-node)
+              (.-type new-node))
+       (j/!set this :proseNode new-node)
+       (let [new-text (.-textContent new-node)
+             old-text (code-text codeView)]
          (when (not= new-text old-text)
            (controlled-update this
              (fn []
-               (.dispatch code-view {:changes (text-diff old-text new-text)
-                                     :annotations [(u/user-event-annotation "noformat")]})))))
+               (.dispatch codeView {:changes (text-diff old-text new-text)
+                                    :annotations [(u/user-event-annotation "noformat")]})))))
        true)))
 
-  (defn prose:select-node [{:keys [code-view]}]
-    (.focus code-view))
+  (defn prose:select-node [{:keys [codeView]}]
+    (.focus codeView))
 
-  (defn init [this code-view]
-    (let [parent (js/document.createElement "div")
-          root (react.client/createRoot parent)
-          {:keys [!result]} this
-          this (j/extend! this
-                 {;; NodeView API
-                  :dom parent
-                  :update (partial prose:forward-update this)
-                  :selectNode (partial prose:select-node this)
-                  :deselectNode (fn [] (prn :not-implemented--deselect-node))
-                  :setSelection (partial prose:set-selection this)
-                  :stopEvent (constantly true)
-                  :destroy #(do (.destroy code-view)
-                                (roots/unmount! root))
 
-                  ;; Internal
-                  :updating? false
-                  :code-view code-view})]
-      ;; TODO - implement eval, putting results into right-panel
-      (roots/init! root #(reagent/as-element ^:clj [code-row !result this]))
-      this)))
+  (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
+    (let [eval-modifier "Alt"
+          dom (js/document.createElement "div")
+          this (j/obj)]
+      (j/extend! this
+        {:getPos getPos
+         :proseView proseView
+         :proseNode proseNode
+         :root (doto (react.client/createRoot dom)
+                 (roots/init! #(reagent/as-element ^:clj [code-row this])))
+         :codeView (new EditorView
+                        {:state
+                         (.create EditorState
+                                  {:doc textContent
+                                   :extensions [(.define lang/LRLanguage
+                                                         {:parser (.configure lezer-clojure/parser
+                                                                              {:props [clj-mode/format-props
+                                                                                       (.add lang/foldNodeProp clj-mode/fold-node-props)
+                                                                                       style/code-styles]})})
+                                                (clj-mode/match-brackets)
+                                                (clj-mode/close-brackets)
+                                                (clj-mode/selection-history)
+
+                                                (clj-mode/format-changed-lines)
+                                                (.theme EditorView style/code-theme)
+                                                (cmd/history)
+                                                (.. EditorState -allowMultipleSelections (of true))
+                                                (lang/syntaxHighlighting style/code-highlight-style)
+                                                (lang/syntaxHighlighting lang/defaultHighlightStyle)
+
+                                                (clj-mode/eval-region ^:clj {:modifier eval-modifier
+                                                                             :eval-string! (partial commands/code:eval-string! this)})
+                                                (keys/code-keys this)
+                                                (.of cm.view/keymap clj-mode/complete-keymap)
+                                                (.of cm.view/keymap cmd/historyKeymap)
+
+                                                (.. EditorView
+                                                    -updateListener
+                                                    (of #(code:forward-update this %)))]})})
+         :!result (atom nil)
+
+         :on-mounts []
+         :mounted? false
+         :mounted! (fn []
+                     (j/!set this :mounted? true)
+                     ^:clj (doseq [f (j/get this :on-mounts)] (f)))
+         :on-mount (fn [f]
+                     (if (j/get this :mounted?)
+                       (f)
+                       (j/update! this :on-mounts j/push! f)))
+
+         :code-updating? false
+
+         ;; NodeView API
+         :dom dom
+         :update (fn [node]
+                   #_(j/log :prose:update)
+                   (prose:forward-update this node))
+         :selectNode (fn [this]
+                       #_(j/log :selectNode this)
+                       (prose:select-node this))
+         :deselectNode (fn []
+                         #_(j/log :deselectNode this))
+         :setSelection (fn [anchor head]
+                         #_(j/log :setSelection this)
+                         (prose:set-selection this anchor head))
+         :stopEvent (fn []
+                      #_(j/log :stopEvent)
+                      true)
+         :destroy #(let [{:keys [codeView root]} this]
+                     (.destroy codeView)
+                     (roots/unmount! root))}))))

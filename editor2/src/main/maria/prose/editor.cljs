@@ -3,7 +3,6 @@
             [tools.maria.component :refer [with-element]]
             [maria.prose.input-rules :as input-rules]
             [maria.keymap :as keys]
-            [maria.code.editor :as code-editor]
             [maria.style :as style]
             [maria.code.parse-clj :as parse-clj :refer [clj->md]]
             ["react" :as re]
@@ -16,7 +15,8 @@
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [maria.code.node-view :as node-view]))
 
 (defn md->doc [source] (.parse md/defaultMarkdownParser source))
 (defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
@@ -111,13 +111,13 @@
                                           :plugins (plugins)}))
             view (j/js
                    (EditorView. element {:state state
-                                         :nodeViews {:code_block code-editor/editor}
+                                         :nodeViews {:code_block node-view/editor}
 
                                          ;; no-op tx for debugging
                                          #_#_:dispatchTransaction (fn [tx]
-                                                                (this-as ^js view
-                                                                  (let [state (.apply (.-state view) tx)]
-                                                                    (.updateState view state))))}))]
+                                                                    (this-as ^js view
+                                                                      (let [state (.apply (.-state view) tx)]
+                                                                        (.updateState view state))))}))]
         (fn [] (j/call view :destroy))))))
 
 #_(defn ^:dev/before-load clear-console []
