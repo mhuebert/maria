@@ -193,7 +193,7 @@
                                                 (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
                                                 (clj-mode/eval-region ^:clj {:modifier eval-modifier
-                                                                             :eval-string! (partial commands/code:eval-string! this)})
+                                                                             :on-enter (partial commands/code:eval-string! this)})
                                                 (keys/code-keys this)
                                                 (.of cm.view/keymap clj-mode/complete-keymap)
                                                 (.of cm.view/keymap cmd/historyKeymap)

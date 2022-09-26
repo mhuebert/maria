@@ -8,7 +8,7 @@
                                     :git/sha "d4c7bbcfd37c1418855e3c794fb0cd9adb6ad5a3"}
         nextjournal/clojure-mode {#_#_:local/root "../../clojure-mode"
                                   :git/url "https://github.com/nextjournal/clojure-mode"
-                                  :git/sha "9a810262661fb4ce830f4fd2c5e260fedc73070f"}
+                                  :git/sha "35fb41584e3e071b6f68f2e2185e2fd2bc6a0693"}
         mhuebert/re-db {:git/url "https://github.com/mhuebert/re-db"
                         :git/sha "5b682571945d0e88de64376bcb3cc16504e9bf16"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}

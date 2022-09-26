@@ -102,8 +102,6 @@
            :run (commands/bind-prose-command this pm.history/redo)}
           {:key :Ctrl-y :mac :Cmd-y
            :run (commands/bind-prose-command this pm.history/redo)}
-          {:key :Shift-Enter
-           :run (partial commands/code:eval-block! this)}
           {:key :Enter
            :doc "Convert empty code block to paragraph"
            :run (partial commands/code:convert-to-paragraph this)}

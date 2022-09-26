@@ -149,4 +149,5 @@
         true)))
 
   (defn code:eval-block! [{:as this :keys [codeView]} _]
-    (code:eval-string! this (.. codeView -state -doc (toString)))))
+    (code:eval-string! this (.. codeView -state -doc (toString)))
+    true))
