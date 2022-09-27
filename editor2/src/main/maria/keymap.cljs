@@ -33,7 +33,11 @@
                                             (pm.cmd/scrollIntoView))))
                             true))]
       (pm.keymap/keymap
-       (j/extend! {:Backspace pm.cmd/undoInputRule
+       (j/extend! {:Mod-Alt-Enter
+                   (fn [state dispatch view]
+                     (commands/prose:eval-doc! view)
+                     true)
+                   :Backspace pm.cmd/undoInputRule
                    :Alt-ArrowUp pm.cmd/joinUp
                    :Alt-ArrowDown pm.cmd/joinDown
                    :Mod-BracketLeft pm.cmd/lift
@@ -113,6 +117,10 @@
            :run (partial commands/code:split this)}
           {:key :Backspace
            :doc "Remove empty code block"
-           :run (partial commands/code:remove-on-backspace this)}])))
+           :run (partial commands/code:remove-on-backspace this)}
+          {:key :Mod-Alt-Enter
+           :doc "Evaluate doc"
+           :run (fn [_] (commands/prose:eval-doc! (.. this -proseView))
+                  true)}])))
 
 

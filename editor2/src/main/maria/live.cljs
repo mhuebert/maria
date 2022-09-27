@@ -7,7 +7,8 @@
             [clojure.string :as str]
             [maria.style :as style]
             maria.scratch
-            [tools.maria.react-roots :as roots]))
+            [tools.maria.react-roots :as roots]
+            [shadow.resource :as rc]))
 
 (defonce !root (delay (react.client/createRoot
                        (dom/find-or-create-element :maria-live))))
@@ -46,8 +47,14 @@
 
 ;; More text")
 
+(def para-example "
+;; One
+
+;; Two
+;; Three")
+
 (def example
-  [prose/editor {:source syntax-example}])
+  [prose/editor {:source (rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
 
 (defn landing []
   [:div

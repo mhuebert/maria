@@ -80,8 +80,13 @@
   @apply mb-4;
  }
 
+ .ProseMirror > *:not(div) {
+  @apply md:w-1/2 leading-relaxed;
+
+ }
+
  .cm-content {
- @apply p-4
+ @apply p-4 bg-white
  }
 
  h1 {

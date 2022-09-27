@@ -150,4 +150,17 @@
 
   (defn code:eval-block! [{:as this :keys [codeView]} _]
     (code:eval-string! this (.. codeView -state -doc (toString)))
-    true))
+    true)
+
+
+  )
+(defn prose:eval-doc! [^js prose-view]
+  ;; TODO
+  ;; use funcool/promesa to do this async so that any block which
+  ;; returns a promise causes the doc to 'wait'
+  (doseq [code-view (->> prose-view
+                         .-docView
+                         .-children
+                         (keep (j/get :spec))
+                         (filterv (j/get :codeView)))]
+    (code:eval-block! code-view nil)))

@@ -16,7 +16,7 @@
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
             [clojure.string :as str]
-            [maria.code.node-view :as node-view]))
+            [maria.code.NodeView :as node-view]))
 
 (defn md->doc [source] (.parse md/defaultMarkdownParser source))
 (defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))

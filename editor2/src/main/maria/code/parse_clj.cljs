@@ -1,5 +1,6 @@
 (ns maria.code.parse-clj
-  (:require ["lezer-clojure" :as lezer-clj]
+  (:require [applied-science.js-interop :as j]
+            ["lezer-clojure" :as lezer-clj]
             [clojure.string :as str]))
 
 ;; This namespace splits Clojure files into prose and code blocks using nextjournal/clojure-mode lezer parser.
@@ -25,8 +26,20 @@
   (->> source
        parse-clj
        program-nodes
+
+       ;; lezer does not represent the space between nodes, eg. empty lines,
+       ;; so add a ::line-gap marker in these cases
+       (partition 2 1 nil)
+       (mapcat (fn [[^js a ^js b]]
+                 (if (and b (pos? (- (.-from b) (.-to a) 1)))
+                   [a ::line-gap]
+                   [a])))
+
        (eduction
-        (map (fn [^js node] (subs source (.-from node) (.-to node))))
+        (map (fn [node]
+               (if (= node ::line-gap)
+                 ";"
+                 (subs source (j/get node :from) (j/get node :to)))))
         (partition-by comment?)
         (mapcat
          (fn [sources]
@@ -43,13 +56,13 @@
   (->> blocks
        (map (fn [{:keys [type source]}]
               (case type
-                :code  (str \newline
-                            "```clj"
-                            \newline
-                            source
-                            \newline
-                            "```"
-                            \newline)
+                :code (str \newline
+                           "```clj"
+                           \newline
+                           source
+                           \newline
+                           "```"
+                           \newline)
                 :prose source)))
        (str/join \newline)))
 

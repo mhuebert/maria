@@ -1,4 +1,4 @@
-(ns maria.code.node-view
+(ns maria.code.NodeView
   (:require [applied-science.js-interop :as j]
             [maria.prose.schema :as prose-schema]
             ["lezer-clojure" :as lezer-clojure]
@@ -17,21 +17,9 @@
             [maria.style :as style]
             [maria.keymap :as keys]
             [maria.eval.sci :as sci]
-            [maria.code.commands :as commands]))
+            [maria.code.commands :as commands]
+            [maria.code.views :as views]))
 
-(defn use-watch [ref]
-  (let [[value set-value!] (react/useState [nil @ref])]
-    (react/useEffect
-     (fn []
-       (add-watch ref set-value! (fn [_ _ old new] (set-value! [old new])))
-       #(remove-watch ref set-value!)))
-    value))
-
-(defn value-viewer [!result]
-  (when-let [result (second (use-watch !result))]
-    (if-let [error (:error result)]
-      (str "Error: " error) ;; TODO  format error
-      (pr-str (:value result)))))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -48,21 +36,6 @@
       (when (and (>= cursor start)
                  (< cursor end))
         (focus! this)))))
-
-(j/defn code-row [^js {:as this :keys [!result codeView mounted!]}]
-  (let [ref (react/useCallback (fn [^js el]
-                                 (when el
-                                   (.appendChild (.-firstChild el) (.-dom codeView))
-                                   (set-initial-focus! this)
-                                   (mounted!))))]
-    [:div.-mx-4.mb-4.md:flex
-     {:ref ref}
-     [:div {:class "md:w-1/2 text-base bg-white"
-            :style {:color "#c9c9c9"}}]
-
-     [:div
-      {:class "md:w-1/2 text-sm bg-slate-300"}
-      [value-viewer !result]]]))
 
 (j/js
 
@@ -171,7 +144,13 @@
          :proseView proseView
          :proseNode proseNode
          :root (doto (react.client/createRoot dom)
-                 (roots/init! #(reagent/as-element ^:clj [code-row this])))
+                 (roots/init! #(reagent/as-element ^:clj [views/code-row this])))
+         :mounted! (fn [el]
+                     (.appendChild (.-firstChild el)
+                                   (.. this -codeView -dom))
+                     (set-initial-focus! this)
+                     (j/!set this :mounted? true)
+                     ^:clj (doseq [f (j/get this :on-mounts)] (f)))
          :codeView (new EditorView
                         {:state
                          (.create EditorState
@@ -205,9 +184,6 @@
 
          :on-mounts []
          :mounted? false
-         :mounted! (fn []
-                     (j/!set this :mounted? true)
-                     ^:clj (doseq [f (j/get this :on-mounts)] (f)))
          :on-mount (fn [f]
                      (if (j/get this :mounted?)
                        (f)

@@ -15,7 +15,8 @@
         org.babashka/sci {:mvn/version "0.4.33"}
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}
-        maria/friendly {:local/root "../friendly"}}
+        maria/friendly {:local/root "../friendly"}
+        funcool/promesa {:mvn/version "8.0.450"}}
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}}}}}
