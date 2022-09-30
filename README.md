@@ -1,4 +1,4 @@
-# Maria
+## Maria
 
 The ClojureScript coding environment for beginners. 
 

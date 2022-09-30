@@ -1,4 +1,5 @@
-# Maria: a beginner-friendly coding environment for Clojure
+## Maria: a beginner-friendly coding environment for Clojure
+
 *Matt Huebert, Dave Liepmann, and Jack Rusher*
 
 We'd like to introduce a tool we built for Clojure beginners. To understand why we built it, join us for a moment on a mental exercise.
@@ -79,7 +80,7 @@ We have two very distinct columns.
 
 The programming comes _last_ and the setup comes first.
 
-<wax poetic about what we truly want>
+\<wax poetic about what we truly want\>
 
 What if we could swap these columns?
 
