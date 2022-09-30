@@ -1,20 +1,12 @@
 (ns maria.live
   (:require ["react-dom/client" :as react.client]
-            [applied-science.js-interop :as j]
             [maria.prose.editor :as prose]
-            [tools.maria.dom :as dom]
-            [reagent.core :as reagent]
             [clojure.string :as str]
             [maria.style :as style]
             maria.scratch
-            [tools.maria.react-roots :as roots]
-            [shadow.resource :as rc]))
-
-(defonce !root (delay (react.client/createRoot
-                       (dom/find-or-create-element :maria-live))))
-
-(defonce fn-compiler (doto (reagent/create-compiler {:function-components true})
-                       (reagent/set-default-compiler!)))
+            [shadow.resource :as rc]
+            [yawn.view.dom :as dom]
+            [yawn.view :as v]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -54,13 +46,17 @@
 ;; Three")
 
 (def example
-  [prose/editor {:source (rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
+  [prose/editor {:source "{1 2}\n(circle 10)" #_(rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
 
-(defn landing []
+(v/defview landing []
   [:div
    example
-   style/tailwind]
-  )
+   style/tailwind])
 
-(defn render []
-  (roots/init! @!root #(reagent/as-element [landing])))
+(macroexpand '(v/defview landing []
+                [:div
+                 example
+                 style/tailwind]))
+
+(defn init []
+  (dom/mount :maria-live #(v/x [landing])))

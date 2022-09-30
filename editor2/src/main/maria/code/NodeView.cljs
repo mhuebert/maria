@@ -10,15 +10,14 @@
             ["@codemirror/commands" :as cmd]
             ["react-dom/client" :as react.client]
             ["react" :as react]
-            [reagent.core :as reagent]
-            [tools.maria.react-roots :as roots]
             [nextjournal.clojure-mode.util :as u]
             [nextjournal.clojure-mode :as clj-mode]
             [maria.style :as style]
             [maria.keymap :as keys]
             [maria.eval.sci :as sci]
             [maria.code.commands :as commands]
-            [maria.code.views :as views]))
+            [maria.code.views :as views]
+            [yawn.view.dom :as dom]))
 
 
 (j/js
@@ -139,18 +138,19 @@
     (let [eval-modifier "Alt"
           dom (js/document.createElement "div")
           this (j/obj)]
+      (dom/mount dom #(#'views/code-row this))
       (j/extend! this
         {:getPos getPos
          :proseView proseView
          :proseNode proseNode
-         :root (doto (react.client/createRoot dom)
-                 (roots/init! #(reagent/as-element ^:clj [views/code-row this])))
          :mounted! (fn [el]
-                     (.appendChild (.-firstChild el)
-                                   (.. this -codeView -dom))
+                     (.appendChild (.-firstChild el) (.. this -codeView -dom))
                      (set-initial-focus! this)
-                     (j/!set this :mounted? true)
-                     ^:clj (doseq [f (j/get this :on-mounts)] (f)))
+                     (when-not (j/get this :mounted?)
+                       (j/!set this :mounted? true)
+                       ^:clj (doseq [f (j/get this :on-mounts)] (f))
+                       (j/delete! this :on-mounts)
+                       ))
          :codeView (new EditorView
                         {:state
                          (.create EditorState
@@ -207,6 +207,6 @@
          :stopEvent (fn []
                       #_(j/log :stopEvent)
                       true)
-         :destroy #(let [{:keys [codeView root]} this]
+         :destroy #(let [{:keys [codeView]} this]
                      (.destroy codeView)
-                     (roots/unmount! root))}))))
+                     (dom/unmount dom))}))))

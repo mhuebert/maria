@@ -10,6 +10,7 @@
    :release {:build-hooks [(teknql.tailwind/compile-release!)
                            (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
    :devtools {:http-root "public"
-              :http-port 8000}
-   :modules {:main {:init-fn maria.live/render}}
+              :http-port 8000
+              :preloads [yawn.view.refresh-preload]}
+   :modules {:main {:init-fn maria.live/init}}
    :tailwind/output "public/css/tailwind.css"}}}

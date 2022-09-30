@@ -152,7 +152,6 @@
     (code:eval-string! this (.. codeView -state -doc (toString)))
     true)
 
-
   )
 (defn prose:eval-doc! [^js prose-view]
   ;; TODO
@@ -164,3 +163,19 @@
                          (keep (j/get :spec))
                          (filterv (j/get :codeView)))]
     (code:eval-block! code-view nil)))
+
+(j/defn prose:next-code-cell [proseView]
+  (when-let [index (.. proseView -state -selection -$anchor (index 0))]
+    (when-let [next-node (->> proseView
+                              .-docView
+                              .-children
+                              (drop (inc index))
+                              (keep (j/get :spec))
+                              first)]
+      (j/js (let [{:keys [codeView dom]} next-node]
+              (.dispatch codeView
+                         {:selection {:anchor 0
+                                      :head 0}})
+              (.focus codeView)
+              (.scrollIntoView dom {:block :center})))
+      true)))

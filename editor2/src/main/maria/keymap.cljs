@@ -33,7 +33,8 @@
                                             (pm.cmd/scrollIntoView))))
                             true))]
       (pm.keymap/keymap
-       (j/extend! {:Mod-Alt-Enter
+       (j/extend! {:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
+                   :Mod-Alt-Enter
                    (fn [state dispatch view]
                      (commands/prose:eval-doc! view)
                      true)
@@ -121,6 +122,9 @@
           {:key :Mod-Alt-Enter
            :doc "Evaluate doc"
            :run (fn [_] (commands/prose:eval-doc! (.. this -proseView))
-                  true)}])))
+                  true)}
+          {:key :Shift-Tab
+           :doc "Next Code Cell"
+           :run #(commands/prose:next-code-cell (j/get this :proseView))}])))
 
 

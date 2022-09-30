@@ -1,7 +1,32 @@
 (ns maria.code.views
   (:require [applied-science.js-interop :as j]
+            [yawn.view :as v]
+            [yawn.convert :as c :refer [IElement]]
+            [shapes.core :as shapes]
             ["react" :as react]
-            [reagent.core :as reagent]))
+            [shadow.cljs.modern :refer [defclass]]))
+
+(v/defview render-error-boundary [this]
+  (j/let [^js {{[error-view body] :children} :props
+               {:keys [error]} :state} this]
+    (if error
+      [error-view error]
+      [:div body])))
+
+(defclass ErrorBoundary
+  (extends react/Component)
+  (constructor [this] (super))
+  Object
+  (render [^js this] (render-error-boundary this)))
+
+(j/!set ErrorBoundary :getDerivedStateFromError (fn [error]
+                                                  (j/log :found-error error)
+                                                  #js{:error error}))
+
+(extend-protocol IElement
+  shapes/Shape
+  (to-element [this]
+    (v/x (shapes/to-hiccup this))))
 
 (defn use-watch [ref]
   (let [[value set-value!] (react/useState [nil @ref])]
@@ -11,20 +36,23 @@
        #(remove-watch ref set-value!)))
     value))
 
-(defn value-viewer [!result]
-  (when-let [result (second (use-watch !result))]
-    (if-let [error (:error result)]
-      (str "Error: " error) ;; TODO  format error
-      (pr-str (:value result)))))
+(v/defview error-viewer [error]
+  (ex-message error))
 
-(j/defn code-row [^js {:keys [!result mounted!]}]
+(v/defview value-viewer [!result]
+  (when-let [{:as result :keys [value error]} (second (use-watch !result))]
+    [:...
+     (if error
+       [error-viewer error]
+       (j/lit [ErrorBoundary {:key result} error-viewer value]))]))
+
+(v/defview code-row [^js {:keys [!result mounted!]}]
   (let [ref (react/useCallback (fn [el]
                                  (when el (mounted! el))))]
-          [:div.-mx-4.mb-4.md:flex
-           {:ref ref}
-           [:div {:class "md:w-1/2 text-base"
-                  :style {:color "#c9c9c9"}}]
-
-           [:div
-            {:class "md:w-1/2 text-sm"}
-            [value-viewer !result]]]))
+    [:div.-mx-4.mb-4.md:flex
+     {:ref ref}
+     [:div {:class "md:w-1/2 text-base"
+            :style {:color "#c9c9c9"}}]
+     [:div
+      {:class "md:w-1/2 text-sm"}
+      [value-viewer !result]]]))

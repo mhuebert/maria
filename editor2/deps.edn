@@ -2,21 +2,21 @@
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
         thheller/shadow-cljs {:mvn/version "2.20.1"}
-        reagent/reagent {:mvn/version "1.1.1"}
         applied-science/js-interop {#_#_:mvn/version "0.3.3"
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "d4c7bbcfd37c1418855e3c794fb0cd9adb6ad5a3"}
-        nextjournal/clojure-mode {#_#_:local/root "../../clojure-mode"
-                                  :git/url "https://github.com/nextjournal/clojure-mode"
+        nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "35fb41584e3e071b6f68f2e2185e2fd2bc6a0693"}
-        mhuebert/re-db {:git/url "https://github.com/mhuebert/re-db"
-                        :git/sha "5b682571945d0e88de64376bcb3cc16504e9bf16"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         org.babashka/sci {:mvn/version "0.4.33"}
+        funcool/promesa {:mvn/version "8.0.450"}
+
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
-        funcool/promesa {:mvn/version "8.0.450"}}
+
+        io.github.mhuebert/yawn {:git/sha "1613f394e1dfd508c8f043501a9157dad1fa0bfb"}}
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
-                       nextjournal/clojure-mode {:local/root "../../clojure-mode"}}}}}
+                       nextjournal/clojure-mode {:local/root "../../clojure-mode"}
+                       io.github.mhuebert/yawn {:local/root "../../yawn"}}}}}
