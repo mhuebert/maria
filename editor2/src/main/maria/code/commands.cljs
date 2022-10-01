@@ -73,13 +73,16 @@
             (and (pos? dir) (not at-end-of-block?)) false ;; moving forwards, not at end
             (and (= "line" unit)
                  at-end-of-block?
-                 at-end-of-doc?) (when (pm.cmd/exitCode (.-state proseView) (.-dispatch proseView))
-                                   (.focus proseView)
-                                   true)
+                 at-end-of-doc?
+                 (pos? dir)) (when (pm.cmd/exitCode (.-state proseView) (.-dispatch proseView))
+                               (.focus proseView)
+                               true)
             :else
-            (let [node-pos (+ (getPos) (if (neg? dir) 0 (.-nodeSize proseNode)))
+            (let [next-pos (if (neg? dir)
+                             (getPos)
+                             (+ (getPos) (.-nodeSize proseNode)))
                   {:keys [doc tr]} (.-state proseView)
-                  selection (.near Selection (.resolve doc node-pos) dir)]
+                  selection (.near Selection (.resolve doc next-pos) dir)]
               (doto proseView
                 (.dispatch (.. tr
                                (setSelection selection)
@@ -170,10 +173,10 @@
                         (filterv (j/get :codeView)))
         end (count code-views)]
     (p/loop [i 0]
-            (when (< i end)
-              (p/do
-                (code:eval-block (nth code-views i))
-                (p/recur (inc i)))))))
+      (when (< i end)
+        (p/do
+          (code:eval-block (nth code-views i))
+          (p/recur (inc i)))))))
 
 (j/defn prose:next-code-cell [proseView]
   (when-let [index (.. proseView -state -selection -$anchor (index 0))]
