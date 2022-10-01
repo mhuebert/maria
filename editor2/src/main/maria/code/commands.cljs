@@ -6,7 +6,8 @@
             [clojure.string :as str]
             [nextjournal.clojure-mode.node :as n]
             [maria.prose.schema :refer [schema]]
-            [maria.eval.sci :as sci]))
+            [maria.eval.sci :as sci]
+            [promesa.core :as p]))
 
 (j/js
 
@@ -31,7 +32,8 @@
 
   (defn code:eval-string! [{:as this :keys [!result]} source]
     ;; TODO - handle errors
-    (reset! !result (sci/eval-string source)))
+    (p/->> (sci/eval-string source)
+           (reset! !result)))
 
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
@@ -148,8 +150,12 @@
           (.focus))
         true)))
 
-  (defn code:eval-block! [{:as this :keys [codeView]} _]
-    (code:eval-string! this (.. codeView -state -doc (toString)))
+  (defn code:eval-block [{:as this :keys [codeView !result]}]
+    (p/->> (code:eval-string! this (.. codeView -state -doc (toString)))
+           (reset! !result)))
+
+  (defn code:eval-block! [this _]
+    (code:eval-block this)
     true)
 
   )
@@ -157,12 +163,17 @@
   ;; TODO
   ;; use funcool/promesa to do this async so that any block which
   ;; returns a promise causes the doc to 'wait'
-  (doseq [code-view (->> prose-view
-                         .-docView
-                         .-children
-                         (keep (j/get :spec))
-                         (filterv (j/get :codeView)))]
-    (code:eval-block! code-view nil)))
+  (let [code-views (->> prose-view
+                        .-docView
+                        .-children
+                        (keep (j/get :spec))
+                        (filterv (j/get :codeView)))
+        end (count code-views)]
+    (p/loop [i 0]
+            (when (< i end)
+              (p/do
+                (code:eval-block (nth code-views i))
+                (p/recur (inc i)))))))
 
 (j/defn prose:next-code-cell [proseView]
   (when-let [index (.. proseView -state -selection -$anchor (index 0))]

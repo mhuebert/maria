@@ -1,7 +1,7 @@
 (ns user
   (:require maria.friendly.messages
             [maria.friendly.kinds :refer [what-is]]
-            [maria.eval.repl :refer [eval eval-string doc dir]]
+            [maria.eval.repl :refer [eval eval-string doc dir is-valid-element?]]
             sci.impl.resolve
             [shapes.core :as shapes :refer [listen
                                             circle ellipse square rectangle triangle polygon polyline text image

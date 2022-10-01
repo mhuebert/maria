@@ -7,29 +7,30 @@
             shapes.core
             maria.friendly.kinds
             [maria.eval.repl :refer [*context*]]
-            sci.impl.resolve)
+            sci.impl.resolve
+            [promesa.core :as p])
   (:require-macros [maria.eval.sci :refer [require-namespaces]]))
 
 (defn eval-string
   ([source] (eval-string @*context* source))
   ([ctx source]
    (when-some [code (not-empty (str/trim source))]
-     (try {:value (sci/eval-string* ctx code)}
-          (catch js/Error ^js e
-            {:error (str (.-message e))})))))
-
-(def eval (comp eval-string pr-str))
+     (try
+       (p/catch (p/let [value (sci/eval-string* ctx code)]
+                       {:value value})
+                (fn [e] {:error e}))
+       (catch js/Error e {:error e})))))
 
 (def sci-opts
   {:namespaces (merge (require-namespaces 'shapes.core
                                           'maria.friendly.kinds
                                           'maria.friendly.messages
                                           'maria.eval.repl
-                                          '[sci.impl.resolve :include [resolve-symbol]])
+                                          '[sci.impl.resolve :include [resolve-symbol]]
+                                          )
                       {'user {'println println
                               'prn prn
-                              'pr pr
-                              'eval eval}})})
+                              'pr pr}})})
 
 (reset! *context*  (sci/init sci-opts))
 

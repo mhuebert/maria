@@ -44,7 +44,12 @@
     [:...
      (if error
        [error-viewer error]
-       (j/lit [ErrorBoundary {:key result} error-viewer value]))]))
+       (j/lit [ErrorBoundary {:key result}
+               error-viewer
+               (cond (string? value) (pr-str value)
+                     (number? value) value
+                     (boolean? value) (pr-str value)
+                     :else value)]))]))
 
 (v/defview code-row [^js {:keys [!result mounted!]}]
   (let [ref (react/useCallback (fn [el]

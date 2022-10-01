@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [eval])
   (:require [sci.impl.resolve :as sci.resolve]
             [sci.core :as sci]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            ["react" :as react]))
 
 (defonce ^:dynamic *context* (atom nil))
 
@@ -34,3 +35,5 @@
               keys
               (filter symbol?)
               sort))
+
+(def ^function is-valid-element? react/isValidElement)

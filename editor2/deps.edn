@@ -4,7 +4,7 @@
         thheller/shadow-cljs {:mvn/version "2.20.1"}
         applied-science/js-interop {#_#_:mvn/version "0.3.3"
                                     :git/url "https://github.com/applied-science/js-interop"
-                                    :git/sha "d4c7bbcfd37c1418855e3c794fb0cd9adb6ad5a3"}
+                                    :git/sha "cb99958428f95fdacfbbba377f3a8b0b92050bb8"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "35fb41584e3e071b6f68f2e2185e2fd2bc6a0693"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}

@@ -46,7 +46,15 @@
 ;; Three")
 
 (def example
-  [prose/editor {:source #_"{1 2}\n(circle 10)" (rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
+  [prose/editor {:source
+
+                 "(is-valid-element? 1)
+                 (is-valid-element? \"a\")\n"
+
+                 ;; invalid element
+                 #_"{1 2}\n(circle 10)"
+
+                 #_(rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
 
 (v/defview landing []
   [:div
