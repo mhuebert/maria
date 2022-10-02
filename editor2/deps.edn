@@ -15,6 +15,7 @@
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
 
+        io.github.babashka/sci.configs {:git/sha "63225c8606d593c595d2f10a6fa5bf38103852df"}
         io.github.mhuebert/yawn {:git/sha "1613f394e1dfd508c8f043501a9157dad1fa0bfb"}}
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}

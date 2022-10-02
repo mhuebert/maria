@@ -209,4 +209,5 @@
                       true)
          :destroy #(let [{:keys [codeView]} this]
                      (.destroy codeView)
-                     (dom/unmount dom))}))))
+                     ;; setTimeout => avoids trying to unmount during a re-render caused by react-refresh
+                     (js/setTimeout (partial dom/unmount dom) 0))}))))

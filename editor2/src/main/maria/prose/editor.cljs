@@ -16,7 +16,8 @@
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
             [clojure.string :as str]
-            [maria.code.NodeView :as node-view]))
+            [maria.code.NodeView :as node-view]
+            [maria.code.commands :as commands]))
 
 (defn md->doc [source] (.parse md/defaultMarkdownParser source))
 (defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
@@ -118,6 +119,7 @@
                                                                     (this-as ^js view
                                                                       (let [state (.apply (.-state view) tx)]
                                                                         (.updateState view state))))}))]
+        (commands/prose:eval-doc! view)
         (fn [] (j/call view :destroy))))))
 
 #_(defn ^:dev/before-load clear-console []
