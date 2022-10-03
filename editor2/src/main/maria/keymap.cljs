@@ -125,6 +125,9 @@
                   true)}
           {:key :Shift-Tab
            :doc "Next Code Cell"
-           :run #(commands/prose:next-code-cell (j/get this :proseView))}])))
+           :run #(commands/prose:next-code-cell (j/get this :proseView))}
+          {:key :Alt-c
+           :doc "Copy code"
+           :run commands/code:copy-current-region}])))
 
 

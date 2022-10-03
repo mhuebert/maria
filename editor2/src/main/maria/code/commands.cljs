@@ -7,7 +7,9 @@
             [nextjournal.clojure-mode.node :as n]
             [maria.prose.schema :refer [schema]]
             [maria.eval.sci :as sci]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
+            [sci.async :as a]))
 
 (j/js
 
@@ -31,9 +33,7 @@
   (defn guard [x f] (when (f x) x))
 
   (defn code:eval-string! [{:as this :keys [!result]} source]
-    ;; TODO - handle errors
-    (p/->> (sci/eval-string source)
-           (reset! !result)))
+    (reset! !result (sci/eval-string source)))
 
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
@@ -154,8 +154,12 @@
         true)))
 
   (defn code:eval-block [{:as this :keys [codeView !result]}]
-    (p/->> (code:eval-string! this (.. codeView -state -doc (toString)))
-           (reset! !result)))
+    (let [value (code:eval-string! this (.. codeView -state -doc (toString)))]
+      (if (sci/await? value)
+        (a/await
+         (p/let [value* value]
+           (reset! !result value*)))
+        value)))
 
   (defn code:eval-block! [this _]
     (code:eval-block this)
@@ -174,9 +178,11 @@
         end (count code-views)]
     (p/loop [i 0]
       (when (< i end)
-        (p/do
-          (code:eval-block (nth code-views i))
-          (p/recur (inc i)))))))
+        (let [value (sci/flatten-var (code:eval-block (nth code-views i)))]
+          (if (sci/await? value)
+            (p/do value
+                  (p/recur (inc i)))
+            (p/recur (inc i))))))))
 
 (j/defn prose:next-code-cell [proseView]
   (when-let [index (.. proseView -state -selection -$anchor (index 0))]
@@ -193,3 +199,8 @@
               (.focus codeView)
               (.scrollIntoView dom {:block :center})))
       true)))
+
+(j/js
+  (defn code:copy-current-region [{:keys [state]}]
+    (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-str state))
+    true))

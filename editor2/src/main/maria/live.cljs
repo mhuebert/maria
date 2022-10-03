@@ -45,16 +45,38 @@
 ;; Two
 ;; Three")
 
+(def values-examples "
+
+(p/delay 10000 :result)
+
+(await (p/delay 1000 :result))
+
+js/Promise
+
+(def num-circles (await (p/do (p/delay 300) 5)))
+
+(->> (range num-circles)
+     (map #(circle (* 10 %))))
+
+(10)
+
+(.-x nil)
+")
+
 (def example
   [prose/editor {:source
+                 (do
+                   "(is-valid-element? 1)
+                   (is-valid-element? \"a\")\n"
 
-                 "(is-valid-element? 1)
-                 (is-valid-element? \"a\")\n"
+                   ;; invalid element
+                   #_"{1 2}\n(circle 10)"
 
-                 ;; invalid element
-                 #_"{1 2}\n(circle 10)"
+                   (rc/inline "curriculum/Learn Clojure with Shapes.cljs")
 
-                 #_(rc/inline "curriculum/Learn Clojure with Shapes.cljs")}])
+                   values-examples
+
+                   )}])
 
 (v/defview landing []
   [:div
