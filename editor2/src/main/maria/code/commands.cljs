@@ -9,7 +9,8 @@
             [maria.eval.sci :as sci]
             [promesa.core :as p]
             [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
-            [sci.async :as a]))
+            [sci.async :as a]
+            [re-db.reactive :as r]))
 
 (j/js
 
@@ -32,8 +33,11 @@
 
   (defn guard [x f] (when (f x) x))
 
+  (defn set-result! [!result v]
+    (reset! !result v))
+
   (defn code:eval-string! [{:as this :keys [!result]} source]
-    (reset! !result (sci/eval-string source)))
+    (set-result! !result (sci/eval-string source)))
 
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
@@ -158,10 +162,10 @@
       (if (sci/await? value)
         (a/await
          (p/let [value* value]
-           (reset! !result value*)))
+           (set-result! !result value*)))
         value)))
 
-  (defn code:eval-block! [this _]
+  (defn code:eval-block! [this]
     (code:eval-block this)
     true)
 
@@ -178,7 +182,7 @@
         end (count code-views)]
     (p/loop [i 0]
       (when (< i end)
-        (let [value (sci/flatten-var (code:eval-block (nth code-views i)))]
+        (let [value (code:eval-block (nth code-views i))]
           (if (sci/await? value)
             (p/do value
                   (p/recur (inc i)))
@@ -201,6 +205,12 @@
       true)))
 
 (j/js
+
+  (defn code:eval-current-region [{:as this {:keys [state]} :codeView}]
+    (when-let [source (guard (eval-region/current-str state) (complement str/blank?))]
+      (code:eval-string! this source))
+    true)
+
   (defn code:copy-current-region [{:keys [state]}]
     (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-str state))
     true))

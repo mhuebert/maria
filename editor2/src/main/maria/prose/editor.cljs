@@ -113,14 +113,13 @@
             view (j/js
                    (EditorView. element {:state state
                                          :nodeViews {:code_block node-view/editor}
-
                                          ;; no-op tx for debugging
                                          #_#_:dispatchTransaction (fn [tx]
                                                                     (this-as ^js view
                                                                       (let [state (.apply (.-state view) tx)]
                                                                         (.updateState view state))))}))]
         (commands/prose:eval-doc! view)
-        (fn [] (j/call view :destroy))))))
+        #(j/call view :destroy)))))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

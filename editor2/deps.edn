@@ -10,14 +10,21 @@
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         org.babashka/sci {:mvn/version "0.4.33"}
         funcool/promesa {:mvn/version "8.0.450"}
+        com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
 
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
 
+        io.github.mhuebert/re-db {:git/sha "41fd4b30e436cd444403df2a7c6ebfa1171120f2"}
         io.github.babashka/sci.configs {:git/sha "63225c8606d593c595d2f10a6fa5bf38103852df"}
-        io.github.mhuebert/yawn {:git/sha "1613f394e1dfd508c8f043501a9157dad1fa0bfb"}}
+        io.github.mhuebert/yawn {:git/sha "2aebf9127182735ff6150e9d2c2c35d8cb0d5bcf"}
+
+        io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
+        io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
+        }
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
-                       io.github.mhuebert/yawn {:local/root "../../yawn"}}}}}
+                       io.github.mhuebert/yawn {:local/root "../../yawn"}
+                       io.github.mhuebert/re-db {:local/root "../../re-db"}}}}}

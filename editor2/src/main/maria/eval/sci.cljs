@@ -5,6 +5,9 @@
             [clojure.string :as str]
             [sci.core :as sci]
             [shadow.resource :as resource]
+            cells.lib
+            cells.cell
+            cells.macros
             shapes.core
             maria.friendly.kinds
             [maria.eval.repl :refer [*context*]]
@@ -13,52 +16,68 @@
             [sci.async :as a]
             [promesa.core :as p]
             [sci.configs.applied-science.js-interop :as sci.j]
-            [sci.configs.funcool.promesa :as sci.p])
+            [sci.configs.funcool.promesa :as sci.p]
+            [re-db.reactive]
+            [re-db.macros :as r.macros])
   (:require-macros [maria.eval.sci :refer [require-namespaces]]))
 
-(defn flatten-var [x]
-  (cond-> x (instance? sci.lang/Var x) deref))
+(sci/alter-var-root sci/print-fn (constantly *print-fn*))
 
 (defn await? [x]
-  (let [x (flatten-var x)]
-    (and (instance? js/Promise x) (a/await? x))))
+  (and (instance? js/Promise x)
+       (a/await? x)))
 
-(defn pass-await [p0 p1]
-  (cond-> p1
-          (a/await? (flatten-var p0))
-          a/await))
+(defn guard [x f] (when (f x) x))
 
 (defn eval-string
   ([source] (eval-string @*context* source))
   ([ctx source]
    (try
-     (let [value (sci/eval-string* ctx (str/trim source))]
-       (if (await? value)
-         (-> (p/let [awaited-value (flatten-var value)]
-               (if (instance? sci.lang/Var value)
-                 (do (sci/alter-var-root value (constantly awaited-value))
-                     {:value value})
-                 {:value awaited-value}))
-             (p/catch (fn [e] {:error e}))
-             a/await)
-         {:value value}))
+     (let [value (sci/eval-string* ctx (str/trim source))
+           [value var] (if (instance? sci.lang/Var value)
+                         [@value value]
+                         [value nil])]
+       (if-let [promise (guard value await?)]
+         (a/await
+          (-> (p/let [value promise]
+                (cond-> {:value value}
+                        var
+                        (assoc :var (doto var
+                                      (sci/alter-var-root (constantly value))))))
+              (p/catch (fn [e] {:error e}))))
+         (cond-> {:value value}
+                 var (assoc :var var))))
      (catch js/Error e {:error e}))))
 
+(defn init-cells [sci-opts]
+  (-> (require-namespaces sci-opts [cells.lib])
+      (assoc-in [:namespaces 'cells.cell] (let [ns (sci/create-ns 'cells.cell)]
+                                            (merge (sci/copy-ns cells.cell ns)
+                                                   #_{'defcell (sci/copy-var cells.macros/defcell:impl ns)
+                                                    'cell (sci/copy-var cells.macros/cell:impl ns)
+                                                    'bound-fn (sci/copy-var cells.macros/bound-fn:impl ns)
+                                                    'memoized-on (sci/copy-var cells.macros/memoized-on:impl ns)})))))
+
 (def sci-opts
-  {:bindings {}
-   :namespaces (merge (require-namespaces 'shapes.core
-                                          'maria.friendly.kinds
-                                          'maria.friendly.messages
-                                          'maria.eval.repl
-                                          'sci.async
-                                          '[sci.impl.resolve :include [resolve-symbol]]
-                                          )
-                      {'applied-science.js-interop sci.j/js-interop-namespace
-                       'promesa.core sci.p/promesa-namespace
-                       'promesa.protocols sci.p/promesa-protocols-namespace
-                       'user {'println println
-                              'prn prn
-                              'pr pr}})})
+  (-> {:bindings {'prn prn
+                  'println println}
+       :classes {'js goog/global}
+       :namespaces {'applied-science.js-interop sci.j/js-interop-namespace
+                    'promesa.core sci.p/promesa-namespace
+                    'promesa.protocols sci.p/promesa-protocols-namespace
+                    'user {'println println
+                           'prn prn
+                           'pr pr}}}
+      (init-cells)
+      (require-namespaces '[[shapes.core :as shapes]
+                            maria.friendly.kinds
+                            maria.friendly.messages
+                            maria.eval.repl
+                            [sci.async :refer [await]]
+                            [sci.impl.resolve :include [resolve-symbol]]
+                            cells.cell
+                            cells.lib
+                            re-db.reactive])))
 
 (reset! *context* (sci/init sci-opts))
 

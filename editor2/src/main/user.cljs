@@ -6,6 +6,12 @@
             [maria.eval.repl :refer [eval eval-string doc dir is-valid-element?]]
             sci.impl.resolve
             [sci.async :refer [await]]
+            [cells.cell :refer [defcell
+                                cell]]
+            [cells.lib :refer [interval
+                               timeout
+                               fetch
+                               geo-location]]
             [shapes.core :as shapes :refer [listen
                                             circle ellipse square rectangle triangle polygon polyline text image
                                             position opacity rotate scale

@@ -1,23 +1,35 @@
 (ns maria.eval.sci)
 
 (defn dequote [x]
-  (if (and (list? x) (= 'quote (first x)))
+  (if (and (seq? x) (= 'quote (first x)))
     (second x)
     x))
 
-(defmacro require-namespaces [& namespaces]
-  (->> namespaces
-       (reduce (fn [m ns]
-                 (let [ns (dequote ns)
-                       [ns opts] (if (symbol? ns)
-                                   [ns {}]
-                                   [(first ns) (apply hash-map (rest ns))])]
-                   (if (:include opts)
-                     (let [ns-sym (gensym "ns")]
-                       (assoc m `'~ns `(let [~ns-sym (~'sci.core/create-ns '~ns)]
-                                         ~(reduce (fn [out sym]
+(defmacro require-namespaces [sci-opts namespaces]
+  (reduce (fn [sci-opts ns]
+            (let [the-ns (dequote ns)
+                  [the-ns opts] (if (symbol? the-ns)
+                              [the-ns {}]
+                              [(first the-ns) (apply hash-map (rest the-ns))])
+                  ns-map (if (:include opts)
+                           (let [ns-sym (gensym "ns")]
+                             `(let [~ns-sym (~'sci.core/create-ns '~the-ns)]
+                                ~(reduce (fn [out sym]
+                                           (assoc out `'~sym `(~'sci.core/copy-var ~(symbol (str the-ns) (str sym)) ~ns-sym)))
+                                         {}
+                                         (:include opts))))
+                           `(~'sci.core/copy-ns ~the-ns (~'sci.core/create-ns '~the-ns) ~opts))
+                  as (:as opts)]
+              `(-> ~sci-opts
+                   (assoc-in [:namespaces '~the-ns] ~ns-map)
+                   ~@(when as
+                       `[(assoc-in [:aliases '~the-ns] '~as)]))))
+          sci-opts
+          (dequote namespaces)))
 
-                                                    (assoc out `'~sym `(~'sci.core/copy-var ~(symbol (str ns) (str sym)) ~ns-sym)))
-                                                  {}
-                                                  (:include opts)))))
-                     (assoc m `'~ns `(~'sci.core/copy-ns ~ns (~'sci.core/create-ns '~ns) ~opts))))) {})))
+(comment
+ (require-namespaces {}
+                     '[[cells.lib :as y]
+                       shapes.core])
+ (macroexpand '(require-namespaces {}
+                                   '[shapes.core])))

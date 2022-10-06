@@ -2,7 +2,8 @@
   (:require ["@lezer/highlight" :refer [tags styleTags]]
             ["@codemirror/language" :as highlight]
             [applied-science.js-interop :as j]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [shadow.resource :as rc]))
 
 (def prose-element :div)
 
@@ -70,9 +71,18 @@
 (def tailwind
   [:style {:type "text/tailwindcss"}
    (str
+    (rc/inline "nextjournal.viewer.css")
+
     (css-color-vars)
     "
 
+.gap-list {
+  @apply gap-[4px]
+}
+
+svg {
+  display: inline-block;
+}
  .ProseMirror {
   @apply m-4 p-0 text-xl font-serif;
  }
@@ -96,4 +106,5 @@
   font-family: georgia, times, serif;
   @apply font-normal;
  }
-    ")])
+    "
+    )])

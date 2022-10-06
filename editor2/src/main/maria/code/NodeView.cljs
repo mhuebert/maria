@@ -17,7 +17,8 @@
             [maria.eval.sci :as sci]
             [maria.code.commands :as commands]
             [maria.code.views :as views]
-            [yawn.view.dom :as dom]))
+            [yawn.view.dom :as dom]
+            [re-db.reactive :as r]))
 
 
 (j/js
@@ -125,9 +126,9 @@
              old-text (code-text codeView)]
          (when (not= new-text old-text)
            (controlled-update this
-             (fn []
-               (.dispatch codeView {:changes (text-diff old-text new-text)
-                                    :annotations [(u/user-event-annotation "noformat")]})))))
+                              (fn []
+                                (.dispatch codeView {:changes (text-diff old-text new-text)
+                                                     :annotations [(u/user-event-annotation "noformat")]})))))
        true)))
 
   (defn prose:select-node [{:keys [codeView]}]
@@ -171,8 +172,7 @@
                                                 (lang/syntaxHighlighting style/code-highlight-style)
                                                 (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
-                                                (clj-mode/eval-region ^:clj {:modifier eval-modifier
-                                                                             :on-enter (partial commands/code:eval-string! this)})
+                                                (clj-mode/eval-region ^:clj {:modifier eval-modifier})
                                                 (keys/code-keys this)
                                                 (.of cm.view/keymap clj-mode/complete-keymap)
                                                 (.of cm.view/keymap cmd/historyKeymap)
@@ -207,7 +207,10 @@
          :stopEvent (fn []
                       #_(j/log :stopEvent)
                       true)
-         :destroy #(let [{:keys [codeView]} this]
+         :destroy #(let [{:keys [codeView !result]} this]
                      (.destroy codeView)
                      ;; setTimeout => avoids trying to unmount during a re-render caused by react-refresh
-                     (js/setTimeout (partial dom/unmount dom) 0))}))))
+                     (js/setTimeout (partial dom/unmount dom) 0)
+
+                     (let [value ^:clj (:value @!result)]
+                       (when (satisfies? r/IDispose value) (r/dispose! value))))}))))
