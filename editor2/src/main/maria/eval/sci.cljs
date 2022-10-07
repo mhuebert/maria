@@ -33,20 +33,17 @@
   ([source] (eval-string @*context* source))
   ([ctx source]
    (try
-     (let [value (sci/eval-string* ctx (str/trim source))
-           [value var] (if (instance? sci.lang/Var value)
-                         [@value value]
-                         [value nil])]
-       (if-let [promise (guard value await?)]
+     (let [value (sci/eval-string* ctx source)
+           ;; can use this to track ns;
+           ;; then have to handle promise flattening and await detection.
+           #_#_{value :val ns :ns} (a/eval-string+ ctx source)
+           ]
+       (if (await? value)
          (a/await
-          (-> (p/let [value promise]
-                (cond-> {:value value}
-                        var
-                        (assoc :var (doto var
-                                      (sci/alter-var-root (constantly value))))))
+          (-> (p/let [value value]
+                {:value value})
               (p/catch (fn [e] {:error e}))))
-         (cond-> {:value value}
-                 var (assoc :var var))))
+         {:value value}))
      (catch js/Error e {:error e}))))
 
 (defn init-cells [sci-opts]
@@ -58,11 +55,13 @@
                                                     'bound-fn (sci/copy-var cells.macros/bound-fn:impl ns)
                                                     'memoized-on (sci/copy-var cells.macros/memoized-on:impl ns)})))))
 
+
 (def sci-opts
   (-> {:bindings {'prn prn
                   'println println}
        :classes {'js goog/global}
        :namespaces {'applied-science.js-interop sci.j/js-interop-namespace
+                    'clojure.core {'require a/require}
                     'promesa.core sci.p/promesa-namespace
                     'promesa.protocols sci.p/promesa-protocols-namespace
                     'user {'println println

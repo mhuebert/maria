@@ -65,13 +65,12 @@ js/Promise
   "
 ;; ## Promises with top-level `await`
 
-(p/delay 10000 (circle 40))
+(p/delay 3000 (square 20))
 
-(await (p/delay 2000 (circle 40)))
+;; You can await a `def` that contains a promise.
 
-;; Can reference previous vars
-
-(def num-circles (await (p/delay 300 50)))
+(await
+  (def num-circles (p/delay 300 5)))
 
 (->> (range num-circles)
      (map #(circle (* % 10))))
@@ -125,12 +124,20 @@ js/Promise
 
 
                    (str
-                    async-examples
                     cell-examples
                     list-examples
+                    promise-examples
+                    async-examples
                     error-examples
-                    promise-examples)
 
+
+                    "(doc inc)
+                    (dir user)
+                    (ns my.ns)
+                    *ns*
+                    (doc prn)
+                    (prn 10)
+                    (ns a.b)")
 
                    )}])
 

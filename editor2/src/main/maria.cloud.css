@@ -21,9 +21,8 @@ pre, h1, h2, h3, h4 {
     @apply p-4 bg-white
 }
 
-h1 {
-    @apply text-4xl;
-}
+h1 {@apply text-4xl;}
+h2 {@apply text-[1.6rem];}
 .font-serif {
     font-family: georgia, times, serif;
     @apply font-normal;
@@ -57,8 +56,8 @@ h1 {
 
 .circle-loading > div {
     opacity: .6;
-    -webkit-animation: sk-bounce 2s infinite ease-in-out;
-    animation: sk-bounce 2s infinite ease-in-out;
+    -webkit-animation: sk-bounce 3s infinite ease-in-out;
+    animation: sk-bounce 3s infinite ease-in-out;
     background-color: #357edd
 }
 

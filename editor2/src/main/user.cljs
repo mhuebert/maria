@@ -3,9 +3,8 @@
             [promesa.core :as p]
             maria.friendly.messages
             [maria.friendly.kinds :refer [what-is]]
-            [maria.eval.repl :refer [eval eval-string doc dir is-valid-element?]]
+            [maria.eval.repl :refer [eval eval-string doc dir is-valid-element? await]]
             sci.impl.resolve
-            [sci.async :refer [await]]
             [cells.cell :refer [defcell
                                 cell]]
             [cells.lib :refer [interval

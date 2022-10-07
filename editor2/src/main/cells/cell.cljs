@@ -49,6 +49,7 @@
   "Async metadata is stored in a ratom containing `true` for loading-state,
    or an instance of js/Error."
   [x]
+
   (when-let [f (get (meta x) `-async-status)]
     (f x)))
 

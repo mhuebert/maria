@@ -3,7 +3,9 @@
   (:require [sci.impl.resolve :as sci.resolve]
             [sci.core :as sci]
             [clojure.string :as str]
-            ["react" :as react]))
+            ["react" :as react]
+            [sci.async :as a]
+            [promesa.core :as p]))
 
 (defonce ^:dynamic *context* (atom nil))
 
@@ -20,6 +22,7 @@
 (defn ^:macro doc
   "Show documentation for given symbol"
   [&form &env sym]
+  #_`(unescape (with-out-str (clojure.repl/doc ~sym)))
   (-> (sci.impl.resolve/resolve-symbol @maria.eval.repl/*context* sym)
       meta
       :doc))
@@ -27,6 +30,7 @@
 (defn ^:macro dir
   "Display public vars in namespace (symbol)"
   [&form &env ns]
+  #_`(with-out-str (clojure.repl/dir ~ns))
   `'~(some->> @maria.eval.repl/*context*
               :env
               deref
@@ -37,3 +41,13 @@
               sort))
 
 (def ^function is-valid-element? react/isValidElement)
+
+(defn await [x]
+  (cond (instance? sci.lang/Var x)
+        (a/await (p/let [v @x]
+                   (prn :awaited x v) 
+                   (sci/alter-var-root x (constantly v))
+                   x))
+        (instance? js/Promise x)
+        (a/await x)
+        :else x))

@@ -11,7 +11,8 @@
             [nextjournal.clerk.viewer :as clerk.viewer]
             [nextjournal.clerk.sci-viewer :as clerk.sci-viewer]
             [reagent.core :as reagent]
-            [cells.cell :as cell]))
+            [cells.cell :as cell]
+            [promesa.core :as p]))
 
 (def SHOW-VARS? false)
 (def COLL-PADDING 4)
@@ -25,6 +26,7 @@
   (render [^js this]
     (j/let [error (j/get-in this [:state :error])
             ^js [show body :as children] (.. this -props -children)]
+      ;; todo - hint to avoid interpretation here
       (v/x (if error
              [show error]
              [show body])))))
@@ -47,14 +49,14 @@
 
 (declare ^:dynamic *viewers*)
 
-(v/defview show [x]
+(v/defview show {:key identity} [x]
   (reduce (fn [_ v] (if-some [out (v x)] (reduced out) _)) "No viewer" *viewers*))
 
 (v/defview more-btn [on-click]
   [:div.pb-1.-mt-1.px-1.mx-1.cursor-pointer.bg-gray-200.hover:bg-gray-300 {:on-click on-click}
    "..."])
 
-(defn ^v/el punctuate [s]
+(defn punctuate ^v/el [s]
   (v/x [:div.inline-block.font-bold.opacity-60 s]))
 
 (v/defview show-brackets [left right more children !wrapper !parent]
@@ -125,7 +127,7 @@
      right
      more!
      (into []
-           (map show)
+           (map #(do [:span (show %)]))
            coll)
      !wrapper
      !parent]))
@@ -136,17 +138,14 @@
    (show (val this))
    [:br]])
 
-(defn use-derefable [x]
+(defn use-watchable [x]
   (v/use-sync-external-store (fn [changed!]
                                (add-watch x changed! (fn [_ _ _ _] (changed!)))
                                #(remove-watch x changed!))
                              #(r/peek x)))
 
-(v/defview show-deref {:key identity} [x]
-  (let [value (use-derefable x)]
-    [:div.flex.gap-list.items-start
-     (punctuate "@")
-     (show value)]))
+(v/defview show-watchable [x]
+  (show (use-watchable x)))
 
 (def loader (v/x [:div.cell-status
                   [:div.circle-loading
@@ -158,12 +157,25 @@
     [:div (ex-message error)]
     loader))
 
+(v/defview show-promise [p]
+  (let [[v v!] (v/use-state ::loading)]
+    (v/use-effect
+     (fn []
+       (v! ::loading)
+       (p/then p v!)
+       nil)
+     [p])
+    (v/x
+     (if (= v ::loading)
+       loader
+       (show v)))))
+
 (def ^:dynamic *viewers*
   [(fn [x] (some-> (cell/async-status x)
-                   (use-derefable)
+                   (use-watchable)
                    show-async-status))
-   (fn [x] (when (satisfies? IDeref x)
-             (show-deref x)))
+   (fn [x] (when (satisfies? IWatchable x)
+             (show-watchable x)))
    (fn [x] (when (or (instance? PersistentHashMap x)
                      (instance? PersistentArrayMap x))
              [show-coll \{ \} x]))
@@ -173,12 +185,14 @@
    (fn [x] (when (boolean? x) (pr-str x)))
    (fn [x] (when (vector? x) (show-coll \[ \] x)))
    (fn [x] (when (set? x) (show-coll "#{" "}" x)))
-   (fn [x] (when (var? x) (v/x [:div.text-gray-400 (str x)])))
+   (fn [x] (when (var? x) (v/x [:<>
+                                (when SHOW-VARS? [:div.text-gray-400.mb-1 (str x)])
+                                (show @x)])))
    (fn [x] (when (instance? js/Error x) (error-viewer x)))
    (fn [x] (when (instance? shapes/Shape x) (v/x (shapes/to-hiccup x))))
    (fn [x] (when (fn? x) (str x)))
    (fn [x] (when (seq? x) (show-coll "(" ")" x)))
-   (fn [x] (when (instance? js/Promise x) (v/x [:em "js/Promise"])))
+   (fn [x] (when (instance? js/Promise x) (show-promise x)))
    (fn [x] (when keyword? x) (str x))
    (fn [x] (when (nil? x) "nil"))
 
@@ -192,9 +206,8 @@
                                                                   :render-fn show}]))
 
 (v/defview value-viewer [!result]
-  (let [{:as result :keys [value error var]} (second (use-watch !result))]
+  (let [{:as result :keys [value error]} (second (use-watch !result))]
     [:...
-     (when (and SHOW-VARS? var) [:div.mb-1 [show var]])
      (if error
        (show error)
        (j/lit [ErrorBoundary {:key result}
