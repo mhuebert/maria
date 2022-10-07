@@ -105,6 +105,12 @@ js/Promise
 (cell (timeout 1000 \"hello\"))
 
 ")
+
+(def async-examples "
+;; ## Async state
+(for [i (range 10)]
+  (cell (timeout (* i 100) (circle 10))))
+")
 (def example
   [prose/editor {:source
                  (do
@@ -119,10 +125,12 @@ js/Promise
 
 
                    (str
-                    list-examples
+                    async-examples
                     cell-examples
+                    list-examples
                     error-examples
                     promise-examples)
+
 
                    )}])
 

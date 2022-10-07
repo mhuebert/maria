@@ -1,6 +1,10 @@
 (ns cells.cell
   (:require [re-db.reactive :as r]))
 
+(defn guard
+  ([f] (fn [x] (when (f x) x)))
+  ([x f] (when (f x) x)))
+
 (defprotocol IAsyncStatus
   :extend-via-metadata true
   (-async-status [this]))
@@ -12,13 +16,10 @@
 #_(defn with-view [cell view]
   (r/update-meta! cell assoc `-view (fn [cell] (view (r/peek cell)))))
 
-(defn satisfies-async-status? [x]
-  (and (satisfies? IMeta x) (get (meta x) `-async-status )))
-
 (defn make-cell [prev f]
-  (let [async-state (r/atom nil)
+  (let [!async-status (r/atom nil)
         cell (r/make-reaction (fn [] (f r/*owner*))
-                              :meta {`-async-status (fn [this] async-state)})]
+                              :meta {`-async-status (fn [this] !async-status)})]
     (if prev
       (let [watches (r/get-watches prev)
             prev-val (r/peek prev)]
@@ -44,21 +45,20 @@
            (make-cell prev-cell# (fn [~'self] ~@body)))
          ~the-name))))
 
-(defn error! [cell e] (reset! (-async-status cell) {:error e}))
-(defn loading! [cell] (reset! (-async-status cell) {:loading true}))
-(defn complete! [cell] (reset! (-async-status cell) nil))
-
-(defn async-status [x]
-  (when-let [f (and (satisfies? IMeta x)
-                    (get (meta x) `-async-status))]
+(defn async-status
+  "Async metadata is stored in a ratom containing `true` for loading-state,
+   or an instance of js/Error."
+  [x]
+  (when-let [f (get (meta x) `-async-status)]
     (f x)))
 
-(defn status "Returns :error, :loading, or nil"
-  [cell]
-  (some #{:error :loading} (-async-status cell)))
+(defn error! [cell e] (reset! (-async-status cell) (cond-> e
+                                                           (string? e)
+                                                           (ex-info {:cell cell}))))
+(defn error [state] (guard state #(instance? js/Error %)))
 
-(def loading? (comp #{:loading} status))
-(def error? (comp #{:error} status))
-(def error (comp :error status))
-(defn message [cell] (some-> (error cell) str))
+(defn loading! [cell] (reset! (-async-status cell) true))
+(defn loading? [state] (true? state))
+
+(defn complete! [cell] (reset! (-async-status cell) nil))
 

@@ -148,15 +148,20 @@
      (punctuate "@")
      (show value)]))
 
-(v/defview show-async-status [{:keys [loading error]}]
-  (cond loading "Loading..."
-        error (show error)
-        :else "INVALID STATE"))
+(def loader (v/x [:div.cell-status
+                  [:div.circle-loading
+                   [:div]
+                   [:div]]]))
+
+(v/defview show-async-status [astate]
+  (if-let [error (cell/error astate)]
+    [:div (ex-message error)]
+    loader))
 
 (def ^:dynamic *viewers*
-  [(fn [x] (when-let [!status (cell/async-status x)]
-             (when-let [status (use-derefable !status)]
-               (show-async-status status))))
+  [(fn [x] (some-> (cell/async-status x)
+                   (use-derefable)
+                   show-async-status))
    (fn [x] (when (satisfies? IDeref x)
              (show-deref x)))
    (fn [x] (when (or (instance? PersistentHashMap x)

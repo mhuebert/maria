@@ -74,37 +74,5 @@
     (rc/inline "nextjournal.viewer.css")
 
     (css-color-vars)
-    "
-
-.gap-list {
-  @apply gap-[4px]
-}
-
-svg {
-  display: inline-block;
-}
- .ProseMirror {
-  @apply m-4 p-0 text-xl font-serif;
- }
- pre, h1, h2, h3, h4 {
-  @apply mb-4;
- }
-
- .ProseMirror > *:not(div) {
-  @apply md:w-1/2 leading-relaxed;
-
- }
-
- .cm-content {
- @apply p-4 bg-white
- }
-
- h1 {
-  @apply text-4xl;
-  }
- .font-serif {
-  font-family: georgia, times, serif;
-  @apply font-normal;
- }
-    "
+    (rc/inline "maria.cloud.css")
     )])
