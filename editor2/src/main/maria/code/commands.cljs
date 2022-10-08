@@ -11,6 +11,21 @@
             [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
             [sci.async :as a]))
 
+
+(j/js
+  (defn set-result! [{:keys [!result]} v]
+    (reset! !result v)))
+
+(defn code:eval-string! [this source]
+  (let [result (try (sci/eval-string source)
+                    (catch js/Error e ^:clj {:error e}))]
+    (if (a/await? result)
+      (a/await
+       (-> result
+           (.then (fn [result] (set-result! this result)))
+           (.catch (fn [e] (set-result! this {:error e})))))
+      (set-result! this result))))
+
 (j/js
 
   (defn bind-prose-command [this cmd]
@@ -31,17 +46,6 @@
         true)))
 
   (defn guard [x f] (when (f x) x))
-
-  (defn set-result! [{:keys [!result]} v]
-    (reset! !result v))
-
-  (defn code:eval-string! [this source]
-    (let [result (sci/eval-string source)]
-      (if (a/await? result)
-        (a/await
-         (p/let [result result]
-           (set-result! this result)))
-        (set-result! this result))))
 
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
@@ -174,20 +178,13 @@
                         .-docView
                         .-children
                         (keep (j/get :spec))
-                        (filterv (j/get :codeView)))
-        end (count node-views)]
+                        (filterv (j/get :codeView)))]
     ((fn continue [i]
-       (when (< i end)
-         (let [node-view (nth node-views i)
-               value (try (sci/eval-string (code:block-str node-view))
-                          (catch js/Error e {:error e}))]
+       (when-let [node-view (nth node-views i nil)]
+         (let [value (code:eval-string! node-view (code:block-str node-view))]
            (if (a/await? value)
-             (p/then value (fn [value]
-                             (set-result! node-view value)
-                             (continue (inc i))))
-             (do
-               (set-result! node-view value)
-               (continue (inc i))))))
+             (p/do value (continue (inc i)))
+             (continue (inc i)))))
        nil) 0)))
 
 (j/defn prose:next-code-cell [proseView]
