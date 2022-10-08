@@ -42,12 +42,23 @@
 
 (def ^function is-valid-element? react/isValidElement)
 
+(defn promise? [x] (instance? js/Promise x))
+
+(defn await? [x] (and (promise? x) (a/await? x)))
+
 (defn await [x]
-  (cond (instance? sci.lang/Var x)
-        (a/await (p/let [v @x]
-                   (prn :awaited x v) 
-                   (sci/alter-var-root x (constantly v))
-                   x))
-        (instance? js/Promise x)
-        (a/await x)
-        :else x))
+  (a/await
+   (if (instance? sci.lang/Var x)
+     (p/let [v @x]
+       (sci/alter-var-root x (constantly v))
+       x)
+     (js/Promise.resolve x))))
+
+(defn catch [^js p f]
+  (if (promise? p)
+    (cond-> (.catch p f) (a/await? p) a/await)
+    p))
+(defn then [^js p f]
+  (if (promise? p)
+    (cond-> (.then p f) (a/await? p) a/await)
+    p))

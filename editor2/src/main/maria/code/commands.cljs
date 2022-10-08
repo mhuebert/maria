@@ -9,8 +9,7 @@
             [maria.eval.sci :as sci]
             [promesa.core :as p]
             [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
-            [sci.async :as a]
-            [re-db.reactive :as r]))
+            [sci.async :as a]))
 
 (j/js
 
@@ -33,11 +32,16 @@
 
   (defn guard [x f] (when (f x) x))
 
-  (defn set-result! [!result v]
+  (defn set-result! [{:keys [!result]} v]
     (reset! !result v))
 
-  (defn code:eval-string! [{:as this :keys [!result]} source]
-    (set-result! !result (sci/eval-string source)))
+  (defn code:eval-string! [this source]
+    (let [result (sci/eval-string source)]
+      (if (a/await? result)
+        (a/await
+         (p/let [result result]
+           (set-result! this result)))
+        (set-result! this result))))
 
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
@@ -157,36 +161,34 @@
           (.focus))
         true)))
 
-  (defn code:eval-block [{:as this :keys [codeView !result]}]
-    (let [value (code:eval-string! this (.. codeView -state -doc (toString)))]
-      (if (sci/await? value)
-        (a/await
-         (p/let [value* value]
-           (set-result! !result value*)))
-        value)))
+  (defn code:block-str [{:keys [codeView]}]
+    (.. codeView -state -doc (toString)))
 
   (defn code:eval-block! [this]
-    (code:eval-block this)
+    (code:eval-string! this (code:block-str this))
     true)
 
   )
 (defn prose:eval-doc! [^js prose-view]
-  ;; TODO
-  ;; use funcool/promesa to do this async so that any block which
-  ;; returns a promise causes the doc to 'wait'
-  (let [code-views (->> prose-view
+  (let [node-views (->> prose-view
                         .-docView
                         .-children
                         (keep (j/get :spec))
                         (filterv (j/get :codeView)))
-        end (count code-views)]
-    (p/loop [i 0]
-      (when (< i end)
-        (let [value (code:eval-block (nth code-views i))]
-          (if (sci/await? value)
-            (p/do value
-                  (p/recur (inc i)))
-            (p/recur (inc i))))))))
+        end (count node-views)]
+    ((fn continue [i]
+       (when (< i end)
+         (let [node-view (nth node-views i)
+               value (try (sci/eval-string (code:block-str node-view))
+                          (catch js/Error e {:error e}))]
+           (if (a/await? value)
+             (p/then value (fn [value]
+                             (set-result! node-view value)
+                             (continue (inc i))))
+             (do
+               (set-result! node-view value)
+               (continue (inc i))))))
+       nil) 0)))
 
 (j/defn prose:next-code-cell [proseView]
   (when-let [index (.. proseView -state -selection -$anchor (index 0))]

@@ -110,6 +110,18 @@ js/Promise
 (for [i (range 10)]
   (cell (timeout (* i 100) (circle 10))))
 ")
+(def repl-examples ";; ## REPL utils
+(doc inc)
+(dir user)")
+(def ns-examples "
+;; Namespaces
+
+(ns my.app)
+*ns*
+(doc inc)
+(ns user)
+(doc inc)
+")
 (def example
   [prose/editor {:source
                  (do
@@ -124,20 +136,14 @@ js/Promise
 
 
                    (str
+                    promise-examples
+                    repl-examples
+                    ns-examples
                     cell-examples
                     list-examples
-                    promise-examples
                     async-examples
-                    error-examples
+                    error-examples)
 
-
-                    "(doc inc)
-                    (dir user)
-                    (ns my.ns)
-                    *ns*
-                    (doc prn)
-                    (prn 10)
-                    (ns a.b)")
 
                    )}])
 
