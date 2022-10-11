@@ -17,7 +17,8 @@
             [promesa.core :as p]
             [sci.configs.applied-science.js-interop :as sci.j]
             [sci.configs.funcool.promesa :as sci.p]
-            [re-db.reactive])
+            [re-db.reactive]
+            [sicmutils.env.sci :as sicm.sci])
   (:require-macros [maria.eval.sci :refer [require-namespaces]]))
 
 (defn eval-string*
@@ -53,16 +54,14 @@
                                 (:last-ns ctx)
                                 @sci/ns))
          ctx (assoc ctx :last-ns last-ns)
-         value (eval-string* ctx s)]
+         value (eval-string* ctx s)
+         return (fn [v]
+                  (swap! *context* assoc :last-ns @last-ns)
+                  {:value v})]
      (if (await? value)
        (a/await
-        (p/let [value value]
-          (let [ns @last-ns]
-            (swap! *context* assoc :last-ns ns)
-            {:value value :ns ns})))
-       (let [ns @last-ns]
-         (swap! *context* assoc :last-ns ns)
-         {:value value :ns ns})))))
+        (p/-> value return))
+       (return value)))))
 
 (sci/alter-var-root sci/print-fn (constantly *print-fn*))
 
@@ -77,6 +76,15 @@
                                                       'bound-fn (sci/copy-var cells.macros/bound-fn:impl ns)
                                                       'memoized-on (sci/copy-var cells.macros/memoized-on:impl ns)})))))
 
+
+(defn intern-core [ctx & syms]
+  (let [ns (sci/find-ns ctx 'clojure.core)]
+    (reduce (fn [ctx sym]
+              (let [resolved (sci.impl.resolve/resolve-symbol ctx sym)]
+                (doto ctx (sci/intern ns
+                                      (with-meta
+                                       (symbol (name sym))
+                                       (meta resolved)) @resolved)))) ctx syms)))
 
 (def sci-opts
   (-> {:bindings {'prn prn
@@ -100,6 +108,10 @@
                             cells.lib
                             re-db.reactive])))
 
-(reset! *context* (sci/init sci-opts))
+(reset! *context* (-> (sci/init sci-opts)
+                      (intern-core 'maria.eval.repl/doc
+                                   'maria.eval.repl/dir
+                                   'maria.eval.repl/await)
+                      (sci/merge-opts sicm.sci/context-opts)))
 
 (eval-string (resource/inline "user.cljs")) ;; sets up scope for repl

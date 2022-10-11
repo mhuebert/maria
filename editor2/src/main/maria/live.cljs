@@ -1,5 +1,6 @@
 (ns maria.live
-  (:require ["react-dom/client" :as react.client]
+  (:require [applied-science.js-interop :as j]
+            ["react-dom/client" :as react.client]
             ["react" :as react]
             [maria.prose.editor :as prose]
             [clojure.string :as str]
@@ -72,7 +73,7 @@ js/Promise
 (await
   (def num-circles (p/delay 300 5)))
 
-(->> (range num-circles)
+(->> (range 1 (inc num-circles))
      (map #(circle (* % 10))))
 ")
 
@@ -110,9 +111,11 @@ js/Promise
 (for [i (range 10)]
   (cell (timeout (* i 100) (circle 10))))
 ")
+
 (def repl-examples ";; ## REPL utils
 (doc inc)
 (dir user)")
+
 (def ns-examples "
 ;; Namespaces
 
@@ -122,6 +125,58 @@ js/Promise
 (ns user)
 (doc inc)
 ")
+
+(def sicm-examples "
+(ns maria.sicm
+  (:require [sicmutils.env :refer :all]))
+
+(take 10 (((exp D) sin) 'x))
+
+ (let [x (/ 3 2)]
+  (and
+    (ratio? x)
+    (= 3 (numerator x))
+    (= 2 (denominator x))))
+
+(let [x (complex 1 2)]
+  (and
+    (complex? x)
+    (= 1 (real-part x))
+    (= 2 (imag-part x))))
+
+(let [x (make-polar 5 pi)]
+  (and
+    (complex? x)
+    (= 5 (magnitude x))
+    (= pi (angle x))))
+(square (sin (+ 'a 3)))
+(+ 'Theta 'alpha)
+(up
+  'alphadot_beta
+  'xdotdot
+  'zetaprime_alphadot
+  'alphaprimeprime_mubar
+  'vbar
+  'Pivec
+  'alphatilde)
+((D cube) 'x)
+
+(defn L-central-polar [m U]
+  (fn [[_ [r] [rdot thetadot]]]
+    (- (* 1/2 m
+          (+ (square rdot)
+             (square (* r thetadot))))
+       (U r))))
+
+(let [potential-fn (literal-function 'U)
+      L     (L-central-polar 'm potential-fn)
+      state (up (literal-function 'r)
+                (literal-function 'theta))]
+  (((Lagrange-equations L) state) 't))
+(ns user)
+")
+
+
 (def example
   [prose/editor {:source
                  (do
@@ -136,13 +191,16 @@ js/Promise
 
 
                    (str
+                    sicm-examples
                     promise-examples
                     repl-examples
                     ns-examples
                     cell-examples
                     list-examples
                     async-examples
-                    error-examples)
+                    error-examples
+
+                    )
 
 
                    )}])
@@ -150,8 +208,8 @@ js/Promise
 
 (v/defview landing []
   [:div
-     example
-     style/tailwind])
+   example
+   style/tailwind])
 
 (defn init []
   (dom/mount :maria-live #(v/x [landing])))

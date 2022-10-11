@@ -92,3 +92,8 @@ h2 {@apply text-[1.6rem];}
     -webkit-transform: rotate(45deg) scale(.75);
     transform: rotate(45deg) scale(.75)
 }
+
+.interpose-comma > *:not(:last-child)::after {
+    content: ", ";
+    align-self: end;
+}

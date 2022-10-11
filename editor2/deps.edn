@@ -22,6 +22,8 @@
 
         io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
         io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
+
+        sicmutils/sicmutils {:mvn/version "0.22.0"}
         }
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}

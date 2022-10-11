@@ -12,7 +12,8 @@
             [nextjournal.clerk.sci-viewer :as clerk.sci-viewer]
             [reagent.core :as reagent]
             [cells.cell :as cell]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            maria.sicm-views))
 
 (def SHOW-VARS? false)
 (def COLL-PADDING 4)
@@ -64,7 +65,7 @@
     [:div.inline-flex.max-w-full.gap-list {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
-     (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden {:ref !parent}]
+     (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden.interpose-comma {:ref !parent}]
          (into (map (fn [x] x)) children))
 
      [:div.items-end {:class bracket-classes}
@@ -127,7 +128,7 @@
      right
      more!
      (into []
-           (map #(do [:span (show %)]))
+           (comp (map #(do [:span.inline-flex.align-center (show %)])))
            coll)
      !wrapper
      !parent]))
@@ -171,32 +172,33 @@
        (show v)))))
 
 (def ^:dynamic *viewers*
-  [(fn [x] (some-> (cell/async-status x)
-                   (use-watchable)
-                   show-async-status))
-   (fn [x] (when (satisfies? IWatchable x)
-             (show-watchable x)))
-   (fn [x] (when (or (instance? PersistentHashMap x)
-                     (instance? PersistentArrayMap x))
-             [show-coll \{ \} x]))
-   (fn [x] (when (instance? MapEntry x) [show-map-entry x]))
-   (fn [x] (when (string? x) (pr-str x)))
-   (fn [x] (when (number? x) (str x)))
-   (fn [x] (when (boolean? x) (pr-str x)))
-   (fn [x] (when (vector? x) (show-coll \[ \] x)))
-   (fn [x] (when (set? x) (show-coll "#{" "}" x)))
-   (fn [x] (when (var? x) (v/x [:<>
-                                (when SHOW-VARS? [:div.text-gray-400.mb-1 (str x)])
-                                (show @x)])))
-   (fn [x] (when (instance? js/Error x) (error-viewer x)))
-   (fn [x] (when (instance? shapes/Shape x) (v/x (shapes/to-hiccup x))))
-   (fn [x] (when (fn? x) (str x)))
-   (fn [x] (when (seq? x) (show-coll "(" ")" x)))
-   (fn [x] (when (instance? js/Promise x) (show-promise x)))
-   (fn [x] (when keyword? x) (str x))
-   (fn [x] (when (nil? x) "nil"))
-
-   ])
+  (-> (into maria.sicm-views/views
+            [(fn [x] (some-> (cell/async-status x)
+                             (use-watchable)
+                             show-async-status))
+             (fn [x] (when (satisfies? IWatchable x)
+                       (show-watchable x)))
+             (fn [x] (when (or (instance? PersistentHashMap x)
+                               (instance? PersistentArrayMap x))
+                       [show-coll \{ \} x]))
+             (fn [x] (when (instance? MapEntry x) [show-map-entry x]))
+             (fn [x] (when (string? x) (pr-str x)))
+             (fn [x] (when (number? x) (str x)))
+             (fn [x] (when (boolean? x) (pr-str x)))
+             (fn [x] (when (vector? x) (show-coll \[ \] x)))
+             (fn [x] (when (set? x) (show-coll "#{" "}" x)))
+             (fn [x] (when (var? x) (v/x [:<>
+                                          (when (fn? @x) [:div.text-gray-500.mb-1 (str x)])
+                                          (show @x)])))
+             (fn [x] (when (fn? x) "ƒ"))
+             (fn [x] (when (instance? js/Error x) (error-viewer x)))
+             (fn [x] (when (instance? shapes/Shape x) (v/x (shapes/to-hiccup x))))
+             (fn [x] (when (fn? x) (str x)))
+             (fn [x] (when (seq? x) (show-coll "(" ")" x)))
+             (fn [x] (when (instance? js/Promise x) (show-promise x)))
+             (fn [x] (when keyword? x) (str x))
+             (fn [x] (when (nil? x) (punctuate "nil")))
+             #_(fn [x] (clerk.sci-viewer/inspect x))])))
 
 (defn shape? [x] (instance? shapes.core/Shape x))
 
