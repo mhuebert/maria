@@ -8,7 +8,7 @@
             maria.scratch
             [shadow.resource :as rc]
             [yawn.view.dom :as dom]
-            [maria.code.views :as code.views]
+            [maria.code.views :as cv]
             [yawn.view :as v]
             [re-db.reactive :as r]
             [cells.lib :refer [interval timeout]]))
@@ -127,28 +127,15 @@ js/Promise
 ")
 
 (def sicm-examples "
+
+;; ## SICM Utils
 (ns maria.sicm
   (:require [sicmutils.env :refer :all]))
 
 (take 10 (((exp D) sin) 'x))
 
- (let [x (/ 3 2)]
-  (and
-    (ratio? x)
-    (= 3 (numerator x))
-    (= 2 (denominator x))))
+(complex 1 2)
 
-(let [x (complex 1 2)]
-  (and
-    (complex? x)
-    (= 1 (real-part x))
-    (= 2 (imag-part x))))
-
-(let [x (make-polar 5 pi)]
-  (and
-    (complex? x)
-    (= 5 (magnitude x))
-    (= pi (angle x))))
 (square (sin (+ 'a 3)))
 (+ 'Theta 'alpha)
 (up
@@ -173,9 +160,9 @@ js/Promise
       state (up (literal-function 'r)
                 (literal-function 'theta))]
   (((Lagrange-equations L) state) 't))
-(ns user)
-")
 
+  (ns user)
+")
 
 (def example
   [prose/editor {:source
@@ -186,12 +173,12 @@ js/Promise
                    ;; invalid element
                    #_"{1 2}\n(circle 10)"
 
-                   (rc/inline "curriculum/Learn Clojure with Shapes.cljs")
+                   #_(rc/inline "curriculum/Learn Clojure with Shapes.cljs")
 
 
 
                    (str
-                    sicm-examples
+
                     promise-examples
                     repl-examples
                     ns-examples
@@ -199,8 +186,10 @@ js/Promise
                     list-examples
                     async-examples
                     error-examples
-
+                    sicm-examples
                     )
+
+                   #_(rc/inline "curriculum/Welcome to Cells.cljs")
 
 
                    )}])

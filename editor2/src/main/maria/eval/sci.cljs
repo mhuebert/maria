@@ -33,7 +33,8 @@
                                                      res
                                                      (if (seq? form)
                                                        (if (= 'ns (first form))
-                                                         (eval-next (a/await (a/eval-ns-form ctx form)))
+                                                         (eval-next (a/await (p/do (a/eval-ns-form ctx form)
+                                                                                   @last-ns)))
                                                          (eval-next (sci/eval-form ctx form)))
                                                        (eval-next (sci/eval-form ctx form))))))]
                       (if (await? res)
@@ -48,8 +49,8 @@
   result, and `:ns`, the last active namespace. The return value can
   be passed back into `opts` to preserve the namespace state."
   ([s] (eval-string @*context* s))
-  ([ctx s] (eval-string ctx s nil))
-  ([ctx s opts]
+  ([ctx s] (eval-string ctx nil s))
+  ([ctx opts s]
    (let [last-ns (volatile! (or (:ns opts)
                                 (:last-ns ctx)
                                 @sci/ns))
@@ -86,8 +87,16 @@
                                        (symbol (name sym))
                                        (meta resolved)) @resolved)))) ctx syms)))
 
+(defn load-fn [{:keys [namespace]}]
+  (when (str/starts-with? (str namespace)
+                        "sicmutils.")
+    {:file (str namespace ".cljs")
+     :source ":source"}
+    ))
+
 (def sci-opts
-  (-> {:bindings {'prn prn
+  (-> {:load-fn load-fn
+       :bindings {'prn prn
                   'println println}
        :classes {'js goog/global}
        :namespaces {'applied-science.js-interop sci.j/js-interop-namespace
@@ -107,11 +116,12 @@
                             cells.cell
                             cells.lib
                             re-db.reactive])))
+(defonce _
+         (do
+           (reset! *context* (-> (sci/init sci-opts)
+                                 (intern-core 'maria.eval.repl/doc
+                                              'maria.eval.repl/dir
+                                              'maria.eval.repl/await)
+                                 (sci/merge-opts sicm.sci/context-opts)))
 
-(reset! *context* (-> (sci/init sci-opts)
-                      (intern-core 'maria.eval.repl/doc
-                                   'maria.eval.repl/dir
-                                   'maria.eval.repl/await)
-                      (sci/merge-opts sicm.sci/context-opts)))
-
-(eval-string (resource/inline "user.cljs")) ;; sets up scope for repl
+           (eval-string (resource/inline "user.cljs")))) ;; sets up scope for repl

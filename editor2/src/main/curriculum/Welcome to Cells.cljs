@@ -43,7 +43,7 @@
 ;; Let's make a more tangled web of cells, to better see this interconnectedness in action.
 
 ;; We'll start with a cell that is a random number generator:
-(defcell random-number
+(defcell random-number []
   (interval 200 #(rand-int 20)))
 
 ;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead and evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
@@ -51,7 +51,7 @@
 ;; Now we have a cell that updates itself every fifth of a second (every 200 milliseconds). Let's tinker with it a bit. Those numbers go by so fast–change the cell to slow it down. (Or, if you're a jet-pilot kind of programmer, speed it up! ⚡️ 😀)
 
 ;; That `random-number` cell is the first part of our cell chain. Next we'll create a cell that keeps track of the last 10 random numbers generated, using the `random-number` cell:
-(defcell last-ten
+(defcell last-ten [self]
   (take 10 (cons @random-number @self)))
 
 ;; The `last-ten` cell works by building up a list one at a time with `cons`. (If you're not familiar with `cons`, take a minute using `doc` (press `Command-i`) to get to know it.) The value that `cons` adds to the list comes from looking at the *current* value of the `random-number` cell, which we get by dereferencing it.
@@ -59,7 +59,7 @@
 ;; (Bonus 'how it works' puzzle: what would happen if we `take` a different number from the list, or if we didn't `take 10` at all? Think about it, then experiment.)
 
 ;; Often it's easier to think about numbers if we can make them more real. Let's do that by visualizing our last ten random numbers into shapes:
-(defcell squares
+(defcell squares []
   (map square @last-ten))
 
 ;; Notice how you can see each number-as-a-square move across the list as it grows old. Notice also how `squares` uses one cell, which uses another cell, and that all those dependencies are handled *automatically* by your friend the computer.

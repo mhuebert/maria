@@ -38,12 +38,10 @@
 (defn interval
   ([n f] (interval n f nil))
   ([n f initial-value]
-   (let [[value set-value!] (hooks/use-state initial-value)
-         cell r/*owner*]
+   (let [[value set-value!] (hooks/use-state initial-value)]
      (hooks/use-effect
       (fn []
-        (let [i (js/setInterval #(binding [r/*owner* cell]
-                                   (set-value! f)) n)]
+        (let [i (js/setInterval #(set-value! f) n)]
           #(js/clearInterval i))))
      value)))
 

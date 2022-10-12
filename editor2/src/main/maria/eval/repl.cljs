@@ -5,7 +5,8 @@
             [clojure.string :as str]
             ["react" :as react]
             [sci.async :as a]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            [yawn.view :as v]))
 
 (defonce ^:dynamic *context* (atom nil))
 
@@ -19,13 +20,20 @@
   [form]
   (eval-string (pr-str form)))
 
+
 (defn ^:macro doc
   "Show documentation for given symbol"
   [&form &env sym]
-  #_`(unescape (with-out-str (clojure.repl/doc ~sym)))
-  (-> (sci.impl.resolve/resolve-symbol @maria.eval.repl/*context* sym)
-      meta
-      :doc))
+  (let [{:keys [name ns doc arglists]} (-> (sci.impl.resolve/resolve-symbol @maria.eval.repl/*context* sym)
+                                           meta)]
+    `^:hiccup [:div.mx-2
+               [:div.mb-1
+                [:span.text-slate-500 ~(str ns)]
+                [:span.text-slate-500 "/"]
+                [:span.text-slate-800 ~(str name)]]
+               (into [:div.text-blue-500]
+                     ~(mapv #(vector :div.mb-1 (str %)) arglists))
+               [:div.mb-1 ~doc]]))
 
 (defn ^:macro dir
   "Display public vars in namespace (symbol)"
@@ -62,3 +70,4 @@
   (if (promise? p)
     (cond-> (.then p f) (a/await? p) a/await)
     p))
+

@@ -9,24 +9,14 @@
             [maria.eval.sci :as sci]
             [promesa.core :as p]
             [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
-            [sci.async :as a]))
-
+            [maria.eval.repl :refer [*context*]]
+            [sci.async :as a]
+            [maria.util :as u]))
 
 (j/js
+
   (defn set-result! [{:keys [!result]} v]
-    (reset! !result v)))
-
-(defn code:eval-string! [this source]
-  (let [result (try (sci/eval-string source)
-                    (catch js/Error e ^:clj {:error e}))]
-    (if (a/await? result)
-      (a/await
-       (-> result
-           (.then (fn [result] (set-result! this result)))
-           (.catch (fn [e] (set-result! this {:error e})))))
-      (set-result! this result))))
-
-(j/js
+    (reset! !result v))
 
   (defn bind-prose-command [this cmd]
     (fn []
@@ -44,20 +34,15 @@
                  (= 0 (.-size (.-content node))))
         ((pm.cmd/setBlockType code_block) state dispatch)
         true)))
-
-  (defn guard [x f] (when (f x) x))
-
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
               (if (not= from to)
                 (reduced nil)
                 (j/push! out from))) [] ranges))
-
   (defn code:cursor [state]
     (-> (code:cursors state)
-        (guard #(= (count %) 1))
+        (u/guard #(= (count %) 1))
         first))
-
   (defn code:paragraph-after-code [{:keys [proseView]} {:keys [state]}]
     (boolean
      (when (and (= (code:cursor state)
@@ -124,7 +109,8 @@
 
   (defn code:split [{:keys [getPos proseView]} {:keys [state]}]
     (if-let [cursor-prose-pos (some-> (code:cursor state)
-                                      (guard #(n/program? (n/tree state %)))
+                                      (u/guard #(n/program? (n/tree state %)))
+                                      u/type:number ;; cljs bug doesn't like use of `guard` above
                                       (+ 1 (getPos)))]
       (do
         (.dispatch proseView (.. proseView -state -tr
@@ -168,11 +154,41 @@
   (defn code:block-str [{:keys [codeView]}]
     (.. codeView -state -doc (toString)))
 
-  (defn code:eval-block! [this]
-    (code:eval-string! this (code:block-str this))
-    true)
-
   )
+
+(j/js
+  (defn index [{:keys [proseView getPos]}]
+    (.. proseView -state -doc (resolve (getPos)) (index 0))))
+
+(j/defn code:ns
+  "Returns the first evaluated namespace above this code block"
+  [^js {:as this :keys [proseView]}]
+  (u/akeep-first #(some-> (j/get-in % [:spec :!result])
+                          deref
+                          :value
+                          (u/guard (partial instance? sci.lang/Namespace)))
+                 (dec (index this))
+                 -1
+                 (.. proseView -docView -children)))
+
+(j/defn code:eval-string!
+  ([this source] (code:eval-string! nil this source))
+  ([opts this source]
+   (let [opts (update opts :ns #(or % (code:ns this)))
+         result (try (sci/eval-string @*context* opts source)
+                     (catch js/Error e ^:clj {:error e}))]
+     (if (a/await? result)
+       (a/await
+        (-> result
+            (.then (fn [result] (set-result! this result)))
+            (.catch (fn [e] (set-result! this {:error e})))))
+       (set-result! this result)))))
+
+(defn code:eval-block! [this]
+  (code:eval-string! this (code:block-str this))
+  true)
+
+
 (defn prose:eval-doc! [^js prose-view]
   (let [node-views (->> prose-view
                         .-docView
@@ -181,7 +197,7 @@
                         (filterv (j/get :codeView)))]
     ((fn continue [i]
        (when-let [node-view (nth node-views i nil)]
-         (let [value (code:eval-string! node-view (code:block-str node-view))]
+         (let [value (code:eval-string! {:ns (:last-ns @*context*)} node-view (code:block-str node-view))]
            (if (a/await? value)
              (p/do value (continue (inc i)))
              (continue (inc i)))))
@@ -206,7 +222,7 @@
 (j/js
 
   (defn code:eval-current-region [{:as this {:keys [state]} :codeView}]
-    (when-let [source (guard (eval-region/current-str state) (complement str/blank?))]
+    (when-let [source (u/guard (eval-region/current-str state) (complement str/blank?))]
       (code:eval-string! this source))
     true)
 

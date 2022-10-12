@@ -11,7 +11,7 @@
                  (when el
                    (katex/render x el))))}])
 
-(def views [(fn [x]
+(def views [(fn [opts x]
               (when (or (value/numerical? x)
                         (instance? sicmutils.structure/Structure x))
                 (-> x

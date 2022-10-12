@@ -16,19 +16,20 @@
 #_(defn with-view [cell view]
   (r/update-meta! cell assoc `-view (fn [cell] (view (r/peek cell)))))
 
-(defn make-cell [prev f]
-  (let [!async-status (r/atom nil)
-        cell (r/make-reaction (fn [] (f r/*owner*))
-                              :meta {`-async-status (fn [this] !async-status)})]
-    (if prev
-      (let [watches (r/get-watches prev)
-            prev-val (r/peek prev)]
-        (r/dispose! prev)
-        (r/migrate-watches! watches prev-val (r/invalidate! cell)))
-      (r/invalidate! cell))))
+(defn make-cell [f]
+  (let [!async-status (r/atom nil)]
+    (r/make-reaction (fn [] (f r/*owner*))
+                     :meta {`-async-status (fn [this] !async-status)})))
+
+(defn migrate-prev [from to]
+  (when from
+    (let [watches (r/get-watches from)
+          prev-val (r/peek from)]
+      (r/dispose! from)
+      (r/migrate-watches! watches prev-val to))))
 
 (defn ^:macro cell [&form &env expr]
-  `(make-cell nil (fn [~'self] ~expr)))
+  `(make-cell (fn [~'self] ~expr)))
 
 (defn ^:macro defcell [&form &env the-name & body]
   (let [[docstring body] (if (string? (first body))
@@ -42,14 +43,14 @@
        (let [^r/Reaction prev-cell# ~the-name]
          (def ~(with-meta the-name options)
            ~@(when docstring (list docstring))
-           (make-cell prev-cell# (fn [~'self] ~@body)))
+           (make-cell (fn [~'self] ~@body)))
+         (migrate-prev prev-cell# ~the-name)
          ~the-name))))
 
 (defn async-status
   "Async metadata is stored in a ratom containing `true` for loading-state,
    or an instance of js/Error."
   [x]
-
   (when-let [f (get (meta x) `-async-status)]
     (f x)))
 

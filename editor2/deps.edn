@@ -16,17 +16,18 @@
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
 
-        io.github.mhuebert/re-db {:git/sha "b254cd0ed074253a1cfafa17302fba21da1a037e"}
+        io.github.mhuebert/re-db {:git/sha "6892ecc441c7bec29b28ff97f2377081742e236a"}
         io.github.babashka/sci.configs {:git/sha "63225c8606d593c595d2f10a6fa5bf38103852df"}
         io.github.mhuebert/yawn {:git/sha "2aebf9127182735ff6150e9d2c2c35d8cb0d5bcf"}
 
         io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
         io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
 
-        sicmutils/sicmutils {:mvn/version "0.22.0"}
+        io.github.sicmutils/sicmutils {:git/sha "888357d29d617c4d6738aab159ce91ea8252baa0"}
         }
  :aliases
  {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}
-                       io.github.mhuebert/re-db {:local/root "../../re-db"}}}}}
+                       io.github.mhuebert/re-db {:local/root "../../re-db"}
+                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}}}}}
