@@ -43,7 +43,7 @@
 
 (declare ^:dynamic *viewers*)
 
-(v/defview show {:key identity}
+(v/defview show {:key (fn [opts x] x)}
   [opts x]
   (let [opts (or opts {:depth -1 :stack ()})
         opts (-> opts
