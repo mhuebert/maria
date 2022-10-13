@@ -10,8 +10,7 @@
             [yawn.view.dom :as dom]
             [maria.code.views :as cv]
             [yawn.view :as v]
-            [re-db.reactive :as r]
-            [cells.lib :refer [interval timeout]]))
+            [re-db.reactive :as r]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -107,7 +106,7 @@ js/Promise
 
 ;; ## Async state
 (for [i (range 10)]
-  (cell (timeout (* i 100) (circle 10))))
+  (cell (timeout (* i 300) (circle 10))))
 
 ")
 
@@ -186,8 +185,7 @@ o\""
 (def requires
   (str '(ns maria.examples
           (:require [shapes.core :refer :all]
-                    [cells.cell :refer [defcell cell]]
-                    [cells.lib :refer :all]))))
+                    [cells.api :refer :all]))))
 
 (def example
   [prose/editor {:source
@@ -204,7 +202,6 @@ o\""
                     promise-examples
                     string-examples
                     )
-
 
 
                    #_(rc/inline "maria/curriculum/learn_clojure_with_shapes.cljs")

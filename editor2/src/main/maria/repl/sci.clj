@@ -1,4 +1,4 @@
-(ns maria.eval.sci)
+(ns maria.repl.sci)
 
 (defn dequote [x]
   (if (and (seq? x) (= 'quote (first x)))
@@ -29,7 +29,7 @@
 
 (comment
  (require-namespaces {}
-                     '[[cells.lib :as y]
+                     '[[cells.api :as cells]
                        shapes.core])
  (macroexpand '(require-namespaces {}
                                    '[shapes.core])))

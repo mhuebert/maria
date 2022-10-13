@@ -14,7 +14,7 @@
             [nextjournal.clojure-mode :as clj-mode]
             [maria.style :as style]
             [maria.keymap :as keys]
-            [maria.eval.sci :as sci]
+            [maria.repl.sci :as sci]
             [maria.code.commands :as commands]
             [maria.code.views :as views]
             [yawn.view.dom :as dom]

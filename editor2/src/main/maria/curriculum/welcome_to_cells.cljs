@@ -1,7 +1,6 @@
 (ns maria.curriculum.welcome-to-cells
-  (:require [shapes.core :refer :all]
-            [cells.cell :refer [defcell cell]]
-            [cells.lib :refer :all]))
+  (:require [cells.api :refer :all]
+            [shapes.core :refer :all]))
 
 ;; # Say Hello to Cells
 
@@ -49,7 +48,7 @@
 
 ;; We'll start with a cell that is a random number generator:
 (defcell random-number []
-  (interval 200 #(rand-int 20)))
+         (interval 200 #(rand-int 20)))
 
 ;; The `#` ("hash" or "pound sign") immediately before an open-parenthesis might be new to you. Go ahead and evaluate that subform, `#(rand-int 20)`, and you'll see it returns a function. That's all the `#` does: it's a quick way to define an anonymous function. This [shorthand](https://clojure.org/guides/weird_characters#__code_code_anonymous_function) is no different from `(fn [] ...)` except the arguments get automatic names like %1 and %2.
 
@@ -57,7 +56,7 @@
 
 ;; That `random-number` cell is the first part of our cell chain. Next we'll create a cell that keeps track of the last 10 random numbers generated, using the `random-number` cell:
 (defcell last-ten [self]
-  (take 10 (cons @random-number @self)))
+         (take 10 (cons @random-number @self)))
 
 ;; The `last-ten` cell works by building up a list one at a time with `cons`. (If you're not familiar with `cons`, take a minute using `doc` (press `Command-i`) to get to know it.) The value that `cons` adds to the list comes from looking at the *current* value of the `random-number` cell, which we get by dereferencing it.
 
@@ -65,7 +64,7 @@
 
 ;; Often it's easier to think about numbers if we can make them more real. Let's do that by visualizing our last ten random numbers into shapes:
 (defcell squares []
-  (map square @last-ten))
+         (map square @last-ten))
 
 ;; Notice how you can see each number-as-a-square move across the list as it grows old. Notice also how `squares` uses one cell, which uses another cell, and that all those dependencies are handled *automatically* by your friend the computer.
 
@@ -114,11 +113,11 @@
 (defcell switch false)
 
 (defcell click-me
-  (listen :click
-          (fn [] (swap! switch not))
-          (if @switch
-            (circle 40)
-            (square 80))))
+         (listen :click
+                 (fn [] (swap! switch not))
+                 (if @switch
+                   (circle 40)
+                   (square 80))))
 
 ;; Here's the magic: go ahead and click on the shape `click-me` draws. Then look at the value of `switch`. Now click again. They're connected! Let's dive into how it works. There's a bunch going on.
 

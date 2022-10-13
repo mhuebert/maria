@@ -1,7 +1,6 @@
 (ns maria.curriculum.animation-quickstart
   (:require [shapes.core :refer :all]
-            [cells.cell :refer [defcell cell]]
-            [cells.lib :refer :all]))
+            [cells.api :refer :all]))
 ;; # Animations Quick-Start
 
 ;; This is a quick-start guide for drawing animations. The goal of this document is to equip you with templates to give you a running start at making basic animations. From there you can do many fun and complex things.

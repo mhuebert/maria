@@ -6,10 +6,10 @@
             [clojure.string :as str]
             [nextjournal.clojure-mode.node :as n]
             [maria.prose.schema :refer [schema]]
-            [maria.eval.sci :as sci]
+            [maria.repl.sci :as sci]
             [promesa.core :as p]
             [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
-            [maria.eval.repl :refer [*context*]]
+            [maria.repl.api :refer [*context*]]
             [sci.async :as a]
             [maria.util :as u]))
 

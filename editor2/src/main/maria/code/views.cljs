@@ -2,7 +2,6 @@
   (:refer-clojure :exclude [var?])
   (:require [applied-science.js-interop :as j]
             [yawn.view :as v]
-            [yawn.convert :as c :refer [IElement]]
             [re-db.reactive :as r]
             [shapes.core :as shapes]
             ["react" :as react]
@@ -10,13 +9,11 @@
             [sci.lang]
             [nextjournal.clerk.viewer :as clerk.viewer]
             [nextjournal.clerk.sci-viewer :as clerk.sci-viewer]
-            [reagent.core :as reagent]
-            [cells.cell :as cell]
+            [cells.async]
             [promesa.core :as p]
             maria.sicm-views
             [clojure.string :as str]))
 
-(def SHOW-VARS? false)
 (def COLL-PADDING 4)
 
 (defn var? [x] (instance? sci.lang/Var x))
@@ -153,11 +150,9 @@
                    [:div]
                    [:div]]]))
 
-(defn show-async-status [_ astate]
-  (v/x
-   (if-let [error (cell/error astate)]
-     [:div (ex-message error)]
-     loader)))
+(defn show-async-status [opts {:keys [loading error]}]
+  (cond loading loader
+        error (show-error opts error)))
 
 (v/defview show-promise [opts p]
   (let [[v v!] (v/use-state ::loading)]
@@ -224,7 +219,7 @@
 (def ^:dynamic *viewers*
   (flatten [
             (fn [opts x]
-              (when-let [!status (cell/async-status x)]
+              (when-let [!status (cells.async/!status x)]
                 (show-with-async-status opts !status x)))
 
             (fn [opts x]

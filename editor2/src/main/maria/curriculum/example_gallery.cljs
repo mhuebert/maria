@@ -1,7 +1,6 @@
 (ns maria.curriculum.example-gallery
   (:require [shapes.core :refer :all]
-            [cells.cell :refer [cell defcell]]
-            [cells.lib :refer :all]))
+            [cells.api :refer :all]))
 ;; # Gallery
 
 ;; Here are some ways to use shapes in Maria. They’re here for you to browse and play with.

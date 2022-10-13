@@ -1,15 +1,13 @@
-(ns maria.eval.sci
+(ns maria.repl.sci
   (:refer-clojure :exclude [eval])
   (:require [applied-science.js-interop :as j]
             ["@codemirror/view" :as view]
             [clojure.string :as str]
             [sci.core :as sci]
             [shadow.resource :as resource]
-            cells.lib
-            cells.cell
-            cells.macros
+            cells.api
             shapes.core
-            [maria.eval.repl :refer [*context* promise? await?]]
+            [maria.repl.api :refer [*context* promise? await?]]
             sci.impl.resolve
             sci.lang
             [sci.async :as a]
@@ -19,7 +17,7 @@
             [re-db.reactive]
             maria.friendly.kinds
             [sicmutils.env.sci :as sicm.sci])
-  (:require-macros [maria.eval.sci :refer [require-namespaces]]))
+  (:require-macros [maria.repl.sci :refer [require-namespaces]]))
 
 (defn eval-string*
   [ctx s]
@@ -103,21 +101,20 @@
       (require-namespaces '[applied-science.js-interop
                             promesa.core
                             shapes.core
-                            maria.eval.repl
+                            maria.repl.api
                             sci.async
-                            cells.cell
-                            cells.lib
+                            cells.hooks
+                            cells.impl
+                            cells.api
                             re-db.reactive
                             maria.friendly.messages
                             maria.friendly.kinds])))
 (defonce _
          (do
            (reset! *context* (-> (sci/init sci-opts)
-                                 (intern-core 'maria.eval.repl/doc
-                                              'maria.eval.repl/dir
-                                              'maria.eval.repl/await
-                                              'maria.eval.repl/html
-                                              'maria.friendly.kinds/what-is)
+                                 (intern-core 'maria.repl.api/doc
+                                              'maria.repl.api/dir
+                                              'maria.repl.api/await)
                                  (sci/merge-opts sicm.sci/context-opts)))
 
            (p/->> (eval-string (resource/inline "user.cljs"))
