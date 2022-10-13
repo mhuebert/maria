@@ -134,10 +134,9 @@
      !parent]))
 
 (v/defview show-map-entry [opts this]
-  [:<>
-   (show opts (key this)) " "
-   (show opts (val this))
-   [:br]])
+  [:div.inline-flex.gap-list
+   [:span (show opts (key this))] " "
+   [:span (show opts (val this))]])
 
 (defn use-watch [x]
   (let [id (v/use-callback #js{})]
@@ -179,11 +178,14 @@
         (show opts @x)]))
 
 (v/defview show-str [opts x]
-  (let [[pr-str? toggle!] (v/use-state (str/includes? x \newline))]
-    [:span {:on-click #(toggle! not)}
-     (if pr-str?
-       (pr-str x)
-       x)]))
+  ;; TODO - collapse via button, not clicking anywhere on the text
+  (let [[collapse toggle!] (v/use-state (or (> (count (str/split-lines x)) 10)
+                                            (> (count x) 200)))
+        x (str \" x \")]
+    (if collapse
+      [:div.line-clamp-6 {:on-click #(toggle! not)} x]
+      [:div {:class ["max-h-[80vh] overflow-y-scroll"]
+             :on-click #(toggle! not)} x])))
 
 (def show-map (partial show-coll "{" "}"))
 (def show-set (partial show-coll "#{" "}"))

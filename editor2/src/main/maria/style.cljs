@@ -66,7 +66,9 @@
        (.define highlight/HighlightStyle)))
 
 (def code-theme
-  (j/lit {".cm-content" {:padding "1rem"}}))
+  (j/lit {".cm-content" {:padding "1rem"
+                         :white-space "pre-wrap"
+                         :max-width "100%"}}))
 
 (def tailwind
   [:style {:type "text/tailwindcss"}
