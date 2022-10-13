@@ -1,7 +1,5 @@
-^:maria/hidden ;; TODO, implement this
 (ns maria.curriculum.learn-clojure-with-shapes
-  (:require [shapes.core :refer [circle]]
-            [maria.friendly :refer [what-is]]))
+  (:require [shapes.core :refer :all]))
 
 ;; # Hi!
 

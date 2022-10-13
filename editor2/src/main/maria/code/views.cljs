@@ -62,7 +62,7 @@
 
 (v/defview show-brackets [left right more children !wrapper !parent]
   (let [bracket-classes "flex flex-none"]
-    [:div.inline-flex.max-w-full.gap-list {:ref !wrapper}
+    [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
      (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden.interpose-comma {:ref !parent}]
@@ -144,7 +144,7 @@
     (v/use-sync-external-store
      (v/use-callback
       (fn [changed!]
-        (add-watch x id changed!)
+        (add-watch x id (fn [_ _ _ _] (changed!)))
         #(remove-watch x id))
       #js[x])
      #(r/peek x))))
@@ -207,6 +207,7 @@
   (show opts (use-watch x)))
 
 (v/defview show-with-async-status [opts !status !value]
+  ;; always watch status & value together, to avoid cell value being unwatched during loading/error states.
   (let [status (use-watch !status)
         value (use-watch !value)]
     (if status
@@ -223,6 +224,10 @@
             (fn [opts x]
               (when-let [!status (cell/async-status x)]
                 (show-with-async-status opts !status x)))
+
+            (fn [opts x]
+              (when (react/isValidElement x)
+                x))
 
             (fn [opts x] (when (:hiccup (meta x))
                            (v/x x)))

@@ -104,13 +104,13 @@ js/Promise
 
 (cell (timeout 1000 \"hello\"))
 
-")
 
-(def async-examples "
 ;; ## Async state
 (for [i (range 10)]
   (cell (timeout (* i 100) (circle 10))))
+
 ")
+
 
 (def repl-examples ";; ## REPL utils
 (doc inc)
@@ -120,10 +120,9 @@ js/Promise
 ;; Namespaces
 
 (ns my.app)
-*ns*
-(doc inc)
+(doc circle)
 (ns user)
-(doc inc)
+(doc circle)
 ")
 
 (def sicm-examples "
@@ -164,32 +163,37 @@ js/Promise
   (ns user)
 ")
 
+(def requires
+  (str '(ns maria.examples
+          (:require [shapes.core :refer :all]
+                    [cells.cell :refer [defcell cell]]
+                    [cells.lib :refer :all]))))
+
 (def example
   [prose/editor {:source
                  (do
-                   "(is-valid-element? 1)
-                   (is-valid-element? \"a\")\n"
-
-                   ;; invalid element
-                   #_"{1 2}\n(circle 10)"
-
-                   #_(rc/inline "curriculum/Learn Clojure with Shapes.cljs")
-
-
-
                    (str
 
-                    promise-examples
+
                     repl-examples
                     ns-examples
                     cell-examples
                     list-examples
-                    async-examples
                     error-examples
                     sicm-examples
+                    promise-examples
+
+
                     )
 
-                   #_(rc/inline "curriculum/Welcome to Cells.cljs")
+
+
+
+                   #_(rc/inline "maria/curriculum/learn_clojure_with_shapes.cljs")
+                   #_(rc/inline "maria/curriculum/welcome_to_cells.cljs")
+                   #_(rc/inline "maria/curriculum/animation_quickstart.cljs")
+                   #_(rc/inline "maria/curriculum/example_gallery.cljs")
+
 
 
                    )}])

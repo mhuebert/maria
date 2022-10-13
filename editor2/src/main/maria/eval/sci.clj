@@ -11,13 +11,13 @@
                   [the-ns opts] (if (symbol? the-ns)
                               [the-ns {}]
                               [(first the-ns) (apply hash-map (rest the-ns))])
-                  ns-map (if (:include opts)
+                  ns-map (if (:only opts)
                            (let [ns-sym (gensym "ns")]
                              `(let [~ns-sym (~'sci.core/create-ns '~the-ns)]
                                 ~(reduce (fn [out sym]
                                            (assoc out `'~sym `(~'sci.core/copy-var ~(symbol (str the-ns) (str sym)) ~ns-sym)))
                                          {}
-                                         (:include opts))))
+                                         (:only opts))))
                            `(~'sci.core/copy-ns ~the-ns (~'sci.core/create-ns '~the-ns) ~opts))
                   as (:as opts)]
               `(-> ~sci-opts

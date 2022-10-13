@@ -9,7 +9,6 @@
             cells.cell
             cells.macros
             shapes.core
-            maria.friendly.kinds
             [maria.eval.repl :refer [*context* promise? await?]]
             sci.impl.resolve
             sci.lang
@@ -18,6 +17,7 @@
             [sci.configs.applied-science.js-interop :as sci.j]
             [sci.configs.funcool.promesa :as sci.p]
             [re-db.reactive]
+            maria.friendly.kinds
             [sicmutils.env.sci :as sicm.sci])
   (:require-macros [maria.eval.sci :refer [require-namespaces]]))
 
@@ -68,15 +68,6 @@
 
 (defn guard [x f] (when (f x) x))
 
-(defn init-cells [sci-opts]
-  (-> (require-namespaces sci-opts [cells.lib])
-      (assoc-in [:namespaces 'cells.cell] (let [ns (sci/create-ns 'cells.cell)]
-                                            (merge (sci/copy-ns cells.cell ns)
-                                                   #_{'defcell (sci/copy-var cells.macros/defcell:impl ns)
-                                                      'cell (sci/copy-var cells.macros/cell:impl ns)
-                                                      'bound-fn (sci/copy-var cells.macros/bound-fn:impl ns)
-                                                      'memoized-on (sci/copy-var cells.macros/memoized-on:impl ns)})))))
-
 
 (defn intern-core [ctx & syms]
   (let [ns (sci/find-ns ctx 'clojure.core)]
@@ -95,10 +86,13 @@
     ))
 
 (def sci-opts
-  (-> {:load-fn load-fn
-       :bindings {'prn prn
+  (-> {:bindings {'prn prn
                   'println println}
-       :classes {'js goog/global}
+       :classes {'js goog/global
+                 'Math js/Math}
+       :aliases {'p 'promesa.core
+                 'j 'applied-science.js-interop
+                 'shapes 'shapes.core}
        :namespaces {'applied-science.js-interop sci.j/js-interop-namespace
                     'clojure.core {'require a/require}
                     'promesa.core sci.p/promesa-namespace
@@ -106,22 +100,25 @@
                     'user {'println println
                            'prn prn
                            'pr pr}}}
-      (init-cells)
-      (require-namespaces '[[shapes.core :as shapes]
-                            maria.friendly.kinds
-                            maria.friendly.messages
+      (require-namespaces '[applied-science.js-interop
+                            promesa.core
+                            shapes.core
                             maria.eval.repl
-                            [sci.async :refer [await]]
-                            [sci.impl.resolve :include [resolve-symbol]]
+                            sci.async
                             cells.cell
                             cells.lib
-                            re-db.reactive])))
+                            re-db.reactive
+                            maria.friendly.messages
+                            maria.friendly.kinds])))
 (defonce _
          (do
            (reset! *context* (-> (sci/init sci-opts)
                                  (intern-core 'maria.eval.repl/doc
                                               'maria.eval.repl/dir
-                                              'maria.eval.repl/await)
+                                              'maria.eval.repl/await
+                                              'maria.eval.repl/html
+                                              'maria.friendly.kinds/what-is)
                                  (sci/merge-opts sicm.sci/context-opts)))
 
-           (eval-string (resource/inline "user.cljs")))) ;; sets up scope for repl
+           (p/->> (eval-string (resource/inline "user.cljs"))
+                  (prn "Evaluated user.cljs"))))

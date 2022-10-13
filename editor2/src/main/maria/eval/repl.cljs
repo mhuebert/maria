@@ -62,12 +62,8 @@
        x)
      (js/Promise.resolve x))))
 
-(defn catch [^js p f]
-  (if (promise? p)
-    (cond-> (.catch p f) (a/await? p) a/await)
-    p))
-(defn then [^js p f]
-  (if (promise? p)
-    (cond-> (.then p f) (a/await? p) a/await)
-    p))
+(defn html
+  "Renders hiccup forms to html (via underlying view layer, eg. React)"
+  [hiccup-form]
+  (v/x hiccup-form))
 

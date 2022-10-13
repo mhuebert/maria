@@ -7,16 +7,7 @@
             [re-db.reactive :as r]
             [promesa.core]
             [cells.cell :as cell]
-            [clojure.string :as str])
-  #_#_#_(:require [cells.cell :as cell :refer [cell]]
-         [goog.net.XhrIo :as xhr]
-         [goog.net.ErrorCode :as errors]
-         [applied-science.js-interop :as j]
-         [clojure.string :as str])
-          (:require-macros [cells.lib])
-          (:import [goog Uri]))
-
-(defn some-str [s] (when-not (str/blank? s) s))
+            [maria.util :refer [some-str]]))
 
 (defn -on-frame
   ([f] (-on-frame f nil))
@@ -50,7 +41,7 @@
    :json js/JSON.parse
    :text identity})
 
-(j/defn xhrio-error-message [^js XhrIo]
+(j/defn ^:private xhrio-error-message [^js XhrIo]
   (when-not (.isSuccess XhrIo)
     (str (-> (.getLastErrorCode XhrIo)
              (errors/getDebugMessage))
@@ -116,8 +107,8 @@
             (cell/bound-fn [error]
                            (cell/error! self (str error)))))))
 
-(defn -timeout
-  ([n f] (-timeout n f nil))
+(defn set-timeout
+  ([n f] (set-timeout n f nil))
   ([n f initial-value]
    (let [[v v!] (hooks/use-state initial-value)
          self r/*owner*]
@@ -125,12 +116,13 @@
       (fn []
         (cell/loading! self)
         (let [t (js/setTimeout (fn []
-                                 (v! (f))
+                                 (binding [r/*owner* self]
+                                   (v! (f)))
                                  (cell/complete! self)) n)]
           #(js/clearTimeout t))))
      v)))
 
 (defn ^:macro timeout
-  "Returns cell with body wrapped in timeout of n milliseconds."
+  "Runs body after timeout of n milliseconds."
   [&form &env n & body]
-  `(~'cells.lib/-timeout ~n (fn [] ~@body)))
+  `(~'cells.lib/set-timeout ~n (fn [] ~@body)))

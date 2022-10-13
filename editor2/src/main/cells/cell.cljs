@@ -18,8 +18,9 @@
 
 (defn make-cell [f]
   (let [!async-status (r/atom nil)]
-    (r/make-reaction (fn [] (f r/*owner*))
-                     :meta {`-async-status (fn [this] !async-status)})))
+    (-> (r/make-reaction (fn [] (f r/*owner*))
+                         :meta {`-async-status (fn [this] !async-status)})
+        r/invalidate!)))
 
 (defn migrate-prev [from to]
   (when from

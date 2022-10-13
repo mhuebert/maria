@@ -1,3 +1,8 @@
+(ns maria.curriculum.welcome-to-cells
+  (:require [shapes.core :refer :all]
+            [cells.cell :refer [defcell cell]]
+            [cells.lib :refer :all]))
+
 ;; # Say Hello to Cells
 
 ;; Welcome! On this page, we are going to introduce something called a ‘cell’, which will help you make code come alive.

@@ -1,10 +1,13 @@
 (ns maria.util
+  (:require [clojure.string :as str])
   #?(:cljs (:require-macros [maria.util :as util :refer [defmacro:sci]])))
 
 (defn guard
   "Returns x when (f x) is truthy"
   ([f] (fn [x] (guard x f)))
   ([x f] (when (f x) x)))
+
+(defn some-str [s] (when-not (str/blank? s) s))
 
 #?(:cljs
    (defn type:number
