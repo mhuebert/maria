@@ -5,7 +5,7 @@
             [clojure.string :as str]
             [shadow.resource :as rc]))
 
-(def prose-element :div)
+(def prose-element :div.relative)
 
 (def tag-colors
   {:variableName "#98a14b"

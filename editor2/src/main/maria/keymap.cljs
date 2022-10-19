@@ -10,7 +10,8 @@
             ["@codemirror/commands" :as cm.commands]
             ["@codemirror/view" :as cm.view]
             [nextjournal.clojure-mode.node :as n]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [maria.prose.links :as links]))
 
 (def default-keys (pm.keymap/keymap baseKeymap))
 
@@ -38,7 +39,10 @@
                    (fn [state dispatch view]
                      (commands/prose:eval-doc! view)
                      true)
-                   :Backspace pm.cmd/undoInputRule
+                   :Backspace (chain links/open-link-on-backspace
+                                     pm.cmd/deleteSelection
+                                     pm.cmd/joinBackward
+                                     pm.cmd/selectNodeBackward)
                    :Alt-ArrowUp pm.cmd/joinUp
                    :Alt-ArrowDown pm.cmd/joinDown
                    :Mod-BracketLeft pm.cmd/lift
@@ -73,10 +77,10 @@
                    [:ArrowRight
                     :ArrowDown] (commands/prose:arrow-handler 1)}
 
-         {:Mod-z pm.cmd/undo
-          :Shift-Mod-z pm.cmd/redo}
+         {:Mod-z pm.history/undo
+          :Shift-Mod-z pm.history/redo}
          (when-not mac?
-           {:Mod-y pm.cmd/redo})
+           {:Mod-y pm.history/redo})
 
          {[:Mod-Enter
            :Shift-Enter] hard-break-cmd}

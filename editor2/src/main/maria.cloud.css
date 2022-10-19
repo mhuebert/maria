@@ -97,3 +97,7 @@ h2 {@apply text-[1.6rem];}
     content: ", ";
     align-self: end;
 }
+
+a {
+    @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-700
+}

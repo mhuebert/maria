@@ -14,10 +14,15 @@
                                               (string? e)
                                               (ex-info {:cell cell}))}))
 (defn loading! [cell] (reset! (!status cell) {:loading true}))
-(defn complete! [cell] (reset! (!status cell) nil))
+(defn complete!
+  ([cell] (reset! (!status cell) nil))
+  ([cell value]
+   (reset! cell value)
+   (complete! cell)))
 
 (def error :error)
 (def loading? :loading)
 
+(defn promise? [x] (instance? js/Promise x))
 
 

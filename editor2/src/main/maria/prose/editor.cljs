@@ -17,7 +17,8 @@
             ["prosemirror-schema-list" :as cmd-list]
             [clojure.string :as str]
             [maria.code.NodeView :as node-view]
-            [maria.code.commands :as commands]))
+            [maria.code.commands :as commands]
+            [maria.prose.links :as links]))
 
 (defn md->doc [source] (.parse md/defaultMarkdownParser source))
 (defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
@@ -99,7 +100,8 @@
       input-rules/maria-rules
       (dropCursor)
       (gapCursor)
-      (history)])
+      (history)
+      (links/plugin)])
 
 (defn editor [{:keys [source]}]
   (with-element {:el style/prose-element}
