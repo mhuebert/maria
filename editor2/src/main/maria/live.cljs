@@ -182,6 +182,9 @@ n
 o\""
    ))
 
+(def link-examples
+  ";; Hello, [world](https://example.com) of [apples](https://www.apple.com).
+  ")
 (def requires
   (str '(ns maria.examples
           (:require [shapes.core :refer :all]
@@ -192,7 +195,7 @@ o\""
                  (do
                    (str
 
-
+                    link-examples
                     repl-examples
                     ns-examples
                     cell-examples
