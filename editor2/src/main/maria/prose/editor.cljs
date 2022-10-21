@@ -94,14 +94,15 @@
  (= (md->clj "```\na\n```\n\n```\nb\n```")
     "a\n\nb"))
 
-(defn plugins []
-  #js[keys/prose-keys
-      keys/default-keys
-      input-rules/maria-rules
-      (dropCursor)
-      (gapCursor)
-      (history)
-      (links/plugin)])
+(j/js
+  (defn plugins []
+    [keys/prose-keys
+     keys/default-keys
+     input-rules/maria-rules
+     (dropCursor)
+     (gapCursor)
+     (history)
+     ~@(links/plugins)]))
 
 (defn editor [{:keys [source]}]
   (with-element {:el style/prose-element}

@@ -40,9 +40,10 @@
                      (commands/prose:eval-doc! view)
                      true)
                    :Backspace (chain links/open-link-on-backspace
+                                     pm.cmd/selectNodeBackward
                                      pm.cmd/deleteSelection
                                      pm.cmd/joinBackward
-                                     pm.cmd/selectNodeBackward)
+                                     )
                    :Alt-ArrowUp pm.cmd/joinUp
                    :Alt-ArrowDown pm.cmd/joinDown
                    :Mod-BracketLeft pm.cmd/lift

@@ -1,5 +1,6 @@
 (ns maria.prose.links
-  (:require ["prosemirror-state" :refer [Plugin]]
+  (:require ["prosemirror-state" :refer [Plugin TextSelection]]
+            ["prosemirror-inputrules" :as input-rules]
             ["react-dom/client" :refer [createRoot]]
             [applied-science.js-interop :as j]
             [shadow.cljs.modern :refer [defclass]]
@@ -9,7 +10,8 @@
             [clojure.string :as str]
             [maria.util :as u]))
 
-(def link-mark-type (j/get-in schema [:marks :link]))
+(def mark:link (.. schema -marks -link))
+(def node:image (.. schema -nodes -image))
 
 (defn get-mark [marks type]
   (first (filter #(identical? (j/get % :type) type)
@@ -50,26 +52,26 @@
   (defn open-link [view $pos]
     (let [{:keys [dispatch state]} view
           {:keys [doc]} state]
-      (when-let [[mark from to] (resolve-mark $pos link-mark-type)]
+      (when-let [[mark from to] (resolve-mark $pos mark:link)]
         (let [text (str "[" (.textBetween doc from to) "](" (.. mark -attrs -href) ")")]
           (dispatch (-> (.-tr state)
-                        (.removeMark from to link-mark-type)
+                        (.removeMark from to mark:link)
                         (.insertText text from to)))
           (.focus view))))))
 
 (j/js
   (defn edit-href [view $pos href]
     (let [{:keys [state dispatch]} view]
-      (when-let [[mark from to] (resolve-mark $pos link-mark-type)]
+      (when-let [[mark from to] (resolve-mark $pos mark:link)]
         (dispatch (-> (.-tr state)
-                      (.removeMark from to link-mark-type)
-                      (cond-> href (.addMark from to (.create link-mark-type {:href href})))))
+                      (.removeMark from to mark:link)
+                      (cond-> href (.addMark from to (.create mark:link {:href href})))))
         (.focus view)))))
 
 (j/js
-  (defn open-link-on-backspace [state dispatch view]
-    (let [$cursor (.. state -selection -$cursor)
-          [_ to] (mark-extend $cursor link-mark-type)]
+  (defn open-link-on-backspace [{:keys [selection]} dispatch view]
+    (let [$cursor (.-$cursor selection)
+          [_ _ to] (resolve-mark $cursor mark:link)]
       (when (= to (.-pos $cursor))
         (open-link view $cursor)
         true))))
@@ -93,21 +95,32 @@
 (def target-value (j/get-in [:target :value]))
 
 (v/defview link-tooltip
-  {:key :href}
-  [{:as props :keys [href title style view $pos]}]
+  {:key :value}
+  [{:as props :keys [value set-value! style]}]
   (let [[edit-text set-text!] (v/use-state nil)
+        [hidden? set-hidden!] (v/use-state (nil? props))
         input-el (v/use-ref)
         c:icon-btn " text-gray-700 inline-flex items-center p-2 cursor-pointer hover:text-gray-500"
         exit! #(set-text! nil)
         save! #(do (.preventDefault %)
-                   (edit-href view $pos (u/some-str edit-text))
+                   (set-value! edit-text)
                    (exit!))
-        remove! #(edit-href view $pos nil)]
+        remove! #(set-value! nil)]
 
     ;; select input after showing it
     (v/use-effect #(some-> @input-el (j/call :select)) [(some? edit-text)])
 
-    (when props
+    ;; hide on escape
+    (v/use-effect (fn []
+                    (when-not hidden?
+                      (let [f (on-keys "Escape" (fn [^js event]
+                                                  (.preventDefault event)
+                                                  (set-hidden! true)))]
+                        (.addEventListener js/window "keydown" f #js{:capture true})
+                        #(.removeEventListener js/window "keydown" f #js{:capture true}))))
+                  [hidden?])
+
+    (when-not hidden?
       [:div.bg-white.rounded-md.shadow-md.absolute.flex.overflow-hidden.divide-x
        {:style style}
        (if edit-text
@@ -123,11 +136,24 @@
                     :on-click remove!} (icons/trash "w-5 h-5")]]
          [:<>
           [:a.inline-flex.items-center.p-2.no-underline.hover:underline.truncate
-           {:class "max-w-[20rem]" :href href
-            :title title}
-           (str/replace href #"https?://" "")]
+           {:class "max-w-[20rem]" :href value}
+           (str/replace value #"https?://" "")]
           [:div {:class c:icon-btn
-                 :on-click #(set-text! href)} (icons/pencil "w-5 h-5")]])])))
+                 :on-click #(set-text! value)} (icons/pencil "w-5 h-5")]])])))
+
+(defn tooltip-position [^js view from to]
+  (j/let [^js {start-left :left
+               start-top :top} (.coordsAtPos view from)
+          ^js {end-bottom :bottom} (.coordsAtPos view to)
+          ^js {inner-height :innerHeight
+               scroll-y :scrollY} js/window
+          above? (let [mid-y (- end-bottom (-> end-bottom (- start-top) (/ 2)))]
+                   (> mid-y (/ inner-height 2)))]
+    (merge {:left start-left}
+           (if above?
+             {:bottom (-> (- inner-height start-top scroll-y)
+                          (+ 10))}
+             {:top (+ scroll-y end-bottom 10)}))))
 
 (defclass Tooltip
   (field root)
@@ -145,36 +171,51 @@
   Object
   (update [this ^js view ^js prev-state]
           (let [state (.-state view)
+                selection (.-selection state)
                 changed? (and prev-state (or (not (.. prev-state -selection (eq (.-selection state))))
                                              (not (.. prev-state -doc (eq (.-doc state))))))
-                $head (.. state -selection -$head)
-                href (-> $head
-                         (mark-at link-mark-type)
-                         (j/get-in [:attrs :href]))]
+                $head (.. selection -$head)
+                link-href (-> $head
+                              (mark-at mark:link)
+                              (j/get-in [:attrs :href]))
+                ^js image-node (-> selection .-node (u/guard #(= (j/get % :type) node:image)))]
             (cond
               (not changed?) nil ;; no-op
-              (not href) (.render root (link-tooltip nil))
-              :else
-              (j/let [[from to] (mark-extend $head link-mark-type)
-                      ^js {start-left :left
-                           start-top :top} (.coordsAtPos view from)
-                      ^js {end-bottom :bottom} (.coordsAtPos view to)
-                      ^js {inner-height :innerHeight
-                           scroll-y :scrollY} js/window
-                      above? (let [mid-y (- end-bottom (-> end-bottom (- start-top) (/ 2)))]
-                               (> mid-y (/ inner-height 2)))]
-                (.render root (link-tooltip {:href href
-                                             :view view
-                                             :$pos $head
-                                             :style (merge {:left start-left}
-                                                           (if above?
-                                                             {:bottom (-> (- inner-height start-top scroll-y)
-                                                                          (+ 10))}
-                                                             {:top (+ scroll-y end-bottom 10)}))}))))))
+              link-href (j/let [[from to] (mark-extend $head mark:link)]
+                          (.render root (link-tooltip {:value link-href
+                                                       :set-value! #(edit-href view $head (u/some-str %))
+                                                       :style (tooltip-position view from to)})))
+              image-node (j/let [^js {:as attrs :keys [src]} (.. image-node -attrs)
+                                 from (.. selection -$from -pos)
+                                 to (.. selection -$to -pos)]
+                           (j/log :image-node image-node)
+                           (.render root (link-tooltip {:value src
+                                                        :set-value! #(.dispatch view
+                                                                                (.. state -tr
+                                                                                    (setNodeAttribute from "src" %)))
+                                                        :style (tooltip-position view from to)})))
+              :else (.render root (link-tooltip nil)))))
   (destroy [this]
            (.unmount root)
            (.. div -parentNode (removeChild div))))
 
-(defn plugin []
-  (new Plugin #js{:view (fn [editor-view]
-                          (new Tooltip editor-view))}))
+(j/js
+  (defn plugins []
+    [(new Plugin {:view (fn [editor-view]
+                          (new Tooltip editor-view))})
+     (input-rules/inputRules
+      {:rules
+       [(input-rules/InputRule.
+         #"(\!?)\[(.*)\]\((.*)\)\s?$"
+         (fn [{:keys [doc tr]} [_ kind label href] from to]
+           (if (= kind "!")
+             (let [image (.. schema -nodes -image)]
+               (.. tr
+                   (setSelection (.create TextSelection doc from to))
+                   (replaceSelectionWith (.create image {:src href
+                                                         :title label
+                                                         :alt label}))))
+             (.. tr
+                 (insertText label from to)
+                 (addMark from (+ from (count label)) (.create mark:link {:href href}))
+                 (removeStoredMark mark:link)))))]})]))

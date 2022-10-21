@@ -183,7 +183,7 @@ o\""
    ))
 
 (def link-examples
-  ";; Hello, [world](https://example.com) of [apples](https://www.apple.com).
+  ";; Hello, [world](https://example.com) of [apples](https://www.apple.com) ![title](https://via.placeholder.com/350x150).
   ")
 (def requires
   (str '(ns maria.examples

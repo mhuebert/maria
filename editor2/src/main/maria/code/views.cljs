@@ -288,5 +288,5 @@
      [:div {:class "md:w-1/2 text-base"
             :style {:color "#c9c9c9"}}]
      [:div
-      {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-scroll"}
+      {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-auto"}
       [value-viewer !result]]]))
