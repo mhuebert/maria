@@ -18,7 +18,7 @@
 (def chain pm.cmd/chainCommands)
 
 (j/js
-  (def prose-keys
+  (def prose-keymap
     (let [mac? (and (exists? js/navigator)
                     (.test #"Mac|iPhone|iPad|iPod" js/navigator.platform))
           {{:keys [strong em code]} :marks
@@ -96,7 +96,7 @@
                    true)})))))
 
 (j/js
-  (defn code-keys [this]
+  (defn code-keymap [this]
     (.of cm.view/keymap
          [{:key :ArrowUp
            :run #(commands/code:arrow-handler this :line -1)}

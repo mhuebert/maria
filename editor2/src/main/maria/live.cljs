@@ -1,6 +1,5 @@
 (ns maria.live
-  (:require [applied-science.js-interop :as j]
-            ["react-dom/client" :as react.client]
+  (:require ["react-dom/client" :as react.client]
             ["react" :as react]
             [maria.prose.editor :as prose]
             [clojure.string :as str]
@@ -8,9 +7,8 @@
             maria.scratch
             [shadow.resource :as rc]
             [yawn.view.dom :as dom]
-            [maria.code.views :as cv]
             [yawn.view :as v]
-            [re-db.reactive :as r]))
+            [maria.code.eldoc :as eldoc]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -122,6 +120,7 @@ js/Promise
 (doc circle)
 (ns user)
 (doc circle)
+(resolve-symbol 'circle)
 ")
 
 (def sicm-examples "
@@ -220,6 +219,7 @@ o\""
 (v/defview landing []
   [:div
    example
+   [eldoc/view]
    style/tailwind])
 
 (defn init []

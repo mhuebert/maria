@@ -66,7 +66,6 @@
 
 (defn guard [x f] (when (f x) x))
 
-
 (defn intern-core [ctx & syms]
   (let [ns (sci/find-ns ctx 'clojure.core)]
     (reduce (fn [ctx sym]
@@ -108,7 +107,8 @@
                             cells.api
                             re-db.reactive
                             maria.friendly.messages
-                            maria.friendly.kinds])))
+                            maria.friendly.kinds
+                            maria.ui])))
 (defonce _
          (do
            (reset! *context* (-> (sci/init sci-opts)

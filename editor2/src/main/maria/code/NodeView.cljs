@@ -18,8 +18,9 @@
             [maria.code.commands :as commands]
             [maria.code.views :as views]
             [yawn.view.dom :as dom]
-            [re-db.reactive :as r]))
-
+            [re-db.reactive :as r]
+            [maria.code.eldoc :as eldoc]
+            ))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -173,13 +174,14 @@
                                                 (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
                                                 (clj-mode/eval-region ^:clj {:modifier eval-modifier})
-                                                (keys/code-keys this)
+                                                (keys/code-keymap this)
                                                 (.of cm.view/keymap clj-mode/complete-keymap)
                                                 (.of cm.view/keymap cmd/historyKeymap)
 
                                                 (.. EditorView
                                                     -updateListener
-                                                    (of #(code:forward-update this %)))]})})
+                                                    (of #(code:forward-update this %)))
+                                                (eldoc/extension this)]})})
          :!result (atom nil)
 
          :on-mounts []

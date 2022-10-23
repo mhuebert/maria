@@ -12,7 +12,9 @@
             [cells.async]
             [promesa.core :as p]
             maria.sicm-views
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [maria.util :refer [use-watch]]
+            [maria.icons :as icons]))
 
 (def COLL-PADDING 4)
 
@@ -51,8 +53,8 @@
                              _)) "No viewer" *viewers*)))
 
 (v/defview more-btn [on-click]
-  [:div.pb-1.-mt-1.px-1.mx-1.cursor-pointer.bg-gray-200.hover:bg-gray-300 {:on-click on-click}
-   "..."])
+  [:div.inline-block.-mt-1 {:on-click on-click}
+   (icons/ellipsis-mini "w-4 h-4 cursor-pointer ")])
 
 (defn punctuate ^v/el [s]
   (v/x [:div.inline-block.font-bold.opacity-60 s]))
@@ -134,16 +136,6 @@
   [:div.inline-flex.gap-list
    [:span (show opts (key this))] " "
    [:span (show opts (val this))]])
-
-(defn use-watch [x]
-  (let [id (v/use-callback #js{})]
-    (v/use-sync-external-store
-     (v/use-callback
-      (fn [changed!]
-        (add-watch x id (fn [_ _ _ _] (changed!)))
-        #(remove-watch x id))
-      #js[x])
-     #(r/peek x))))
 
 (def loader (v/x [:div.cell-status
                   [:div.circle-loading

@@ -6,23 +6,30 @@
             #?(:cljs [sci.async :as a])
             [promesa.core :as p]
             [yawn.view :as v]
-            [re-db.reactive :as r]))
+            [re-db.reactive :as r]
+            [sci.impl.vars :as vars]
+            [sci.impl.utils :as utils]
+            [sci.impl.resolve :as resolve]
+            [maria.ui :as ui]))
 
 (defonce ^:dynamic *context* (clojure.core/atom nil))
+
+(defn resolve-symbol
+  ([sym] (resolve-symbol nil sym))
+  ([ns sym]
+   (vars/with-bindings
+    {utils/current-ns (or ns @utils/current-ns)}
+    (resolve/resolve-symbol @*context* sym))))
+
+(defn html
+  "Renders hiccup forms to html (via underlying view layer, eg. React)"
+  [hiccup-form]
+  (v/x hiccup-form))
 
 (defn ^:macro doc
   "Show documentation for given symbol"
   [&form &env sym]
-  (let [{:keys [name ns doc arglists]} (-> (sci.impl.resolve/resolve-symbol @maria.repl.api/*context* sym)
-                                           meta)]
-    `^:hiccup [:<>
-               [:div.mb-1
-                [:span.text-slate-500 ~(str ns)]
-                [:span.text-slate-500 "/"]
-                [:span.text-slate-800 ~(str name)]]
-               (into [:div.text-blue-500]
-                     ~(mapv #(vector :div.mb-1 (str %)) arglists))
-               [:div.mb-1 ~doc]]))
+  `(ui/show-doc (meta (resolve-symbol '~sym))))
 
 (defn ^:macro dir
   "Display public vars in namespace (symbol)"
@@ -58,11 +65,6 @@
         (js/Promise.resolve x))))
    :clj
    (defn await [x] x))
-
-(defn html
-  "Renders hiccup forms to html (via underlying view layer, eg. React)"
-  [hiccup-form]
-  (v/x hiccup-form))
 
 (defn what-is
   "Returns a string describing what kind of thing `thing` is."

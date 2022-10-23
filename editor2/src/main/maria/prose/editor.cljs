@@ -96,7 +96,7 @@
 
 (j/js
   (defn plugins []
-    [keys/prose-keys
+    [keys/prose-keymap
      keys/default-keys
      input-rules/maria-rules
      (dropCursor)

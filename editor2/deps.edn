@@ -6,7 +6,7 @@
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "cb99958428f95fdacfbbba377f3a8b0b92050bb8"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
-                                  :git/sha "35fb41584e3e071b6f68f2e2185e2fd2bc6a0693"}
+                                  :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         org.babashka/sci {:mvn/version "0.4.33"}
         funcool/promesa {:mvn/version "8.0.450"}
