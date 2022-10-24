@@ -15,6 +15,7 @@
 (defonce ^:dynamic *context* (clojure.core/atom nil))
 
 (defn resolve-symbol
+  "Resolves symbol to var"
   ([sym] (resolve-symbol nil sym))
   ([ns sym]
    (vars/with-bindings

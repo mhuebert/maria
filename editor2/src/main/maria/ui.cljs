@@ -12,8 +12,7 @@
           [:span.text-slate-800 (str name)]))))
 
 (defn show-arglists [arglists]
-  (v/x (into [:div.text-blue-500]
-             (mapv str arglists))))
+  (into [:<>] (map #(vector :span.text-blue-500 (str %))) arglists))
 
 (defn show-doc [{:as var-meta :keys [ns name arglists doc]}]
   (v/x (into [:<>]

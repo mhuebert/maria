@@ -219,8 +219,7 @@ o\""
 (v/defview landing []
   [:div
    example
-   [eldoc/view]
-   style/tailwind])
+   [eldoc/view]])
 
 (defn init []
   (dom/mount :maria-live #(v/x [landing])))

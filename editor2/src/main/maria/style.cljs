@@ -7,29 +7,6 @@
 
 (def prose-element :div.relative)
 
-(def tag-colors
-  {:variableName "#98a14b"
-   :operator "#c66"
-   :bool "#987aa0"
-   :null "#888"
-   :keyword "#987aa0"
-   :docString "#a78938"
-   :comment "#a3685a"
-   :number "#987aa0"
-   :string "#a78938"
-   :regexp "#a78938"})
-
-(defn color-var [k] (str "--code-" (name k)))
-
-(defn css-color-vars []
-  (str
-   ":root {"
-   (->> tag-colors
-        (map (fn [[k color]]
-               (str (color-var k) ": " color ";")))
-        (str/join \newline))
-   "}"))
-
 (def code-styles
   ;; map from token types (as defined in the grammar) to universally-defined
   ;; "tags" (defined by @lezer/highlight) which can have color applied.
@@ -56,12 +33,21 @@
       styleTags))
 
 (def code-highlight-style
-  (->> (keys tag-colors)
+  (->> ["variableName"
+        "operator"
+        "bool"
+        "null"
+        "keyword"
+        "docString"
+        "comment"
+        "number"
+        "string"
+        "regexp"]
        (map (fn [tag-name]
               (j/obj :tag (j/!get tags tag-name)
-                     :color (str "var(" (color-var tag-name) ")")
+                     :color (str "var(--code-" tag-name ")")
                      ;; for dev
-                     :tag-name (name tag-name))))
+                     :tag-name tag-name)))
        into-array
        (.define highlight/HighlightStyle)))
 
@@ -69,12 +55,3 @@
   (j/lit {".cm-content" {:padding "1rem"
                          :white-space "pre-wrap"
                          :max-width "100%"}}))
-
-(def tailwind
-  [:style {:type "text/tailwindcss"}
-   (str
-    (rc/inline "nextjournal.viewer.css")
-
-    (css-color-vars)
-    (rc/inline "maria.cloud.css")
-    )])

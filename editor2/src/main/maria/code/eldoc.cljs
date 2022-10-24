@@ -47,11 +47,9 @@
 
 (v/defview view []
   (when-let [{:keys [ns name doc arglists]} (meta (use-watch !current-operator))]
-    [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm
+    [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list
      {:class ["h-[35px]"
               "border-t border-stone-300"]}
-     (ui/show-sym ns name)
-     [:div.ml-2]
+     [:div (ui/show-sym ns name)]
      (ui/show-arglists arglists)
-     [:div.ml-2]
      [:div.truncate doc]]))

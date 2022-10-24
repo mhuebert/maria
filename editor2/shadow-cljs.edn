@@ -7,10 +7,13 @@
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
                     "/index.html" (build/index-html)})]
+   :dev {:build-hooks [(teknql.tailwind/start-watch!)]}
    :release {:build-hooks [(teknql.tailwind/compile-release!)
                            (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
    :devtools {:http-root "public"
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
    :modules {:main {:init-fn maria.live/init}}
-   :tailwind/output "public/css/tailwind.css"}}}
+   :tailwind/output "public/css/tailwind.css"
+   :tailwind/files {:tailwind.css "./src/maria.cloud.css"
+                    :base-path "."}}}}

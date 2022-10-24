@@ -147,6 +147,9 @@
          :proseNode proseNode
          :mounted! (fn [el]
                      (.appendChild (.-firstChild el) (.. this -codeView -dom))
+                     (doto (.. this -codeView -dom -classList)
+                       (.add "rounded-r")
+                       (.add "overflow-hidden"))
                      (set-initial-focus! this)
                      (when-not (j/get this :mounted?)
                        (j/!set this :mounted? true)
