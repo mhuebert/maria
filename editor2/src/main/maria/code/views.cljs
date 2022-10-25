@@ -171,7 +171,7 @@
         x (str \" x \")]
     (if collapse
       [:div.line-clamp-6 {:on-click #(toggle! not)} x]
-      [:div {:class ["max-h-[80vh] overflow-y-scroll"]
+      [:div {:class ["max-h-[80vh] overflow-y-auto"]
              :on-click #(toggle! not)} x])))
 
 (def show-map (partial show-coll "{" "}"))
@@ -253,9 +253,9 @@
 
             (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
             (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
-
-            #_(fn [x] (clerk.sci-viewer/inspect x))
-            maria.sicm-views/views]))
+            (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
+            maria.sicm-views/views
+            (fn [x] (clerk.sci-viewer/inspect x))]))
 
 (defn shape? [x] (instance? shapes.core/Shape x))
 
@@ -280,5 +280,5 @@
      [:div {:class "md:w-1/2 text-base"
             :style {:color "#c9c9c9"}}]
      [:div
-      {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-auto"}
+      {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-auto pb-4"}
       [value-viewer !result]]]))

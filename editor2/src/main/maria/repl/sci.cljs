@@ -12,8 +12,9 @@
             sci.lang
             [sci.async :as a]
             [promesa.core :as p]
-            [sci.configs.applied-science.js-interop :as sci.j]
-            [sci.configs.funcool.promesa :as sci.p]
+            [sci.configs.applied-science.js-interop :as js-interop.sci]
+            [sci.configs.funcool.promesa :as promesa.sci]
+            [yawn.sci-config :as yawn.sci]
             [re-db.reactive]
             maria.friendly.kinds
             [sicmutils.env.sci :as sicm.sci])
@@ -77,7 +78,7 @@
 
 (defn load-fn [{:keys [namespace]}]
   (when (str/starts-with? (str namespace)
-                        "sicmutils.")
+                          "sicmutils.")
     {:file (str namespace ".cljs")
      :source ":source"}
     ))
@@ -90,16 +91,14 @@
        :aliases {'p 'promesa.core
                  'j 'applied-science.js-interop
                  'shapes 'shapes.core}
-       :namespaces {'applied-science.js-interop sci.j/js-interop-namespace
-                    'clojure.core {'require a/require}
-                    'promesa.core sci.p/promesa-namespace
-                    'promesa.protocols sci.p/promesa-protocols-namespace
-                    'user {'println println
-                           'prn prn
-                           'pr pr}}}
-      (require-namespaces '[applied-science.js-interop
-                            promesa.core
-                            shapes.core
+       :namespaces (merge {'clojure.core {'require a/require}
+                           'user {'println println
+                                  'prn prn
+                                  'pr pr}}
+                          js-interop.sci/namespaces
+                          promesa.sci/namespaces
+                          yawn.sci/namespaces)}
+      (require-namespaces '[shapes.core
                             maria.repl.api
                             sci.async
                             cells.hooks
@@ -108,6 +107,7 @@
                             re-db.reactive
                             maria.friendly.messages
                             maria.friendly.kinds
+                            maria.helpful
                             maria.ui])))
 (defonce _
          (do

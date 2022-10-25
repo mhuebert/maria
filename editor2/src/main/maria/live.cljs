@@ -15,6 +15,26 @@
               (str/starts-with? title "http")
               (assoc :target "_blank")) title])
 
+(def js-interop-example "
+(def obj #js{:x \"world\"})
+(j/get obj :x)
+(j/defn hello [^js {:keys [x]}] x)
+(hello obj)
+")
+
+(def view-example
+  "(require '[yawn.view :as v])
+   (v/x [:div {:style {:color \"red\"}} \"a\"])
+   (v/defview hello-world [name] [:div \"Hello, \" name])
+   (hello-world \"creature of the void!\")")
+
+(def emoji-example "
+(def 🔬 '{🦄 🌈
+          🐄 🥩
+          🤧 🦠})
+(🔬 '🦄)
+")
+
 (def syntax-example "
 ;; # Hello, world...
 
@@ -111,6 +131,8 @@ js/Promise
 
 (def repl-examples ";; ## REPL utils
 (doc inc)
+(doc do)
+(doc when)
 (dir user)")
 
 (def ns-examples "
@@ -193,7 +215,9 @@ o\""
   [prose/editor {:source
                  (do
                    (str
-
+                    js-interop-example
+                    view-example
+                    emoji-example
                     link-examples
                     repl-examples
                     ns-examples

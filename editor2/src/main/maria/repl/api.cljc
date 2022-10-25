@@ -10,12 +10,13 @@
             [sci.impl.vars :as vars]
             [sci.impl.utils :as utils]
             [sci.impl.resolve :as resolve]
-            [maria.ui :as ui]))
+            [maria.ui :as ui]
+            [maria.helpful :as helpful]))
 
 (defonce ^:dynamic *context* (clojure.core/atom nil))
 
 (defn resolve-symbol
-  "Resolves symbol to var"
+  "Resolves `sym` to var, optionally evaluated within `ns`"
   ([sym] (resolve-symbol nil sym))
   ([ns sym]
    (vars/with-bindings
@@ -30,7 +31,8 @@
 (defn ^:macro doc
   "Show documentation for given symbol"
   [&form &env sym]
-  `(ui/show-doc (meta (resolve-symbol '~sym))))
+  `(ui/show-doc (merge (meta (resolve-symbol '~sym))
+                       '~(helpful/doc-map sym))))
 
 (defn ^:macro dir
   "Display public vars in namespace (symbol)"

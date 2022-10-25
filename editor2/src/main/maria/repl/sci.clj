@@ -1,4 +1,6 @@
-(ns maria.repl.sci)
+(ns maria.repl.sci
+  (:require [sci.core :as sci]
+            [clojure.string :as str]))
 
 (defn dequote [x]
   (if (and (seq? x) (= 'quote (first x)))
@@ -9,8 +11,8 @@
   (reduce (fn [sci-opts ns]
             (let [the-ns (dequote ns)
                   [the-ns opts] (if (symbol? the-ns)
-                              [the-ns {}]
-                              [(first the-ns) (apply hash-map (rest the-ns))])
+                                  [the-ns {}]
+                                  [(first the-ns) (apply hash-map (rest the-ns))])
                   ns-map (if (:only opts)
                            (let [ns-sym (gensym "ns")]
                              `(let [~ns-sym (~'sci.core/create-ns '~the-ns)]
@@ -32,4 +34,25 @@
                      '[[cells.api :as cells]
                        shapes.core])
  (macroexpand '(require-namespaces {}
-                                   '[shapes.core])))
+                                   '[shapes.core]))
+
+
+
+ (defn clojure-meta [name]
+   (-> (resolve (symbol "clojure.core" (str name)))
+       meta))
+
+ ;; returns map of missing metadata.
+ (into {}
+       (for [[name var] (-> (sci/init {})
+                            :env
+                            deref
+                            :namespaces
+                            ('clojure.core))
+             :let [sci-meta (meta var)]
+             :when (not (:doc sci-meta))
+             :let [m (clojure-meta name)]
+             :when (:doc m)
+             :let [m (select-keys m [:doc :arglists :macro :special-form])
+                   m (apply dissoc m (keys sci-meta))]]
+         [name m])))
