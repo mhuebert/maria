@@ -1026,6 +1026,5 @@ itself (not its value) is returned. The reader macro #'x expands to (var x)."}})
     refer-clojure {:doc "Same as (refer 'clojure.core <filters>)", :arglists ([& filters])}})
 
 (defn doc-map [sym]
-  (or (some-> (special-doc-map* sym) ->meta)
-      (core-doc-map* sym)
-      (core-doc-map* (symbol (name sym)))))
+  (some-> (special-doc-map* sym)
+          ->meta))

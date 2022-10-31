@@ -8,7 +8,8 @@
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
-        org.babashka/sci {:mvn/version "0.5.34"}
+        #_#_org.babashka/sci {:mvn/version "0.5.34"}
+        io.github.babashka/sci {:git/sha "eb322b3b68312f4de109153ec1719042267320ac"}
         funcool/promesa {:mvn/version "8.0.450"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
 

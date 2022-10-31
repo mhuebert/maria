@@ -90,11 +90,12 @@
 
   (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
-    [{:as this :keys [codeView]} anchor head]
+    [{:as this :keys [codeView dom]} anchor head]
     (controlled-update this
       #(do (.dispatch codeView {:selection {:anchor anchor
                                             :head head}})
-           (focus! this))))
+           (when-not (.contains dom (.. js/document (getSelection) -focusNode))
+             (focus! this)))))
 
   (defn text-diff [old-text new-text]
     (let [old-end (.-length old-text)
@@ -202,16 +203,13 @@
                    #_(j/log :prose:update)
                    (prose:forward-update this node))
          :selectNode (fn [this]
-                       #_(j/log :selectNode this)
+                       (j/log :selectNode this)
                        (prose:select-node this))
          :deselectNode (fn []
                          #_(j/log :deselectNode this))
          :setSelection (fn [anchor head]
-                         #_(j/log :setSelection this)
                          (prose:set-selection this anchor head))
-         :stopEvent (fn []
-                      #_(j/log :stopEvent)
-                      true)
+         :stopEvent (fn [e] true)
          :destroy #(let [{:keys [codeView !result]} this]
                      (.destroy codeView)
                      ;; setTimeout => avoids trying to unmount during a re-render caused by react-refresh

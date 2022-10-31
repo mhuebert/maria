@@ -21,7 +21,8 @@
   ([ns sym]
    (vars/with-bindings
     {utils/current-ns (or ns @utils/current-ns)}
-    (resolve/resolve-symbol @*context* sym))))
+    (try (resolve/resolve-symbol @*context* sym)
+         (catch js/Error e nil)))))
 
 (defn html
   "Renders hiccup forms to html (via underlying view layer, eg. React)"
