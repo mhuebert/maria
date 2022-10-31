@@ -1,3 +1,7 @@
+---
+redirect_from: /2020/09/30/Maria-and-Clojurists-Together.html
+---
+
 We’re excited to announce that I ([Matt](https://twitter.com/mhuebert)) have received a three-month grant from [ClojuristsTogether](https://www.clojuriststogether.org) to work on [Maria.cloud](https://www.maria.cloud). This is the first of three monthly updates.
 
 ### What is Maria?

@@ -1,2 +1,4 @@
 theme: minima
 description: a beginner-friendly coding environment for Clojure
+plugins:
+  - jekyll-redirect-from
