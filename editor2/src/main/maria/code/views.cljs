@@ -25,15 +25,15 @@
   (constructor [this] (super))
   Object
   (render [^js this]
-    (j/let [error (j/get-in this [:state :error])
-            ^js [show body :as children] (.. this -props -children)]
-      ;; todo - hint to avoid interpretation here
-      (if error
-        (show error)
-        (show body)))))
+    (j/let [^js {{:keys [error]} :state
+                 {:keys [render value]} :props} this]
+      (try (render (or error value))
+           (catch js/Error e
+             (js/console.debug (.-stack e))
+             (render e))))))
 
 (j/!set ErrorBoundary :getDerivedStateFromError (fn [error]
-                                                  (j/log :found-error error)
+                                                  (j/log :found-error )
                                                   #js{:error error}))
 
 (v/defview show-error [opts error]
@@ -42,7 +42,7 @@
 
 (declare ^:dynamic *viewers*)
 
-(v/defview show {:key (fn [opts x] x)}
+(v/defview show
   [opts x]
   (let [opts (or opts {:depth -1 :stack ()})
         opts (-> opts
@@ -265,13 +265,13 @@
                                                                   :render-fn #(show nil %)}]))
 
 (v/defview value-viewer [!result]
-  (let [{:as result :keys [value error]} (use-watch !result)]
-    [:... {:key result}
+  (let [{:as result :keys [value error key]} (use-watch !result)]
+    [:... {:key key}
      (if error
        (show nil error)
-       (j/lit [ErrorBoundary {:key result}
-               #(show nil %)
-               value]))]))
+       (j/lit [ErrorBoundary {:key key
+                              :render #(show nil %)
+                              :value value}]))]))
 
 (v/defview code-row [^js {:keys [!result mounted!]}]
   (let [ref (v/use-callback (fn [el] (when el (mounted! el))))]

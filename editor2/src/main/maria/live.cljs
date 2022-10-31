@@ -34,12 +34,20 @@
    (hello-world \"creature of the void!\")")
 
 (def emoji-examples "
-;; Using emoji, thanks to [sci](https://www.github.com/babashka/sci) (this doesn't work in plain ClojureScript)
+;; Emoji in var names
 
-(def 🔬 '{🦄 🌈
-          🐄 🥩
-          🤧 🦠})
-(🔬 '🦄)
+(defn 🌈 [shapes]
+  (map (fn [shape color] (colorize color shape))
+    shapes
+    (cycle [\"red\"
+            \"orange\"
+            \"yellow\"
+            \"green\"
+            \"blue\"
+            \"indigo\"
+            \"violet\"])))
+
+(🌈 (repeat (circle 20)))
 ")
 
 (def error-examples "
@@ -201,8 +209,6 @@ o\""
   [prose/editor {:source
                  (do
                    (str
-                    js-interop-examples
-                    view-examples
                     emoji-examples
                     link-examples
                     repl-examples
@@ -213,15 +219,17 @@ o\""
                     sicm-examples
                     promise-examples
                     string-examples
+                    js-interop-examples
+                    view-examples
                     )
+
+
 
 
                    #_(rc/inline "maria/curriculum/learn_clojure_with_shapes.cljs")
                    #_(rc/inline "maria/curriculum/welcome_to_cells.cljs")
                    #_(rc/inline "maria/curriculum/animation_quickstart.cljs")
                    #_(rc/inline "maria/curriculum/example_gallery.cljs")
-
-
 
                    )}])
 

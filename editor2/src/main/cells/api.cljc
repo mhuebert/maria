@@ -1,6 +1,6 @@
 (ns cells.api
   (:require [cells.impl :as impl]
-            [cells.hooks :as lib]))
+            [cells.hooks :as hooks]))
 
 (defn- defn-opts [body]
   (let [[docstring body] (if (string? (first body))
@@ -36,15 +36,15 @@
   Accepts options :format, which may be :json or :text"
   ([url] (fetch url nil))
   ([url & {:as opts :keys [format query]}]
-   (lib/use-fetch url opts)))
+   (hooks/use-fetch url opts)))
 
 (defn interval
   "Calls `f` on interval of n milliseconds, with previous value, starting with optional init value."
   ([n f] (interval n f nil))
   ([n f init]
-   (lib/use-interval n f init)))
+   (hooks/use-interval n f init)))
 
 (defn geo-location
   "Requests a user's geographic location using the browser's Navigator.geolocation api."
   []
-  (lib/use-geo-location))
+  (hooks/use-geo-location))

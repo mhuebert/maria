@@ -15,8 +15,9 @@
 
 (j/js
 
+  (defonce !result-key (volatile! 0))
   (defn set-result! [{:keys [!result]} v]
-    (reset! !result v))
+    (reset! !result ^:clj (assoc v :key (vswap! !result-key inc))))
 
   (defn bind-prose-command [this cmd]
     (fn []
