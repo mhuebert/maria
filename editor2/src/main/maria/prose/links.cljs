@@ -100,7 +100,7 @@
   (let [[edit-text set-text!] (v/use-state nil)
         [hidden? set-hidden!] (v/use-state (nil? props))
         input-el (v/use-ref)
-        c:icon-btn " text-gray-700 inline-flex items-center p-2 cursor-pointer hover:text-gray-500"
+        c:icon-btn "hover:text-gray-700 text-gray-500 inline-flex items-center p-2 cursor-pointer"
         exit! #(set-text! nil)
         save! #(do (.preventDefault %)
                    (set-value! edit-text)
@@ -119,9 +119,8 @@
                         (.addEventListener js/window "keydown" f #js{:capture true})
                         #(.removeEventListener js/window "keydown" f #js{:capture true}))))
                   [hidden?])
-
     (when-not hidden?
-      [:div.bg-white.rounded-md.shadow-md.absolute.flex.overflow-hidden.divide-x
+      [:div.bg-white.rounded-md.shadow-md.absolute.flex.overflow-hidden
        {:style style}
        (if edit-text
          [:<>
@@ -139,7 +138,7 @@
            {:class "max-w-[20rem]" :href value}
            (str/replace value #"https?://" "")]
           [:div {:class c:icon-btn
-                 :on-click #(set-text! value)} (icons/pencil "w-5 h-5")]])])))
+                 :on-click #(set-text! value)} (icons/pencil-square:mini "w-5 h-5")]])])))
 
 (defn tooltip-position [^js view from to]
   (j/let [^js {start-left :left

@@ -8,7 +8,8 @@
             [shadow.resource :as rc]
             [yawn.view.dom :as dom]
             [yawn.view :as v]
-            [maria.code.eldoc :as eldoc]))
+            [maria.code.eldoc :as eldoc]
+            [nextjournal.react-hooks :as hooks]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -36,7 +37,9 @@
 (def emoji-examples "
 ;; Emoji in var names
 
-(defn 🌈 [shapes]
+(defn 🌈
+  \"Applies colors of the rainbow to a sequence of shapes\"
+  [shapes]
   (map (fn [shape color] (colorize color shape))
     shapes
     (cycle [\"red\"
@@ -60,7 +63,20 @@ js/Promise
 (10)
 
 (.-x nil)
-")
+
+;; sci: no function name for named anonymous function
+((fn x [] (throw (js/Error. \"Hello\"))))
+
+;; sci: no stack for error which doesn't call a function.
+(throw (js/Error. \"Hello\"))
+;; _expected: show file & location of error_
+
+(require '[cells.api :refer :all])
+
+(defn x [] (throw (js/Error. \"in x\")))
+[(cell (x)) (cell (x))]
+"
+  )
 
 (def promise-examples
   "
@@ -222,7 +238,7 @@ o\""
                     js-interop-examples
                     view-examples
                     )
-
+                   link-examples
 
 
 
@@ -239,5 +255,14 @@ o\""
    example
    [eldoc/view]])
 
+(v/defview hooks-test []
+  (let [!ref (hooks/use-ref)]
+    (hooks/use-effect
+     (fn []
+       (prn :effect @!ref)
+       ))
+    [:div {:ref !ref}]))
+
 (defn init []
-  (dom/mount :maria-live #(v/x [landing])))
+  (dom/mount :maria-live #(v/x #_[hooks-test]
+                               [landing])))

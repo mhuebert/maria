@@ -24,12 +24,14 @@
 
         io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
         io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
-
+        io.github.nextjournal/react-hooks-cljs {:git/sha "a5ed3e8a82a8f4fc4aaead634591390f6be554d7"}
         io.github.sicmutils/sicmutils {:git/sha "888357d29d617c4d6738aab159ce91ea8252baa0"}
         }
  :aliases
- {:local {:extra-deps {applied-science/js-interop {:local/root "../../js-interop"}
+ {:local {:extra-deps {io.github.babashka/sci {:local/root "../../sci"}
+                       applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}
                        io.github.mhuebert/re-db {:local/root "../../re-db"}
-                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}}}}}
+                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}
+                       io.github.nextjournal/react-hooks-cljs {:local/root "../../react-hooks"}}}}}
