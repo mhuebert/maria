@@ -5,6 +5,7 @@
             [maria.keymap :as keys]
             [maria.style :as style]
             [maria.code.parse-clj :as parse-clj :refer [clj->md]]
+            [maria.prose.schema :as markdown]
             ["react" :as re]
             ["react-dom/client" :refer [createRoot]]
             ["prosemirror-view" :refer [EditorView]]
@@ -19,9 +20,6 @@
             [maria.code.NodeView :as node-view]
             [maria.code.commands :as commands]
             [maria.prose.links :as links]))
-
-(defn md->doc [source] (.parse md/defaultMarkdownParser source))
-(defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -71,14 +69,14 @@
                        (str/join \newline (map #(str ";; " (str/trim %)) ss)))))))
          (str/join "\n\n"))))
 
-(-> "```\n(+ 1 2)\n```" md->doc doc->clj)
+(-> "```\n(+ 1 2)\n```" markdown/md->doc doc->clj)
 
 (defn md->clj
   "Given a Markdown string, returns Clojure source.
   Code blocks (```) are treated as Clojure code unless marked with a
   non-clj language (eg. ```python). Everything else becomes a line comment."
   [md-string]
-  (-> md-string md->doc doc->clj))
+  (-> md-string markdown/md->doc doc->clj))
 
 (comment
  (= (md->clj "# hello")
@@ -111,7 +109,7 @@
       (let [state (j/js
                     (.create EditorState {:doc (-> source
                                                    parse-clj/clj->md
-                                                   md->doc)
+                                                   markdown/md->doc)
                                           :plugins (plugins)}))
             view (j/js
                    (EditorView. element {:state state

@@ -90,7 +90,8 @@
                  'Math js/Math}
        :aliases {'p 'promesa.core
                  'j 'applied-science.js-interop
-                 'shapes 'shapes.core}
+                 'shapes 'shapes.core
+                 'sci 'sci.core}
        :namespaces (merge {'clojure.core {'require a/require}
                            'user {'println println
                                   'prn prn
@@ -100,6 +101,7 @@
                           yawn.sci/namespaces)}
       (require-namespaces '[shapes.core
                             maria.repl.api
+                            sci.core
                             sci.async
                             cells.hooks
                             cells.impl
