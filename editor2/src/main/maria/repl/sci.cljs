@@ -21,12 +21,13 @@
   (:require-macros [maria.repl.sci :refer [require-namespaces]]))
 
 (defn eval-string*
-  [ctx s]
+  [ctx opts s]
   (let [rdr (sci/reader s)
         last-ns (or (:last-ns ctx) (volatile! @sci/ns))
         ctx (assoc ctx :last-ns last-ns)
         eval-next (fn eval-next [res]
-                    (let [continue #(sci/binding [sci/ns @last-ns]
+                    (let [continue #(sci/binding [sci/ns @last-ns
+                                                  sci/file (:clojure.core/eval-file opts)]
                                                  (let [form (sci/parse-next ctx rdr)]
                                                    (if (= :sci.core/eof form)
                                                      res
@@ -54,7 +55,7 @@
                                 (:last-ns ctx)
                                 @sci/ns))
          ctx (assoc ctx :last-ns last-ns)
-         value (eval-string* ctx s)
+         value (eval-string* ctx opts s)
          return (fn [v]
                   (swap! *context* assoc :last-ns @last-ns)
                   {:value v})]

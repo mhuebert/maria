@@ -161,6 +161,16 @@
   (defn index [{:keys [proseView getPos]}]
     (.. proseView -state -doc (resolve (getPos)) (index 0))))
 
+(j/defn code-nodes [^js {:as this :keys [proseView]}]
+  (into []
+        (comp (map (j/get :spec))
+              (filter (j/get :!result)))
+        (.. proseView -docView -children)))
+
+(j/defn code-node-by-id [this id]
+  (first (filter #(= (j/get % :id) id)
+                 (code-nodes this))))
+
 (j/defn code:ns
   "Returns the first evaluated namespace above this code block"
   [^js {:as this :keys [proseView]}]
@@ -175,7 +185,9 @@
 (j/defn code:eval-string!
   ([this source] (code:eval-string! nil this source))
   ([opts this source]
-   (let [opts (update opts :ns #(or % (code:ns this)))
+   (let [opts (-> opts
+                  (update :ns #(or % (code:ns this)))
+                  (assoc :clojure.core/eval-file (j/get this :id)))
          result (try (sci/eval-string @*context* opts source)
                      (catch js/Error e ^:clj {:error e}))]
      (if (a/await? result)

@@ -20,7 +20,8 @@
             [yawn.view.dom :as dom]
             [re-db.reactive :as r]
             [maria.code.eldoc :as eldoc]
-            ))
+            [yawn.view :as v]
+            [maria.code.error-marks :as error-marks]))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -140,7 +141,7 @@
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
     (let [eval-modifier "Alt"
           dom (js/document.createElement "div")
-          this (j/obj)]
+          this (j/obj :id (str (gensym "code-view-")))]
       (dom/mount dom #(#'views/code-row this))
       (j/extend! this
         {:getPos getPos
@@ -185,7 +186,8 @@
                                                 (.. EditorView
                                                     -updateListener
                                                     (of #(code:forward-update this %)))
-                                                (eldoc/extension this)]})})
+                                                (eldoc/extension this)
+                                                (error-marks/extension)]})})
          :!result (atom nil)
 
          :on-mounts []

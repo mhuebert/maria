@@ -1,6 +1,8 @@
 (ns maria.show
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
+            ["@radix-ui/react-popover" :as Popover]
+            ["@radix-ui/react-tooltip" :as Tooltip]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.icons :as icons]
@@ -9,7 +11,13 @@
             [nextjournal.clerk.sci-viewer :as clerk.sci-viewer]
             [promesa.core :as p]
             [sci.core :as sci]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [maria.repl.api :as repl]
+            [maria.ui :as ui]
+            [maria.util :as u]
+            [maria.code.error-marks :as error-marks]
+            [maria.code.commands :as commands]
+            [nextjournal.clojure-mode.node :as n]))
 
 
 (def COLL-PADDING 4)
@@ -17,6 +25,71 @@
 (defn var? [x] (instance? sci.lang/Var x))
 
 (declare show)
+
+(defn set-error-highlight! [node-view id location]
+  (some-> (commands/code-node-by-id node-view id)
+          (j/get :codeView)
+          (error-marks/set-highlight! location)))
+
+(defn inline-form [node-view id location]
+  (when-let [state (some-> (commands/code-node-by-id node-view id)
+                           (j/get-in [:codeView :state]))]
+    (j/let [^:js {:keys [from to]} (error-marks/get-range state location)]
+      (n/string state from to))))
+
+(v/defview show-stacktrace [opts stack]
+  ;; - for built-in, look up clojure.core metadata / link to source?
+  (into [:div.flex.flex-col.-mx-2]
+        (keep (fn [{:as frame :keys [file ns line column sci/built-in local name]}]
+                (let [icon-classes "w-5 h-5 -mt-1"
+                      fqn (when name
+                            (if (= ns 'user)
+                              name
+                              (symbol ns name)))
+                      code-cell (when (and file (str/starts-with? file "code-"))
+                                  (str "#" file))
+                      m (when fqn
+                          (let [m (meta (repl/resolve-symbol fqn))]
+                            (when (or (:doc m) (not-empty (:arglists m)))
+                              m)))
+                      fqn (if m
+                            (symbol (str (:ns m)) (str (:name m)))
+                            fqn)
+                      inline-str (when (and (not fqn) line)
+                                   (inline-form (:node-view opts) file [line column]))]
+                  [:div.flex.flex-row.gap-1.py-1.px-2
+                   (when (and file line)
+                     {:class "hover:bg-gray-200"
+                      :on-mouse-enter #(set-error-highlight! (:node-view opts) file [line column])
+                      :on-mouse-leave #(set-error-highlight! (:node-view opts) file nil)})
+                   (when (and code-cell line)
+                     [:div.no-underline.cursor-pointer.text-gray-700.hover:underline
+                      {:href code-cell}
+                      (icons/map-pin:mini icon-classes)])
+                   (when m
+                     [:> Tooltip/Provider
+                      [:> Tooltip/Root {:delayDuration 300}
+                       [:> Tooltip/Trigger (icons/information-circle:mini icon-classes)]
+                       [:> Tooltip/Portal
+                        [:> Tooltip/Content
+                         [:> Tooltip/Arrow {:class "fill-white"}]
+                         [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"} (ui/show-doc m)]]]]])
+                   (if fqn
+                     [:div
+                      [:span.text-gray-500 (namespace fqn) "/"]
+                      [:span.text-black (clojure.core/name fqn)]]
+                     [:<>
+                      [:span.text-gray-500.italic "<expr>"]
+                      #_[:div.pre-wrap.truncate inline-str]
+                      ])
+
+                   (when built-in [:span.text-gray-500.ml-1 "(built-in)"])
+                   [:div.flex-grow]
+                   (when line
+                     [:div.text-gray-700 line ":" column])
+                   #_[:div {:on-click #(prn frame)} (icons/command-line:mini "w-5 h-5")]
+                   ])))
+        (force stack)))
 
 (v/defview show-error [opts error]
   [:<>
@@ -27,16 +100,15 @@
       :on-click #(js/console.error error)} (icons/command-line:mini "w-5 h-5")]]
    (when-let [stack (seq (sci/stacktrace error))]
      [:div.p-2
-      (into [:div] (map (partial vector :div)) (sci/format-stacktrace stack))])])
+      [show-stacktrace opts stack]])])
 
 (declare ^:dynamic *viewers*)
 
 (v/defview show
   [opts x]
-  (let [opts (or opts {:depth -1 :stack ()})
-        opts (-> opts
-                 (update :depth inc)
-                 (update :stack conj x))]
+  (let [opts (-> (or opts {})
+                 (update :depth (fnil inc -1))
+                 (update :stack (fnil conj ()) x))]
     (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
                              (reduced out)
                              _)) "No viewer" *viewers*)))

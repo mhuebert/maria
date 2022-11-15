@@ -34,21 +34,21 @@
                                                                   :transform-fn clerk.viewer/mark-presented
                                                                   :render-fn #(show nil %)}]))
 
-(v/defview value-viewer [!result]
-  (let [{:as result :keys [value error key]} (use-watch !result)]
+(v/defview value-viewer [this]
+  (let [{:keys [value error key]} (use-watch (j/get this :!result))]
     [:... {:key key}
      (if error
-       (show nil error)
+       (show {:node-view this} error)
        (j/lit [ErrorBoundary {:key key
-                              :render #(show nil %)
+                              :render #(show {:node-view this} %)
                               :value value}]))]))
 
-(v/defview code-row [^js {:keys [!result mounted!]}]
+(v/defview code-row [^js {:as this :keys [!result mounted! id]}]
   (let [ref (v/use-callback (fn [el] (when el (mounted! el))))]
     [:div.-mx-4.mb-4.md:flex.w-full
-     {:ref ref}
+     {:ref ref :id id}
      [:div {:class "md:w-1/2 text-base"
             :style {:color "#c9c9c9"}}]
      [:div
       {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-auto pb-4"}
-      [value-viewer !result]]]))
+      [value-viewer this]]]))

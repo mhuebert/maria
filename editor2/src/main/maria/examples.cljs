@@ -59,21 +59,17 @@ js/Promise
 ;; # sci stacktraces
 
 ;; ✅ When an error is thrown inside a `defn`, we see its name and position
-(do
-  (defn x [] (1 2 3))
-  (x))
+(defn x [] (1 2 3))
+(x)
 
 ;; 🪲For anonymous functions that have names (🤔), the name is not shown
 ((fn my-function [] (1 2 3)))
-
-;; 🪲 If we throw our own error outside of a function call, there is no stacktrace
-(throw (js/Error. \"Hello\"))
-(throw (ex-info \"Hello\" {}))
 
 ;; ✅ Other errors (at least the following) do show stacktraces
 (1 2 3)
 (keyword)
 (name 1)
+(throw (js/Error. \"Hello\"))\n(throw (ex-info \"Hello\" {}))
 
 ;; 🪲
 ((fn call-numbers [] (1 2 3)))
