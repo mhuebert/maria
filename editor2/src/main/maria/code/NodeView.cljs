@@ -21,7 +21,8 @@
             [re-db.reactive :as r]
             [maria.code.eldoc :as eldoc]
             [yawn.view :as v]
-            [maria.code.error-marks :as error-marks]))
+            [maria.code.error-marks :as error-marks]
+            [maria.code.eval-region :as eval-region]))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -129,9 +130,9 @@
              old-text (code-text codeView)]
          (when (not= new-text old-text)
            (controlled-update this
-                              (fn []
-                                (.dispatch codeView {:changes (text-diff old-text new-text)
-                                                     :annotations [(u/user-event-annotation "noformat")]})))))
+             (fn []
+               (.dispatch codeView {:changes (text-diff old-text new-text)
+                                    :annotations [(u/user-event-annotation "noformat")]})))))
        true)))
 
   (defn prose:select-node [{:keys [codeView]}]
@@ -178,7 +179,8 @@
                                                 (lang/syntaxHighlighting style/code-highlight-style)
                                                 (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
-                                                (clj-mode/eval-region ^:clj {:modifier eval-modifier})
+                                                (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
+                                                                                             true)})
                                                 (keys/code-keymap this)
                                                 (.of cm.view/keymap clj-mode/complete-keymap)
                                                 (.of cm.view/keymap cmd/historyKeymap)

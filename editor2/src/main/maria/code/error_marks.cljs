@@ -4,7 +4,7 @@
    ["@codemirror/view" :refer [EditorView Decoration]]
    ["@codemirror/state" :refer [StateEffect StateField]]
    [nextjournal.clojure-mode.node :as n]
-   [nextjournal.clojure-mode.extensions.eval-region :refer [uppermost-edge-here]]))
+   [maria.code.eval-region :refer [uppermost-edge-here]]))
 
 (defn pos [^js state [line column]]
   (+ (.. state -doc (line line) -from)

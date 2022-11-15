@@ -8,7 +8,7 @@
             [maria.prose.schema :refer [schema]]
             [maria.repl.sci :as sci]
             [promesa.core :as p]
-            [nextjournal.clojure-mode.extensions.eval-region :as eval-region]
+            [maria.code.eval-region :as eval-region]
             [maria.repl.api :refer [*context*]]
             [sci.async :as a]
             [maria.util :as u]))
@@ -234,11 +234,11 @@
 
 (j/js
 
-  (defn code:eval-current-region [{:as this {:keys [state]} :codeView}]
-    (when-let [source (u/guard (eval-region/current-str state) (complement str/blank?))]
+  #_(defn code:eval-current-region [{:as this {:keys [state]} :codeView}]
+    (when-let [source (u/guard (eval-region/current-selection-str state) (complement str/blank?))]
       (code:eval-string! this source))
     true)
 
   (defn code:copy-current-region [{:keys [state]}]
-    (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-str state))
+    (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-selection-str state))
     true))

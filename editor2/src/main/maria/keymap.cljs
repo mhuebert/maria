@@ -128,16 +128,17 @@
            :doc "Evaluate doc"
            :run (fn [_] (commands/prose:eval-doc! (.. this -proseView))
                   true)}
+
           {:key :Shift-Enter
            :doc "Evaluate block"
-           :run #(commands/code:eval-block! this)}
+           :run identity #_(commands/code:eval-block! this)}
           {:key :Alt-Enter
            :doc "Evaluate current region"
-           :run #(commands/code:eval-current-region this)}
+           :run identity #_(commands/code:eval-current-region this)}
           {:key :Shift-Tab
            :doc "Next Code Cell"
            :run #(commands/prose:next-code-cell (j/get this :proseView))}
-          {:key :Alt-c
+          {:key :Mod-c
            :doc "Copy code"
            :run commands/code:copy-current-region}])))
 
