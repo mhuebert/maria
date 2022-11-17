@@ -117,7 +117,6 @@
 (defn extension
   "Maintains modifier-state-field, containing a map of {<modifier> true}, including Enter."
   [{:as opts :keys [on-enter]}]
-  (prn :opts opts)
   (let [handle-enter (j/fn handle-enter [binding ^:js {:as view :keys [state]} _]
                        ;(j/log :handle-enter binding)
                        (let [mods (get-modifier-field state)]

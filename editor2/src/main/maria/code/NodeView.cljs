@@ -22,7 +22,8 @@
             [maria.code.eldoc :as eldoc]
             [yawn.view :as v]
             [maria.code.error-marks :as error-marks]
-            [maria.code.eval-region :as eval-region]))
+            [maria.code.eval-region :as eval-region]
+            [maria.code.completions :as completions]))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -138,6 +139,12 @@
   (defn prose:select-node [{:keys [codeView]}]
     (.focus codeView))
 
+  (def language
+    (.define lang/LRLanguage
+             {:parser (.configure lezer-clojure/parser
+                                  {:props [clj-mode/format-props
+                                           (.add lang/foldNodeProp clj-mode/fold-node-props)
+                                           style/code-styles]})}))
 
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
     (let [eval-modifier "Alt"
@@ -163,16 +170,18 @@
                         {:state
                          (.create EditorState
                                   {:doc textContent
-                                   :extensions [(.define lang/LRLanguage
-                                                         {:parser (.configure lezer-clojure/parser
-                                                                              {:props [clj-mode/format-props
-                                                                                       (.add lang/foldNodeProp clj-mode/fold-node-props)
-                                                                                       style/code-styles]})})
+                                   :extensions [language
+                                                (.. language -data (of {:autocomplete (fn [context]
+                                                                                        (#'completions/completions this context))}))
+                                                (completions/plugin)
+
                                                 (clj-mode/match-brackets)
                                                 (clj-mode/close-brackets)
                                                 (clj-mode/selection-history)
-
                                                 (clj-mode/format-changed-lines)
+
+
+
                                                 (.theme EditorView style/code-theme)
                                                 (cmd/history)
                                                 (.. EditorState -allowMultipleSelections (of true))

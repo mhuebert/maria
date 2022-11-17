@@ -1,6 +1,7 @@
 (ns maria.code.eldoc
   (:require ["@codemirror/view" :refer [ViewPlugin]]
             ["@codemirror/state" :refer [StateField]]
+            ["@codemirror/autocomplete" :as autocomplete]
             [applied-science.js-interop :as j]
             [nextjournal.clojure-mode.node :as n]
             [yawn.view :as v]
@@ -40,16 +41,17 @@
                  #js{:update (fn [^js view-update]
                                (when (.. view-update -view -hasFocus)
                                  (let [ns (commands/code:ns node-view)
-                                       sym (.. view-update -state (field operator-field))]
+                                       sym (or (j/get (autocomplete/selectedCompletion (.-state view-update)) :sym)
+                                               (.. view-update -state (field operator-field)))]
                                    (reset! !current-operator (when sym
                                                                (try (resolve-symbol ns sym)
                                                                     (catch js/Error e nil)))))))}))])
 
 (v/defview view []
   (when-let [{:keys [ns name doc arglists]} (meta (use-watch !current-operator))]
-    [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list
+    [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap
      {:class ["h-[35px]"
               "border-t border-stone-300"]}
      [:div (ui/show-sym ns name)]
-     (ui/show-arglists arglists)
+     [:div (ui/show-arglists arglists)]
      [:div.truncate doc]]))

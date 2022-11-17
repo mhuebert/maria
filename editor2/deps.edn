@@ -9,7 +9,7 @@
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         #_#_org.babashka/sci {:mvn/version "0.5.34"}
-        io.github.babashka/sci {:git/sha "b9f4dff7a69b5ac729427d86c6d457dc56d3bb6b"}
+        io.github.babashka/sci {:git/sha "6cdf788aca5dcd579b77688a4efa24325e7852ff"}
         funcool/promesa {:mvn/version "8.0.450"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         com.taoensso/encore {:mvn/version "3.32.0"}
