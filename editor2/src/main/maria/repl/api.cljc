@@ -10,6 +10,7 @@
             [sci.impl.vars :as vars]
             [sci.impl.utils :as utils]
             [sci.impl.resolve :as resolve]
+            [sci.impl.namespaces :as sci.ns]
             [maria.ui :as ui]
             [maria.helpful :as helpful]))
 
@@ -24,6 +25,16 @@
     (try (resolve/resolve-symbol @*context* sym)
          (catch js/Error e nil)))))
 
+(defn doc-map
+  ([sym] (doc-map nil sym))
+  ([ns sym]
+   (vars/with-bindings {utils/current-ns (or ns @utils/current-ns)}
+                       (merge (meta (resolve-symbol ns sym))
+                              (helpful/doc-map sym)
+                              (when-let [sci-ns (sci.ns/sci-find-ns @*context* sym)]
+                                {:doc (:doc (meta sci-ns))
+                                 :name sym})))))
+
 (defn html
   "Renders hiccup forms to html (via underlying view layer, eg. React)"
   [hiccup-form]
@@ -32,8 +43,7 @@
 (defn ^:macro doc
   "Show documentation for given symbol"
   [&form &env sym]
-  `(ui/show-doc (merge (meta (resolve-symbol '~sym))
-                       '~(helpful/doc-map sym))))
+  `(ui/show-doc '~(doc-map sym)))
 
 (defn ^:macro dir
   "Display public vars in namespace (symbol)"

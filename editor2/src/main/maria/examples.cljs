@@ -146,8 +146,9 @@ js/Promise
 ;; Working with namespaces. When evaluating a code block individually,
 ;; Maria uses the nearest-evaluated namespace above it.
 
-(ns my.app)
+(ns my.app \"Main app namespace\")
 (doc circle)
+(doc my.app)
 (ns user)
 (doc circle)
 (resolve-symbol 'circle)

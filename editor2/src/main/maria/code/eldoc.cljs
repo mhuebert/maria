@@ -5,7 +5,7 @@
             [applied-science.js-interop :as j]
             [nextjournal.clojure-mode.node :as n]
             [yawn.view :as v]
-            [maria.repl.api :refer [resolve-symbol]]
+            [maria.repl.api :refer [resolve-symbol doc-map]]
             [maria.util :refer [use-watch]]
             [maria.code.commands :as commands]
             [maria.ui :as ui]))
@@ -44,11 +44,11 @@
                                        sym (or (j/get (autocomplete/selectedCompletion (.-state view-update)) :sym)
                                                (.. view-update -state (field operator-field)))]
                                    (reset! !current-operator (when sym
-                                                               (try (resolve-symbol ns sym)
+                                                               (try (doc-map ns sym)
                                                                     (catch js/Error e nil)))))))}))])
 
 (v/defview view []
-  (when-let [{:keys [ns name doc arglists]} (meta (use-watch !current-operator))]
+  (when-let [{:keys [ns name doc arglists]} (use-watch !current-operator)]
     [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap
      {:class ["h-[35px]"
               "border-t border-stone-300"]}

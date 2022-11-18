@@ -63,14 +63,32 @@
   (-> (.mark Decoration spec)
       (.range from to)))
 
-(defn single-mark [spec range]
-  (.set Decoration #js[(mark spec range)]))
-
 
 (defn cursor-range [^js state]
   (if (.. state -selection -main -empty)
     (node-at-cursor state)
     (.. state -selection -main)))
+
+(defn deco-set
+  ([] (.-none Decoration))
+  ([spec range]
+   (.set Decoration #js[(mark spec range)])))
+
+(def eval-regions
+  (let [bg (fn [color] (j/lit {:attributes {:style (str "background-color: " color ";")}}))
+        selection-color "rgba(0, 243, 255, 0.14)"
+        block:highlight (fn [state]
+                          (deco-set (bg selection-color) #js{:from 0 :to (.. state -doc -length)}))
+        block:no-highlight (fn [^js state]
+                             (deco-set (bg "transparent") #js{:from 0 :to (.. state -doc -length)}))
+        cursor-node:highlight (fn [state]
+                                (when-let [range (or (u/guard (main-selection state) (complement (j/get :empty)))
+                                                     (cursor-range state))]
+                                  (deco-set (bg selection-color) range)))]
+    {#{"Shift" "Enter"} block:highlight
+     #{"Shift"} block:no-highlight
+     #{"Meta"} cursor-node:highlight
+     #{"Meta" "Enter"} cursor-node:highlight}))
 
 (defonce region-field
          (let [bg (fn [color] (j/lit {:attributes {:style (str "background-color: " color ";")}}))
@@ -80,24 +98,10 @@
                     (j/lit
                      {:create (constantly (.-none Decoration))
                       :update (j/fn [_value ^:js {:keys [state]}]
-                                (let [mods (set (keys (get-modifier-field state)))]
-                                  (if-some [[spec range] (when (n/within-program? state)
-                                                           (case mods
-                                                             (#{"Shift" "Enter"})
-                                                             [mark:selected (top-level-node state)]
-
-                                                             #{"Shift"}
-                                                             [mark:none (j/lit {:from 0 :to (.. state -doc -length)})]
-
-                                                             (#{"Meta"}
-                                                              #{"Meta" "Enter"})
-                                                             (when-let [range (or (u/guard (main-selection state) (complement (j/get :empty)))
-                                                                                  (cursor-range state))]
-                                                               [mark:selected range])
-                                                             nil))]
-                                    (single-mark spec range)
-                                    (.-none Decoration))))}))))
-
+                                (or (when (n/within-program? state)
+                                      (when-let [f (eval-regions (get-modifier-field state))]
+                                        (f state)))
+                                    (deco-set)))}))))
 
 (defn get-region-field [^js state] (.field state region-field))
 
@@ -119,25 +123,25 @@
   [{:as opts :keys [on-enter]}]
   (let [handle-enter (j/fn handle-enter [binding ^:js {:as view :keys [state]} _]
                        ;(j/log :handle-enter binding)
-                       (let [mods (get-modifier-field state)]
-                         (set-modifier-field! view (assoc mods "Enter" true))
+                       (let [mods (conj (get-modifier-field state) "Enter")]
+                         (set-modifier-field! view mods)
                          (when on-enter
                            (some-> (current-selection-str state)
                                    (u/guard (complement str/blank?))
-                                   on-enter)))
-                       true)
+                                   on-enter))
+                         (contains? eval-regions mods)))
         handle-key-event (j/fn [^:js {:as event :keys [altKey shiftKey metaKey controlKey type]}
                                 ^:js {:as view :keys [state]}]
                            ;(prn :handle-key-event type (keyName event))
                            (let [prev (get-modifier-field state)
-                                 next (cond-> {}
-                                              altKey (assoc "Alt" true)
-                                              shiftKey (assoc "Shift" true)
-                                              metaKey (assoc "Meta" true)
-                                              controlKey (assoc "Control" true)
+                                 next (cond-> #{}
+                                              altKey (conj "Alt")
+                                              shiftKey (conj "Shift")
+                                              metaKey (conj "Meta")
+                                              controlKey (conj "Control")
                                               (and (= "keydown" type)
                                                    (= "Enter" (keyName event)))
-                                              (assoc "Enter" true))]
+                                              (conj "Enter"))]
                              (when (not= prev next)
                                (set-modifier-field! view next))
                              false))
@@ -164,7 +168,7 @@
         (.domEventHandlers view/EditorView
                            #js{:keydown handle-key-event
                                :keypress handle-key-event
-                               :keyup   handle-key-event})]))
+                               :keyup handle-key-event})]))
 
 (defn cursor-node-string [^js state]
   (u/guard (some->> (node-at-cursor state)
