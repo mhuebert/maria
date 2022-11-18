@@ -1,6 +1,7 @@
 (ns maria.ui
-  (:require [yawn.view :as v]
-            [clojure.string :as str]))
+  (:require ["@radix-ui/react-tooltip" :as Tooltip]
+            [clojure.string :as str]
+            [yawn.view :as v]))
 
 (def tag-el :span.text-stone-500.text-xs.bg-stone-100.p-1.ml-1)
 
@@ -31,3 +32,13 @@
                 [tag-el (clojure.core/name tag)]))]
             (when arglists [show-arglists arglists])
             (some-> doc (str/replace #"\n ( \S)" (fn [[_ x]] x)))]))))
+
+(v/defview doc-tooltip [m trigger]
+  (when m
+    [:> Tooltip/Provider
+     [:> Tooltip/Root {:delayDuration 300}
+      [:> Tooltip/Trigger {:asChild true} trigger]
+      [:> Tooltip/Portal
+       [:> Tooltip/Content
+        [:> Tooltip/Arrow {:class "fill-white"}]
+        [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"} (show-doc m)]]]]]))

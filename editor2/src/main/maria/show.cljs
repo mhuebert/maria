@@ -1,8 +1,6 @@
 (ns maria.show
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
-            ["@radix-ui/react-popover" :as Popover]
-            ["@radix-ui/react-tooltip" :as Tooltip]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.icons :as icons]
@@ -67,13 +65,7 @@
                       {:href code-cell}
                       (icons/map-pin:mini icon-classes)])
                    (when m
-                     [:> Tooltip/Provider
-                      [:> Tooltip/Root {:delayDuration 300}
-                       [:> Tooltip/Trigger (icons/information-circle:mini icon-classes)]
-                       [:> Tooltip/Portal
-                        [:> Tooltip/Content
-                         [:> Tooltip/Arrow {:class "fill-white"}]
-                         [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"} (ui/show-doc m)]]]]])
+                     (ui/doc-tooltip m (icons/information-circle:mini icon-classes)))
                    (if fqn
                      [:div
                       [:span.text-gray-500 (namespace fqn) "/"]

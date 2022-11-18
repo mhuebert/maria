@@ -48,10 +48,11 @@
                                                                     (catch js/Error e nil)))))))}))])
 
 (v/defview view []
-  (when-let [{:keys [ns name doc arglists]} (use-watch !current-operator)]
-    [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap
-     {:class ["h-[35px]"
-              "border-t border-stone-300"]}
-     [:div (ui/show-sym ns name)]
-     [:div (ui/show-arglists arglists)]
-     [:div.truncate doc]]))
+  (when-let [{:as m :keys [ns name doc arglists]} (use-watch !current-operator)]
+    (ui/doc-tooltip m
+      [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
+       {:class ["h-[35px]"
+                "border-t border-stone-300"]}
+       [:div (ui/show-sym ns name)]
+       [:div (ui/show-arglists arglists)]
+       [:div.truncate doc]])))
