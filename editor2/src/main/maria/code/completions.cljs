@@ -1,7 +1,9 @@
 (ns maria.code.completions
   (:require ["@codemirror/autocomplete" :as a]
+            ["@codemirror/view" :as cm.view]
             [applied-science.js-interop :as j]
             [clojure.edn :as edn]
+            [clojure.core :as c]
             [maria.code.commands :as commands]
             [maria.repl.api :refer [*context*]]
             [maria.util :as u]
@@ -39,19 +41,21 @@
                              (some-> (sci.ns/sci-ns-aliases ctx current-ns)
                                      (get (symbol ns-name))))
                          current-ns)
-                syms (keys
-                      (if ns-name
-                        (sci.ns/sci-ns-publics ctx sci-ns)
-                        (sci.ns/sci-ns-map ctx sci-ns)))
+                syms (if ns-name
+                       (sci.ns/sci-ns-publics ctx sci-ns)
+                       (sci.ns/sci-ns-map ctx sci-ns))
                 results {:from from
                          :to to
                          :validFor #"^[^ \[\](){}@#]+"
                          :options
                          (to-array
-                          (mapv (fn [s]
-                                  (let [sym-name (name s)]
+                          (mapv (fn [^:clj [s s-var]]
+                                  (let [^:clj {:keys [ns name]} (meta s-var)
+                                        sym-name (c/name name)
+                                        ns-name (sci.ns/sci-ns-name ns)]
                                     {:label sym-name
                                      :sym (symbol ns-name sym-name)
+                                     :detail ns-name
                                      ;; :type "y" ;; indicates icon
                                      ;; :detail ;; short string shown after label
                                      ;; :info ;; shown when completion is selected
@@ -60,9 +64,38 @@
                                 syms))}]
             results))))))
 
+
+
 (j/js
+
+  (def styles
+    {".cm-tooltip.cm-tooltip-autocomplete"
+     {:border "none"
+      :background-color "white"
+      :box-shadow "2px 2px 8px 0 rgba(0,0,0,.2)"}
+     ".cm-tooltip.cm-tooltip-autocomplete > ul"
+     {:min-width "min(225px, 95vw)"}
+     ".cm-tooltip.cm-tooltip-autocomplete > ul > li"
+     {:padding "0.4rem"
+      :margin-top "-1px"
+      :color "black"
+      :border-bottom "1px solid rgba(0,0,0,0.05)"
+      :display "flex"
+      :font-size "0.8rem"}
+     ".cm-tooltip-autocomplete ul li[aria-selected]"
+     {:background-color "rgba(0, 0, 0, .03)"}
+     ".cm-completionLabel"
+     {:flex "auto"}
+     ".cm-completionDetail"
+     {:color "rgba(0,0,0,0.5)"
+      :font-style "normal"}})
+
   (defn plugin []
-    (a/autocompletion {:activateOnTyping true
-                       :selectOnOpen false
-                       :maxRenderedOptions 20
-                       :icons false})))
+    [(.theme cm.view/EditorView styles)
+     (.of cm.view/keymap
+          (j/push! a/completionKeymap {:key "Tab" :run a/acceptCompletion}))
+     (a/autocompletion {:activateOnTyping true
+                        :selectOnOpen false
+                        :maxRenderedOptions 20
+                        :icons false
+                        :defaultKeymap false})]))
