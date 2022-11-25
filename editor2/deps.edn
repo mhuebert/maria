@@ -21,7 +21,7 @@
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
         io.github.mhuebert/re-db {:git/sha "c7c2b0274d3cdb9db3f3d48cf2b37c5128edfd96"}
-        io.github.mhuebert/yawn {:git/sha "ac5059c7428300136e125104edd6a05b3c18382c"}
+        io.github.mhuebert/yawn {:git/sha "1d00dc4172d9422209f076d1c8c472df7a637568"}
 
         io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
         io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
