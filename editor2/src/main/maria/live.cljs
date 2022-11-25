@@ -36,7 +36,8 @@
                     ex/js-interop
                     ex/yawn
                     )
-                   ex/yawn
+
+
 
 
 
@@ -58,5 +59,5 @@
    example
    [eldoc/view]])
 
-(defn init []
+(defn ^:export init []
   (root/create :maria-live (v/x [landing])))

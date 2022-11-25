@@ -5,9 +5,7 @@
 (defn index-html []
   (page/root "Maria"
              {:meta {:viewport "width=device-width, initial-scale=1"}
-              :scripts/head [{:src "https://cdn.jsdelivr.net/npm/jsxgraph@1.4.6/distrib/jsxgraphcore.js"}]
               :styles [{:href "https://prosemirror.net/css/editor.css"}
-                       {:href "https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"}
                        {:href "/css/tailwind.css"}]
               :props/html {:class "bg-[#eeeeee]"}
               :body [:div#maria-live]

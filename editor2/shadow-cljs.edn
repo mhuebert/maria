@@ -13,6 +13,7 @@
    :devtools {:http-root "public"
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
+   :module-loader true
    :modules {:main {:init-fn maria.live/init}
              :ext.katex {:entries [maria.ext.katex]
                          :depends-on #{:main}}

@@ -272,6 +272,9 @@
 
 (def builtin-viewers
   (flatten (list
+            (fn [_ x]
+              (when (= x ::loading)
+                loader))
             (fn [opts x]
               (when-let [!status (cells.async/!status x)]
                 (show-with-async-status opts !status x)))

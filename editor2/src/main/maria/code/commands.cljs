@@ -193,10 +193,11 @@
          result (try (sci/eval-string ctx opts source)
                      (catch js/Error e ^:clj {:error e}))]
      (if (a/await? result)
-       (a/await
-        (-> result
-            (.then (fn [result] (set-result! node-view result)))
-            (.catch (fn [e] (set-result! node-view {:error e})))))
+       (do (set-result! node-view {:value :maria.show/loading})
+           (a/await
+            (-> result
+                (.then (fn [result] (set-result! node-view result)))
+                (.catch (fn [e] (set-result! node-view {:error e}))))))
        (set-result! node-view result)))))
 
 (defn code:eval-block! [this]

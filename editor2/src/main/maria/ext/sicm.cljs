@@ -1,6 +1,5 @@
 (ns maria.ext.sicm
   (:require [maria.ext.katex :as katex]
-            [maria.show :as show]
             [sci.core :as sci]
             [sicmutils.env :refer [->TeX simplify]]
             [sicmutils.env.sci :as sicm.sci]
@@ -17,6 +16,7 @@
                     (->> (katex/show-katex :span)))))])
 
 (defn init [ctx]
-  (-> ctx
-      (sci/merge-opts sicm.sci/context-opts)
-      (show/add-viewers :sicm viewers)))
+
+  ;; TODO
+  ;; install viewers
+  (sci/merge-opts ctx sicm.sci/context-opts))

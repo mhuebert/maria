@@ -1,14 +1,14 @@
 (ns maria.repl.sci
   (:refer-clojure :exclude [eval])
   (:require-macros [maria.repl.sci])
-  (:require [applied-science.js-interop]
+  (:require ["@codemirror/view" :as view]
+            [applied-science.js-interop]
             [cells.api]
             [cells.hooks]
             [cells.impl]
             [clojure.string :as str]
             [maria.helpful]
             [maria.repl.api]
-            ["@codemirror/view" :as view]
             [maria.ui]
             [maria.ui]
             [promesa.core :as p]
@@ -17,12 +17,29 @@
             [sci.configs.applied-science.js-interop :as js-interop.sci]
             [sci.configs.funcool.promesa :as promesa.sci]
             [sci.core :as sci]
+            [sci.ctx-store :as ctx]
             [sci.impl.namespaces :as sci.ns]
             [sci.impl.resolve]
             [sci.lang]
+            [shadow.lazy :as lazy]
             [shapes.core]
-            [yawn.sci-config :as yawn.sci]
-            [sci.ctx-store :as ctx]))
+            [yawn.sci-config :as yawn.sci]))
+
+;; Extension point for additional lazy-loaded libraries
+(def lazy-libs {"sicmutils" (lazy/loadable maria.ext.sicm/init)})
+
+(defn lazy-load [{:keys [libname ctx]}]
+  (when-let [loadable (lazy-libs (first (str/split (str libname) #"\.")))]
+    (p/do (if false #_(lazy/ready? loadable)
+            (@loadable ctx)
+            (p/let [init (lazy/load loadable)]
+              (init ctx)))
+          {})))
+
+(defn async-load-fn [{:as opts :keys [libname ctx]}]
+  (or (lazy-load opts)
+      (throw (js/Error. (str "Module not found for lib: " libname)))))
+
 
 (defn await? [x] (and (instance? js/Promise x) (a/await? x)))
 
@@ -45,7 +62,7 @@
                       (if (await? res)
                         (a/await (-> res
                                      (.then continue)
-                                     (.catch (fn [e] {:error e}))))
+                                     (.catch (fn [e] e))))
                         (continue))))]
     (eval-next nil)))
 
@@ -81,15 +98,9 @@
                                        (symbol (name sym))
                                        (meta resolved)) @resolved)))) ctx syms)))
 
-(defn load-fn [{:keys [namespace]}]
-  (when (str/starts-with? (str namespace)
-                          "sicmutils.")
-    {:file (str namespace ".cljs")
-     :source ":source"}
-    ))
-
 (def sci-opts
-  (-> {:bindings {'prn prn
+  (-> {:async-load-fn async-load-fn
+       :bindings {'prn prn
                   'println println}
        :classes {'js goog/global
                  'Math js/Math}
