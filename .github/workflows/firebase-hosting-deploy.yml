@@ -10,7 +10,10 @@ jobs:
       dir: './editor2'
     steps:
       - uses: actions/checkout@v3
-
+      - name: Reconfigure git to use HTTP authentication
+        run: >
+          git config --global url."https://github.com/".insteadOf
+          ssh://git@github.com/
       - name: Cache clojure dependencies
         uses: actions/cache@v3
         with:
