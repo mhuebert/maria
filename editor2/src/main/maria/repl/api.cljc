@@ -1,39 +1,44 @@
 (ns maria.repl.api
   (:refer-clojure :exclude [atom])
-  (:require [sci.impl.resolve]
-            [sci.core :as sci]
-            #?(:cljs ["react" :as react])
+  (:require #?(:cljs ["react" :as react])
             #?(:cljs [sci.async :as a])
-            [promesa.core :as p]
-            [yawn.view :as v]
-            [re-db.reactive :as r]
-            [sci.impl.vars :as vars]
-            [sci.impl.utils :as utils]
-            [sci.impl.resolve :as resolve]
-            [sci.impl.namespaces :as sci.ns]
+            [maria.helpful :as helpful]
             [maria.ui :as ui]
-            [maria.helpful :as helpful]))
+            [promesa.core :as p]
+            [re-db.reactive :as r]
+            [sci.core :as sci]
+            [sci.impl.namespaces :as sci.ns]
+            [sci.impl.resolve]
+            [sci.impl.resolve :as resolve]
+            [sci.impl.utils :as utils]
+            [sci.impl.vars :as vars]
+            [yawn.view :as v]
+            [sci.ctx-store :as store]))
 
-(defonce ^:dynamic *context* (clojure.core/atom nil))
+(defn current-ns [ctx]
+  @(:last-ns ctx))
+
+(def current-ns-name (comp sci.ns/sci-ns-name current-ns))
 
 (defn resolve-symbol
   "Resolves `sym` to var, optionally evaluated within `ns`"
   ([sym] (resolve-symbol nil sym))
-  ([ns sym]
+  ([ns sym] (resolve-symbol (store/get-ctx) ns sym))
+  ([ctx ns sym]
    (vars/with-bindings
     {utils/current-ns (or ns @utils/current-ns)}
-    (try (resolve/resolve-symbol @*context* sym)
+    (try (resolve/resolve-symbol ctx sym)
          (catch js/Error e nil)))))
 
 (defn doc-map
   ([sym] (doc-map nil sym))
-  ([ns sym]
-   (vars/with-bindings {utils/current-ns (or ns @utils/current-ns)}
-                       (merge (meta (resolve-symbol ns sym))
-                              (helpful/doc-map sym)
-                              (when-let [sci-ns (sci.ns/sci-find-ns @*context* sym)]
-                                {:doc (:doc (meta sci-ns))
-                                 :name sym})))))
+  ([ns sym] (doc-map (store/get-ctx) ns sym))
+  ([ctx ns sym]
+   (merge (meta (resolve-symbol ns sym))
+          (helpful/doc-map sym)
+          (when-let [sci-ns (sci.ns/sci-find-ns ctx sym)]
+            {:doc (:doc (meta sci-ns))
+             :name sym}))))
 
 (defn html
   "Renders hiccup forms to html (via underlying view layer, eg. React)"
@@ -49,7 +54,7 @@
   "Display public vars in namespace (symbol)"
   [&form &env ns]
   #_`(with-out-str (clojure.repl/dir ~ns))
-  `'~(some->> @maria.repl.api/*context*
+  `'~(some->> (store/get-ctx)
               :env
               deref
               :namespaces

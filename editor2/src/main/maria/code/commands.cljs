@@ -9,9 +9,9 @@
             [maria.repl.sci :as sci]
             [promesa.core :as p]
             [maria.code.eval-region :as eval-region]
-            [maria.repl.api :refer [*context*]]
             [sci.async :as a]
-            [maria.util :as u]))
+            [maria.util :as u]
+            [sci.impl.namespaces :as sci.ns]))
 
 (j/js
 
@@ -184,33 +184,37 @@
 
 (j/defn code:eval-string!
   ([this source] (code:eval-string! nil this source))
-  ([opts this source]
+  ([opts node-view source]
    (let [opts (-> opts
-                  (update :ns #(or % (code:ns this)))
-                  (assoc :clojure.core/eval-file (j/get this :id)))
-         result (try (sci/eval-string @*context* opts source)
+                  (update :ns #(or % (code:ns node-view)))
+                  (assoc :clojure.core/eval-file (j/get node-view :id)))
+         ctx @(j/get-in node-view [:proseView :!sci-ctx])
+         _ (assert "code:eval-string! requires sci context")
+         result (try (sci/eval-string ctx opts source)
                      (catch js/Error e ^:clj {:error e}))]
      (if (a/await? result)
        (a/await
         (-> result
-            (.then (fn [result] (set-result! this result)))
-            (.catch (fn [e] (set-result! this {:error e})))))
-       (set-result! this result)))))
+            (.then (fn [result] (set-result! node-view result)))
+            (.catch (fn [e] (set-result! node-view {:error e})))))
+       (set-result! node-view result)))))
 
 (defn code:eval-block! [this]
   (code:eval-string! this (code:block-str this))
   true)
 
 
-(defn prose:eval-doc! [^js prose-view]
-  (let [node-views (->> prose-view
+(j/defn prose:eval-doc! [^js proseView]
+  (let [node-views (->> proseView
                         .-docView
                         .-children
                         (keep (j/get :spec))
-                        (filterv (j/get :codeView)))]
+                        (filterv (j/get :codeView)))
+        {:as ctx :keys [last-ns]} @(j/get proseView :!sci-ctx)]
+    (vreset! last-ns (sci.ns/sci-find-ns ctx 'user))
     ((fn continue [i]
        (when-let [node-view (nth node-views i nil)]
-         (let [value (code:eval-string! {:ns (:last-ns @*context*)} node-view (code:block-str node-view))]
+         (let [value (code:eval-string! node-view (code:block-str node-view))]
            (if (a/await? value)
              (p/do value (continue (inc i)))
              (continue (inc i)))))

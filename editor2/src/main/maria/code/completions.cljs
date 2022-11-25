@@ -2,10 +2,9 @@
   (:require ["@codemirror/autocomplete" :as a]
             ["@codemirror/view" :as cm.view]
             [applied-science.js-interop :as j]
-            [clojure.edn :as edn]
+            [edamame.core :as edamame]
             [clojure.core :as c]
             [maria.code.commands :as commands]
-            [maria.repl.api :refer [*context*]]
             [maria.util :as u]
             [nextjournal.clojure-mode.node :as n]
             [sci.core :as sci]
@@ -27,9 +26,10 @@
         ;; clojure.core/x        ns: fully qualified, looks in the-ns publics
         ;; c/x                   ns: alias, looks in the-ns publics
         ;; x                     no ns, look at whole current-ns
-        (when-let [sym (try (edn/read-string (.sliceDoc state from pos))
+        (when-let [sym (try (edamame/parse-string (.sliceDoc state from pos))
                             (catch js/Error e nil))]
-          (let [ctx @*context*
+          (let [ctx @(j/get-in node-view [:proseView :!sci-ctx])
+                _ (assert ctx "completions requires sci context")
                 current-ns (or (commands/code:ns node-view)
                                (sci.ns/sci-find-ns ctx 'user))
                 ns-name (namespace sym)

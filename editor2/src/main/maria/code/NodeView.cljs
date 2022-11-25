@@ -1,29 +1,26 @@
 (ns maria.code.NodeView
-  (:require [applied-science.js-interop :as j]
-            [maria.prose.schema :as prose-schema]
-            ["lezer-clojure" :as lezer-clojure]
-            ["prosemirror-state" :refer [TextSelection Selection]]
+  (:require ["@codemirror/commands" :as cmd]
             ["@codemirror/language" :as lang]
             ["@codemirror/state" :refer [EditorState]]
             ["@codemirror/view" :as cm.view :refer [EditorView]]
+            ["lezer-clojure" :as lezer-clojure]
             ["prosemirror-history" :as history]
-            ["@codemirror/commands" :as cmd]
-            ["react-dom/client" :as react.client]
+            ["prosemirror-state" :refer [TextSelection Selection]]
             ["react" :as react]
-            [nextjournal.clojure-mode.util :as u]
-            [nextjournal.clojure-mode :as clj-mode]
-            [maria.style :as style]
-            [maria.keymap :as keys]
-            [maria.repl.sci :as sci]
+            [applied-science.js-interop :as j]
             [maria.code.commands :as commands]
-            [maria.code.views :as views]
-            [yawn.view.dom :as dom]
-            [re-db.reactive :as r]
+            [maria.code.completions :as completions]
             [maria.code.eldoc :as eldoc]
-            [yawn.view :as v]
             [maria.code.error-marks :as error-marks]
             [maria.code.eval-region :as eval-region]
-            [maria.code.completions :as completions]))
+            [maria.code.views :as views]
+            [maria.keymaps :as keymaps]
+            [maria.prose.schema :as prose-schema]
+            [maria.styles :as styles]
+            [nextjournal.clojure-mode :as clj-mode]
+            [nextjournal.clojure-mode.util :as u]
+            [re-db.reactive :as r]
+            [yawn.root :as root]))
 
 (j/js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -144,13 +141,12 @@
              {:parser (.configure lezer-clojure/parser
                                   {:props [clj-mode/format-props
                                            (.add lang/foldNodeProp clj-mode/fold-node-props)
-                                           style/code-styles]})}))
+                                           styles/code-styles]})}))
 
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
-    (let [eval-modifier "Alt"
-          dom (js/document.createElement "div")
-          this (j/obj :id (str (gensym "code-view-")))]
-      (dom/mount dom #(#'views/code-row this))
+    (let [el (js/document.createElement "div")
+          this (j/obj :id (str (gensym "code-view-")))
+          root (root/create el (views/code-row this))]
       (j/extend! this
         {:getPos getPos
          :proseView proseView
@@ -182,15 +178,15 @@
 
 
 
-                                                (.theme EditorView style/code-theme)
+                                                (.theme EditorView styles/code-theme)
                                                 (cmd/history)
                                                 (.. EditorState -allowMultipleSelections (of true))
-                                                (lang/syntaxHighlighting style/code-highlight-style)
+                                                (lang/syntaxHighlighting styles/code-highlight-style)
                                                 (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
                                                 (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
                                                                                              true)})
-                                                (keys/code-keymap this)
+                                                (keymaps/code-keymap this)
                                                 (.of cm.view/keymap clj-mode/complete-keymap)
                                                 (.of cm.view/keymap cmd/historyKeymap)
 
@@ -211,7 +207,7 @@
          :code-updating? false
 
          ;; NodeView API
-         :dom dom
+         :dom el
          :update (fn [node]
                    #_(j/log :prose:update)
                    (prose:forward-update this node))
@@ -225,8 +221,6 @@
          :stopEvent (fn [e] true)
          :destroy #(let [{:keys [codeView !result]} this]
                      (.destroy codeView)
-                     ;; setTimeout => avoids trying to unmount during a re-render caused by react-refresh
-                     (js/setTimeout (partial dom/unmount dom) 0)
-
+                     (root/unmount-soon root)
                      (let [value ^:clj (:value @!result)]
                        (when (satisfies? r/IDispose value) (r/dispose! value))))}))))

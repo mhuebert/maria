@@ -1,9 +1,7 @@
-(ns maria.style
-  (:require ["@lezer/highlight" :refer [tags styleTags]]
-            ["@codemirror/language" :as highlight]
-            [applied-science.js-interop :as j]
-            [clojure.string :as str]
-            [shadow.resource :as rc]))
+(ns maria.styles
+  (:require ["@codemirror/language" :as highlight]
+            ["@lezer/highlight" :refer [tags styleTags]]
+            [applied-science.js-interop :as j]))
 
 (def prose-element :div.relative)
 

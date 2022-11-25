@@ -47,7 +47,7 @@
 (defonce modifier-effect (.define StateEffect))
 (defonce modifier-field
          (.define StateField
-                  (j/lit {:create (constantly {})
+                  (j/lit {:create (constantly #{})
                           :update (fn [value ^js tr]
                                     (or (some-> (first (filter #(.is ^js % modifier-effect) (.-effects tr)))
                                                 (j/get :value))

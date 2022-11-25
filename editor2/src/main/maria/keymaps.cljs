@@ -1,17 +1,15 @@
-(ns maria.keymap
-  (:require [applied-science.js-interop :as j]
-            [maria.prose.schema :refer [schema]]
-            [maria.code.commands :as commands]
+(ns maria.keymaps
+  (:require ["@codemirror/commands" :as cm.commands]
+            ["@codemirror/view" :as cm.view]
             ["prosemirror-state" :refer [NodeSelection TextSelection Selection]]
             ["prosemirror-commands" :as pm.cmd :refer [baseKeymap]]
             ["prosemirror-keymap" :as pm.keymap]
             ["prosemirror-schema-list" :as pm.schema-list]
             ["prosemirror-history" :as pm.history]
-            ["@codemirror/commands" :as cm.commands]
-            ["@codemirror/view" :as cm.view]
-            [nextjournal.clojure-mode.node :as n]
-            [clojure.string :as str]
-            [maria.prose.links :as links]))
+            [applied-science.js-interop :as j]
+            [maria.code.commands :as commands]
+            [maria.prose.links :as links]
+            [maria.prose.schema :refer [schema]]))
 
 (def default-keys (pm.keymap/keymap baseKeymap))
 
@@ -126,7 +124,7 @@
            :run (partial commands/code:remove-on-backspace this)}
           {:key :Mod-Alt-Enter
            :doc "Evaluate doc"
-           :run (fn [_] (commands/prose:eval-doc! (.. this -proseView))
+           :run (fn [_] (commands/prose:eval-doc! (j/get this :proseView))
                   true)}
 
           {:key :Shift-Enter

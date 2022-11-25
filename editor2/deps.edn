@@ -9,8 +9,9 @@
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         #_#_org.babashka/sci {:mvn/version "0.5.34"}
-        io.github.babashka/sci {:git/sha "6cdf788aca5dcd579b77688a4efa24325e7852ff"}
-        funcool/promesa {:mvn/version "8.0.450"}
+        io.github.babashka/sci {:git/sha "914919f248b7e3fc2ec59c435320145f588899d0"}
+        io.github.babashka/sci.configs {:git/sha "2717e545e5a61d4cccd85350b9ad6265afc9146c"}
+        funcool/promesa {:mvn/version "9.1.538"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         com.taoensso/encore {:mvn/version "3.32.0"}
 
@@ -20,12 +21,10 @@
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
         io.github.mhuebert/re-db {:git/sha "c7c2b0274d3cdb9db3f3d48cf2b37c5128edfd96"}
-        io.github.babashka/sci.configs {:git/sha "63225c8606d593c595d2f10a6fa5bf38103852df"}
-        io.github.mhuebert/yawn {:git/sha "397dccd8fbca3cb2cef5ba913f3fe5aa89e6231f"}
+        io.github.mhuebert/yawn {:git/sha "ac5059c7428300136e125104edd6a05b3c18382c"}
 
         io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
         io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
-        io.github.nextjournal/react-hooks-cljs {:git/sha "a5ed3e8a82a8f4fc4aaead634591390f6be554d7"}
         io.github.sicmutils/sicmutils {:git/sha "888357d29d617c4d6738aab159ce91ea8252baa0"}
         }
  :aliases
@@ -34,5 +33,4 @@
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}
                        io.github.mhuebert/re-db {:local/root "../../re-db"}
-                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}
-                       io.github.nextjournal/react-hooks-cljs {:local/root "../../react-hooks"}}}}}
+                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}}}}}

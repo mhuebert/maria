@@ -1,14 +1,15 @@
 (ns maria.prose.links
   (:require ["prosemirror-state" :refer [Plugin TextSelection]]
             ["prosemirror-inputrules" :as input-rules]
-            ["react-dom/client" :refer [createRoot]]
             [applied-science.js-interop :as j]
-            [shadow.cljs.modern :refer [defclass]]
-            [yawn.view :as v]
-            [maria.prose.schema :refer [schema]]
-            [maria.icons :as icons]
             [clojure.string :as str]
-            [maria.util :as u]))
+            [maria.icons :as icons]
+            [maria.prose.schema :refer [schema]]
+            [maria.util :as u]
+            [shadow.cljs.modern :refer [defclass]]
+            [yawn.hooks :as h]
+            [yawn.view :as v]
+            [yawn.root :as root]))
 
 (def mark:link (.. schema -marks -link))
 (def node:image (.. schema -nodes -image))
@@ -97,9 +98,9 @@
 (v/defview link-tooltip
   {:key :value}
   [{:as props :keys [value set-value! style]}]
-  (let [[edit-text set-text!] (v/use-state nil)
-        [hidden? set-hidden!] (v/use-state (nil? props))
-        input-el (v/use-ref)
+  (let [[edit-text set-text!] (h/use-state nil)
+        [hidden? set-hidden!] (h/use-state (nil? props))
+        input-el (h/use-ref)
         c:icon-btn "hover:text-gray-700 text-gray-500 inline-flex items-center p-2 cursor-pointer"
         exit! #(set-text! nil)
         save! #(do (.preventDefault %)
@@ -108,10 +109,10 @@
         remove! #(set-value! nil)]
 
     ;; select input after showing it
-    (v/use-effect #(some-> @input-el (j/call :select)) [(some? edit-text)])
+    (h/use-effect #(some-> @input-el (j/call :select)) [(some? edit-text)])
 
     ;; hide on escape
-    (v/use-effect (fn []
+    (h/use-effect (fn []
                     (when-not hidden?
                       (let [f (on-keys "Escape" (fn [^js event]
                                                   (.preventDefault event)
@@ -165,7 +166,7 @@
                          (j/!set :className "pm-tooltip-link")))
                (.. js/document -body (appendChild div))
                #_(.. view -dom -parentNode (appendChild div))
-               (set! root (createRoot div))
+               (set! root (root/create div))
                (.update this prose-view nil))
   Object
   (update [this ^js view ^js prev-state]
@@ -181,21 +182,21 @@
             (cond
               (not changed?) nil ;; no-op
               link-href (j/let [[from to] (mark-extend $head mark:link)]
-                          (.render root (link-tooltip {:value link-href
-                                                       :set-value! #(edit-href view $head (u/some-str %))
-                                                       :style (tooltip-position view from to)})))
+                          (root/render root (link-tooltip {:value link-href
+                                                           :set-value! #(edit-href view $head (u/some-str %))
+                                                           :style (tooltip-position view from to)})))
               image-node (j/let [^js {:as attrs :keys [src]} (.. image-node -attrs)
                                  from (.. selection -$from -pos)
                                  to (.. selection -$to -pos)]
                            (j/log :image-node image-node)
-                           (.render root (link-tooltip {:value src
-                                                        :set-value! #(.dispatch view
-                                                                                (.. state -tr
-                                                                                    (setNodeAttribute from "src" %)))
-                                                        :style (tooltip-position view from to)})))
+                           (root/render root (link-tooltip {:value src
+                                                            :set-value! #(.dispatch view
+                                                                                    (.. state -tr
+                                                                                        (setNodeAttribute from "src" %)))
+                                                            :style (tooltip-position view from to)})))
               :else (.render root (link-tooltip nil)))))
   (destroy [this]
-           (.unmount root)
+           (root/unmount-soon root)
            (.. div -parentNode (removeChild div))))
 
 (j/js

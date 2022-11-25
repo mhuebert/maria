@@ -1,25 +1,23 @@
 (ns maria.prose.editor
-  (:require [applied-science.js-interop :as j]
-            [tools.maria.component :refer [with-element]]
-            [maria.prose.input-rules :as input-rules]
-            [maria.keymap :as keys]
-            [maria.style :as style]
-            [maria.code.parse-clj :as parse-clj :refer [clj->md]]
-            [maria.prose.schema :as markdown]
-            ["react" :as re]
-            ["react-dom/client" :refer [createRoot]]
-            ["prosemirror-view" :refer [EditorView]]
+  (:require ["prosemirror-view" :refer [EditorView]]
             ["prosemirror-state" :refer [EditorState]]
             ["prosemirror-markdown" :as md]
-            ["prosemirror-example-setup" :refer [exampleSetup]]
             ["prosemirror-history" :refer [history]]
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
+            [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.code.NodeView :as node-view]
             [maria.code.commands :as commands]
-            [maria.prose.links :as links]))
+            [maria.code.parse-clj :as parse-clj :refer [clj->md]]
+            [maria.keymaps :as keymaps]
+            [maria.prose.input-rules :as input-rules]
+            [maria.prose.links :as links]
+            [maria.prose.schema :as markdown]
+            [maria.repl.sci :as sci]
+            [maria.styles :as styles]
+            [tools.maria.component :refer [with-element]]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -94,8 +92,8 @@
 
 (j/js
   (defn plugins []
-    [keys/prose-keymap
-     keys/default-keys
+    [keymaps/prose-keymap
+     keymaps/default-keys
      input-rules/maria-rules
      (dropCursor)
      (gapCursor)
@@ -103,7 +101,7 @@
      ~@(links/plugins)]))
 
 (defn editor [{:keys [source]}]
-  (with-element {:el style/prose-element}
+  (with-element {:el styles/prose-element}
     (fn [^js element]
 
       (let [state (j/js
@@ -111,14 +109,15 @@
                                                    parse-clj/clj->md
                                                    markdown/md->doc)
                                           :plugins (plugins)}))
-            view (j/js
-                   (EditorView. element {:state state
-                                         :nodeViews {:code_block node-view/editor}
-                                         ;; no-op tx for debugging
-                                         #_#_:dispatchTransaction (fn [tx]
-                                                                    (this-as ^js view
-                                                                      (let [state (.apply (.-state view) tx)]
-                                                                        (.updateState view state))))}))]
+            view (-> (j/js
+                       (EditorView. element {:state state
+                                             :nodeViews {:code_block node-view/editor}
+                                             ;; no-op tx for debugging
+                                             #_#_:dispatchTransaction (fn [tx]
+                                                                        (this-as ^js view
+                                                                          (let [state (.apply (.-state view) tx)]
+                                                                            (.updateState view state))))}))
+                     (j/assoc! :!sci-ctx (atom (sci/initial-context))))]
         (commands/prose:eval-doc! view)
         #(j/call view :destroy)))))
 

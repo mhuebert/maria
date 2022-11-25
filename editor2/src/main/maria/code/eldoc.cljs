@@ -5,7 +5,7 @@
             [applied-science.js-interop :as j]
             [nextjournal.clojure-mode.node :as n]
             [yawn.view :as v]
-            [maria.repl.api :refer [resolve-symbol doc-map]]
+            [maria.repl.api :as repl]
             [maria.util :refer [use-watch]]
             [maria.code.commands :as commands]
             [maria.ui :as ui]))
@@ -42,9 +42,11 @@
                                (when (.. view-update -view -hasFocus)
                                  (let [ns (commands/code:ns node-view)
                                        sym (or (j/get (autocomplete/selectedCompletion (.-state view-update)) :sym)
-                                               (.. view-update -state (field operator-field)))]
+                                               (.. view-update -state (field operator-field)))
+                                       ctx @(j/get-in node-view [:proseView :!sci-ctx])]
+                                   (assert ctx "eldoc extension requires sci context")
                                    (reset! !current-operator (when sym
-                                                               (try (doc-map ns sym)
+                                                               (try (repl/doc-map ctx ns sym)
                                                                     (catch js/Error e nil)))))))}))])
 
 (v/defview view []

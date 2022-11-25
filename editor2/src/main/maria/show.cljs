@@ -3,19 +3,19 @@
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
+            [maria.code.commands :as commands]
+            [maria.code.error-marks :as error-marks]
             [maria.icons :as icons]
-            [shapes.core :as shapes]
-            [maria.util :refer [use-watch]]
-            [nextjournal.clerk.sci-viewer :as clerk.sci-viewer]
-            [promesa.core :as p]
-            [sci.core :as sci]
-            [yawn.view :as v]
             [maria.repl.api :as repl]
             [maria.ui :as ui]
-            [maria.util :as u]
-            [maria.code.error-marks :as error-marks]
-            [maria.code.commands :as commands]
-            [nextjournal.clojure-mode.node :as n]))
+            [maria.util :refer [use-watch]]
+            [maria.util]
+            [nextjournal.clojure-mode.node :as n]
+            [promesa.core :as p]
+            [sci.core :as sci]
+            [shapes.core :as shapes]
+            [yawn.hooks :as h]
+            [yawn.view :as v]))
 
 
 (def COLL-PADDING 4)
@@ -35,6 +35,11 @@
     (j/let [^:js {:keys [from to]} (error-marks/get-range state location)]
       (n/string state from to))))
 
+(defn get-ctx [opts]
+  (let [ctx (-> opts :node-view (j/get-in [:proseView :!sci-ctx]) deref)]
+    (assert ctx "show-opts requires a sci context")
+    ctx))
+
 (v/defview show-stacktrace [opts stack]
   ;; - for built-in, look up clojure.core metadata / link to source?
   (into [:div.flex.flex-col.-mx-2]
@@ -47,7 +52,9 @@
                       code-cell (when (and file (str/starts-with? file "code-"))
                                   (str "#" file))
                       m (when fqn
-                          (let [m (meta (repl/resolve-symbol fqn))]
+                          (let [m (meta (repl/resolve-symbol (get-ctx opts)
+                                                             nil
+                                                             fqn))]
                             (when (or (:doc m) (not-empty (:arglists m)))
                               m)))
                       fqn (if m
@@ -94,16 +101,18 @@
      [:div.p-2
       [show-stacktrace opts stack]])])
 
-(declare ^:dynamic *viewers*)
+(declare get-viewers)
 
 (v/defview show
   [opts x]
-  (let [opts (-> (or opts {})
-                 (update :depth (fnil inc -1))
-                 (update :stack (fnil conj ()) x))]
+  (let [opts
+        (-> opts
+            (update :depth (fnil inc -1))
+            (update :stack (fnil conj ()) x)
+            (update :viewers #(or % (get-viewers (get-ctx opts)))))]
     (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
                              (reduced out)
-                             _)) "No viewer" *viewers*)))
+                             _)) "No viewer" (:viewers opts))))
 
 (v/defview more-btn [on-click]
   [:div.inline-block.-mt-1 {:on-click on-click}
@@ -159,10 +168,10 @@
                 (recur available-height available-width (inc limit))))))))
 
 (defn use-limit [coll initial-limit]
-  (j/let [!inc (v/use-ref initial-limit)
-          [showing set-showing!] (v/use-state initial-limit)
-          !wrapper (v/use-ref)
-          !parent (v/use-ref)
+  (j/let [!inc (h/use-ref initial-limit)
+          [showing set-showing!] (h/use-state initial-limit)
+          !wrapper (h/use-ref)
+          !parent (h/use-ref)
           total (bounded-count (+ showing @!inc) coll)]
     [(take showing coll)
      (when (> total showing)
@@ -200,8 +209,8 @@
         error (show-error opts error)))
 
 (v/defview show-promise [opts p]
-  (let [[v v!] (v/use-state ::loading)]
-    (v/use-effect
+  (let [[v v!] (h/use-state ::loading)]
+    (h/use-effect
      (fn []
        (v! ::loading)
        (p/then p v!)
@@ -219,7 +228,7 @@
 
 (v/defview show-str [opts x]
   ;; TODO - collapse via button, not clicking anywhere on the text
-  (let [[collapse toggle!] (v/use-state (or (> (count (str/split-lines x)) 10)
+  (let [[collapse toggle!] (h/use-state (or (> (count (str/split-lines x)) 10)
                                             (> (count x) 200)))
         x (str \" x \")]
     (if collapse
@@ -232,7 +241,7 @@
 (def show-list (partial show-coll "(" ")"))
 
 (v/defview show-function [_ f]
-  (let [[showing toggle!] (v/use-state false)]
+  (let [[showing toggle!] (h/use-state false)]
     ;; TODO show arrow
     [:div {:on-click #(toggle! not)}
      [:div "ƒ"]
@@ -261,8 +270,8 @@
     (when-some [f (views (type x))]
       (f opts x))))
 
-(def ^:dynamic *viewers*
-  (flatten [
+(def builtin-viewers
+  (flatten (list
             (fn [opts x]
               (when-let [!status (cells.async/!status x)]
                 (show-with-async-status opts !status x)))
@@ -307,5 +316,20 @@
             (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
             (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
             (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
-            maria.sicm-views/views
-            (fn [x] (clerk.sci-viewer/inspect x))]))
+            #_maria.sicm-views/views
+            #_(fn [x] (clerk.sci-viewer/inspect x)))))
+
+(defn add-viewers
+  [ctx key viewers]
+  (update-in ctx [::viewers (repl/current-ns-name ctx)]
+             (fn [x]
+               (-> x
+                   (->> (filterv #(not= key (first %))))
+                   (conj [key viewers])))))
+
+(defn get-viewers [ctx]
+  ;; added-viewers are added in front of builtin viewers,
+  ;; most recently added viewer takes precedence
+  (into builtin-viewers
+        (mapcat second)
+        (get-in ctx [::viewers (repl/current-ns-name ctx)])))

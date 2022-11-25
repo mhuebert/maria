@@ -1,15 +1,14 @@
 (ns maria.code.views
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
-            [yawn.view :as v]
-            [shapes.core :as shapes]
-            [sci.lang]
-            [nextjournal.clerk.viewer :as clerk.viewer]
             [cells.async]
-            maria.sicm-views
-            [maria.util :refer [use-watch]]
             [maria.show :refer [show]]
-            [shadow.cljs.modern :refer [defclass]]))
+            [maria.util :refer [use-watch]]
+            [sci.lang]
+            [shadow.cljs.modern :refer [defclass]]
+            [shapes.core :as shapes]
+            [yawn.hooks :as h]
+            [yawn.view :as v]))
 
 (defclass ErrorBoundary
   (extends react/Component)
@@ -29,11 +28,6 @@
 
 (defn shape? [x] (instance? shapes/Shape x))
 
-(clerk.viewer/reset-viewers! :default (clerk.viewer/add-viewers clerk.viewer/default-viewers
-                                                                [{:pred #(shape? (cond-> % (coll? %) first))
-                                                                  :transform-fn clerk.viewer/mark-presented
-                                                                  :render-fn #(show nil %)}]))
-
 (v/defview value-viewer [this]
   (let [{:keys [value error key]} (use-watch (j/get this :!result))]
     [:... {:key key}
@@ -44,7 +38,7 @@
                               :value value}]))]))
 
 (v/defview code-row [^js {:as this :keys [!result mounted! id]}]
-  (let [ref (v/use-callback (fn [el] (when el (mounted! el))))]
+  (let [ref (h/use-callback (fn [el] (when el (mounted! el))))]
     [:div.-mx-4.mb-4.md:flex.w-full
      {:ref ref :id id}
      [:div {:class "md:w-1/2 text-base"

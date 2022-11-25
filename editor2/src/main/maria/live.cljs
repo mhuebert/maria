@@ -1,15 +1,12 @@
 (ns maria.live
-  (:require ["react-dom/client" :as react.client]
-            ["react" :as react]
-            [maria.prose.editor :as prose]
-            [clojure.string :as str]
-            [maria.examples :as ex]
-            maria.scratch
-            [shadow.resource :as rc]
-            [yawn.view.dom :as dom]
-            [yawn.view :as v]
+  (:require [clojure.string :as str]
             [maria.code.eldoc :as eldoc]
-            [nextjournal.react-hooks :as hooks]))
+            [maria.examples :as ex]
+            [maria.prose.editor :as prose]
+            [maria.scratch]
+            [shadow.resource :as rc]
+            [yawn.view :as v]
+            [yawn.root :as root]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -37,10 +34,13 @@
                     ex/promise
                     ex/string
                     ex/js-interop
-                    ex/view
+                    ex/yawn
                     )
-                   #_"(defn abracadabra [])
-                   ()"
+                   ex/yawn
+
+
+
+
 
 
 
@@ -58,14 +58,5 @@
    example
    [eldoc/view]])
 
-(v/defview hooks-test []
-  (let [!ref (hooks/use-ref)]
-    (hooks/use-effect
-     (fn []
-       (prn :effect @!ref)
-       ))
-    [:div {:ref !ref}]))
-
 (defn init []
-  (dom/mount :maria-live #(v/x #_[hooks-test]
-                               [landing])))
+  (root/create :maria-live (v/x [landing])))

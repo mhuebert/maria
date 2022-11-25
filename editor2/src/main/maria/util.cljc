@@ -1,14 +1,14 @@
 (ns maria.util
   (:require [clojure.string :as str]
-            [yawn.view :as v]
+            [yawn.hooks :as h]
             [re-db.reactive :as r])
   #?(:cljs (:require-macros [maria.util :as util :refer [defmacro:sci]])))
 
 #?(:cljs
    (defn use-watch [x]
-     (let [id (v/use-callback #js{})]
-       (v/use-sync-external-store
-        (v/use-callback
+     (let [id (h/use-callback #js{})]
+       (h/use-sync-external-store
+        (h/use-callback
          (fn [changed!]
            (add-watch x id (fn [_ _ _ _] (changed!)))
            #(remove-watch x id))

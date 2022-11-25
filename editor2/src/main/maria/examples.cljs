@@ -10,7 +10,7 @@
 (hello obj)
 ")
 
-(def view
+(def yawn
   "
   ;; Using [yawn](https://github.com/mhuebert/yawn), a light React wrapper:
 
