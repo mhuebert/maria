@@ -1,6 +1,6 @@
 (ns maria.util
   (:require [clojure.string :as str]
-            [yawn.hooks :as h]
+            #?(:cljs [yawn.hooks :as h])
             [re-db.reactive :as r])
   #?(:cljs (:require-macros [maria.util :as util :refer [defmacro:sci]])))
 
