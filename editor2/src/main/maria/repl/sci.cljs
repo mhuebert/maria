@@ -23,7 +23,9 @@
             [sci.lang]
             [shadow.lazy :as lazy]
             [shapes.core]
-            [yawn.sci-config :as yawn.sci]))
+            [yawn.sci-config :as yawn.sci]
+            [sci.pprint]
+            [clojure.pprint :refer [pprint]]))
 
 ;; Extension point for additional lazy-loaded libraries
 (def lazy-libs {"sicmutils" (lazy/loadable maria.ext.sicm/init)})
@@ -101,8 +103,10 @@
 (def sci-opts
   (-> {:async-load-fn async-load-fn
        :bindings {'prn prn
-                  'println println}
-       :classes {'js goog/global
+                  'println println
+                  'pprint pprint}
+       :classes {#_#_'js goog/global
+                 'js/Promise js/Promise
                  'Math js/Math}
        :aliases {'p 'promesa.core
                  'j 'applied-science.js-interop

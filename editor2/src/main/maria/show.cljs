@@ -1,6 +1,7 @@
 (ns maria.show
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
+            [clojure.core :as core]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.code.commands :as commands]
@@ -15,7 +16,8 @@
             [sci.core :as sci]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [clojure.pprint :refer [pprint]]))
 
 
 (def COLL-PADDING 4)
@@ -75,8 +77,8 @@
                      (ui/doc-tooltip m (icons/information-circle:mini icon-classes)))
                    (if fqn
                      [:div
-                      [:span.text-gray-500 (namespace fqn) "/"]
-                      [:span.text-black (clojure.core/name fqn)]]
+                      [:span.text-gray-500 (str (namespace fqn)) "/"]
+                      [:span.text-black (str (.-name ^clj fqn))]]
                      [:<>
                       [:span.text-gray-500.italic "<expr>"]
                       #_[:div.pre-wrap.truncate inline-str]
@@ -96,7 +98,8 @@
     [:div.m-2.flex-grow (ex-message error)]
     [:a.m-2.cursor-pointer.text-red-800.hover:text-red-900
      {:title "Print to console"
-      :on-click #(js/console.error error)} (icons/command-line:mini "w-5 h-5")]]
+      :on-click #(do (js/console.error error)
+                     (some-> (sci/stacktrace error) seq pprint))} (icons/command-line:mini "w-5 h-5")]]
    (when-let [stack (seq (sci/stacktrace error))]
      [:div.p-2
       [show-stacktrace opts stack]])])

@@ -34,6 +34,14 @@ pre, h1, h2, h3, h4 {
 
 }
 
+.ProseMirror li {
+    list-style: disc;
+}
+
+.ProseMirror hr {
+    @apply border-gray-300 my-8
+}
+
 .cm-content {
     @apply p-4 bg-white
 }

@@ -15,54 +15,52 @@
                     "NS"
                     "Symbol"})
 
-(j/js
-  (defn completions [node-view {:keys [state explicit pos]}]
-    (when-let [node (some-> (n/nearest-touching state pos -1)
-                            (u/guard #(or explicit (= (n/end %) pos)))
-                            (u/guard (comp symbol-nodes n/name)))]
 
-      (let [{:as from-to :keys [from to]} (n/from-to node)
+(j/defn completions [node-view ^:js {:keys [state explicit pos]}]
+  (when-let [node (some-> (n/nearest-touching state pos -1)
+                          (u/guard #(or explicit (= (n/end %) pos)))
+                          (u/guard (comp symbol-nodes n/name)))]
+
+    (j/let [^:js {:keys [from to]} (n/from-to node)
             text (.sliceDoc state from pos)]
-        ;; clojure.core/x        ns: fully qualified, looks in the-ns publics
-        ;; c/x                   ns: alias, looks in the-ns publics
-        ;; x                     no ns, look at whole current-ns
-        (when-let [sym (try (edamame/parse-string (.sliceDoc state from pos))
-                            (catch js/Error e nil))]
-          (let [ctx @(j/get-in node-view [:proseView :!sci-ctx])
-                _ (assert ctx "completions requires sci context")
-                current-ns (or (commands/code:ns node-view)
-                               (sci.ns/sci-find-ns ctx 'user))
-                ns-name (namespace sym)
-                from (if ns-name
-                       (+ from 1 (count ns-name))
-                       from)
-                sci-ns (if ns-name
-                         (or (sci/find-ns ctx (symbol ns-name))
-                             (some-> (sci.ns/sci-ns-aliases ctx current-ns)
-                                     (get (symbol ns-name))))
-                         current-ns)
-                syms (if ns-name
-                       (sci.ns/sci-ns-publics ctx sci-ns)
-                       (sci.ns/sci-ns-map ctx sci-ns))
-                results {:from from
-                         :to to
-                         :validFor #"^[^ \[\](){}@#]+"
-                         :options
-                         (to-array
-                          (mapv (fn [^:clj [s s-var]]
-                                  (let [^:clj {:keys [ns name]} (meta s-var)
-                                        sym-name (c/name name)
-                                        ns-name (sci.ns/sci-ns-name ns)]
-                                    {:label sym-name
-                                     :sym (symbol ns-name sym-name)
-                                     :detail ns-name
-                                     ;; :type "y" ;; indicates icon
-                                     ;; :detail ;; short string shown after label
-                                     ;; :info ;; shown when completion is selected
-                                     ;; :apply ".." ;; a string to replace completion range with, or function that will be called
-                                     }))
-                                syms))}]
-            results))))))
+      ;; clojure.core/x        ns: fully qualified, looks in the-ns publics
+      ;; c/x                   ns: alias, looks in the-ns publics
+      ;; x                     no ns, look at whole current-ns
+      (when-let [sym (try (edamame/parse-string text)
+                          (catch js/Error e nil))]
+        (let [ctx @(j/get-in node-view [:proseView :!sci-ctx])
+              current-ns (commands/code:ns node-view)
+              ns-name (namespace sym)
+              from (if ns-name
+                     (+ from 1 (count ns-name))
+                     from)
+              sci-ns (if ns-name
+                       (or (sci/find-ns ctx (symbol ns-name))
+                           (some-> (sci.ns/sci-ns-aliases ctx current-ns)
+                                   (get (symbol ns-name))))
+                       current-ns)
+              syms (if ns-name
+                     (sci.ns/sci-ns-publics ctx sci-ns)
+                     (sci.ns/sci-ns-map ctx sci-ns))
+              results #js{:from from
+                          :to to
+                          :validFor #"^[^ \[\](){}@#]+"
+                          :options
+                          (to-array
+                           (keep (fn [[s s-var]]
+                                   (when-let [{:as m :keys [ns name]} (meta s-var)]
+                                     (let [sym-name (c/name name)
+                                           ns-name (sci.ns/sci-ns-name ns)]
+                                       #js{:label sym-name
+                                           :sym (symbol ns-name sym-name)
+                                           :detail ns-name
+                                           ;; :type "y" ;; indicates icon
+                                           ;; :detail ;; short string shown after label
+                                           ;; :info ;; shown when completion is selected
+                                           ;; :apply ".." ;; a string to replace completion range with, or function that will be called
+                                           })))
+                                 syms))}]
+          results)))))
 
 
 

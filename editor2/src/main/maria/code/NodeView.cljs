@@ -162,39 +162,40 @@
                        ^:clj (doseq [f (j/get this :on-mounts)] (f))
                        (j/delete! this :on-mounts)
                        ))
-         :codeView (new EditorView
-                        {:state
-                         (.create EditorState
-                                  {:doc textContent
-                                   :extensions [language
-                                                (.. language -data (of {:autocomplete (fn [context]
-                                                                                        (#'completions/completions this context))}))
-                                                (completions/plugin)
+         :codeView (-> (new EditorView
+                            {:state
+                             (.create EditorState
+                                      {:doc textContent
+                                       :extensions [language
+                                                    (.. language -data (of {:autocomplete (fn [context]
+                                                                                            (#'completions/completions this context))}))
+                                                    (completions/plugin)
 
-                                                (clj-mode/match-brackets)
-                                                (clj-mode/close-brackets)
-                                                (clj-mode/selection-history)
-                                                (clj-mode/format-changed-lines)
+                                                    (clj-mode/match-brackets)
+                                                    (clj-mode/close-brackets)
+                                                    (clj-mode/selection-history)
+                                                    (clj-mode/format-changed-lines)
 
 
 
-                                                (.theme EditorView styles/code-theme)
-                                                (cmd/history)
-                                                (.. EditorState -allowMultipleSelections (of true))
-                                                (lang/syntaxHighlighting styles/code-highlight-style)
-                                                (lang/syntaxHighlighting lang/defaultHighlightStyle)
+                                                    (.theme EditorView styles/code-theme)
+                                                    (cmd/history)
+                                                    (.. EditorState -allowMultipleSelections (of true))
+                                                    (lang/syntaxHighlighting styles/code-highlight-style)
+                                                    (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
-                                                (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
-                                                                                             true)})
-                                                (keymaps/code-keymap this)
-                                                (.of cm.view/keymap clj-mode/complete-keymap)
-                                                (.of cm.view/keymap cmd/historyKeymap)
+                                                    (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
+                                                                                                 true)})
+                                                    keymaps/code-keymap
+                                                    (.of cm.view/keymap clj-mode/complete-keymap)
+                                                    (.of cm.view/keymap cmd/historyKeymap)
 
-                                                (.. EditorView
-                                                    -updateListener
-                                                    (of #(code:forward-update this %)))
-                                                (eldoc/extension this)
-                                                (error-marks/extension)]})})
+                                                    (.. EditorView
+                                                        -updateListener
+                                                        (of #(code:forward-update this %)))
+                                                    (eldoc/extension this)
+                                                    (error-marks/extension)]})})
+                       (j/!set :node-view this))
          :!result (atom nil)
 
          :on-mounts []

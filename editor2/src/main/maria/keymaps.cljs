@@ -11,18 +11,83 @@
             [maria.prose.links :as links]
             [maria.prose.schema :refer [schema]]))
 
+(def mac? (and (exists? js/navigator)
+               (.test #"Mac|iPhone|iPad|iPod" js/navigator.platform)))
+
 (def default-keys (pm.keymap/keymap baseKeymap))
 
 (def chain pm.cmd/chainCommands)
 
+
+(def palette-commands:prose
+  ;; prose commands + metadata accessible to command-palette
+  (j/let [^js {{:keys [strong em code]} :marks
+               {:keys [bullet_list ordered_list blockquote
+                       hard_break list_item paragraph
+                       code_block heading horizontal_rule]} :nodes} schema]
+    {:font/bold {:doc "Toggle bold"
+                 :bindings [:Mod-b]
+                 :f (pm.cmd/toggleMark strong)}
+     :font/italic {:doc "Toggle italic"
+                   :bindings [:Mod-i]
+                   :f (pm.cmd/toggleMark em)}
+     :font/code {:doc "Toggle inline code"
+                 :bindings ["Mod-`"]
+                 :f (pm.cmd/toggleMark code)}
+
+     :block/paragraph {:bindings [:Shift-Ctrl-0]
+                       :f (pm.cmd/setBlockType paragraph)}
+     :block/code {:bindings ["Shift-Ctrl-\\\\"]
+                  :f (pm.cmd/setBlockType code_block)}
+     :block/h1 {:bindings [:Shift-Ctrl-1]
+                :f (pm.cmd/setBlockType heading #js{:level 1})}
+     :block/h2 {:bindings [:Shift-Ctrl-2]
+                :f (pm.cmd/setBlockType heading #js{:level 2})}
+     :block/h3 {:bindings [:Shift-Ctrl-3]
+                :f (pm.cmd/setBlockType heading #js{:level 3})}
+     :block/h4 {:bindings [:Shift-Ctrl-4]
+                :f (pm.cmd/setBlockType heading #js{:level 4})}
+     :block/h5 {:bindings [:Shift-Ctrl-5]
+                :f (pm.cmd/setBlockType heading #js{:level 5})}
+     :block/h6 {:bindings [:Shift-Ctrl-6]
+                :f (pm.cmd/setBlockType heading #js{:level 6})}
+
+     :block/bullet-list {:bindings [:Shift-Ctrl-8]
+                         :f (pm.schema-list/wrapInList bullet_list)}
+     :block/blockquote {:bindings [:Ctrl->]
+                        :f (pm.cmd/wrapIn blockquote)}
+     ;; does not work
+     #_#_:block/ordered-list {:bindings [:Shift-Ctrl-9]
+                              :f (pm.schema-list/wrapInList ordered_list)}
+     :history/undo {:bindings [:Mod-z]
+                    :f pm.history/undo}
+     :history/redo {:bindings (cond-> [:Shift-Mod-z]
+                                      (not mac?)
+                                      (conj :Mod-y))
+                    :f pm.history/redo}
+     :list/outdent {:bindings ["Mod-["
+                               :Shift-Tab]
+                    :f (pm.schema-list/liftListItem list_item)}
+     :list/indent {:bindings ["Mod-]"
+                              :Tab]
+                   :f (pm.schema-list/sinkListItem list_item)}
+     :block/horizontal-rule {:bindings [:Mod-_]
+                             :f (fn [^js state dispatch]
+                                  (when dispatch
+                                    (dispatch (.. state -tr
+                                                  (replaceSelectionWith (.create horizontal_rule))
+                                                  (scrollIntoView))))
+                                  true)}}))
+
+(defn ->pm [out commands]
+  (doseq [[_ {:keys [bindings f]}] commands
+          binding bindings]
+    (j/!set out (name binding) f))
+  out)
+
 (j/js
   (def prose-keymap
-    (let [mac? (and (exists? js/navigator)
-                    (.test #"Mac|iPhone|iPad|iPod" js/navigator.platform))
-          {{:keys [strong em code]} :marks
-           {:keys [bullet_list ordered_list blockquote
-                   hard_break list_item paragraph
-                   code_block heading horizontal_rule]} :nodes} schema
+    (let [{{:keys [hard_break list_item]} :nodes} schema
           hard-break-cmd (chain
                           pm.cmd/exitCode
                           (fn [state dispatch]
@@ -32,110 +97,81 @@
                                             (pm.cmd/scrollIntoView))))
                             true))]
       (pm.keymap/keymap
-       (j/extend! {:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
-                   :Mod-Alt-Enter
-                   (fn [state dispatch view]
-                     (commands/prose:eval-doc! view)
-                     true)
-                   :Backspace (chain links/open-link-on-backspace
-                                     pm.cmd/selectNodeBackward
-                                     pm.cmd/deleteSelection
-                                     pm.cmd/joinBackward
-                                     )
-                   :Alt-ArrowUp pm.cmd/joinUp
-                   :Alt-ArrowDown pm.cmd/joinDown
-                   :Mod-BracketLeft pm.cmd/lift
-                   :Escape pm.cmd/selectParentNode
+       (-> {#_#_:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
+            :Mod-Alt-Enter
+            (fn [state dispatch view]
+              (commands/prose:eval-doc! view)
+              true)
+            :Backspace (chain links/open-link-on-backspace
+                              pm.cmd/selectNodeBackward
+                              pm.cmd/deleteSelection
+                              pm.cmd/joinBackward)
+            :Alt-ArrowUp pm.cmd/joinUp
+            :Alt-ArrowDown pm.cmd/joinDown
+            :Mod-BracketLeft pm.cmd/lift
+            :Escape pm.cmd/selectParentNode
 
-                   [:Mod-b
-                    :Mod-B] (pm.cmd/toggleMark strong)
-                   [:Mod-i
-                    :Mod-I] (pm.cmd/toggleMark em)
-                   "Mod-`" (pm.cmd/toggleMark code)
-                   :Shift-Ctrl-8 (pm.cmd/toggleMark bullet_list)
-                   :Shift-Ctrl-9 (pm.cmd/toggleMark ordered_list)
+            :Enter (chain (pm.schema-list/splitListItem list_item)
+                          commands/prose:convert-to-code)
+            :ArrowLeft (commands/prose:arrow-handler -1)
+            :ArrowUp (commands/prose:arrow-handler -1)
+            :ArrowRight (commands/prose:arrow-handler 1)
+            :ArrowDown (commands/prose:arrow-handler 1)}
+           (->pm palette-commands:prose)
+           (j/extend!
+             {[:Mod-Enter
+               :Shift-Enter] hard-break-cmd}
+             (when mac?
+               {:Ctrl-Enter hard-break-cmd})))))))
 
-                   :Ctrl-> (pm.cmd/wrapIn blockquote)
+(def palette-commands:code
+  ;; code commands + metadata accessible to command-palette
+  {:eval/block {:bindings [:Shift-Enter]}
+   :eval/region {:bindings [:Mod-Enter]}
+   :nav/next-code-cell {:bindings [:Shift-Tab]
+                        :f '#(commands/prose:next-code-cell (j/get this :proseView))}
 
-                   :Enter (chain (pm.schema-list/splitListItem list_item)
-                                 commands/prose:convert-to-code)
-                   "Mod-[" (pm.schema-list/liftListItem list_item)
-                   "Mod-]" (pm.schema-list/sinkListItem list_item)
-
-                   :Shift-Ctrl-0 (pm.cmd/setBlockType paragraph)
-                   "Shift-Ctrl-\\\\" (pm.cmd/setBlockType code_block)
-                   :Shift-Ctrl-1 (pm.cmd/setBlockType heading {:level 1})
-                   :Shift-Ctrl-2 (pm.cmd/setBlockType heading {:level 2})
-                   :Shift-Ctrl-3 (pm.cmd/setBlockType heading {:level 3})
-                   :Shift-Ctrl-4 (pm.cmd/setBlockType heading {:level 4})
-                   :Shift-Ctrl-5 (pm.cmd/setBlockType heading {:level 5})
-                   :Shift-Ctrl-6 (pm.cmd/setBlockType heading {:level 6})
-
-                   [:ArrowLeft
-                    :ArrowUp] (commands/prose:arrow-handler -1)
-                   [:ArrowRight
-                    :ArrowDown] (commands/prose:arrow-handler 1)}
-
-         {:Mod-z pm.history/undo
-          :Shift-Mod-z pm.history/redo}
-         (when-not mac?
-           {:Mod-y pm.history/redo})
-
-         {[:Mod-Enter
-           :Shift-Enter] hard-break-cmd}
-         (when mac?
-           {:Ctrl-Enter hard-break-cmd})
-
-         {:Mod-_ (fn [state dispatch]
-                   (when dispatch
-                     (dispatch (.. state -tr
-                                   (replaceSelectionWith (.create horizontal_rule))
-                                   (pm.cmd/scrollIntoView))))
-                   true)})))))
+   })
 
 (j/js
-  (defn code-keymap [this]
+  (def code-keymap
     (.of cm.view/keymap
          [{:key :ArrowUp
-           :run #(commands/code:arrow-handler this :line -1)}
+           :run (commands/code:arrow-handler :line -1)}
           {:key :ArrowLeft
-           :run #(commands/code:arrow-handler this :char -1)}
+           :run (commands/code:arrow-handler :char -1)}
           {:key :ArrowDown
-           :run #(commands/code:arrow-handler this :line 1)}
+           :run (commands/code:arrow-handler :line 1)}
           {:key :ArrowRight
-           :run #(commands/code:arrow-handler this :char 1)}
+           :run (commands/code:arrow-handler :char 1)}
           {:key :Ctrl-z :mac :Cmd-z
-           :run (commands/bind-prose-command this pm.history/undo)}
+           :run (commands/bind-prose-command pm.history/undo)}
           {:key :Shift-Ctrl-z :mac :Shift-Cmd-z
-           :run (commands/bind-prose-command this pm.history/redo)}
+           :run (commands/bind-prose-command pm.history/redo)}
           {:key :Ctrl-y :mac :Cmd-y
-           :run (commands/bind-prose-command this pm.history/redo)}
+           :run (commands/bind-prose-command pm.history/redo)}
           {:key :Enter
            :doc "Convert empty code block to paragraph"
-           :run (partial commands/code:convert-to-paragraph this)}
+           :run commands/code:convert-to-paragraph}
           {:key :Enter
-           :doc "New paragraph after code block"
-           :run (partial commands/code:paragraph-after-code this)}
+           :doc "New code block after code block"
+           :run commands/code:insert-another-code-block}
           {:key :Enter
            :doc "Split code block"
-           :run (partial commands/code:split this)}
+           :run commands/code:split}
           {:key :Backspace
            :doc "Remove empty code block"
-           :run (partial commands/code:remove-on-backspace this)}
+           :run commands/code:remove-on-backspace}
           {:key :Mod-Alt-Enter
            :doc "Evaluate doc"
-           :run (fn [_] (commands/prose:eval-doc! (j/get this :proseView))
+           :run (fn [{{:keys [proseView]} :node-view}]
+                  (commands/prose:eval-doc! proseView)
                   true)}
-
-          {:key :Shift-Enter
-           :doc "Evaluate block"
-           :run identity #_(commands/code:eval-block! this)}
-          {:key :Alt-Enter
-           :doc "Evaluate current region"
-           :run identity #_(commands/code:eval-current-region this)}
           {:key :Shift-Tab
            :doc "Next Code Cell"
-           :run #(commands/prose:next-code-cell (j/get this :proseView))}
+           :run (fn [{{:keys [proseView]} :node-view}]
+                  (commands/prose:next-code-cell proseView)
+                  true)}
           {:key :Mod-c
            :doc "Copy code"
            :run commands/code:copy-current-region}])))
