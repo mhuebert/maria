@@ -26,7 +26,7 @@ Along the way I also added some improvements over the existing code:
 
 Much of this work went very well and even faster than expected, but a large number of other features also need to be updated or re-implemented in order to work with the new code. A few of these remain incomplete, and are blockers for deploying this work to Maria.cloud.
 
-🔲 command-palette
+🔲 command-palette & 'which-key' keybinding helper
 
 🔲 curriculum browsing & loading
 
