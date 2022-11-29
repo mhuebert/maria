@@ -219,7 +219,10 @@
                          #_(j/log :deselectNode this))
          :setSelection (fn [anchor head]
                          (prose:set-selection this anchor head))
-         :stopEvent (fn [e] true)
+         :stopEvent (fn [e]
+                      ;; keyboard events that are handled by a keymap are already stopped;
+                      ;; not sure what events should be stopped here.
+                      (instance? js/MouseEvent e))
          :destroy #(let [{:keys [codeView !result]} this]
                      (.destroy codeView)
                      (root/unmount-soon root)

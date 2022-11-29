@@ -30,7 +30,7 @@ pre, h1, h2, h3, h4 {
 }
 
 .ProseMirror > *:not(div) {
-    @apply md:w-3/4 leading-relaxed;
+    @apply md:w-1/2 leading-relaxed;
 
 }
 

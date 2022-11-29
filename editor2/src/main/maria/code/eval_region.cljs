@@ -123,13 +123,14 @@
   [{:as opts :keys [on-enter]}]
   (let [handle-enter (j/fn handle-enter [binding ^:js {:as view :keys [state]} _]
                        ;(j/log :handle-enter binding)
-                       (let [mods (conj (get-modifier-field state) "Enter")]
+                       (let [mods (conj (get-modifier-field state) "Enter")
+                             handled? (contains? eval-regions mods)]
                          (set-modifier-field! view mods)
                          (when on-enter
                            (some-> (current-selection-str state)
                                    (u/guard (complement str/blank?))
                                    on-enter))
-                         (contains? eval-regions mods)))
+                         handled?))
         handle-key-event (j/fn [^:js {:as event :keys [altKey shiftKey metaKey controlKey type]}
                                 ^:js {:as view :keys [state]}]
                            ;(prn :handle-key-event type (keyName event))

@@ -3,5 +3,8 @@
  {stop (shell "yarn shadow-cljs stop")
   start (shell "yarn shadow-cljs -A:local server")
   watch (shell "yarn shadow-cljs -A:local watch editor")
-  release (shell "yarn shadow-cljs release editor")
+  copy-curriculum (do (shell "mkdir -p public/cljs")
+                      (shell "cp -r src/main/maria/curriculum public/cljs"))
+  release (do (run 'copy-curriculum)
+              (shell "yarn shadow-cljs release editor"))
   debug (shell "yarn shadow-cljs release editor --debug")}}
