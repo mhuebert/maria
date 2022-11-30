@@ -187,7 +187,6 @@
                                                     (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
                                                                                                  true)})
                                                     keymaps/code-keymap
-                                                    (.of cm.view/keymap clj-mode/complete-keymap)
                                                     (.of cm.view/keymap cmd/historyKeymap)
 
                                                     (.. EditorView

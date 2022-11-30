@@ -9,7 +9,9 @@
             [applied-science.js-interop :as j]
             [maria.code.commands :as commands]
             [maria.prose.links :as links]
-            [maria.prose.schema :refer [schema]]))
+            [maria.prose.schema :refer [schema]]
+            [nextjournal.clojure-mode :as clj-mode]
+            [nextjournal.clojure-mode.commands :refer [paredit-index]]))
 
 (def mac? (and (exists? js/navigator)
                (.test #"Mac|iPhone|iPad|iPod" js/navigator.platform)))
@@ -146,15 +148,72 @@
    :eval/region {:bindings [:Mod-Enter]
                  ;; TODO :f
                  :when :code}
-   :nav/next-code-cell {:bindings [:Shift-Tab]
+   :navigate/next-code-cell {:bindings [:Shift-Tab]
+                             :when :code
+                             ;; TODO fix :f, its quoted and references `this`
+                             :f '#(commands/prose:next-code-cell (j/get this :proseView))}
+   :code/format {:bindings [:Alt-Tab]
+                 :doc "Indent document (or selection)"
+                 :when :code
+                 :f (:indent paredit-index)}
+   :code/unwrap {:bindings [:Alt-S]
+                 :doc "Lift contents of collection into parent"
+                 :when :code
+                 :f (:unwrap paredit-index)}
+   :code/slurp {:bindings [:Ctrl-ArrowRight
+                           :Mod-Shift-ArrowRight
+                           :Mod-Shift-K]
+                :doc "Expand collection to include form to the right"
+                :when :code
+                :f (:slurp-forward paredit-index)}
+   :code/barf-last {:bindings [:Ctrl-ArrowLeft
+                               :Mod-Shift-ArrowLeft]
+                    :doc "Push last element of collection out to the right"
+                    :when :code
+                    :f (:barf-forward paredit-index)}
+   :code/slurp-backward {:bindings [:Shift-Ctrl-ArrowLeft]
+                         :doc "Expand collection to include form to the right"
+                         :when :code
+                         :f (:slurp-backward paredit-index)}
+   :code/barf-first {:bindings [:Shift-Ctrl-ArrowRight]
+                     :doc "Push first element of collection out to the left"
+                     :when :code
+                     :f (:barf-backward paredit-index)}
+   :kill {:bindings [:Ctrl-K]
+          :doc "Remove all forms from cursor to end of line"
+          :when :code
+          :f (:kill paredit-index)}
+   :navigate/hop-right {:bindings [:Alt-ArrowRight]
+                        :doc "Move cursor one form to the right"
                         :when :code
-                        ;; TODO fix :f, its quoted and references `this`
-                        :f '#(commands/prose:next-code-cell (j/get this :proseView))}
-
-   })
+                        :f (:nav-right paredit-index)}
+   :navigate/hop-left {:bindings [:Alt-ArrowLeft]
+                       :doc "Move cursor one form to the left"
+                       :when :code
+                       :f (:nav-left paredit-index)}
+   :select/hop-right {:bindings [:Shift-Alt-ArrowRight]
+                      :doc "Expand selection one form to the left"
+                      :when :code
+                      :f (:nav-select-right paredit-index)}
+   :select/hop-left {:bindings [:Shift-Alt-ArrowLeft]
+                     :doc "Expand selection one form to the right"
+                     :when :code
+                     :f (:nav-select-left paredit-index)}
+   :select/grow {:bindings [:Mod-1
+                            :Alt-ArrowUp
+                            :Mod-ArrowUp]
+                 :doc "Grow selection"
+                 :when :code
+                 :f (:selection-grow paredit-index)}
+   :select/shrink {:bindings [:Mod-2
+                              :Alt-ArrowDown
+                              :Mod-ArrowDown]
+                   :doc "Shrink selection"
+                   :when :code
+                   :f (:selection-return paredit-index)}})
 
 (defn ->cm [out commands]
-  (doseq [[_ {:keys [bindings f]}] commands
+  (doseq [[_ {:keys [doc bindings f]}] commands
           binding bindings]
     (j/push! out #js{:key (name binding)
                      :run f}))
@@ -180,12 +239,16 @@
               {:key :Enter
                :doc "Split code block"
                :run commands/code:split}
+              {:key :Enter
+               :doc "Insert newline and indent"
+               :run ^:clj (:enter-and-indent paredit-index)}
               {:key :Backspace
                :doc "Remove empty code block"
                :run commands/code:remove-on-backspace}
               {:key :Mod-c
                :doc "Copy code"
                :run commands/code:copy-current-region}]
-             (->cm palette-commands:code)))))
+             (->cm palette-commands:code)
+             (.concat clj-mode/builtin-keymap)))))
 
 
