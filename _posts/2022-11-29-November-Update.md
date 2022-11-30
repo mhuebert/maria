@@ -5,8 +5,8 @@ Work concluded this month includes:
 - Popovers for adding & editing **links** and **images** graphically.
 - Improved **stacktrace view** shows doc/metadata for vars, and highlights relevant code regions on hover.
 - **Autocomplete** is now implemented on top of sci.
-- Keymaps are now consistent with Maria.cloud and the "eval-region" extension was simplified.
-- **Async module loading:** we can now include additional dependencies in a release, to be loaded on-demand via `ns` or `require`. Suggestions/PRs for additional modules are welcome.
+- Keymaps are consistent with Maria.cloud and the "eval-region" extension was simplified.
+- With **async module loading** we can include additional dependencies in a release, loadable on-demand via `ns` or `require`. Suggestions/PRs for additional modules are welcome.
 
 My top goals for this 3-month effort were to 
 
@@ -18,7 +18,7 @@ My top goals for this 3-month effort were to
 
 Along the way I also added some improvements over the existing code:
 
-✅ Top-level "await" for asynchronous document evaluation (primarily so that evaluator waits for `require` and `ns` forms to finish before proceeding, but can now be used for other purposes as well).
+✅ Top-level "await" for asynchronous document evaluation (primarily so the evaluator waits for `require` and `ns` forms to finish before proceeding, but can now be used for other purposes as well).
 
 ✅ A stacktrace viewer that can highlight relevant code.
 
