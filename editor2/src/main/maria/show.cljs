@@ -322,7 +322,6 @@
             (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
             (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
             (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
-            #_maria.sicm-views/views
             #_(fn [x] (clerk.sci-viewer/inspect x)))))
 
 (defn add-viewers

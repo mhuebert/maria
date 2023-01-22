@@ -154,44 +154,6 @@ js/Promise
 (resolve-symbol 'circle)
 ")
 
-(def sicm "
-
-;; Using SICM Utils
-(ns maria.sicm
-  (:require [sicmutils.env :refer :all]))
-
-(take 10 (((exp D) sin) 'x))
-
-(complex 1 2)
-
-(square (sin (+ 'a 3)))
-(+ 'Theta 'alpha)
-(up
-  'alphadot_beta
-  'xdotdot
-  'zetaprime_alphadot
-  'alphaprimeprime_mubar
-  'vbar
-  'Pivec
-  'alphatilde)
-((D cube) 'x)
-
-(defn L-central-polar [m U]
-  (fn [[_ [r] [rdot thetadot]]]
-    (- (* 1/2 m
-          (+ (square rdot)
-             (square (* r thetadot))))
-       (U r))))
-
-(let [potential-fn (literal-function 'U)
-      L     (L-central-polar 'm potential-fn)
-      state (up (literal-function 'r)
-                (literal-function 'theta))]
-  (((Lagrange-equations L) state) 't))
-
-  (ns user)
-")
-
 (def string
   (str
    ";; Rendering long strings - click to expand. (Should improve the affordance here.)\n"

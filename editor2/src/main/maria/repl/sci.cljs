@@ -28,7 +28,7 @@
             [clojure.pprint :refer [pprint]]))
 
 ;; Extension point for additional lazy-loaded libraries
-(def lazy-libs {"sicmutils" (lazy/loadable maria.ext.sicm/init)})
+(def lazy-libs {})
 
 (defn lazy-load [{:keys [libname ctx]}]
   (when-let [loadable (lazy-libs (first (str/split (str libname) #"\.")))]

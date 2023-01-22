@@ -30,7 +30,6 @@
                     ex/collections
                     ex/error
                     ex/sci-errors
-                    ex/sicm
                     ex/promise
                     ex/string
                     ex/js-interop

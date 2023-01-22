@@ -9,9 +9,9 @@
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         #_#_org.babashka/sci {:mvn/version "0.5.34"}
-        io.github.babashka/sci {:git/sha "914919f248b7e3fc2ec59c435320145f588899d0"}
-        io.github.babashka/sci.configs {:git/sha "2717e545e5a61d4cccd85350b9ad6265afc9146c"}
-        funcool/promesa {:mvn/version "9.1.538"}
+        io.github.babashka/sci {:git/sha "80f7c9c73aa668138a394a4cbca3f5a98d7316e7"}
+        io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
+        funcool/promesa {:mvn/version "10.0.571"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         com.taoensso/encore {:mvn/version "3.32.0"}
 
@@ -20,17 +20,11 @@
         maria/friendly {:local/root "../friendly"}
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
-        io.github.mhuebert/re-db {:git/sha "c7c2b0274d3cdb9db3f3d48cf2b37c5128edfd96"}
-        io.github.mhuebert/yawn {:git/sha "1d00dc4172d9422209f076d1c8c472df7a637568"}
-
-        io.github.nextjournal/clerk {:git/sha "963662d40b5d9d6dccf5c72895771b773fc7851a"}
-        io.github.nextjournal/viewers {:git/sha "bde760b4a41ee7dfa26bf53fd502ee538f033c8a"}
-        io.github.sicmutils/sicmutils {:git/sha "888357d29d617c4d6738aab159ce91ea8252baa0"}
-        }
+        io.github.mhuebert/re-db {:git/sha "ab99bd550ac00e17861d45b191541c057966e487"}
+        io.github.mhuebert/yawn {:git/sha "956b30824f88a36681bde54dd8eafdaf4b820246"}}
  :aliases
  {:local {:extra-deps {io.github.babashka/sci {:local/root "../../sci"}
                        applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}
-                       io.github.mhuebert/re-db {:local/root "../../re-db"}
-                       io.github.sicmutils/sicmutils {:local/root "../../sicmutils"}}}}}
+                       io.github.mhuebert/re-db {:local/root "../../re-db"}}}}}

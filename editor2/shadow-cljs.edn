@@ -17,10 +17,6 @@
    :modules {:main {:init-fn maria.live/init}
              :ext.katex {:entries [maria.ext.katex]
                          :depends-on #{:main}}
-             :ext.clerk {:entries [maria.ext.clerk]
-                         :depends-on #{:main :ext.katex}}
-             :ext.sicm {:entries [maria.ext.sicm]
-                        :depends-on #{:main :ext.katex}}
              }
    :tailwind/output "public/css/tailwind.css"
    :tailwind/files {:tailwind.css "./src/maria.cloud.css"

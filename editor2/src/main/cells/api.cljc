@@ -1,6 +1,7 @@
 (ns cells.api
   (:require [cells.impl :as impl]
-            [cells.hooks :as hooks]))
+            [cells.hooks :as hooks]
+            [re-db.reactive :as r]))
 
 (defn- defn-opts [body]
   (let [[docstring body] (if (string? (first body))
@@ -15,15 +16,10 @@
   `(impl/make-cell (fn [~'self] ~expr)))
 
 (defn ^:macro defcell [&form &env the-name & body]
-  (let [[docstring options body] (defn-opts body)]
-    `(do
-       (defonce ~the-name nil)
-       (let [prev-cell# ~the-name]
-         (def ~(vary-meta the-name merge options)
-           ~@(when docstring (list docstring))
-           (impl/make-cell (fn [~'self] ~@body)))
-         (impl/after-redef prev-cell# ~the-name)
-         ~the-name))))
+  (let [[doc options body] (defn-opts body)]
+    `(r/redef
+       ~(vary-meta the-name merge options (when doc {:doc doc}))
+       (impl/make-cell (fn [~'self] ~@body)))))
 
 (defn ^:macro timeout
   "Runs body after timeout of n milliseconds."
