@@ -188,7 +188,7 @@
       s)))
 
 (defn stroke-width
-  "Return `shape` with its stroke set to `color`."
+  "Return `shape` with its stroke set to `width`."
   [width shape]
   (assoc shape :stroke-width width))
 
