@@ -1,10 +1,13 @@
 (ns maria.live
-  (:require [clojure.string :as str]
+  (:require ["prosemirror-keymap" :refer [keydownHandler]]
+            [applied-science.js-interop :as j]
+            [clojure.string :as str]
             [maria.code.eldoc :as eldoc]
             [maria.examples :as ex]
             [maria.prose.editor :as prose]
             [maria.scratch]
             [shadow.resource :as rc]
+            [yawn.hooks :as h]
             [yawn.view :as v]
             [yawn.root :as root]))
 
@@ -35,7 +38,7 @@
                     ex/js-interop
                     ex/yawn
                     )
-
+                   ex/cell
 
 
 
@@ -52,8 +55,21 @@
 
                    )}])
 
+(j/js
+  (def global-keymap
+    {:mod-k (fn [& _] (prn :show-command-palette))}))
+
+(defn use-global-keymap [bindings]
+  (h/use-effect
+   (fn []
+     (let [on-keydown (let [handler (keydownHandler bindings)]
+                            (fn [event]
+                              (handler #js{} event)))]
+       (.addEventListener js/window "keydown" on-keydown)
+       #(.removeEventListener js/window "keydown" on-keydown)))))
 
 (v/defview landing []
+  #_(use-global-keymap global-keymap)
   [:div
    example
    [eldoc/view]])

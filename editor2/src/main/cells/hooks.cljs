@@ -14,7 +14,7 @@
   ([f] (-on-frame f nil))
   ([f initial-value]
    (let [[value set-value!] (hooks/use-state initial-value)
-         [disposed? dispose!] (hooks/use-volatile false)
+         [disposed? dispose!] (hooks/use-ref false)
          cell r/*owner*]
      (hooks/use-effect (fn [] (dispose! true)))
      (hooks/use-effect

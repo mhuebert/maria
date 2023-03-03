@@ -14,16 +14,18 @@
         funcool/promesa {:mvn/version "10.0.571"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
         com.taoensso/encore {:mvn/version "3.32.0"}
+        kibu/pushy {:mvn/version "0.3.8"}
 
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
-        io.github.mhuebert/re-db {:git/sha "ab99bd550ac00e17861d45b191541c057966e487"}
-        io.github.mhuebert/yawn {:git/sha "956b30824f88a36681bde54dd8eafdaf4b820246"}}
+        io.github.mhuebert/re-db {:git/sha "9072c5ec6f6398da5c088517d676b7ffd5cdb838"}
+        io.github.mhuebert/yawn {:git/sha "b278fadba9a2dc01c2338899bd7c4f4bc9f3065b"}}
  :aliases
- {:local {:extra-deps {io.github.babashka/sci {:local/root "../../sci"}
+ {:build {:extra-paths ["src/build"]}
+  :local {:extra-deps {io.github.babashka/sci {:local/root "../../sci"}
                        applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}

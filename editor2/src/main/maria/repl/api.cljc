@@ -63,8 +63,6 @@
               (filter symbol?)
               sort))
 
-(def atom r/atom)
-
 #?(:cljs
    (def ^function is-valid-element? react/isValidElement))
 

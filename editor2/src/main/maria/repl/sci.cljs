@@ -6,6 +6,7 @@
             [cells.api]
             [cells.hooks]
             [cells.impl]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [maria.helpful]
             [maria.repl.api]
@@ -13,6 +14,7 @@
             [maria.ui]
             [promesa.core :as p]
             [re-db.reactive]
+            [re-db.sci-config]
             [sci.async :as a]
             [sci.configs.applied-science.js-interop :as js-interop.sci]
             [sci.configs.funcool.promesa :as promesa.sci]
@@ -21,11 +23,10 @@
             [sci.impl.namespaces :as sci.ns]
             [sci.impl.resolve]
             [sci.lang]
+            [sci.pprint]
             [shadow.lazy :as lazy]
             [shapes.core]
-            [yawn.sci-config :as yawn.sci]
-            [sci.pprint]
-            [clojure.pprint :refer [pprint]]))
+            [yawn.sci-config]))
 
 ;; Extension point for additional lazy-loaded libraries
 (def lazy-libs {})
@@ -100,6 +101,9 @@
                                        (symbol (name sym))
                                        (meta resolved)) @resolved)))) ctx syms)))
 
+(def re-db-reactive-ns (sci/create-ns 're-db.reactive nil))
+(def re-db-reactive-namespace (sci/copy-ns re-db.reactive re-db-reactive-ns))
+
 (def sci-opts
   (-> {:async-load-fn async-load-fn
        :bindings {'prn prn
@@ -118,7 +122,8 @@
                                   'pr pr}}
                           js-interop.sci/namespaces
                           promesa.sci/namespaces
-                          yawn.sci/namespaces)}
+                          yawn.sci-config/namespaces
+                          re-db.sci-config/namespaces)}
       (maria.repl.sci/require-namespaces [shapes.core
                                           maria.repl.api
                                           sci.core
@@ -126,7 +131,6 @@
                                           cells.hooks
                                           cells.impl
                                           cells.api
-                                          re-db.reactive
                                           maria.helpful
                                           maria.ui])))
 

@@ -6,7 +6,7 @@
    :asset-path "/js"
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
-                    "/index.html" (build/index-html)})]
+                    "/index.html" (maria.build/index-html)})]
    :dev {:build-hooks [(teknql.tailwind/start-watch!)]}
    :release {:build-hooks [(teknql.tailwind/compile-release!)
                            (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}

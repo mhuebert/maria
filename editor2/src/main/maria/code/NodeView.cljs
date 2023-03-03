@@ -225,4 +225,4 @@
          :destroy #(let [{:keys [codeView !result]} this]
                      (.destroy codeView)
                      (root/unmount-soon root)
-                     (r/dispose! (:value @!result)))}))))
+                     (r/dispose! (j/get @!result :value)))}))))

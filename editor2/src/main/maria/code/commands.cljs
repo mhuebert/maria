@@ -13,12 +13,12 @@
             [maria.util :as u]
             [sci.impl.namespaces :as sci.ns]))
 
+
+(defonce !result-key (volatile! 0))
+(j/defn set-result! [^js {:keys [!result]} v]
+  (reset! !result (assoc v :key (vswap! !result-key inc))))
+
 (j/js
-
-  (defonce !result-key (volatile! 0))
-  (defn set-result! [{:keys [!result]} v]
-    (reset! !result ^:clj (assoc v :key (vswap! !result-key inc))))
-
   (defn bind-prose-command [cmd]
     (fn [{{{:keys [state dispatch]} :proseView} :node-view}]
       (cmd state dispatch)))
