@@ -31,14 +31,14 @@
                     ex/namespaces
                     ex/cell
                     ex/collections
-                    ex/error
-                    ex/sci-errors
+                    ;ex/error
+                    ;ex/sci-errors
                     ex/promise
                     ex/string
                     ex/js-interop
                     ex/yawn
                     )
-                   ex/cell
+
 
 
 

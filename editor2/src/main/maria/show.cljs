@@ -9,7 +9,6 @@
             [maria.icons :as icons]
             [maria.repl.api :as repl]
             [maria.ui :as ui]
-            [maria.util :refer [use-watch]]
             [maria.util]
             [nextjournal.clojure-mode.node :as n]
             [promesa.core :as p]
@@ -258,12 +257,12 @@
 (defn show-terminal [f] (fn [opts x] (f x)))
 
 (v/defview show-watchable [opts x]
-  (show opts (use-watch x)))
+  (show opts (h/use-deref x)))
 
 (v/defview show-with-async-status [opts !status !value]
   ;; always watch status & value together, to avoid cell value being unwatched during loading/error states.
-  (let [status (use-watch !status)
-        value (use-watch !value)]
+  (let [status (h/use-deref !status)
+        value (h/use-deref !value)]
     (if status
       (show-async-status opts status)
       (show opts value))))

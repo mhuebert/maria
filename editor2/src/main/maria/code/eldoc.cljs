@@ -4,9 +4,9 @@
             ["@codemirror/autocomplete" :as autocomplete]
             [applied-science.js-interop :as j]
             [nextjournal.clojure-mode.node :as n]
+            [yawn.hooks :as h]
             [yawn.view :as v]
             [maria.repl.api :as repl]
-            [maria.util :refer [use-watch]]
             [maria.code.commands :as commands]
             [maria.ui :as ui]))
 
@@ -50,7 +50,7 @@
                                                                     (catch js/Error e nil)))))))}))])
 
 (v/defview view []
-  (when-let [{:as m :keys [ns name doc arglists]} (use-watch !current-operator)]
+  (when-let [{:as m :keys [ns name doc arglists]} (h/use-deref !current-operator)]
     (ui/doc-tooltip m
       [:div.fixed.bottom-0.left-0.right-0.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
        {:class ["h-[35px]"

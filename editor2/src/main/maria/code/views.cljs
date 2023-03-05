@@ -3,7 +3,6 @@
             [applied-science.js-interop :as j]
             [cells.async]
             [maria.show :refer [show]]
-            [maria.util :refer [use-watch]]
             [sci.lang]
             [shadow.cljs.modern :refer [defclass]]
             [shapes.core :as shapes]
@@ -29,7 +28,7 @@
 (defn shape? [x] (instance? shapes/Shape x))
 
 (v/defview value-viewer [this]
-  (let [{:keys [value error key]} (use-watch (j/get this :!result))]
+  (let [{:keys [value error key]} (h/use-deref (j/get this :!result))]
     [:... {:key key}
      (if error
        (show {:node-view this} error)
