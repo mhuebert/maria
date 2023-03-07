@@ -31,10 +31,9 @@
          (catch js/Error e nil)))))
 
 (defn doc-map
-  ([sym] (doc-map nil sym))
-  ([ns sym] (doc-map (store/get-ctx) ns sym))
+  ([sym] (doc-map (store/get-ctx) nil sym))
   ([ctx ns sym]
-   (merge (meta (resolve-symbol ns sym))
+   (merge (meta (resolve-symbol ctx ns sym))
           (helpful/doc-map sym)
           (when-let [sci-ns (sci.ns/sci-find-ns ctx sym)]
             {:doc (:doc (meta sci-ns))

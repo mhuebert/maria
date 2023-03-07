@@ -9,8 +9,9 @@
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}
         #_#_org.babashka/sci {:mvn/version "0.5.34"}
-        org.babashka/sci {:git/url "https://github.com/babashka/sci"
-                          :git/sha "44f4af63057e3b76c3fb5690fbc7611e9a1ac5ff"}
+        org.babashka/sci {:mvn/version "0.7.39"
+                          #_#_#_#_:git/url "https://github.com/babashka/sci"
+                          :git/sha "50557c964d44533aa2d61ae7519d252ea83df24b"}
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
         funcool/promesa {:mvn/version "10.0.571"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
@@ -22,11 +23,11 @@
         maria/friendly {:local/root "../friendly"}
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
-        io.github.mhuebert/re-db {:git/sha "9072c5ec6f6398da5c088517d676b7ffd5cdb838"}
-        io.github.mhuebert/yawn {:git/sha "b278fadba9a2dc01c2338899bd7c4f4bc9f3065b"}}
+        io.github.mhuebert/re-db {:git/sha "05d16d9e09bcba39907ff7c33a4db51a9b1fc819"}
+        io.github.mhuebert/yawn {:git/sha "080be2a6a20663726e2b5d65113cf8a9c94377cd"}}
  :aliases
  {:build {:extra-paths ["src/build"]}
-  :local {:extra-deps {io.github.babashka/sci {:local/root "../../sci"}
+  :local {:extra-deps {#_#_io.github.babashka/sci {:local/root "../../sci"}
                        applied-science/js-interop {:local/root "../../js-interop"}
                        nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        io.github.mhuebert/yawn {:local/root "../../yawn"}
