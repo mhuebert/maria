@@ -1,10 +1,10 @@
-(ns maria.prose.links
+(ns maria.prosemirror.links
   (:require ["prosemirror-state" :refer [Plugin TextSelection]]
             ["prosemirror-inputrules" :as input-rules]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.icons :as icons]
-            [maria.prose.schema :refer [schema]]
+            [maria.prosemirror.schema :refer [schema]]
             [maria.util :as u]
             [shadow.cljs.modern :refer [defclass]]
             [yawn.hooks :as h]

@@ -1,10 +1,10 @@
-(ns maria.code.completions
+(ns maria.code-blocks.completions
   (:require ["@codemirror/autocomplete" :as a]
             ["@codemirror/view" :as cm.view]
             [applied-science.js-interop :as j]
             [edamame.core :as edamame]
             [clojure.core :as c]
-            [maria.code.commands :as commands]
+            [maria.code-blocks.commands :as commands]
             [maria.util :as u]
             [nextjournal.clojure-mode.node :as n]
             [sci.core :as sci]

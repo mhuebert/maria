@@ -1,4 +1,4 @@
-(ns maria.code.parse-clj
+(ns maria.code-blocks.parse-clj
   (:require [applied-science.js-interop :as j]
             ["lezer-clojure" :as lezer-clj]
             [clojure.string :as str]))

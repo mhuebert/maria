@@ -179,3 +179,17 @@ o\""
   ";; Links and images in markdown become clickable and editable by moving the cursor into them.
    ;; Hello, [world](https://example.com) of [apples](https://www.apple.com) ![title](https://via.placeholder.com/350x150).
   ")
+
+(def examples (str
+               emoji
+               link
+               repl
+               namespaces
+               cell
+               collections
+               error
+               sci-errors
+               promise
+               string
+               js-interop
+               yawn))

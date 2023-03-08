@@ -2,14 +2,13 @@
   (:require ["prosemirror-keymap" :refer [keydownHandler]]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
-            [maria.code.eldoc :as eldoc]
+            [maria.code-blocks.eldoc :as eldoc]
             [maria.examples :as ex]
-            [maria.prose.editor :as prose]
+            [maria.prosemirror.editor :as prose]
             [maria.scratch]
-            [shadow.resource :as rc]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [yawn.root :as root]))
+            [yawn.root :as root]
+            [yawn.view :as v]))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -21,44 +20,6 @@
           (:require [shapes.core :refer :all]
                     [cells.api :refer :all]))))
 
-(def example
-  [prose/editor {:source
-                 (do
-                   (str
-                    ex/emoji
-                    ex/link
-                    ex/repl
-                    ex/namespaces
-                    ex/cell
-                    ex/collections
-                    ;ex/error
-                    ;ex/sci-errors
-                    ex/promise
-                    ex/string
-                    ex/js-interop
-                    ex/yawn
-                    )
-
-
-
-
-
-
-
-
-
-
-                   #_(rc/inline "maria/curriculum/learn_clojure_with_shapes.cljs")
-                   #_(rc/inline "maria/curriculum/welcome_to_cells.cljs")
-                   #_(rc/inline "maria/curriculum/animation_quickstart.cljs")
-                   #_(rc/inline "maria/curriculum/example_gallery.cljs")
-
-                   )}])
-
-(j/js
-  (def global-keymap
-    {:mod-k (fn [& _] (prn :show-command-palette))}))
-
 (defn use-global-keymap [bindings]
   (h/use-effect
    (fn []
@@ -69,9 +30,14 @@
        #(.removeEventListener js/window "keydown" on-keydown)))))
 
 (v/defview landing []
-  #_(use-global-keymap global-keymap)
+  (use-global-keymap (j/js
+                       {:mod-k
+                        (fn [& _]
+                          ;; TODO
+                          ;; implement command palette
+                          (prn :show-command-palette))}))
   [:div
-   example
+   [prose/editor {:source ex/examples}]
    [eldoc/view]])
 
 (defn ^:export init []

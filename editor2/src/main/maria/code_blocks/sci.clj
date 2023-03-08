@@ -1,4 +1,4 @@
-(ns maria.repl.sci
+(ns maria.code-blocks.sci
   (:require [sci.core :as sci]
             [clojure.string :as str]))
 

@@ -1,4 +1,4 @@
-(ns maria.prose.schema
+(ns maria.prosemirror.schema
   (:require ["prosemirror-markdown" :as md]))
 
 (def schema md/schema)

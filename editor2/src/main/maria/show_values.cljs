@@ -1,13 +1,13 @@
-(ns maria.show
+(ns maria.show-values
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
             [clojure.core :as core]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
-            [maria.code.commands :as commands]
-            [maria.code.error-marks :as error-marks]
+            [maria.code-blocks.commands :as commands]
+            [maria.code-blocks.error-marks :as error-marks]
             [maria.icons :as icons]
-            [maria.repl.api :as repl]
+            [maria.code-blocks.repl :as repl]
             [maria.ui :as ui]
             [maria.util]
             [nextjournal.clojure-mode.node :as n]

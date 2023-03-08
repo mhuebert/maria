@@ -1,6 +1,6 @@
-(ns maria.prose.input-rules
+(ns maria.prosemirror.input-rules
   (:require [applied-science.js-interop :as j]
-            [maria.prose.schema :refer [schema]]
+            [maria.prosemirror.schema :refer [schema]]
             ["prosemirror-inputrules" :as rules]
             ["prosemirror-model" :as model]))
 

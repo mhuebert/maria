@@ -1,4 +1,5 @@
-(ns maria.helpful
+(ns maria.docs
+  "Utilities for looking up docstrings, including special forms."
   (:require [clojure.set :as set]))
 
 ;; copied from https://github.com/clojure/clojurescript/blob/9359f40e7537307b9272fd322ae5cfff88e079f2/src/main/clojure/cljs/repl.cljc#L1303
@@ -80,12 +81,6 @@
   it already exists.  If init is supplied, it is evaluated, and the
   root binding of the var is set to the resulting value.  If init is
   not supplied, the root binding of the var is unaffected."}
-    defn {:arglists ([name doc-string? attr-map? [params*] prepost-map? body] [name doc-string? attr-map? ([params*] prepost-map? body) + attr-map?])
-          :macro true
-          :doc "Same as (def name (core/fn [params* ] exprs*)) or (def
-                                                              name (core/fn ([params* ] exprs*)+)) with any doc-string or attrs added
-          to the var metadata. prepost-map defines a map with optional keys
-          :pre and :post that contain collections of pre or post conditions."}
     do {:forms [(do exprs*)]
         :doc "Evaluates the expressions in order and returns the value of
   the last. If no expressions are supplied, returns nil."}

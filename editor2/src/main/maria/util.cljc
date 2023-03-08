@@ -1,6 +1,7 @@
 (ns maria.util
-  (:require [clojure.string :as str]
-            #?(:cljs [yawn.hooks :as h])
+  (:require #?(:cljs [yawn.hooks :as h])
+            [applied-science.js-interop :as j]
+            [clojure.string :as str]
             [re-db.reactive :as r])
   #?(:cljs (:require-macros [maria.util :as util :refer [defmacro:sci]])))
 
@@ -21,6 +22,15 @@
   ([x f] (when (f x) x)))
 
 (defn some-str [s] (when-not (str/blank? s) s))
+
+(defn ensure-prefix [s pfx]
+  (cond->> s
+           (not (str/starts-with? s pfx)) (str pfx)))
+
+(defn strip-prefix [s pfx]
+  (cond-> s
+          (str/starts-with? s pfx)
+          (subs (count pfx))))
 
 #?(:cljs
    (defn type:number
@@ -52,18 +62,15 @@
       `(let [f# ~f]
          (defmacro ~name [& args#] (apply f# ~'&form ~'&env args#))))))
 
-(comment
-
-  (defmacro:sci macro-test
-    [&form &env a b c]
-    [(str &form)
-     (mapv (comp keyword key) (:locals &env))
-     a
-     b
-     c])
-
-  #?(:cljs
-     (let [x 1]
-       (prn {:fn macro-test
-             :macro-application (util/macro-test 1 2 3)
-             :fn-application (macro-test '(a-form) {:locals nil} 1 2 3)}))))
+#?(:cljs
+   (defn with-element
+     ([init] (with-element nil init))
+     ([{:keys [el props] :or {el :div}} init]
+      (j/let [!destroy (h/use-ref nil)
+              ref-fn (h/use-callback
+                      (fn [el]
+                        (when-let [f @!destroy] (when (fn? f) (f)))
+                        (when el
+                          (reset! !destroy (init el)))
+                        nil))]
+        [el (assoc props :ref ref-fn)]))))

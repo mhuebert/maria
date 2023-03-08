@@ -1,4 +1,4 @@
-(ns maria.ext.katex
+(ns maria.show-values.katex
   (:require ["katex" :as katex]
             [yawn.hooks :as h]
             [yawn.view :as v]))

@@ -7,9 +7,9 @@
             ["prosemirror-schema-list" :as pm.schema-list]
             ["prosemirror-history" :as pm.history]
             [applied-science.js-interop :as j]
-            [maria.code.commands :as commands]
-            [maria.prose.links :as links]
-            [maria.prose.schema :refer [schema]]
+            [maria.code-blocks.commands :as commands]
+            [maria.prosemirror.links :as links]
+            [maria.prosemirror.schema :refer [schema]]
             [nextjournal.clojure-mode :as clj-mode]
             [nextjournal.clojure-mode.commands :refer [paredit-index]]))
 

@@ -1,8 +1,8 @@
-(ns maria.repl.api
+(ns maria.code-blocks.repl
   (:refer-clojure :exclude [atom])
   (:require #?(:cljs ["react" :as react])
             #?(:cljs [sci.async :as a])
-            [maria.helpful :as helpful]
+            [maria.docs :as helpful]
             [maria.ui :as ui]
             [promesa.core :as p]
             [re-db.reactive :as r]

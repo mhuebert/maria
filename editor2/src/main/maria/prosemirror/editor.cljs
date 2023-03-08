@@ -1,4 +1,4 @@
-(ns maria.prose.editor
+(ns maria.prosemirror.editor
   (:require ["prosemirror-view" :refer [EditorView]]
             ["prosemirror-state" :refer [EditorState]]
             ["prosemirror-markdown" :as md]
@@ -8,16 +8,16 @@
             ["prosemirror-schema-list" :as cmd-list]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
-            [maria.code.NodeView :as node-view]
-            [maria.code.commands :as commands]
-            [maria.code.parse-clj :as parse-clj :refer [clj->md]]
+            [maria.code-blocks.NodeView :as node-view]
+            [maria.code-blocks.commands :as commands]
+            [maria.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.keymaps :as keymaps]
-            [maria.prose.input-rules :as input-rules]
-            [maria.prose.links :as links]
-            [maria.prose.schema :as markdown]
-            [maria.repl.sci :as sci]
+            [maria.prosemirror.input-rules :as input-rules]
+            [maria.prosemirror.links :as links]
+            [maria.prosemirror.schema :as markdown]
+            [maria.code-blocks.sci :as sci]
             [maria.styles :as styles]
-            [tools.maria.component :refer [with-element]]))
+            [maria.util :as u]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -101,9 +101,8 @@
      ~@(links/plugins)]))
 
 (defn editor [{:keys [source]}]
-  (with-element {:el styles/prose-element}
+  (u/with-element {:el styles/prose-element}
     (fn [^js element]
-
       (let [state (j/js
                     (.create EditorState {:doc (-> source
                                                    parse-clj/clj->md

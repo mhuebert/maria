@@ -1,4 +1,4 @@
-(ns maria.code.eldoc
+(ns maria.code-blocks.eldoc
   (:require ["@codemirror/view" :refer [ViewPlugin]]
             ["@codemirror/state" :refer [StateField]]
             ["@codemirror/autocomplete" :as autocomplete]
@@ -6,8 +6,8 @@
             [nextjournal.clojure-mode.node :as n]
             [yawn.hooks :as h]
             [yawn.view :as v]
-            [maria.repl.api :as repl]
-            [maria.code.commands :as commands]
+            [maria.code-blocks.repl :as repl]
+            [maria.code-blocks.commands :as commands]
             [maria.ui :as ui]))
 
 (defn closest-operator [state node]

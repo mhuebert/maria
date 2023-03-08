@@ -1,14 +1,14 @@
-(ns maria.code.commands
+(ns maria.code-blocks.commands
   (:require [applied-science.js-interop :as j]
             ["prosemirror-model" :refer [Fragment Slice]]
             ["prosemirror-state" :refer [TextSelection Selection NodeSelection insertPoint]]
             ["prosemirror-commands" :as pm.cmd]
             [clojure.string :as str]
             [nextjournal.clojure-mode.node :as n]
-            [maria.prose.schema :refer [schema]]
-            [maria.repl.sci :as sci]
+            [maria.prosemirror.schema :refer [schema]]
+            [maria.code-blocks.sci :as sci]
             [promesa.core :as p]
-            [maria.code.eval-region :as eval-region]
+            [maria.code-blocks.eval-region :as eval-region]
             [sci.async :as a]
             [maria.util :as u]
             [sci.impl.namespaces :as sci.ns]))
@@ -207,7 +207,7 @@
          result (try (sci/eval-string ctx opts source)
                      (catch js/Error e ^:clj {:error e}))]
      (if (a/await? result)
-       (do (set-result! node-view {:value :maria.show/loading})
+       (do (set-result! node-view {:value :maria.show-values/loading})
            (a/await
             (-> result
                 (.then (fn [result] (set-result! node-view result)))

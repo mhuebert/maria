@@ -1,6 +1,6 @@
-(ns maria.repl.sci
+(ns maria.code-blocks.sci
   (:refer-clojure :exclude [eval])
-  (:require-macros [maria.repl.sci])
+  (:require-macros [maria.code-blocks.sci])
   (:require ["@codemirror/view" :as view]
             [applied-science.js-interop]
             [cells.api]
@@ -8,8 +8,8 @@
             [cells.impl]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [maria.helpful]
-            [maria.repl.api]
+            [maria.docs]
+            [maria.code-blocks.repl]
             [maria.ui]
             [maria.ui]
             [promesa.core :as p]
@@ -124,14 +124,14 @@
                           promesa.sci/namespaces
                           yawn.sci-config/namespaces
                           re-db.sci-config/namespaces)}
-      (maria.repl.sci/require-namespaces [shapes.core
-                                          maria.repl.api
+      (maria.code-blocks.sci/require-namespaces [shapes.core
+                                          maria.code-blocks.repl
                                           sci.core
                                           sci.async
                                           cells.hooks
                                           cells.impl
                                           cells.api
-                                          maria.helpful
+                                          maria.docs
                                           maria.ui])))
 
 (defn refer-all! [{:as ctx :keys [env]} targets]
@@ -145,10 +145,10 @@
 
 (defn initial-context []
   (-> (sci/init sci-opts)
-      (intern-core 'clojure.core '[maria.repl.api/doc
-                                   maria.repl.api/dir
-                                   maria.repl.api/await])
+      (intern-core 'clojure.core '[maria.code-blocks.repl/doc
+                                   maria.code-blocks.repl/dir
+                                   maria.code-blocks.repl/await])
       (refer-all! '{cells.api user
-                    maria.repl.api user
+                    maria.code-blocks.repl user
                     shapes.core user})
       (assoc :last-ns (volatile! @sci/ns))))

@@ -1,8 +1,8 @@
-(ns maria.code.views
+(ns maria.code-blocks.views
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
             [cells.async]
-            [maria.show :refer [show]]
+            [maria.show-values :refer [show]]
             [sci.lang]
             [shadow.cljs.modern :refer [defclass]]
             [shapes.core :as shapes]

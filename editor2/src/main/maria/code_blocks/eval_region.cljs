@@ -1,4 +1,4 @@
-(ns maria.code.eval-region
+(ns maria.code-blocks.eval-region
   (:require
    ["@codemirror/state" :as state :refer [StateEffect StateField]]
    ["@codemirror/view" :as view :refer [EditorView Decoration keymap]]

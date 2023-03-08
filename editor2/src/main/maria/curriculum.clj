@@ -1,4 +1,4 @@
-(ns maria.content
+(ns maria.curriculum
   (:require [babashka.fs :as fs]
             [edamame.core :as eda]
             [clojure.string :as str]))
