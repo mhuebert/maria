@@ -1,16 +1,16 @@
 (ns maria.editor.code-blocks.commands
-  (:require [applied-science.js-interop :as j]
-            ["prosemirror-model" :refer [Fragment Slice]]
+  (:require ["prosemirror-model" :refer [Fragment Slice]]
             ["prosemirror-state" :refer [TextSelection Selection NodeSelection insertPoint]]
             ["prosemirror-commands" :as pm.cmd]
+            [applied-science.js-interop :as j]
             [clojure.string :as str]
-            [nextjournal.clojure-mode.node :as n]
-            [maria.editor.prosemirror.schema :refer [schema]]
-            [maria.editor.code-blocks.sci :as sci]
-            [promesa.core :as p]
             [maria.editor.code-blocks.eval-region :as eval-region]
-            [sci.async :as a]
+            [maria.editor.code-blocks.sci :as sci]
+            [maria.editor.prosemirror.schema :refer [schema]]
             [maria.editor.util :as u]
+            [nextjournal.clojure-mode.node :as n]
+            [promesa.core :as p]
+            [sci.async :as a]
             [sci.impl.namespaces :as sci.ns]))
 
 

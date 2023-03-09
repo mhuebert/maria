@@ -1,14 +1,14 @@
 (ns cells.hooks
   (:refer-clojure :exclude [delay])
   (:require [applied-science.js-interop :as j]
-            [goog.net.XhrIo :as xhr]
-            [goog.net.ErrorCode :as errors]
-            [re-db.hooks :as hooks]
-            [re-db.reactive :as r]
-            [promesa.core]
-            [maria.editor.util :refer [some-str guard]]
             [cells.async :as a]
-            [maria.editor.util :as u]))
+            [goog.net.ErrorCode :as errors]
+            [goog.net.XhrIo :as xhr]
+            [maria.editor.util :refer [guard some-str]]
+            [maria.editor.util]
+            [promesa.core]
+            [re-db.hooks :as hooks]
+            [re-db.reactive :as r]))
 
 (defn -on-frame
   ([f] (-on-frame f nil))

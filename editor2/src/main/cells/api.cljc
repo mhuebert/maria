@@ -1,6 +1,6 @@
 (ns cells.api
-  (:require [cells.impl :as impl]
-            [cells.hooks :as hooks]
+  (:require [cells.hooks :as hooks]
+            [cells.impl :as impl]
             [re-db.reactive :as r]))
 
 (defn- defn-opts [body]

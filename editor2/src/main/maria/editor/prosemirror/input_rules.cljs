@@ -1,8 +1,8 @@
 (ns maria.editor.prosemirror.input-rules
-  (:require [applied-science.js-interop :as j]
-            [maria.editor.prosemirror.schema :refer [schema]]
-            ["prosemirror-inputrules" :as rules]
-            ["prosemirror-model" :as model]))
+  (:require ["prosemirror-inputrules" :as rules]
+            ["prosemirror-model" :as model]
+            [applied-science.js-interop :as j]
+            [maria.editor.prosemirror.schema :refer [schema]]))
 
 ;; An input rule defines a regular expression which, when matched on the current input,
 ;; invokes a command.

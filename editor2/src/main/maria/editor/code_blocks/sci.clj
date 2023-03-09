@@ -1,6 +1,5 @@
 (ns maria.editor.code-blocks.sci
-  (:require [sci.core :as sci]
-            [clojure.string :as str]))
+  (:require [sci.core :as sci]))
 
 (defn dequote [x]
   (if (and (seq? x) (= 'quote (first x)))

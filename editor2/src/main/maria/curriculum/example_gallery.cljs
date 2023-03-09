@@ -1,7 +1,7 @@
 (ns maria.curriculum.example-gallery
   {:description "See what other people have made using Maria"}
-  (:require [shapes.core :refer :all]
-            [cells.api :refer :all]))
+  (:require [cells.api :refer :all]
+            [shapes.core :refer :all]))
 
 ;; # Example Gallery
 

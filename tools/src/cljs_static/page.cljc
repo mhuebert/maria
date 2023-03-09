@@ -1,7 +1,7 @@
 (ns cljs-static.page
   (:require [cljs-static.assets :as assets]
-            [hiccup2.core :as hiccup]
-            [hiccup.util :as hu]))
+            [hiccup.util :as hu]
+            [hiccup2.core :as hiccup]))
 
 (defn map<> [f coll]
   #?(:cljs

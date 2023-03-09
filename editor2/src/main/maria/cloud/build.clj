@@ -1,6 +1,6 @@
 (ns maria.cloud.build
-  (:require [babashka.process :as bp]
-            [babashka.fs :as fs]
+  (:require [babashka.fs :as fs]
+            [babashka.process :as bp]
             [cljs-static.page :as page]
             [cljs-static.shadow :as shadow]
             [clojure.string :as str]

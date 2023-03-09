@@ -1,22 +1,22 @@
 (ns maria.editor.code-blocks.show-values
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
-            [clojure.core :as core]
             [applied-science.js-interop :as j]
+            [clojure.core]
+            [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.error-marks :as error-marks]
-            [maria.editor.ui.icons :as icons]
             [maria.editor.code-blocks.repl :as repl]
             [maria.editor.ui.helpers :as ui]
+            [maria.editor.ui.icons :as icons]
             [maria.editor.util]
             [nextjournal.clojure-mode.node :as n]
             [promesa.core :as p]
             [sci.core :as sci]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [clojure.pprint :refer [pprint]]))
+            [yawn.view :as v]))
 
 
 (def COLL-PADDING 4)

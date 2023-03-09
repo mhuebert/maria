@@ -11,12 +11,12 @@
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
+            [maria.editor.code-blocks.sci :as sci]
+            [maria.editor.code-blocks.styles :as styles]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
-            [maria.editor.code-blocks.sci :as sci]
-            [maria.editor.code-blocks.styles :as styles]
             [maria.editor.util :as u]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.

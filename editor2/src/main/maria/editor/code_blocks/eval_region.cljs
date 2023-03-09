@@ -4,9 +4,9 @@
    ["@codemirror/view" :as view :refer [EditorView Decoration keymap]]
    ["w3c-keyname" :refer [keyName]]
    [applied-science.js-interop :as j]
-   [nextjournal.clojure-mode.util :as u]
+   [clojure.string :as str]
    [nextjournal.clojure-mode.node :as n]
-   [clojure.string :as str]))
+   [nextjournal.clojure-mode.util :as u]))
 
 (defn uppermost-edge-here
   "Returns node or its highest ancestor that starts or ends at the cursor position."

@@ -1,6 +1,6 @@
 (ns cells.impl
-  (:require [re-db.reactive :as r]
-            [cells.async :as a]))
+  (:require [cells.async :as a]
+            [re-db.reactive :as r]))
 
 #_(defn with-view [cell view]
     (r/update-meta! cell assoc `-view (fn [cell] (view (r/peek cell)))))

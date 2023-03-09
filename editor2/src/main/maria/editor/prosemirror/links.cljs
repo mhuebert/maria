@@ -3,13 +3,13 @@
             ["prosemirror-inputrules" :as input-rules]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
-            [maria.editor.ui.icons :as icons]
             [maria.editor.prosemirror.schema :refer [schema]]
+            [maria.editor.ui.icons :as icons]
             [maria.editor.util :as u]
             [shadow.cljs.modern :refer [defclass]]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [yawn.root :as root]))
+            [yawn.root :as root]
+            [yawn.view :as v]))
 
 (def mark:link (.. schema -marks -link))
 (def node:image (.. schema -nodes -image))

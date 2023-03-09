@@ -3,12 +3,12 @@
             ["@codemirror/state" :refer [StateField]]
             ["@codemirror/autocomplete" :as autocomplete]
             [applied-science.js-interop :as j]
+            [maria.editor.code-blocks.commands :as commands]
+            [maria.editor.code-blocks.repl :as repl]
+            [maria.editor.ui.helpers :as ui]
             [nextjournal.clojure-mode.node :as n]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [maria.editor.code-blocks.repl :as repl]
-            [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.ui.helpers :as ui]))
+            [yawn.view :as v]))
 
 (defn closest-operator [state node]
   (when-let [expr (n/closest node (fn [node]

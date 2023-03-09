@@ -5,15 +5,14 @@
             [maria.editor.code-blocks.docs :as helpful]
             [maria.editor.ui.helpers :as ui]
             [promesa.core :as p]
-            [re-db.reactive :as r]
             [sci.core :as sci]
+            [sci.ctx-store :as store]
             [sci.impl.namespaces :as sci.ns]
             [sci.impl.resolve]
             [sci.impl.resolve :as resolve]
             [sci.impl.utils :as utils]
             [sci.impl.vars :as vars]
-            [yawn.view :as v]
-            [sci.ctx-store :as store]))
+            [yawn.view :as v]))
 
 (defn current-ns [ctx]
   @(:last-ns ctx))
