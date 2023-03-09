@@ -1,5 +1,6 @@
 (ns cljs-static.page
-  (:require [hiccup2.core :as hiccup]
+  (:require [cljs-static.assets :as assets]
+            [hiccup2.core :as hiccup]
             [hiccup.util :as hu]))
 
 (defn map<> [f coll]
@@ -12,19 +13,33 @@
 ;;
 ;; HTML generation
 
+(defn update-some [m updaters]
+  (reduce-kv (fn [m k update-f]
+               (cond-> m
+                       (contains? m k) (update k update-f))) m updaters))
+
 (defn element-tag [kw-or-hiccup]
   (cond-> kw-or-hiccup
           (keyword? kw-or-hiccup) (vector)))
 
 (defn script-tag
   ([opts content]
-   [:script opts (some-> content hiccup/raw)])
+   [:script
+    (update-some opts {:src assets/path*})
+    (some-> content hiccup/raw)])
   ([opts-or-content]
    (if-let [value (:value opts-or-content)]
      (script-tag (dissoc opts-or-content :value) value)
      (if (string? opts-or-content)
        (script-tag {} opts-or-content)
        (script-tag opts-or-content nil)))))
+
+(defn style-tag [str-or-map]
+  (if (string? str-or-map)
+    [:style str-or-map]
+    [:link (-> str-or-map
+               (assoc :rel "stylesheet")
+               (update-some {:href assets/path*}))]))
 
 (defn meta-tag [k v]
   [:meta {(if (some #{"Expires"
@@ -35,12 +50,6 @@
             :http-equiv
             :name) (name k)
           :content v}])
-
-(defn style-tag [str-or-map]
-  (if (string? str-or-map)
-    [:style str-or-map]
-    [:link (-> str-or-map
-               (assoc :rel "stylesheet"))]))
 
 (def doctype "<!DOCTYPE html>\n")
 

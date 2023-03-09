@@ -1,5 +1,6 @@
 (ns maria.cloud.build
-  (:require [babashka.fs :as fs]
+  (:require [babashka.process :as bp]
+            [babashka.fs :as fs]
             [cljs-static.page :as page]
             [cljs-static.shadow :as shadow]
             [clojure.string :as str]
@@ -47,3 +48,13 @@
                               :value (str {:maria/curriculum (read-curriculum-namespaces)})}
                              {:src (shadow/module-path :editor :main)}]}))
 
+(defn tailwind-watch!
+  {:shadow.build/stage :flush}
+  [state]
+  (defonce _tailwind (bp/process
+                      {:in :inherit
+                       :out :inherit
+                       :err :inherit
+                       :shutdown bp/destroy-tree}
+                      "npx tailwindcss -w -i src/maria.cloud.css -o public/css/tailwind.css"))
+  state)

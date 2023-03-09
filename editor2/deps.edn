@@ -13,6 +13,7 @@
                           #_#_#_#_:git/url "https://github.com/babashka/sci"
                           :git/sha "50557c964d44533aa2d61ae7519d252ea83df24b"}
         babashka/fs {:mvn/version "0.3.17"}
+        babashka/process {:mvn/version "0.4.16"}
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
         funcool/promesa {:mvn/version "10.0.571"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}

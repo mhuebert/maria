@@ -7,7 +7,7 @@
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
                     "/index.html" (maria.cloud.build/index-html)})]
-   :dev {:build-hooks [(teknql.tailwind/start-watch!)]}
+   :dev {:build-hooks [(maria.cloud.build/tailwind-watch!)]}
    :release {:build-hooks [(teknql.tailwind/compile-release!)
                            (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
    :devtools {:http-root "public"
