@@ -73,7 +73,7 @@
 
 ;; ⬆ your code goes here
 
-;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go off script with lots of your own code blocks, you should consider opening a fresh page with the "New" button at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.cloud/gallery).
+;; In fact, you should feel free to experiment with this document at any time. Try absurd numbers! Move things around! This is *your* playground. In fact, if you feel inspired to go off script with lots of your own code blocks, you should consider opening a fresh page with the "New" button at the top left. And if you don't mind new and complex things being thrown at you without explanation, you might get some inspiration for your wanderings in the [Gallery](https://maria.editor.cloud/gallery).
 
 ;; As you might guess, there's a `rectangle` function much like `circle`. Let's find out how it works:
 
@@ -107,7 +107,7 @@ color-names
 
 ;; Try other partial color names, like "slate" or "light". 🔭
 
-;; Before moving ahead, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
+;; Before moving ahead, depending on how comfortable you feel with exploring on your own how Maria commands work, you might want to check out the [Editor Quickstart](https://maria.editor.cloud/quickstart). That page explains how to use this environment to its full potential. Once you've gone through that, come on back here and continue.
 
 ;; In addition to nesting expressions, we can also combine expressions to create groups of shapes. We do this by using the `layer` function. Let's reach into our **Code Inspection Toolbox** to ask about it:
 
@@ -365,8 +365,8 @@ color-names
 
 ;; This introduction to programming through Clojure intentionally avoids getting into the benefits of Lisp syntax, language features like immutability or laziness, hosting and tooling concerns, and the full span of basic data types. This document is a consciously incomplete introduction. While all of those topics are valuable material, they are secondary for the programming beginner. Instead, since Clojure programmers typically spend the majority of their time juggling expressions, names, and functions, we try to offer with Maria a playground where the beginner is introduced to those fundamental tools.
 
-;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.cloud/gallery), explore other [curriculum modules](https://maria.cloud/curriculum), or write your own code on a fresh page by using the New button at the top left.
+;; To explore other things one can do with Clojure and Maria, check out the [Gallery](https://maria.editor.cloud/gallery), explore other [curriculum modules](https://maria.editor.cloud/curriculum), or write your own code on a fresh page by using the New button at the top left.
 
 ;; If you'd like to work through a textbook, consider [Clojure for the Brave and True](https://www.braveclojure.com/clojure-for-the-brave-and-true/) or [Living Clojure](http://shop.oreilly.com/product/0636920034292.do).
 
-;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://www.maria.cloud/shannons-entropy) or linguistics, or...?
+;; If you’re not sure which of these is best, it might help to consider what you would find rewarding to build. What is your purpose for learning programming? Your answer might be to build mobile apps, websites, or games, or to make art, design graphics, or explore science or math or statistics or [information theory](https://www.maria.editor.cloud/shannons-entropy) or linguistics, or...?

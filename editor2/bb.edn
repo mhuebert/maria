@@ -1,8 +1,8 @@
 {:deps {}
  :tasks
- {dev (shell "yarn shadow-cljs -A:local:build watch editor")
+ {dev (shell "yarn shadow-cljs -A:local watch editor")
   copy-curriculum (do (shell "mkdir -p public/cljs")
                       (shell "cp -r src/main/maria/curriculum public/cljs"))
   release (do (run 'copy-curriculum)
-              (shell "yarn shadow-cljs -A:build release editor"))
-  debug (shell "yarn shadow-cljs -A:build release editor --debug")}}
+              (shell "yarn shadow-cljs release editor"))
+  debug (shell "yarn shadow-cljs release editor --debug")}}

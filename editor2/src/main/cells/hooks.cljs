@@ -6,9 +6,9 @@
             [re-db.hooks :as hooks]
             [re-db.reactive :as r]
             [promesa.core]
-            [maria.util :refer [some-str guard]]
+            [maria.editor.util :refer [some-str guard]]
             [cells.async :as a]
-            [maria.util :as u]))
+            [maria.editor.util :as u]))
 
 (defn -on-frame
   ([f] (-on-frame f nil))

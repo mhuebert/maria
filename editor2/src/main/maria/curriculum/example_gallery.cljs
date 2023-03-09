@@ -7,7 +7,7 @@
 
 ;; Here are some ways to use shapes in Maria. They’re here for you to browse and play with.
 
-;; Some of these were made by first-day programmers after working through [Learn Clojure with Shapes](http://www.maria.cloud/intro), where most (but not all!) of the Clojure programming techniques used are explained. See also [Welcome to Cells](https://dev.maria.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
+;; Some of these were made by first-day programmers after working through [Learn Clojure with Shapes](http://www.maria.editor.cloud/intro), where most (but not all!) of the Clojure programming techniques used are explained. See also [Welcome to Cells](https://dev.maria.editor.cloud/cells). To figure out the parts that aren’t explained, we recommend experimenting with the code. You can do that directly in the code blocks below, or in your own playground using the Duplicate button at the top of the screen. Cheers! 🦋
 
 ;; #### Colorization functions
 
@@ -146,11 +146,11 @@
 
 ;; #### Snake!
 
-;; [Move the snake with your arrow keys! 🐍](https://www.maria.cloud/gist/bba60540e714b31dcac02eb7cdf02fbc?eval=true)
+;; [Move the snake with your arrow keys! 🐍](https://www.maria.editor.cloud/gist/bba60540e714b31dcac02eb7cdf02fbc?eval=true)
 
 ;; #### Music!
 
-;; Code a [piano](https://dev.maria.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can play right in your browser!
+;; Code a [piano](https://dev.maria.editor.cloud/gist/da20602e3eef7cf1e9b45a13884da972) you can play right in your browser!
 
 ;; ### Flower by ClojureBridge Berlin attendee
 

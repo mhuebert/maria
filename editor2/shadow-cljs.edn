@@ -6,7 +6,7 @@
    :asset-path "/js"
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
-                    "/index.html" (maria.build/index-html)})]
+                    "/index.html" (maria.cloud.build/index-html)})]
    :dev {:build-hooks [(teknql.tailwind/start-watch!)]}
    :release {:build-hooks [(teknql.tailwind/compile-release!)
                            (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
@@ -14,10 +14,10 @@
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
    :module-loader true
-   :modules {:main {:init-fn maria.live/init}
-             :ext.katex {:entries [maria.show-values.katex]
+   :modules {:main {:init-fn maria.cloud.live-frame/init}
+             :ext.katex {:entries [maria.editor.extensions.katex]
                          :depends-on #{:main}}
              }
    :tailwind/output "public/css/tailwind.css"
-   :tailwind/files {:tailwind.css "./src/maria.cloud.css"
+   :tailwind/files {:tailwind.css "./src/maria.editor.cloud.css"
                     :base-path "."}}}}

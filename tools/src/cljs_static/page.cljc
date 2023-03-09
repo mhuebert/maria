@@ -16,8 +16,15 @@
   (cond-> kw-or-hiccup
           (keyword? kw-or-hiccup) (vector)))
 
-(defn script-tag [str-or-map]
-  [:script str-or-map])
+(defn script-tag
+  ([opts content]
+   [:script opts (some-> content hiccup/raw)])
+  ([opts-or-content]
+   (if-let [value (:value opts-or-content)]
+     (script-tag (dissoc opts-or-content :value) value)
+     (if (string? opts-or-content)
+       (script-tag {} opts-or-content)
+       (script-tag opts-or-content nil)))))
 
 (defn meta-tag [k v]
   [:meta {(if (some #{"Expires"

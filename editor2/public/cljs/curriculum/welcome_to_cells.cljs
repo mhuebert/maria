@@ -1,4 +1,4 @@
-(ns maria.curriculum.welcome-to-cells
+(ns maria.editor.curriculum.welcome-to-cells
   {:title "Cells Quickstart"
    :description "Learn how to make things come alive and change over time."}
   (:require [cells.api :refer :all]

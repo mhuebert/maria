@@ -1,4 +1,4 @@
-(ns maria.curriculum.animation-quickstart
+(ns maria.editor.curriculum.animation-quickstart
   {:description "Get a running start at making basic animations using the Shapes library."}
   (:require [shapes.core :refer :all]
             [cells.api :refer :all]))
@@ -7,7 +7,7 @@
 
 ;; This is a quick-start guide for drawing animations. The goal of this document is to equip you with templates to give you a running start at making basic animations. From there you can do many fun and complex things.
 
-;; For a full explanation of how the techniques in this guide work, see the [Cells](https://www.maria.cloud/cells) lesson.
+;; For a full explanation of how the techniques in this guide work, see the [Cells](https://www.maria.editor.cloud/cells) lesson.
 
 
 ;; ### `cell` and `interval`
@@ -25,7 +25,7 @@
 
 (defcell clock (interval 10 inc))
 
-;; We can then get the _current_ value of `clock` with the `@` symbol. (Why? Read [Cells](https://www.maria.cloud/cells) for how it works.)
+;; We can then get the _current_ value of `clock` with the `@` symbol. (Why? Read [Cells](https://www.maria.editor.cloud/cells) for how it works.)
 
 (cell (rotate @clock (square 100)))
 
@@ -52,4 +52,4 @@
                      (+ 60 (* 20 (Math/cos @counter))))
            (colorize @a-color)))
 
-;; Those are the basic tricks. Go forth and hack on some animated drawings, fellow programmer. For ideas, see the [Gallery](https://maria.cloud/gallery?eval=true).
+;; Those are the basic tricks. Go forth and hack on some animated drawings, fellow programmer. For ideas, see the [Gallery](https://maria.editor.cloud/gallery?eval=true).
