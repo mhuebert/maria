@@ -4,7 +4,8 @@
             [cljs-static.page :as page]
             [cljs-static.shadow :as shadow]
             [clojure.string :as str]
-            [edamame.core :as eda]))
+            [edamame.core :as eda]
+            [re-db.schema :as schema]))
 
 (defn parse-ns-meta [file]
   (let [src (slurp file)
@@ -32,8 +33,8 @@
   (into []
         (comp (map fs/file)
               (map #(-> (parse-ns-meta %)
-                        (assoc :path (str "/cljs/" (fs/file-name %)))))
-              (remove #(str/ends-with? (:path %) "macros.clj")))
+                        (assoc :curriculum/path (str "/cljs/" (fs/file-name %)))))
+              (remove #(str/ends-with? (:curriculum/path %) "macros.clj")))
         (fs/list-dir (fs/file "src/main/maria/curriculum"))))
 
 (defn index-html []
@@ -44,8 +45,11 @@
               :scripts/head [{:src "https://polyfill.io/v3/polyfill.min.js?version=3.111.0&features=URLSearchParams%2CURL"}]
               :props/html {:class "bg-[#eeeeee]"}
               :body [:div#maria-live]
-              :scripts/body [{:type "application/x-maria:env"
-                              :value (str {:maria/curriculum (read-curriculum-namespaces)})}
+              :scripts/body [{:type "application/re-db:schema"
+                              :value (str {:curriculum/path (merge schema/unique-id
+                                                                   schema/string)})}
+                             {:type "application/re-db:tx"
+                              :value (read-curriculum-namespaces)}
                              {:src (shadow/module-path :editor :main)}]}))
 
 (defn tailwind-watch!

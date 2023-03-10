@@ -9,6 +9,7 @@
             [maria.editor.core :as prose]
             [maria.scratch]
             [maria.ui :as ui :refer [defview]]
+            [re-db.api :as db]
             [re-db.reactive :as r]
             [re-db.hooks :as h]
             [yawn.root :as root]
@@ -24,14 +25,26 @@
 (def sidebar-transition "all 0.2s ease 0s")
 
 (defview sidebar [{:keys [visible? width]}]
-  [:div.fixed.top-0.bottom-0.flex.flex-column.bg-white.rounded.z-10.drop-shadow-md
-   {:style {:width width
-            :transition sidebar-transition
-            :left (if visible? 0 (- width))}}])
+  (into [:div.fixed.top-0.bottom-0.bg-white.rounded.z-10.drop-shadow-md.divide-y
+         {:style {:width width
+                  :transition sidebar-transition
+                  :left (if visible? 0 (- width))}}]
+        (map (fn [{:keys [curriculum/path
+                          name
+                          title
+                          description]}]
+               [:div.p-2.text-sm title]))
+        (db/where [:curriculum/path])))
 
-(def env (->> (js/document.querySelectorAll "[type='application/x-maria:env']")
-              (map (comp edn/read-string (j/get :innerHTML)))
-              (apply merge)))
+(defn get-scripts [type]
+  (->> (js/document.querySelectorAll (str "[type='" type "']"))
+       (map (comp edn/read-string (j/get :innerHTML)))))
+
+(defn init-re-db []
+  (doseq [schema (get-scripts "application/re-db:schema")]
+    (db/merge-schema! schema))
+  (doseq [tx (get-scripts "application/re-db:tx")]
+    (db/transact! tx)))
 
 (defn link [title href]
   [:a (cond-> {:href href}
@@ -58,4 +71,5 @@
        [eldoc/view !docbar]]]]))
 
 (defn ^:export init []
+  (init-re-db)
   (root/create :maria-live (v/x [landing])))

@@ -1,5 +1,6 @@
 (ns maria.ui
   (:require #?(:cljs ["prosemirror-keymap" :refer [keydownHandler]])
+            [clojure.pprint]
             [yawn.view :as v]
             [re-db.fast :as fast]
             [re-db.hooks :as hooks]
@@ -31,3 +32,6 @@
                              (handler #js{} event)))]
           (.addEventListener js/window "keydown" on-keydown)
           #(.removeEventListener js/window "keydown" on-keydown))))))
+
+(defmacro pprinted [x]
+  `(with-out-str (~(if (:ns &env) 'cljs.pprint/pprint 'clojure.pprint/pprint) ~x)))
