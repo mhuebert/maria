@@ -1,4 +1,4 @@
-(ns maria.editor.ui.icons)
+(ns maria.editor.icons)
 ;; from https://heroicons.com
 
 (defn pencil [class]

@@ -10,8 +10,8 @@
             [clojure.string :as str]
             [maria.editor.code-blocks.docs]
             [maria.editor.code-blocks.repl]
-            [maria.editor.ui.helpers]
-            [maria.editor.ui.helpers]
+            [maria.editor.views]
+            [maria.editor.views]
             [promesa.core :as p]
             [re-db.reactive]
             [re-db.sci-config]
@@ -132,7 +132,7 @@
                                           cells.impl
                                           cells.api
                                           maria.editor.code-blocks.docs
-                                          maria.editor.ui.helpers])))
+                                          maria.editor.views])))
 
 (defn refer-all! [{:as ctx :keys [env]} targets]
   (doseq [[from to] targets]

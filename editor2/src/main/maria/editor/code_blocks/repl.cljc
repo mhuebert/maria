@@ -3,7 +3,7 @@
   (:require #?(:cljs ["react" :as react])
             #?(:cljs [sci.async :as a])
             [maria.editor.code-blocks.docs :as helpful]
-            [maria.editor.ui.helpers :as ui]
+            [maria.editor.views :as ui]
             [promesa.core :as p]
             [sci.core :as sci]
             [sci.ctx-store :as store]

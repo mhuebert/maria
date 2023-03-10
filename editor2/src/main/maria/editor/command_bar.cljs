@@ -1,24 +1,16 @@
 (ns maria.editor.command-bar
   (:require ["prosemirror-keymap" :refer [keydownHandler]]
             [applied-science.js-interop :as j]
-            [yawn.hooks :as h]
+            [maria.ui :as ui]
+            [re-db.reactive :as r]
             [yawn.view :as v]))
 
+(r/redef !state (r/atom {:visible? false}))
 
-(defn use-global-keymap [bindings]
-  (h/use-effect
-   (fn []
-     (let [on-keydown (let [handler (keydownHandler bindings)]
-                        (fn [event]
-                          (handler #js{} event)))]
-       (.addEventListener js/window "keydown" on-keydown)
-       #(.removeEventListener js/window "keydown" on-keydown)))))
+(defn toggle! []
+  (swap! !state update :visible? not))
 
-(v/defview view [{:keys [binding]}]
-  (use-global-keymap
-   (j/obj binding
-          (fn [& _]
-            ;; TODO
-            ;; implement command palette
-            (prn :show-command-palette))))
-  nil)
+(v/defview view []
+  (if (ui/use-> !state :visible?)
+    "command-bar"
+    "no command-bar"))

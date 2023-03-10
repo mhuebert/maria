@@ -10,7 +10,7 @@
             [applied-science.js-interop :as j]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.completions :as completions]
-            [maria.editor.code-blocks.eldoc :as eldoc]
+            [maria.editor.code-blocks.docbar :as eldoc]
             [maria.editor.code-blocks.error-marks :as error-marks]
             [maria.editor.code-blocks.eval-region :as eval-region]
             [maria.editor.code-blocks.styles :as styles]
@@ -39,7 +39,6 @@
         (focus! this)))))
 
 (j/js
-
   (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
     [{:keys [codeView proseView getPos code-updating?]} code-update]
@@ -79,24 +78,25 @@
                                        (.-doc tr)
                                        (+ start-pos from')
                                        (+ start-pos to')))
-            (.dispatch proseView tr))))))
+            (.dispatch proseView tr)))))))
 
-  (defn- controlled-update [this f]
-    (j/!set this :code-updating? true)
-    (f)
-    (j/!set this :code-updating? false))
+(defn- controlled-update [this f]
+  (j/!set this :code-updating? true)
+  (f)
+  (j/!set this :code-updating? false))
 
-  (defn code-text [codeView] (.. codeView -state -doc (toString)))
+(defn code-text [^js codeView] (.. codeView -state -doc (toString)))
 
+(j/js
   (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
     [{:as this :keys [codeView dom]} anchor head]
     (controlled-update this
-      #(do (.dispatch codeView {:selection {:anchor anchor
-                                            :head head}})
-           (when-not (.contains dom (.. js/document (getSelection) -focusNode))
-             (focus! this)))))
-
+                       #(do (.dispatch codeView {:selection {:anchor anchor
+                                                             :head head}})
+                            (when-not (.contains dom (.. js/document (getSelection) -focusNode))
+                              (focus! this))))))
+(j/js
   (defn text-diff [old-text new-text]
     (let [old-end (.-length old-text)
           new-end (.-length new-text)
@@ -116,8 +116,9 @@
                  (dec new-end))
           {:from start
            :to old-end
-           :insert (.slice new-text start new-end)}))))
+           :insert (.slice new-text start new-end)})))))
 
+(j/js
   (defn prose:forward-update [{:as this :keys [codeView]
                                prev-node :proseNode} new-node]
     (boolean
@@ -128,20 +129,23 @@
              old-text (code-text codeView)]
          (when (not= new-text old-text)
            (controlled-update this
-             (fn []
-               (.dispatch codeView {:changes (text-diff old-text new-text)
-                                    :annotations [(u/user-event-annotation "noformat")]})))))
-       true)))
+                              (fn []
+                                (.dispatch codeView {:changes (text-diff old-text new-text)
+                                                     :annotations [(u/user-event-annotation "noformat")]})))))
+       true))))
 
-  (defn prose:select-node [{:keys [codeView]}]
-    (.focus codeView))
+(defn prose:select-node [^js this]
+  (.. this -codeView focus))
 
-  (def language
-    (.define lang/LRLanguage
+(def language
+  (.define lang/LRLanguage
+           (j/js
              {:parser (.configure lezer-clojure/parser
                                   {:props [clj-mode/format-props
                                            (.add lang/foldNodeProp clj-mode/fold-node-props)
-                                           styles/code-styles]})}))
+                                           styles/code-styles]})})))
+
+(j/js
 
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
     (let [el (js/document.createElement "div")

@@ -10,6 +10,7 @@
             [clojure.string :as str]
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
+            [maria.editor.code-blocks.docbar :as eldoc]
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code-blocks.sci :as sci]
             [maria.editor.code-blocks.styles :as styles]
@@ -100,7 +101,7 @@
      (history)
      ~@(links/plugins)]))
 
-(defn editor [{:keys [source]}]
+(defn editor [{:as opts :keys [source make-sci-ctx]}]
   (u/with-element {:el styles/prose-element}
     (fn [^js element]
       (let [state (j/js
@@ -116,7 +117,8 @@
                                                                         (this-as ^js view
                                                                           (let [state (.apply (.-state view) tx)]
                                                                             (.updateState view state))))}))
-                     (j/assoc! :!sci-ctx (atom (sci/initial-context))))]
+                     (j/assoc! :!sci-ctx (atom (make-sci-ctx))
+                               :!docbar (:!docbar opts)))]
         (commands/prose:eval-doc! view)
         #(j/call view :destroy)))))
 

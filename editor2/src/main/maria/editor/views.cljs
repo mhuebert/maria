@@ -1,7 +1,9 @@
-(ns maria.editor.ui.helpers
+(ns maria.editor.views
   (:require ["@radix-ui/react-tooltip" :as Tooltip]
             [clojure.string :as str]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [re-db.react]
+            [maria.ui :as ui]))
 
 (def tag-el :span.text-stone-500.text-xs.bg-stone-100.p-1.ml-1)
 
@@ -33,7 +35,7 @@
             (when arglists [show-arglists arglists])
             (some-> doc (str/replace #"\n ( \S)" (fn [[_ x]] x)))]))))
 
-(v/defview doc-tooltip [m trigger]
+(ui/defview doc-tooltip [m trigger]
   (when m
     [:> Tooltip/Provider
      [:> Tooltip/Root {:delayDuration 300}

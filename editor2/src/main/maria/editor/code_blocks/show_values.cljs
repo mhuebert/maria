@@ -8,16 +8,16 @@
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.error-marks :as error-marks]
             [maria.editor.code-blocks.repl :as repl]
-            [maria.editor.ui.helpers :as ui]
-            [maria.editor.ui.icons :as icons]
+            [maria.editor.icons :as icons]
             [maria.editor.util]
+            [maria.ui :refer [defview]]
+            [maria.editor.views :as views]
             [nextjournal.clojure-mode.node :as n]
             [promesa.core :as p]
             [sci.core :as sci]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
             [yawn.view :as v]))
-
 
 (def COLL-PADDING 4)
 
@@ -41,7 +41,7 @@
     (assert ctx "show-opts requires a sci context")
     ctx))
 
-(v/defview show-stacktrace [opts stack]
+(defview show-stacktrace [opts stack]
   ;; - for built-in, look up clojure.core metadata / link to source?
   (into [:div.flex.flex-col.-mx-2]
         (keep (fn [{:as frame :keys [file ns line column sci/built-in local name]}]
@@ -73,7 +73,7 @@
                       {:href code-cell}
                       (icons/map-pin:mini icon-classes)])
                    (when m
-                     (ui/doc-tooltip m (icons/information-circle:mini icon-classes)))
+                     (views/doc-tooltip m (icons/information-circle:mini icon-classes)))
                    (if fqn
                      [:div
                       [:span.text-gray-500 (str (namespace fqn)) "/"]
@@ -91,7 +91,7 @@
                    ])))
         (force stack)))
 
-(v/defview show-error [opts error]
+(defview show-error [opts error]
   [:<>
    [:div.bg-red-100.text-red-800.border.border-red-200.flex.items-start
     [:div.m-2.flex-grow (ex-message error)]
@@ -105,7 +105,7 @@
 
 (declare get-viewers)
 
-(v/defview show
+(defview show
   [opts x]
   (let [opts
         (-> opts
@@ -116,14 +116,14 @@
                              (reduced out)
                              _)) "No viewer" (:viewers opts))))
 
-(v/defview more-btn [on-click]
+(defview more-btn [on-click]
   [:div.inline-block.-mt-1 {:on-click on-click}
    (icons/ellipsis:mini "w-4 h-4 cursor-pointer ")])
 
 (defn punctuate ^v/el [s]
   (v/x [:div.inline-block.font-bold.opacity-60 s]))
 
-(v/defview show-brackets [left right more children !wrapper !parent]
+(defview show-brackets [left right more children !wrapper !parent]
   (let [bracket-classes "flex flex-none"]
     [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
@@ -184,7 +184,7 @@
      !wrapper
      !parent]))
 
-(v/defview show-coll [left right opts coll]
+(defview show-coll [left right opts coll]
   (let [[coll more! !wrapper !parent] (use-limit coll 10)]
     [show-brackets
      left
@@ -196,7 +196,7 @@
      !wrapper
      !parent]))
 
-(v/defview show-map-entry [opts this]
+(defview show-map-entry [opts this]
   [:div.inline-flex.gap-list
    [:span (show opts (key this))] " "
    [:span (show opts (val this))]])
@@ -210,7 +210,7 @@
   (cond loading loader
         error (show-error opts error)))
 
-(v/defview show-promise [opts p]
+(defview show-promise [opts p]
   (let [[v v!] (h/use-state ::loading)]
     (h/use-effect
      (fn []
@@ -223,12 +223,12 @@
        loader
        (show opts v)))))
 
-(v/defview show-var [opts x]
+(defview show-var [opts x]
   (v/x [:<>
         (when (fn? @x) [:div.text-gray-500.mb-1 (str x)])
         (show opts @x)]))
 
-(v/defview show-str [opts x]
+(defview show-str [opts x]
   ;; TODO - collapse via button, not clicking anywhere on the text
   (let [[collapse toggle!] (h/use-state (or (> (count (str/split-lines x)) 10)
                                             (> (count x) 200)))
@@ -242,7 +242,7 @@
 (def show-set (partial show-coll "#{" "}"))
 (def show-list (partial show-coll "(" ")"))
 
-(v/defview show-function [_ f]
+(defview show-function [_ f]
   (let [[showing toggle!] (h/use-state false)]
     ;; TODO show arrow
     [:div {:on-click #(toggle! not)}
@@ -250,16 +250,16 @@
      (when showing
        [:div.pre-wrap (str f)])]))
 
-(v/defview show-shape [_ x]
+(defview show-shape [_ x]
   (v/x (shapes/to-hiccup x)))
 
 (defn show-identity [opts x] x)
 (defn show-terminal [f] (fn [opts x] (f x)))
 
-(v/defview show-watchable [opts x]
+(defview show-watchable [opts x]
   (show opts (h/use-deref x)))
 
-(v/defview show-with-async-status [opts !status !value]
+(defview show-with-async-status [opts !status !value]
   ;; always watch status & value together, to avoid cell value being unwatched during loading/error states.
   (let [status (h/use-deref !status)
         value (h/use-deref !value)]

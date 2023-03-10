@@ -4,12 +4,12 @@
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.editor.prosemirror.schema :refer [schema]]
-            [maria.editor.ui.icons :as icons]
+            [maria.editor.icons :as icons]
             [maria.editor.util :as u]
             [shadow.cljs.modern :refer [defclass]]
             [yawn.hooks :as h]
             [yawn.root :as root]
-            [yawn.view :as v]))
+            [maria.ui :refer [defview]]))
 
 (def mark:link (.. schema -marks -link))
 (def node:image (.. schema -nodes -image))
@@ -95,7 +95,7 @@
 
 (def target-value (j/get-in [:target :value]))
 
-(v/defview link-tooltip
+(defview link-tooltip
   {:key :value}
   [{:as props :keys [value set-value! style]}]
   (let [[edit-text set-text!] (h/use-state nil)
