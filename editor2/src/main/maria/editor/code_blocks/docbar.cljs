@@ -6,9 +6,12 @@
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.repl :as repl]
             [maria.editor.views :as views]
+            [maria.ui :as ui]
             [maria.ui :refer [defview]]
             [nextjournal.clojure-mode.node :as n]
-            [re-db.reactive :as r]))
+            [re-db.reactive :as r]
+            [yawn.hooks :as h]
+            [yawn.view :as v]))
 
 (defn closest-operator [state node]
   (when-let [expr (n/closest node (fn [node]
@@ -32,6 +35,8 @@
                          (operator state))
                :compare =}))
 
+(defonce !state (r/atom nil))
+
 (j/js
   (defn extension [node-view]
     [operator-field
@@ -43,19 +48,24 @@
                                    sym (or (-> (autocomplete/selectedCompletion state)
                                                (j/get :sym))
                                            (.field state operator-field))
-                                   {:keys [!sci-ctx !docbar]} (.-proseView node-view)]
+                                   {:keys [!sci-ctx]} (.-proseView node-view)]
                                (assert !sci-ctx "eldoc extension requires sci context")
-                               (reset! !docbar
+                               (reset! !state
                                        (when sym
                                          (try (repl/doc-map @!sci-ctx ns sym)
                                               (catch js/Error e nil)))))))}))]))
 
-(defview view [!state]
-  (when-let [{:as m :keys [ns name doc arglists]} @!state]
-    (views/doc-tooltip m
-                       [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
-                        {:class ["h-[35px]"
-                                 "border-t border-stone-300"]}
-                        [:div (views/show-sym ns name)]
-                        [:div (views/show-arglists arglists)]
-                        [:div.truncate doc]])))
+(defview view []
+  (let [sidebar (h/use-deref ui/!sidebar-state)]
+    [:div.fixed.bottom-0.right-0
+     {:style {:left (if (:visible? sidebar) (:width sidebar) 0)
+              :transition (:transition sidebar)}}
+     (when-let [{:as m :keys [ns name doc arglists]} @!state]
+       (views/doc-tooltip m
+                          (v/x
+                           [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
+                            {:class ["h-[35px]"
+                                     "border-t border-stone-300"]}
+                            [:div (views/show-sym ns name)]
+                            [:div (views/show-arglists arglists)]
+                            [:div.truncate doc]])))]))

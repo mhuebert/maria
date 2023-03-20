@@ -3,6 +3,7 @@
             [babashka.process :as bp]
             [cljs-static.page :as page]
             [cljs-static.shadow :as shadow]
+            [cljs-static.assets :as assets]
             [clojure.string :as str]
             [edamame.core :as eda]
             [re-db.schema :as schema]))
@@ -29,15 +30,24 @@
 
     opts))
 
+(defn current-sha
+  "Returns SHA for current git commit"
+  []
+  (-> (bp/sh "git" "rev-parse" "HEAD")
+      :out
+      str/trim))
+
 (defn read-curriculum-namespaces []
-  (into []
-        (comp (map fs/file)
-              (map #(-> (parse-ns-meta %)
-                        (assoc :curriculum/path (str "/cljs/" (fs/file-name %)))))
-              (remove #(str/ends-with? (:curriculum/path %) "macros.clj")))
+  (mapv #(let [file (fs/file %)
+               file-name (fs/file-name file)
+               m (parse-ns-meta file)]
+           (assoc m :curriculum/file-name file-name
+                    :curriculum/name (last (str/split (str (:name m)) #"\."))
+                    :curriculum/hash (assets/md5 (slurp file))))
         (fs/list-dir (fs/file "src/main/maria/curriculum"))))
 
 (defn index-html []
+
   (page/root "Maria"
              {:meta {:viewport "width=device-width, initial-scale=1"}
               :styles [{:href "https://prosemirror.net/css/editor.css"}
@@ -46,10 +56,12 @@
               :props/html {:class "bg-[#eeeeee]"}
               :body [:div#maria-live]
               :scripts/body [{:type "application/re-db:schema"
-                              :value (str {:curriculum/path (merge schema/unique-id
-                                                                   schema/string)})}
+                              :value (str {:curriculum/name (merge schema/unique-id
+                                                                        schema/string)})}
                              {:type "application/re-db:tx"
-                              :value (read-curriculum-namespaces)}
+                              :value (conj (read-curriculum-namespaces)
+                                           {:db/id :maria.cloud/env
+                                            :git/sha (current-sha)})}
                              {:src (shadow/module-path :editor :main)}]}))
 
 (defn tailwind-watch!

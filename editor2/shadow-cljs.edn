@@ -14,7 +14,7 @@
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
    :module-loader true
-   :modules {:main {:init-fn maria.cloud.live-frame/init}
+   :modules {:main {:init-fn maria.cloud.index/init}
              :ext.katex {:entries [maria.editor.extensions.katex]
                          :depends-on #{:main}}
              }

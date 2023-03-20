@@ -111,6 +111,7 @@
                   'pprint pprint}
        :classes {#_#_'js goog/global
                  'js/Promise js/Promise
+                 'js/TextEncoder js/TextEncoder
                  'Math js/Math}
        :aliases {'p 'promesa.core
                  'j 'applied-science.js-interop

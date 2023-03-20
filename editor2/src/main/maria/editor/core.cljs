@@ -6,11 +6,11 @@
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
+            ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.code-blocks.docbar :as eldoc]
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code-blocks.sci :as sci]
             [maria.editor.code-blocks.styles :as styles]
@@ -18,7 +18,9 @@
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
-            [maria.editor.util :as u]))
+            [maria.editor.util :as u]
+            [maria.ui :as ui]
+            [yawn.hooks :as h]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -101,26 +103,30 @@
      (history)
      ~@(links/plugins)]))
 
-(defn editor [{:as opts :keys [source make-sci-ctx]}]
-  (u/with-element {:el styles/prose-element}
-    (fn [^js element]
-      (let [state (j/js
-                    (.create EditorState {:doc (-> source
-                                                   parse-clj/clj->md
-                                                   markdown/md->doc)
-                                          :plugins (plugins)}))
-            view (-> (j/js
-                       (EditorView. element {:state state
-                                             :nodeViews {:code_block node-view/editor}
-                                             ;; no-op tx for debugging
-                                             #_#_:dispatchTransaction (fn [tx]
-                                                                        (this-as ^js view
-                                                                          (let [state (.apply (.-state view) tx)]
-                                                                            (.updateState view state))))}))
-                     (j/assoc! :!sci-ctx (atom (make-sci-ctx))
-                               :!docbar (:!docbar opts)))]
-        (commands/prose:eval-doc! view)
-        #(j/call view :destroy)))))
+(ui/defview editor [{:as opts :keys [id
+                                     initial-value
+                                     make-sci-ctx]
+                     :or {make-sci-ctx sci/initial-context}}]
+  (let [!mounted? (h/use-state false)]
+    (u/with-element {:el styles/prose-element}
+      (fn [^js element]
+        (let [state (j/js
+                      (.create EditorState {:doc (-> initial-value
+                                                     parse-clj/clj->md
+                                                     markdown/md->doc)
+                                            :plugins (plugins)}))
+              view (-> (j/js
+                         (EditorView. element {:state state
+                                               :nodeViews {:code_block node-view/editor}
+                                               ;; no-op tx for debugging
+                                               #_#_:dispatchTransaction (fn [tx]
+                                                                          (this-as ^js view
+                                                                            (let [state (.apply (.-state view) tx)]
+                                                                              (.updateState view state))))}))
+                       (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
+          (commands/prose:eval-doc! view)
+          (reset! !mounted? true)
+          #(j/call view :destroy))))))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))
