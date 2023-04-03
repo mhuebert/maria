@@ -8,16 +8,11 @@
                    {:public-path "public"
                     "/index.html" (maria.cloud.build/index-html)})]
    :dev {:build-hooks [(maria.cloud.build/tailwind-watch!)]}
-   :release {:build-hooks [(teknql.tailwind/compile-release!)
-                           (shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
+   :release {:build-hooks [(shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
    :devtools {:http-root "public"
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
    :module-loader true
    :modules {:main {:init-fn maria.cloud.index/init}
              :ext.katex {:entries [maria.editor.extensions.katex]
-                         :depends-on #{:main}}
-             }
-   :tailwind/output "public/css/tailwind.css"
-   :tailwind/files {:tailwind.css "./src/maria.editor.cloud.css"
-                    :base-path "."}}}}
+                         :depends-on #{:main}}}}}}

@@ -4,5 +4,6 @@
   copy-curriculum (do (shell "mkdir -p public/cljs")
                       (shell "cp -r src/main/maria/curriculum public/data"))
   release (do (run 'copy-curriculum)
-              (shell "yarn shadow-cljs release editor"))
+              (shell "yarn shadow-cljs release editor")
+              (shell "npx tailwindcss -i src/maria.cloud.css -o public/css/tailwind.css"))
   debug (shell "yarn shadow-cljs release editor --debug")}}
