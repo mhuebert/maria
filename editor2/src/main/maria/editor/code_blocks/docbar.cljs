@@ -2,6 +2,7 @@
   (:require ["@codemirror/view" :refer [ViewPlugin]]
             ["@codemirror/state" :refer [StateField]]
             ["@codemirror/autocomplete" :as autocomplete]
+            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.repl :as repl]
@@ -37,7 +38,7 @@
 
 (defonce !state (r/atom nil))
 
-(j/js
+(js
   (defn extension [node-view]
     [operator-field
      (.define ViewPlugin

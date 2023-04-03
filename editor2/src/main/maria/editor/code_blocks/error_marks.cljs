@@ -2,6 +2,7 @@
   (:require ["@codemirror/view" :refer [EditorView Decoration]]
             ["@codemirror/state" :refer [StateEffect StateField]]
             [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [maria.editor.code-blocks.eval-region :refer [uppermost-edge-here]]
             [nextjournal.clojure-mode.node :as n]))
 
@@ -17,7 +18,7 @@
 
 (def mark:error (j/lit {:attributes {:class "bg-red-100 text-red-700"}}))
 
-(j/js
+(js
 
   (defn get-decorations [state line column]
     (let [{:keys [from to]} (get-range state [line column])]

@@ -35,6 +35,9 @@
               (str/starts-with? title "http")
               (assoc :target "_blank")) title])
 
+(defview home []
+  "Hello")
+
 (defview landing []
   (let [{:as location ::routes/keys [view]} (h/use-deref routes/!location)]
     [:<>
@@ -50,4 +53,3 @@
   (init-re-db)
   (routes/init)
   (root/create :maria-live (v/x [landing])))
-

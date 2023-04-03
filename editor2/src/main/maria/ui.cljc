@@ -41,14 +41,15 @@
                                  :width 250
                                  :transition "all 0.2s ease 0s"}))
 
-(maria.ui/defview with-sidebar [sidebar content]
-  (let [{:keys [visible? width transition]} (hooks/use-deref !sidebar-state)]
-    [:div
-     {:style {:padding-left (if visible? width 0)
-              :transition transition}}
-     [:div.fixed.top-0.bottom-0.bg-white.rounded.z-10.drop-shadow-md.divide-y.overflow-hidden
-      {:style {:width width
-               :transition transition
-               :left (if visible? 0 (- width))}}
-      sidebar]
-     content]))
+#?(:cljs
+   (maria.ui/defview with-sidebar [sidebar content]
+     (let [{:keys [visible? width transition]} (hooks/use-deref !sidebar-state)]
+       [:div
+        {:style {:padding-left (if visible? width 0)
+                 :transition transition}}
+        [:div.fixed.top-0.bottom-0.bg-white.rounded.z-10.drop-shadow-md.divide-y.overflow-hidden
+         {:style {:width width
+                  :transition transition
+                  :left (if visible? 0 (- width))}}
+         sidebar]
+        content])))

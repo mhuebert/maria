@@ -1,13 +1,13 @@
 (ns maria.editor.prosemirror.input-rules
   (:require ["prosemirror-inputrules" :as rules]
             ["prosemirror-model" :as model]
-            [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [maria.editor.prosemirror.schema :refer [schema]]))
 
 ;; An input rule defines a regular expression which, when matched on the current input,
 ;; invokes a command.
 
-(j/js
+(js
   (def maria-rules*
 
     (let [{{:as nodes :keys [blockquote

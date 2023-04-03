@@ -2,9 +2,7 @@
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
         thheller/shadow-cljs {:mvn/version "2.22.2"}
-        applied-science/js-interop {#_#_:mvn/version "0.3.3"
-                                    :git/url "https://github.com/applied-science/js-interop"
-                                    :git/sha "9fe3de8d88bc9f356a846d3e5ba4fb3b20b7bddf"}
+        applied-science/js-interop {:mvn/version "0.4.1"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
         com.teknql/shadow-cljs-tailwind-jit {:mvn/version "1.0.0"}

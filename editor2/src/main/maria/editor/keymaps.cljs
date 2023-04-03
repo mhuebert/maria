@@ -7,6 +7,7 @@
             ["prosemirror-schema-list" :as pm.schema-list]
             ["prosemirror-history" :as pm.history]
             [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :refer [schema]]
@@ -105,7 +106,7 @@
     (j/!set out (name binding) f))
   out)
 
-(j/js
+(js
   (def prose-keymap
     (let [{{:keys [hard_break list_item]} :nodes} schema
           hard-break-cmd (chain
@@ -219,7 +220,7 @@
                      :run f}))
   out)
 
-(j/js
+(js
   (def code-keymap
     (.of cm.view/keymap
          (-> [{:key :ArrowUp

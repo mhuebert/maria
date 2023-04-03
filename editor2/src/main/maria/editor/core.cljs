@@ -8,6 +8,7 @@
             ["prosemirror-schema-list" :as cmd-list]
             ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
@@ -34,7 +35,7 @@
 (defn clojure-block? [lang]
   (re-matches #"(?i)clj\w?|clojure|clojurescript" lang))
 
-(def clj-serializer (j/js
+(def clj-serializer (js
                       (let [{:keys [nodes marks]
                              {original :code_block} :nodes} md/defaultMarkdownSerializer]
                         (new md/MarkdownSerializer
@@ -93,7 +94,7 @@
  (= (md->clj "```\na\n```\n\n```\nb\n```")
     "a\n\nb"))
 
-(j/js
+(js
   (defn plugins []
     [keymaps/prose-keymap
      keymaps/default-keys
@@ -110,12 +111,12 @@
   (let [!mounted? (h/use-state false)]
     (u/with-element {:el styles/prose-element}
       (fn [^js element]
-        (let [state (j/js
+        (let [state (js
                       (.create EditorState {:doc (-> initial-value
                                                      parse-clj/clj->md
                                                      markdown/md->doc)
                                             :plugins (plugins)}))
-              view (-> (j/js
+              view (-> (js
                          (EditorView. element {:state state
                                                :nodeViews {:code_block node-view/editor}
                                                ;; no-op tx for debugging

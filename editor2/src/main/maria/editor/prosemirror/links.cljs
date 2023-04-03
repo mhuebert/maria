@@ -1,6 +1,7 @@
 (ns maria.editor.prosemirror.links
   (:require ["prosemirror-state" :refer [Plugin TextSelection]]
             ["prosemirror-inputrules" :as input-rules]
+            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.editor.prosemirror.schema :refer [schema]]
@@ -49,7 +50,7 @@
   (when-let [mark (mark-at $pos type)]
     (to-array (into [mark] (mark-extend $pos type)))))
 
-(j/js
+(js
   (defn open-link [view $pos]
     (let [{:keys [dispatch state]} view
           {:keys [doc]} state]
@@ -60,7 +61,7 @@
                         (.insertText text from to)))
           (.focus view))))))
 
-(j/js
+(js
   (defn edit-href [view $pos href]
     (let [{:keys [state dispatch]} view]
       (when-let [[mark from to] (resolve-mark $pos mark:link)]
@@ -69,7 +70,7 @@
                       (cond-> href (.addMark from to (.create mark:link {:href href})))))
         (.focus view)))))
 
-(j/js
+(js
   (defn open-link-on-backspace [{:keys [selection]} dispatch view]
     (let [$cursor (.-$cursor selection)
           [_ _ to] (resolve-mark $cursor mark:link)]
@@ -199,7 +200,7 @@
            (root/unmount-soon root)
            (.. div -parentNode (removeChild div))))
 
-(j/js
+(js
   (defn plugins []
     [(new Plugin {:view (fn [editor-view]
                           (new Tooltip editor-view))})

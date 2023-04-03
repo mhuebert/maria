@@ -2,6 +2,7 @@
   (:require ["prosemirror-model" :refer [Fragment Slice]]
             ["prosemirror-state" :refer [TextSelection Selection NodeSelection insertPoint]]
             ["prosemirror-commands" :as pm.cmd]
+            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.editor.code-blocks.eval-region :as eval-region]
@@ -18,7 +19,7 @@
 (j/defn set-result! [^js {:keys [!result]} v]
   (reset! !result (assoc v :key (vswap! !result-key inc))))
 
-(j/js
+(js
   (defn bind-prose-command [cmd]
     (fn [{{{:keys [state dispatch]} :proseView} :node-view}]
       (cmd state dispatch)))
@@ -170,7 +171,7 @@
 
   )
 
-(j/js
+(js
   (defn index [{:keys [proseView getPos]}]
     (.. proseView -state -doc (resolve (getPos)) (index 0))))
 
@@ -243,15 +244,15 @@
                               (drop (inc index))
                               (keep (j/get :spec))
                               first)]
-      (j/js (let [{:keys [codeView dom]} next-node]
-              (.dispatch codeView
-                         {:selection {:anchor 0
-                                      :head 0}})
-              (.focus codeView)
-              (.scrollIntoView dom {:block :center})))
+      (js (let [{:keys [codeView dom]} next-node]
+            (.dispatch codeView
+                       {:selection {:anchor 0
+                                    :head 0}})
+            (.focus codeView)
+            (.scrollIntoView dom {:block :center})))
       true)))
 
-(j/js
+(js
 
   #_(defn code:eval-current-region [{:as this {:keys [state]} :codeView}]
       (when-let [source (u/guard (eval-region/current-selection-str state) (complement str/blank?))]

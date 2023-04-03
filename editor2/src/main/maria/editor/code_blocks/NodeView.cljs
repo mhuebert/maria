@@ -8,6 +8,7 @@
             ["prosemirror-state" :refer [TextSelection Selection]]
             ["react" :as react]
             [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.completions :as completions]
             [maria.editor.code-blocks.docbar :as eldoc]
@@ -22,11 +23,11 @@
             [re-db.reactive :as r]
             [yawn.root :as root]))
 
-(j/js
+(js
   (defn focus! [{:keys [codeView on-mount]}]
     (on-mount #(.focus codeView))))
 
-(j/js
+(js
   (defn set-initial-focus!
     "If ProseMirror cursor is within code view, focus it."
     [{:as this :keys [getPos proseView codeView]}]
@@ -38,7 +39,7 @@
                  (< cursor end))
         (focus! this)))))
 
-(j/js
+(js
   (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
     [{:keys [codeView proseView getPos code-updating?]} code-update]
@@ -87,7 +88,7 @@
 
 (defn code-text [^js codeView] (.. codeView -state -doc (toString)))
 
-(j/js
+(js
   (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
     [{:as this :keys [codeView dom]} anchor head]
@@ -96,7 +97,7 @@
                                                              :head head}})
                             (when-not (.contains dom (.. js/document (getSelection) -focusNode))
                               (focus! this))))))
-(j/js
+(js
   (defn text-diff [old-text new-text]
     (let [old-end (.-length old-text)
           new-end (.-length new-text)
@@ -118,7 +119,7 @@
            :to old-end
            :insert (.slice new-text start new-end)})))))
 
-(j/js
+(js
   (defn prose:forward-update [{:as this :keys [codeView]
                                prev-node :proseNode} new-node]
     (boolean
@@ -139,14 +140,13 @@
 
 (def language
   (.define lang/LRLanguage
-           (j/js
+           (js
              {:parser (.configure lezer-clojure/parser
                                   {:props [clj-mode/format-props
                                            (.add lang/foldNodeProp clj-mode/fold-node-props)
                                            styles/code-styles]})})))
 
-(j/js
-
+(js
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
     (let [el (js/document.createElement "div")
           this (j/obj :id (str (gensym "code-view-")))

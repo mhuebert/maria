@@ -1,6 +1,7 @@
 (ns maria.editor.code-blocks.completions
   (:require ["@codemirror/autocomplete" :as a]
             ["@codemirror/view" :as cm.view]
+            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
             [clojure.core :as c]
             [edamame.core :as edamame]
@@ -64,7 +65,7 @@
 
 
 
-(j/js
+(js
 
   (def styles
     {".cm-tooltip.cm-tooltip-autocomplete"
