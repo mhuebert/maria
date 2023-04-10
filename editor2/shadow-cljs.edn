@@ -14,5 +14,7 @@
               :preloads [yawn.view.refresh-preload]}
    :module-loader true
    :modules {:main {:init-fn maria.cloud.index/init}
+             :landing {:entries [maria.cloud.pages.landing]
+                       :depends-on #{:main}}
              :ext.katex {:entries [maria.editor.extensions.katex]
                          :depends-on #{:main}}}}}}

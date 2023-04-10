@@ -15,7 +15,7 @@
   (r/atom
    (impl/resolve-views
     ["/"
-     {"" 'maria.cloud.index/home
+     {"" 'maria.cloud.pages.landing/page
       ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum}])))
 
 (defn match-route [path]

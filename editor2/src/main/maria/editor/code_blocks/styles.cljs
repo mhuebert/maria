@@ -52,4 +52,5 @@
 (def code-theme
   (j/lit {".cm-content" {:padding "1rem"
                          :white-space "pre-wrap"
-                         :max-width "100%"}}))
+                         :max-width "100%"}
+          "&.cm-editor, &.cm-editor.cm-focused" {:outline "1px solid transparent"}}))

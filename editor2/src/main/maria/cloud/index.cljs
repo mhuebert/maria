@@ -38,7 +38,7 @@
 (defview home []
   "Hello")
 
-(defview landing []
+(defview root []
   (let [{:as location ::routes/keys [view]} (h/use-deref routes/!location)]
     [:<>
      (ui/use-global-keymap {:mod-k (fn [& _] (command-bar/toggle!))
@@ -52,4 +52,4 @@
 (defn ^:export init []
   (init-re-db)
   (routes/init)
-  (root/create :maria-live (v/x [landing])))
+  (root/create :maria-live (v/x [root])))

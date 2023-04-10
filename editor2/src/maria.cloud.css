@@ -3,7 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {--code-number: #987aa0;
+:root {
+    --code-number: #987aa0;
     --code-string: #a78938;
     --code-docString: #a78938;
     --code-variableName: #98a14b;
@@ -19,15 +20,12 @@
     @apply gap-[6px]
 }
 
-svg {
-    display: inline-block;
-}
+/* ProseMirror */
+
 .ProseMirror {
     @apply m-4 p-0 text-xl font-serif;
 }
-pre, h1, h2, h3, h4 {
-    @apply mb-4;
-}
+
 
 .ProseMirror > *:not(div) {
     @apply md:w-1/2 leading-relaxed;
@@ -42,17 +40,37 @@ pre, h1, h2, h3, h4 {
     @apply border-gray-300 my-8
 }
 
+/* CodeMirror */
+
 .cm-content {
     @apply p-4 bg-white
 }
 
-h1 {@apply text-4xl;}
-h2 {@apply text-[1.6rem];}
+/* General Formatting */
+
+svg {
+    display: inline-block;
+}
+
+pre, h1, h2, h3, h4 {
+    @apply mb-4;
+}
+
+
+h1 {
+    @apply text-4xl;
+}
+
+h2 {
+    @apply text-[1.6rem];
+}
+
 .font-serif {
     font-family: georgia, times, serif;
     @apply font-normal;
 }
 
+/* Cells */
 .cell-status {
     display: inline-block;
     border-radius: 4px;
