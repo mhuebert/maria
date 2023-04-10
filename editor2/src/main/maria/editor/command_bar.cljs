@@ -11,6 +11,7 @@
   (swap! !state update :visible? not))
 
 (v/defview view []
-  (if (ui/use-> !state :visible?)
-    "command-bar"
-    "no command-bar"))
+  [:div.fixed.right-0.top-0
+   (if (ui/use-> !state :visible?)
+     "command-bar"
+     "no command-bar")])

@@ -3,7 +3,7 @@
             ["@lezer/highlight" :refer [tags styleTags]]
             [applied-science.js-interop :as j]))
 
-(def prose-element :div.relative)
+(def prose-element :div.relative.notebook)
 
 (def code-styles
   ;; map from token types (as defined in the grammar) to universally-defined
@@ -50,7 +50,11 @@
        (.define highlight/HighlightStyle)))
 
 (def code-theme
-  (j/lit {".cm-content" {:padding "1rem"
+  (j/lit {".cm-content" {:padding "1rem 1rem 1rem 0"
+                         :background-color "white"
+                         :margin-left "1rem"
+                         :border-radius "4px"
                          :white-space "pre-wrap"
                          :max-width "100%"}
+          ".cm-matchingBracket" {:color "black"}
           "&.cm-editor, &.cm-editor.cm-focused" {:outline "1px solid transparent"}}))

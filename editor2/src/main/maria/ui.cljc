@@ -41,6 +41,10 @@
                                  :width 250
                                  :transition "all 0.2s ease 0s"}))
 
+(defn sidebar-width []
+  (let [{:keys [visible? width transition]} @!sidebar-state]
+    (if visible? width 0)))
+
 #?(:cljs
    (maria.ui/defview with-sidebar [sidebar content]
      (let [{:keys [visible? width transition]} (hooks/use-deref !sidebar-state)]
@@ -53,3 +57,5 @@
                   :left (if visible? 0 (- width))}}
          sidebar]
         content])))
+
+(def divider-classes "border-b-2 border-zinc-100")
