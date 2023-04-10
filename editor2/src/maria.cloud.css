@@ -75,14 +75,14 @@ h2 {
     background-color: rgba(0, 0, 0, .05)
 }
 
-.circle-error, .circle-loading {
+.circle-error, .circle-loading, .circle-value {
     width: 16px;
     height: 16px;
     position: relative;
     display: inline-block
 }
 
-.circle-error > div, .circle-loading > div {
+.circle-error > div, .circle-loading > div, .circle-value > div {
     width: 100%;
     height: 100%;
     border-radius: 50%;
@@ -127,6 +127,12 @@ h2 {
     background-color: darkred;
     border-radius: 0;
     -webkit-transform: rotate(45deg) scale(.75);
+    transform: rotate(45deg) scale(.75)
+}
+
+.circle-value > div {
+    background-color: deepskyblue;
+    border-radius: 0;
     transform: rotate(45deg) scale(.75)
 }
 
@@ -267,6 +273,7 @@ button {
 .AccordionChevron {
     transition: transform 300ms;
 }
+
 .AccordionTrigger[data-state='open'] > .AccordionChevron {
     transform: rotate(90deg);
 }

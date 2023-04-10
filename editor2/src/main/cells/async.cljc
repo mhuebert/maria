@@ -22,7 +22,6 @@
 
 (def error :error)
 (def loading? :loading)
-
 (defn promise? [x] (instance? js/Promise x))
 
 

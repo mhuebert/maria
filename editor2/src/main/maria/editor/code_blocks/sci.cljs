@@ -126,14 +126,14 @@
                           yawn.sci-config/namespaces
                           re-db.sci-config/namespaces)}
       (maria.editor.code-blocks.sci/require-namespaces [shapes.core
-                                          maria.editor.code-blocks.repl
-                                          sci.core
-                                          sci.async
-                                          cells.hooks
-                                          cells.impl
-                                          cells.api
-                                          maria.editor.code-blocks.docs
-                                          maria.editor.views])))
+                                                        maria.editor.code-blocks.repl
+                                                        sci.core
+                                                        sci.async
+                                                        cells.hooks
+                                                        cells.impl
+                                                        cells.api
+                                                        maria.editor.code-blocks.docs
+                                                        maria.editor.views])))
 
 (defn refer-all! [{:as ctx :keys [env]} targets]
   (doseq [[from to] targets]

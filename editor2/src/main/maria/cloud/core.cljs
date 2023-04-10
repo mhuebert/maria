@@ -14,7 +14,8 @@
             [re-db.api :as db]
             [yawn.hooks :as h]
             [yawn.root :as root]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [maria.cloud.sidebar :as sidebar]))
 
 ;; TODO
 ;; - UI for sidebar,
@@ -80,7 +81,7 @@
                             :shift-mod-k (fn [& _] (swap! ui/!sidebar-state update :visible? not))})
      [command-bar/view]
      [ui/with-sidebar
-      [views/sidebar-content]
+      [sidebar/content]
       [:div
        [menubar]
        [view location]]]

@@ -89,17 +89,18 @@
   []
   (let [[v v!] (hooks/use-state nil)
         self r/*owner*]
-    (a/loading! self)
-    (-> (j/get js/navigator :geolocation)
-        (j/call :getCurrentPosition
-          (fn [location]
-            (binding [r/*owner* self]
-              (a/complete! self)
-              (-> (j/get location :coords)
-                  (j/select-keys [:latitude :longitude])
-                  (js->clj :keywordize-keys true)
-                  v!)))
-          (fn [error] (a/error! self error))))
+    (hooks/use-effect
+     (fn []
+       (a/loading! self)
+       (-> (j/get js/navigator :geolocation)
+           (j/call :getCurrentPosition
+             (fn [location]
+               (-> (j/get location :coords)
+                   (j/select-keys [:latitude :longitude])
+                   (js->clj :keywordize-keys true)
+                   v!)
+               (a/complete! self))
+             (fn [error] (a/error! self error))))))
     v))
 
 (defn use-timeout

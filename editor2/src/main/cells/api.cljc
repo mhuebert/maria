@@ -1,5 +1,6 @@
 (ns cells.api
-  (:require [cells.hooks :as hooks]
+  (:require [cells.async :as async]
+            [cells.hooks :as hooks]
             [cells.impl :as impl]
             [re-db.reactive :as r]))
 
@@ -12,8 +13,11 @@
                          [nil body])]
     [docstring options body]))
 
-(defn ^:macro cell [&form &env expr]
-  `(impl/make-cell (fn [~'self] ~expr)))
+(defn ^:macro cell
+  ([&form &env key expr]
+   `(impl/make-cell ~key (fn [~'self] ~expr)))
+  ([&form &env expr]
+   `(impl/make-cell (fn [~'self] ~expr))))
 
 (defn ^:macro defcell [&form &env the-name & body]
   (let [[doc options body] (defn-opts body)]
@@ -44,3 +48,15 @@
   "Requests a user's geographic location using the browser's Navigator.geolocation api."
   []
   (hooks/use-geo-location))
+
+(def loading? (comp async/loading? deref async/!status))
+(def message (comp async/error deref async/!status))
+(def error? (comp boolean message))
+(defn status [cell] (some #{:error :loading} @(async/!status cell)))
+
+
+(defn dependencies [cell] (filter impl/cell? (r/get-derefs cell)))
+
+(defn dependents [cell] (filter impl/cell? (keys (r/get-watches cell))))
+
+(def cell? impl/cell?)

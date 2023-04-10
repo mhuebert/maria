@@ -17,7 +17,8 @@
             [sci.core :as sci]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [cells.api :as cells]))
 
 (def COLL-PADDING 4)
 
@@ -201,14 +202,11 @@
    [:span (show opts (key this))] " "
    [:span (show opts (val this))]])
 
-(def loader (v/x [:div.cell-status
-                  [:div.circle-loading
-                   [:div]
-                   [:div]]]))
-
-(defn show-async-status [opts {:keys [loading error]}]
-  (cond loading loader
-        error (show-error opts error)))
+(def loader
+  (v/x [:div.cell-status
+        [:div.circle-loading
+         [:div]
+         [:div]]]))
 
 (defview show-promise [opts p]
   (let [[v v!] (h/use-state ::loading)]
@@ -259,13 +257,21 @@
 (defview show-watchable [opts x]
   (show opts (h/use-deref x)))
 
-(defview show-with-async-status [opts !status !value]
+(def cell-value-circle
+  (v/x [:div.cell-status
+        [:div.circle-value
+         [:div]
+         [:div]]]))
+
+(defview show-cell [opts cell]
   ;; always watch status & value together, to avoid cell value being unwatched during loading/error states.
-  (let [status (h/use-deref !status)
-        value (h/use-deref !value)]
-    (if status
-      (show-async-status opts status)
-      (show opts value))))
+  (let [{:keys [loading error]} (h/use-deref (cells.async/!status cell))
+        value (h/use-deref cell)]
+    (cond loading loader
+          error (show-error opts error)
+          #_cell-value-circle
+          ;; should we indicate that this is a cell somehow?
+          :else (show opts value))))
 
 (defn by-type [views]
   (fn [opts x]
@@ -278,8 +284,8 @@
               (when (= x ::loading)
                 loader))
             (fn [opts x]
-              (when-let [!status (cells.async/!status x)]
-                (show-with-async-status opts !status x)))
+              (when (cells/cell? x)
+                (show-cell opts x)))
 
             (fn [opts x]
               (when (react/isValidElement x)

@@ -1,5 +1,5 @@
 (ns maria.curriculum.data-flow
-  (:require [cells.api :refer :all]
+  (:require [cells.api :as cell :refer [defcell cell]]
             [shapes.core :refer :all]))
 
 ;; # Data Flow
@@ -12,18 +12,18 @@
 
 ;; Evaluating this next cell will make your browser confirm that you're OK with Maria tracking your location through your browser. We won't use that data for anything except to customize the results in this exercise, which you can see in the code below. If you decline, the exercise will still work.
 
-(defcell location (geo-location))
+(defcell location (cell/geo-location))
 
 ;; With your location (or using a default location) we'll query a data source with an [HTTP](https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol) request. Through some prior digging, we know that the URL in the `fetch` below is a resource for [eBird](http://ebird.org/ebird/explore) data. We'll tell it our latitude and longitude, what format we want the results in, and that 10 results is just plenty, thanks. We'll see a "waiting" icon when we first evaluate it, and then a few seconds later the data will come back. (Give it a few seconds. Our request might have to go through an undersea cable.)
 
 ;; This next code snippet uses hash-maps, [keywords](https://clojure.org/reference/data_structures#Keywords), and keywords as functions with defaults. That's a lot of new stuff! Normally we'd introduce these more slowly but we're a little pressed for time. Sorry about that, we're working on it. :)
 (defcell birds
-  (fetch "https://ebird.org/ws2.0/data/obs/geo/recent"
-         {:query {:lat (:latitude @location "52.4821146")
-                  :lng (:longitude @location "13.4121388")
-                  :maxResults 10
-                  :key "inplsc863h7a" 
-                  :fmt "json"}}))
+  (cell/fetch "https://ebird.org/ws2.0/data/obs/geo/recent"
+              {:query {:lat (:latitude @location "52.4821146")
+                       :lng (:longitude @location "13.4121388")
+                       :maxResults 10
+                       :key "inplsc863h7a"
+                       :fmt "json"}}))
 
 ;; Once that comes back, let's poke at it a bit. That's the best way to get to know some new data. Let's look at just one of the results:
 
@@ -43,16 +43,16 @@
 
 ;; Here's a function that runs off to the open data resource Wikidata and gets the first picture it finds for a given term.
 (defn find-image [term]
-  (let [result (cell term (fetch "https://commons.wikimedia.org/w/api.php"
-                                 {:query {:action "query"
-                                          :origin "*"
-                                          :generator "images"
-                                          :prop "imageinfo"
-                                          :iiprop "url"
-                                          :gimlimit 5
-                                          :format "json"
-                                          :redirects 1
-                                          :titles term}}))]
+  (let [result (cell term (cell/fetch "https://commons.wikimedia.org/w/api.php"
+                                      {:query {:action "query"
+                                               :origin "*"
+                                               :generator "images"
+                                               :prop "imageinfo"
+                                               :iiprop "url"
+                                               :gimlimit 5
+                                               :format "json"
+                                               :redirects 1
+                                               :titles term}}))]
     (some->> @result
              :query
              :pages
@@ -71,8 +71,8 @@
 (defcell bird-pics
   (->> @birds
        (keep (fn [bird]
-           (some->> (:sciName bird)
-                    (find-image)
+               (some->> (:sciName bird)
+                        (find-image)
                         (image 100))))
        (doall)))
 
@@ -89,7 +89,7 @@
 
 ;; A bad or incomplete request returns nil:
 
-(defcell bad-request (fetch "https://ebird.org/xyz"))
+(defcell bad-request (cell/fetch "https://ebird.org/xyz"))
 
 ;; …experimenting with an IAsync protocol for communicating status information:
 
@@ -117,15 +117,16 @@
 
 ;; Cells created using `defcell` are named after their var.
 
-;; Anonymous cells may also be interesting:
+;; You can also create "inline" cells by passing an extra first argument, a "key" that must uniquely
+;; identify a cell within its parent.
 
 (defcell inline-count
-  (let [counter (cell (interval 1000 inc))]
+  (let [counter (cell :count (cell/interval 1000 inc))]
     (str "I have been counted " @counter " times")))
 
-;; The anonymous `cell` macro assigns itself a unique ID behind the scenes:
+;; You can observe this inner cell by looking at the dependencies of its parent:
 
 (cell/dependencies inline-count)
 
-[(cell (interval 1000 inc))
- (cell (interval 500 #(rand-nth [\q \r \s \t \u \v])))]
+[(cell :a (cell/interval 1000 inc))
+ (cell :b (cell/interval 500 #(rand-nth [\q \r \s \t \u \v])))]
