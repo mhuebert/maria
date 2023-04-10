@@ -81,8 +81,7 @@
    :clj
    (defn await [x] x))
 
-(defn what-is
-  "Returns a string describing what kind of thing `thing` is."
+(defn- what-is*
   [thing]
   (cond (vector? thing) "a vector: a collection of values, indexable by number",
         (keyword? thing) "a keyword: a special symbolic identifier",
@@ -101,3 +100,11 @@
         #?@(:cljs [(object? thing) "a javascript object: a collection of key/value pairs",]),
         (instance? #?(:cljs Atom :clj clojure.lang.Atom) thing) "an Clojure atom, a way to manage data that can change"
         (fn? thing) "a function: something you call with input that returns output"))
+
+(defn ^:macro what-is "Returns a string describing what kind of thing `thing` is."
+  [&form &env thing]
+  (let [{:keys [special-form macro]} (doc-map thing)]
+    (cond special-form "a special form: a primitive which is evaluated in a special way"
+          macro "a macro: a function that transforms source code before it is evaluated."
+          :else `(what-is* ~thing))))
+

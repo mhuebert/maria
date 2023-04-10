@@ -58,15 +58,17 @@
 
 (defview view []
   (let [sidebar (h/use-deref ui/!sidebar-state)]
-    [:div.fixed.bottom-0.right-0
-     {:style {:left (if (:visible? sidebar) (:width sidebar) 0)
-              :transition (:transition sidebar)}}
-     (when-let [{:as m :keys [ns name doc arglists]} @!state]
-       (views/doc-tooltip m
-                          (v/x
-                           [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
-                            {:class ["h-[35px]"
-                                     "border-t border-stone-300"]}
-                            [:div (views/show-sym ns name)]
-                            [:div (views/show-arglists arglists)]
-                            [:div.truncate doc]])))]))
+    [:<>
+     [:div {:style {:height 35}}]
+     [:div.fixed.bottom-0.right-0
+      {:style {:left (if (:visible? sidebar) (:width sidebar) 0)
+               :transition (:transition sidebar)}}
+      (when-let [{:as m :keys [ns name doc arglists]} @!state]
+        (views/doc-tooltip m
+                           (v/x
+                            [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
+                             {:class ["h-[35px]"
+                                      "border-t border-stone-300"]}
+                             [:div (views/show-sym ns name)]
+                             [:div (views/show-arglists arglists)]
+                             [:div.truncate doc]])))]]))

@@ -109,10 +109,7 @@
        :bindings {'prn prn
                   'println println
                   'pprint pprint}
-       :classes {#_#_'js goog/global
-                 'js/Promise js/Promise
-                 'js/TextEncoder js/TextEncoder
-                 'Math js/Math}
+       :classes {'js goog/global :allow [js/TextEncoder js/Promise]}
        :aliases {'p 'promesa.core
                  'j 'applied-science.js-interop
                  'shapes 'shapes.core
@@ -148,8 +145,10 @@
   (-> (sci/init sci-opts)
       (intern-core 'clojure.core '[maria.editor.code-blocks.repl/doc
                                    maria.editor.code-blocks.repl/dir
-                                   maria.editor.code-blocks.repl/await])
+                                   maria.editor.code-blocks.repl/await
+                                   maria.editor.code-blocks.repl/what-is])
       (refer-all! '{cells.api user
                     maria.editor.code-blocks.repl user
                     shapes.core user})
+      (sci/add-class! 'Math js/Math)
       (assoc :last-ns (volatile! @sci/ns))))
