@@ -16,7 +16,8 @@
    (impl/resolve-views
     ["/"
      {"" 'maria.cloud.pages.landing/page
-      ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum}])))
+      ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
+      ["gist/" :gist/id] `maria.cloud.views/gist}])))
 
 (defn match-route [path]
   (when-let [{:keys [route-params

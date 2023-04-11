@@ -10,6 +10,8 @@
             [re-db.xform :as xf])
   #?(:cljs (:require-macros maria.ui)))
 
+(defmacro x [& args] `(v/x ~@args))
+
 (defmacro defview [name & args]
   (v/defview:impl {:wrap-expr (fn [expr] `(re-db.react/use-derefs ~expr))} name args))
 
@@ -58,4 +60,13 @@
          sidebar]
         content])))
 
-(def divider-classes "border-b-2 border-zinc-100")
+(def c:divider "border-b-2 border-zinc-100")
+(def c:button-dark (str "bg-zinc-600 hover:bg-zinc-700 active:bg-zinc-900 "
+                        "font-sans font-bold no-underline "
+                        "text-white visited:text-white hover:text-white "
+                        "cursor-pointer"))
+(def c:button-light (str "bg-white active:bg-zinc-50 "
+                         "shadow-md hover:shadow-lg "
+                         "font-sans font-bold no-underline "
+                         "text-black visited:text-black hover:text-black "
+                         "cursor-pointer"))

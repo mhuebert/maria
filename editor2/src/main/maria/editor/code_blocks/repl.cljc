@@ -81,7 +81,7 @@
    :clj
    (defn await [x] x))
 
-(defn- what-is*
+(defn what-is*
   [thing]
   (cond (vector? thing) "a vector: a collection of values, indexable by number",
         (keyword? thing) "a keyword: a special symbolic identifier",

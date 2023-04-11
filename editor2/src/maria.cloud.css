@@ -258,15 +258,10 @@ button {
 .RightSlot {
     margin-left: auto;
     padding-left: 20px;
-    color: var(--mauve9);
 }
 
 [data-highlighted] > .RightSlot {
     color: white;
-}
-
-[data-disabled] > .RightSlot {
-    color: var(--mauve8);
 }
 
 /* radix-ui accordion */

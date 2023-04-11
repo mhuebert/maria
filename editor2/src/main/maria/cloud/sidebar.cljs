@@ -10,11 +10,15 @@
     [:> acc/Root {:type "multiple" :defaultValue #js["curriculum"]}
      [:> acc/Item
       {:value "curriculum"
-       :class ui/divider-classes}
+       :class ui/c:divider}
       [:> acc/Header
-       [:> acc/Trigger {:class "text-sm font-bold cursor-pointer p-2 AccordionTrigger"}
-        [icons/chevron-right:mini "w-4 h-4 -ml-1 AccordionChevron"]
-        "Learn"]]
+       {:class "flex flex-row h-[40px]"}
+       [:> acc/Trigger {:class "text-sm font-bold cursor-pointer p-2 AccordionTrigger flex-grow"}
+        [icons/chevron-right:mini "w-4 h-4 -ml-1 mr-1 AccordionChevron"]
+        "Learn"]
+       [:div.flex.items-center.justify-center.px-2.cursor-pointer.text-zinc-600.hover:text-zinc-800
+        {:on-click #(swap! ui/!sidebar-state assoc :visible? false)}
+        [icons/x-mark:mini "w-5 h-5 rotate-180"]]]
 
       (into [:> acc/Content]
             (map (fn [{:as m
