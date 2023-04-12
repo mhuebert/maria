@@ -4,6 +4,7 @@
             ["@codemirror/autocomplete" :as autocomplete]
             [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
+            [maria.cloud.sidebar :as sidebar]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.repl :as repl]
             [maria.editor.views :as views]
@@ -57,7 +58,7 @@
                                               (catch js/Error e nil)))))))}))]))
 
 (defview view []
-  (let [sidebar (h/use-deref ui/!sidebar-state)]
+  (let [sidebar (h/use-deref sidebar/!state)]
     [:<>
      [:div {:style {:height 35}}]
      [:div.fixed.bottom-0.right-0

@@ -33,18 +33,18 @@
 
 (defview root []
   (let [{:as location ::routes/keys [view]} (h/use-deref routes/!location)]
-    [:<>
-     (ui/use-global-keymap {:mod-k (fn [& _] (command-bar/toggle!))
-                            :shift-mod-k (fn [& _] (swap! ui/!sidebar-state update :visible? not))})
-     [command-bar/view]
-     [ui/with-sidebar
-      [sidebar/content]
-      [:div
-       [menu/menubar]
-       [view location]]]
-     [docbar/view]]))
+      [:<>
+       (ui/use-global-keymap {:mod-k (fn [& _] (command-bar/toggle!))
+                              :shift-mod-k (fn [& _] (swap! sidebar/!state update :visible? not))})
+       [command-bar/view]
+       [sidebar/with-sidebar
+        [sidebar/content]
+        [:div
+         [menu/menubar]
+         [view location]]]
+       [docbar/view]]))
 
 (defn ^:export init []
   (init-re-db)
   (routes/init)
-  (root/create :maria-live (v/x [root])))
+  (root/create :maria-live (v/<> [root])))

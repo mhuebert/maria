@@ -15,13 +15,15 @@
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code-blocks.sci :as sci]
             [maria.editor.code-blocks.styles :as styles]
+            [maria.editor.icons :as icons]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
             [maria.editor.util :as u]
             [maria.ui :as ui]
-            [yawn.hooks :as h]))
+            [yawn.hooks :as h]
+            [yawn.view :as v]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -104,30 +106,39 @@
      (history)
      ~@(links/plugins)]))
 
-(ui/defview editor [{:as opts :keys [id
-                                     initial-value
-                                     make-sci-ctx]
-                     :or {make-sci-ctx sci/initial-context}}]
-  (let [!mounted? (h/use-state false)]
-    (u/with-element {:el styles/prose-element}
-      (fn [^js element]
-        (let [state (js
-                      (.create EditorState {:doc (-> initial-value
-                                                     parse-clj/clj->md
-                                                     markdown/md->doc)
-                                            :plugins (plugins)}))
-              view (-> (js
-                         (EditorView. element {:state state
-                                               :nodeViews {:code_block node-view/editor}
-                                               ;; no-op tx for debugging
-                                               #_#_:dispatchTransaction (fn [tx]
-                                                                          (this-as ^js view
-                                                                            (let [state (.apply (.-state view) tx)]
-                                                                              (.updateState view state))))}))
-                       (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
-          (commands/prose:eval-doc! view)
-          (reset! !mounted? true)
-          #(j/call view :destroy))))))
+(ui/defview editor
+  {:key :id}
+  [{:as opts :keys [id
+                    title
+                    initial-value
+                    make-sci-ctx]
+    :or {make-sci-ctx sci/initial-context}}]
+
+  [:<>
+   (v/portal :menubar-title
+     [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
+      title
+      [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]])
+   (let [!mounted? (h/use-state false)]
+     (u/with-element {:el styles/prose-element}
+       (fn [^js element]
+         (let [state (js
+                       (.create EditorState {:doc (-> initial-value
+                                                      parse-clj/clj->md
+                                                      markdown/md->doc)
+                                             :plugins (plugins)}))
+               view (-> (js
+                          (EditorView. element {:state state
+                                                :nodeViews {:code_block node-view/editor}
+                                                ;; no-op tx for debugging
+                                                #_#_:dispatchTransaction (fn [tx]
+                                                                           (this-as ^js view
+                                                                             (let [state (.apply (.-state view) tx)]
+                                                                               (.updateState view state))))}))
+                        (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
+           (commands/prose:eval-doc! view)
+           (reset! !mounted? true)
+           #(j/call view :destroy)))))])
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

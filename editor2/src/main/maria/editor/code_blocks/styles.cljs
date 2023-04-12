@@ -56,5 +56,6 @@
                          :border-radius "4px"
                          :white-space "pre-wrap"
                          :max-width "100%"}
+          ".cm-scroller" {:overflow-x "hidden"}
           ".cm-matchingBracket" {:color "black"}
           "&.cm-editor, &.cm-editor.cm-focused" {:outline "1px solid transparent"}}))

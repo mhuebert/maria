@@ -53,7 +53,7 @@
               :styles [{:href "/css/prosemirror.css"}
                        {:href "/css/tailwind.css"}]
               :scripts/head [{:src "https://polyfill.io/v3/polyfill.min.js?version=3.111.0&features=URLSearchParams%2CURL"}]
-              :props/html {:class "bg-[#eeeeee]"}
+              :props/html {:class "bg-neutral-100"}
               :body [:div#maria-live]
               :scripts/body [{:type "application/re-db:schema"
                               :value (str {:curriculum/name (merge schema/unique-id

@@ -1,5 +1,6 @@
 (ns maria.editor.util
   (:require #?(:cljs [yawn.hooks :as h])
+            #?(:cljs ["react" :as react])
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [re-db.reactive :as r])
@@ -51,8 +52,6 @@
                ret
                (recur (move i)))))))))
 
-
-
 (defmacro defmacro:sci
   "Given name and a function with &form and &env params, defines a Clojure(Script) macro and a sci-compatible macro function with the same name."
   [name & args]
@@ -69,7 +68,7 @@
       (j/let [!destroy (h/use-ref nil)
               ref-fn (h/use-callback
                       (fn [el]
-                        (when-let [f @!destroy] (when (fn? f) (f)))
+                        (when-let [f (guard @!destroy fn?)] (f))
                         (when el
                           (reset! !destroy (init el)))
                         nil))]

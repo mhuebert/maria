@@ -8,9 +8,9 @@
             [re-db.react]
             [re-db.reactive :as r]
             [re-db.xform :as xf])
-  #?(:cljs (:require-macros maria.ui)))
+  #?(:cljs (:require-macros [maria.ui :as ui])))
 
-(defmacro x [& args] `(v/x ~@args))
+(defmacro x [& args] `(v/x (do ~@args)))
 
 (defmacro defview [name & args]
   (v/defview:impl {:wrap-expr (fn [expr] `(re-db.react/use-derefs ~expr))} name args))
@@ -37,28 +37,6 @@
 
 (defmacro pprinted [x]
   `(with-out-str (~(if (:ns &env) 'cljs.pprint/pprint 'clojure.pprint/pprint) ~x)))
-
-
-(r/redef !sidebar-state (r/atom {:visible? true
-                                 :width 250
-                                 :transition "all 0.2s ease 0s"}))
-
-(defn sidebar-width []
-  (let [{:keys [visible? width transition]} @!sidebar-state]
-    (if visible? width 0)))
-
-#?(:cljs
-   (maria.ui/defview with-sidebar [sidebar content]
-     (let [{:keys [visible? width transition]} (hooks/use-deref !sidebar-state)]
-       [:div
-        {:style {:padding-left (if visible? width 0)
-                 :transition transition}}
-        [:div.fixed.top-0.bottom-0.bg-white.rounded.z-10.drop-shadow-md.divide-y.overflow-hidden
-         {:style {:width width
-                  :transition transition
-                  :left (if visible? 0 (- width))}}
-         sidebar]
-        content])))
 
 (def c:divider "border-b-2 border-zinc-100")
 (def c:button-dark (str "bg-zinc-600 hover:bg-zinc-700 active:bg-zinc-900 "
