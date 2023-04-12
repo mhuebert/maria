@@ -3,6 +3,7 @@
             #?(:cljs ["react" :as react])
             [applied-science.js-interop :as j]
             [clojure.string :as str]
+            [promesa.core :as p]
             [re-db.reactive :as r])
   #?(:cljs (:require-macros [maria.editor.util :as util :refer [defmacro:sci]])))
 
@@ -73,3 +74,23 @@
                           (reset! !destroy (init el)))
                         nil))]
         [el (assoc props :ref ref-fn)]))))
+
+#?(:cljs
+   (defn fetch
+     "Uses browser's fetch api to request url"
+     [url & {:as opts :keys [headers then] :or {then identity}}]
+     (.catch
+      (p/-> (js/fetch url (j/lit {:method "GET"
+                                  :headers (clj->js (or headers {}))}))
+            then)
+      (fn [e] (js/console.debug e)))))
+
+#?(:cljs
+   (defn use-fetch
+     "Uses browser's fetch api to request url"
+     [url & {:as opts}]
+     (let [[v v!] (h/use-state nil)]
+       (h/use-effect #(p/catch (p/let [text (fetch url opts)]
+                                 (v! [url text])) js/console.error)
+                     [url])
+       v)))

@@ -7,6 +7,7 @@
             [applied-science.js-interop :as j]
             [maria.cloud.config.public :refer [env]]
             [maria.cloud.local :as local]
+            [maria.editor.util :as u]
             [promesa.core :as p]
             [re-db.reactive :as r]))
 
@@ -19,13 +20,17 @@
 
 (defn token [] (when @!user @!token))
 
+(defn auth-headers []
+  (when-let [t (:token (token))]
+    {:Authorization (str "Bearer " t)}))
+
 (defonce App (firebase/initializeApp (clj->js (:firebase env))))
 
 (def provider (doto (new GithubAuthProvider)
                 (.addScope "gist")))
 
-(j/defn handle-user! [^js {:as user :keys [photoURL email displayName uid]}]
-  (j/log user)
+(j/defn handle-user! [^js {:as user :keys [photoURL email displayName uid]
+                           [{github-uid :uid}] :providerData}]
   (if (and user
            (= uid (:uid @!token)))
     (reset! !user
@@ -33,7 +38,11 @@
              :email email
              :display-name displayName})
     (do (reset! !token nil)
-        (reset! !user false))))
+        (reset! !user false)))
+  (p/-> (u/fetch (str "https://api.github.com/user/" github-uid) :headers (auth-headers))
+        (j/call :json)
+        (j/get :login)
+        (->> (swap! !user assoc :username))))
 
 (defn handle-token! [uid token]
   (assert token)
@@ -53,3 +62,22 @@
 (defonce _auth_callback
   (try
     (.onAuthStateChanged (getAuth) handle-user!)))
+
+(defn parse-gists [gists]
+  (->> gists
+       (keep (j/fn [^js {:keys [description
+                                files
+                                html_url
+                                updated_at]
+                         {:keys [login]} :owner}]
+               (when-let [files (->> (js/Object.values files)
+                                     (keep (j/fn [^js {:keys [filename language raw_url]}]
+                                             (when (= language "Clojure")
+                                               {:filename filename
+                                                :raw_url raw_url})))
+                                     seq)]
+                 {:owner login
+                  :description description
+                  :files files
+                  :html_url html_url
+                  :updated_at updated_at})))))
