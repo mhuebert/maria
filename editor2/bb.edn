@@ -6,5 +6,6 @@
   css (shell "npx tailwindcss -i src/maria.cloud.css -o public/maria.cloud.css")
   release (do (run 'copy-curriculum)
               (shell "yarn shadow-cljs release editor --debug")
+              (prn :public (shell "ls public"))
               (run 'css))
   debug (shell "yarn shadow-cljs release editor --debug")}}
