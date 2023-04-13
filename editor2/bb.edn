@@ -3,8 +3,8 @@
  {dev (shell "yarn shadow-cljs -A:local watch editor")
   server (shell "yarn shadow-cljs -A:local server")
   copy-curriculum (shell "cp -r src/main/maria/curriculum public")
-  css (shell "npx tailwindcss -i src/maria.cloud.css -o public/css/maria.cloud.css")
+  css (shell "npx tailwindcss -i src/maria.cloud.css -o public/maria.cloud.css")
   release (do (run 'copy-curriculum)
-              (run 'css)
-              (shell "yarn shadow-cljs release editor --debug"))
+              (shell "yarn shadow-cljs release editor --debug")
+              (run 'css))
   debug (shell "yarn shadow-cljs release editor --debug")}}
