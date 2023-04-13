@@ -5,10 +5,7 @@
         applied-science/js-interop {:mvn/version "0.4.1"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
-        #_#_org.babashka/sci {:mvn/version "0.5.34"}
-        org.babashka/sci {:mvn/version "0.7.39"
-                          #_#_#_#_:git/url "https://github.com/babashka/sci"
-                          :git/sha "50557c964d44533aa2d61ae7519d252ea83df24b"}
+        org.babashka/sci {:mvn/version "0.7.39"}
         babashka/fs {:mvn/version "0.3.17"}
         babashka/process {:mvn/version "0.4.16"}
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
@@ -17,8 +14,7 @@
         com.taoensso/encore {:mvn/version "3.32.0"}
         kibu/pushy {:mvn/version "0.3.8"}
         bidi/bidi {:git/url "https://github.com/mhuebert/bidi"
-                   :git/sha "21afb221b7e290e4a1d0a4aff4cf2a02fdb7f151"
-                   #_#_:mvn/version "2.1.6"}
+                   :git/sha "21afb221b7e290e4a1d0a4aff4cf2a02fdb7f151"}
 
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}

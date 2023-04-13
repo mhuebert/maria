@@ -41,7 +41,7 @@
         [sidebar/content]
         [:div
          [menu/menubar]
-         [view location]]]
+         (when view [view location])]]
        [docbar/view]]))
 
 (defn ^:export init []
