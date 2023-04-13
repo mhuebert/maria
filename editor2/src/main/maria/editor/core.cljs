@@ -20,6 +20,7 @@
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
+            [maria.cloud.menubar :as menubar]
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [yawn.hooks :as h]
@@ -106,39 +107,39 @@
      (history)
      ~@(links/plugins)]))
 
-(ui/defview editor
-  {:key :id}
-  [{:as opts :keys [id
-                    title
-                    initial-value
-                    make-sci-ctx]
-    :or {make-sci-ctx sci/initial-context}}]
+(defn init [{:as opts :keys [initial-value
+                             make-sci-ctx]
+             :or {make-sci-ctx sci/initial-context}}
+            ^js element]
+  (let [state (js (.create EditorState {:doc (-> initial-value
+                                                 parse-clj/clj->md
+                                                 markdown/md->doc)
+                                        :plugins (plugins)}))
+        view (-> (js (EditorView. element {:state state
+                                           :nodeViews {:code_block node-view/editor}
+                                           ;; no-op tx for debugging
+                                           #_#_:dispatchTransaction (fn [tx]
+                                                                      (this-as ^js view
+                                                                        (let [state (.apply (.-state view) tx)]
+                                                                          (.updateState view state))))}))
+                 (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
+    (commands/prose:eval-doc! view)
+    #(j/call view :destroy)))
 
+(ui/defview editor [options]
   [:<>
-   (v/portal :menubar-title
-     [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
-      title
-      [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]])
-   (let [!mounted? (h/use-state false)]
-     (u/with-element {:el styles/prose-element}
-       (fn [^js element]
-         (let [state (js
-                       (.create EditorState {:doc (-> initial-value
-                                                      parse-clj/clj->md
-                                                      markdown/md->doc)
-                                             :plugins (plugins)}))
-               view (-> (js
-                          (EditorView. element {:state state
-                                                :nodeViews {:code_block node-view/editor}
-                                                ;; no-op tx for debugging
-                                                #_#_:dispatchTransaction (fn [tx]
-                                                                           (this-as ^js view
-                                                                             (let [state (.apply (.-state view) tx)]
-                                                                               (.updateState view state))))}))
-                        (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
-           (commands/prose:eval-doc! view)
-           (reset! !mounted? true)
-           #(j/call view :destroy)))))])
+
+   [menubar/title!
+    [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
+     (:title options)
+     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]]
+
+   (let [!ref (h/use-ref nil)]
+     (h/use-effect
+      (fn [] (some->> @!ref (init options)))
+      [@!ref (:initial-value options)])
+
+     [:div.relative.notebook {:ref !ref}])])
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

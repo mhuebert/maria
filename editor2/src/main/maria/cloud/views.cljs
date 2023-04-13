@@ -17,16 +17,22 @@
                  "?v="
                  (db/get [:curriculum/name name]
                          :curriculum/hash))
-        [url text] (try (u/use-fetch url :then (j/call :text))
-                        (catch js/Error e (js/console.error e)))]
+        text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
       [prose/editor {:initial-value text
                      :title (str "curriculum / " file-name)
                      :id url}])))
 
 (ui/defview gist [{:gist/keys [id]}]
-  (let [text (u/use-fetch (str "https://api.github.com/gists/" id)
-                          :headers (gh/auth-headers))]
-    (when text
-      [prose/editor {:initial-value text}])))
+  (let [{:keys [gist/id]
+         [{:gist/keys [filename content]}] :gist/clojure-files}
+        (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" id)
+                                       :headers (gh/auth-headers))
+                              (j/call :json)
+                              gh/parse-gist)
+                       [id])]
+    (when content
+      [prose/editor {:id id
+                     :title filename
+                     :initial-value content}])))
 

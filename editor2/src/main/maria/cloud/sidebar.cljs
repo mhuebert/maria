@@ -6,6 +6,7 @@
             [maria.editor.icons :as icons]
             [maria.editor.util :as u]
             [maria.ui :as ui]
+            [promesa.core :as p]
             [re-db.api :as db]
             [re-db.reactive :as r]
             [re-db.hooks :as hooks]
@@ -52,13 +53,17 @@
    (into [:el acc/Content] items)])
 
 (ui/defview user-gist-list [{:keys [username current-path]}]
-  (let [[_ gists] (u/use-fetch (str "https://api.github.com/users/" username "/gists")
-                               :headers (merge {:Content-Type "text/plain"}
-                                               (gh/auth-headers))
-                               :then (j/call :json))]
+  (let [gists (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/users/" username "/gists")
+                                             :headers (merge {:Content-Type "text/plain"}
+                                                             (gh/auth-headers)))
+                                    (j/call :json))
+                             [username])]
     [acc-section "My Gists"
-     (for [{:keys [description files html_url]} (gh/parse-gists gists)]
-       (v/x [acc-item {:href html_url} (or (u/guard description seq) (:filename (first files)))]))]))
+     (for [{:gist/keys [id description clojure-files]} (keep gh/parse-gist gists)]
+       (v/x [acc-item {:href (routes/path-for 'maria.cloud.views/gist
+                                              {:gist/id id})
+                       :key id}
+             (or (u/guard description seq) (:gist/filename (first clojure-files)))]))]))
 
 (defn curriculum-list [current-path]
   (map (fn [{:as m

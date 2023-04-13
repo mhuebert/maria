@@ -63,19 +63,6 @@
          (defmacro ~name [& args#] (apply f# ~'&form ~'&env args#))))))
 
 #?(:cljs
-   (defn with-element
-     ([init] (with-element nil init))
-     ([{:keys [el props] :or {el :div}} init]
-      (j/let [!destroy (h/use-ref nil)
-              ref-fn (h/use-callback
-                      (fn [el]
-                        (when-let [f (guard @!destroy fn?)] (f))
-                        (when el
-                          (reset! !destroy (init el)))
-                        nil))]
-        [el (assoc props :ref ref-fn)]))))
-
-#?(:cljs
    (defn fetch
      "Uses browser's fetch api to request url"
      [url & {:as opts :keys [headers then] :or {then identity}}]
@@ -90,7 +77,18 @@
      "Uses browser's fetch api to request url"
      [url & {:as opts}]
      (let [[v v!] (h/use-state nil)]
-       (h/use-effect #(p/catch (p/let [text (fetch url opts)]
-                                 (v! [url text])) js/console.error)
+       (h/use-effect #(do (v! nil)
+                          (p/catch (p/-> (fetch url opts) v!) str))
                      [url])
+       v)))
+
+#?(:cljs
+   (defn use-promise [f deps]
+     (let [[v v!] (h/use-state nil)
+           !current-key (h/use-ref key)]
+       (h/use-effect #(do (reset! !current-key key)
+                          (v! nil)
+                          (p/let [result (f)]
+                            (when (= @!current-key key) (v! result))))
+                     deps)
        v)))

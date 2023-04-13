@@ -3,8 +3,6 @@
             ["@lezer/highlight" :refer [tags styleTags]]
             [applied-science.js-interop :as j]))
 
-(def prose-element :div.relative.notebook)
-
 (def code-styles
   ;; map from token types (as defined in the grammar) to universally-defined
   ;; "tags" (defined by @lezer/highlight) which can have color applied.

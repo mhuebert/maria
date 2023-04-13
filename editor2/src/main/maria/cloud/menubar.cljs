@@ -95,3 +95,6 @@
           {:on-click #(gh/sign-in-with-popup!)}
           [:div.mr-1 [icons/arrow-left-on-rect:mini "w-4 h-4"]]
           "Sign In with GitHub"]))]]])
+
+(defn title! [content]
+  (v/portal :menubar-title content))

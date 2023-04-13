@@ -63,21 +63,24 @@
   (try
     (.onAuthStateChanged (getAuth) handle-user!)))
 
-(defn parse-gists [gists]
-  (->> gists
-       (keep (j/fn [^js {:keys [description
+(j/defn parse-gist [^js {:as gist
+                         :keys [id
+                                description
                                 files
                                 html_url
                                 updated_at]
                          {:keys [login]} :owner}]
-               (when-let [files (->> (js/Object.values files)
-                                     (keep (j/fn [^js {:keys [filename language raw_url]}]
-                                             (when (= language "Clojure")
-                                               {:filename filename
-                                                :raw_url raw_url})))
-                                     seq)]
-                 {:owner login
-                  :description description
-                  :files files
-                  :html_url html_url
-                  :updated_at updated_at})))))
+  (when-let [files (some->> files
+                            (js/Object.values)
+                            (keep (j/fn [^js {:keys [filename language content]}]
+                                    (when (= language "Clojure")
+                                      #:gist{:filename filename
+                                             :language language
+                                             :content content})))
+                            seq)]
+    #:gist{:id id
+           :owner login
+           :description description
+           :clojure-files files
+           :html_url html_url
+           :updated_at updated_at}))
