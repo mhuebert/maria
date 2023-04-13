@@ -16,7 +16,7 @@
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
       [prose/editor {:initial-value text
-                     :title (str "curriculum / " file-name)
+                     :title (str "curriculum / " name)
                      :id url}])))
 
 (ui/defview gist [{:gist/keys [id]}]
