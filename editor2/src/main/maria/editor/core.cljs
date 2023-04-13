@@ -10,21 +10,18 @@
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
+            [maria.cloud.menubar :as menubar]
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code-blocks.sci :as sci]
-            [maria.editor.code-blocks.styles :as styles]
             [maria.editor.icons :as icons]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
-            [maria.cloud.menubar :as menubar]
-            [maria.editor.util :as u]
             [maria.ui :as ui]
-            [yawn.hooks :as h]
-            [yawn.view :as v]))
+            [yawn.hooks :as h]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.

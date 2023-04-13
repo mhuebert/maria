@@ -1,4 +1,4 @@
-/*@import url("./nextjournal.viewer.css");*/
+@import url("../node_modules/prosemirror-view/style/prosemirror.css"); /*@import url("./nextjournal.viewer.css");*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

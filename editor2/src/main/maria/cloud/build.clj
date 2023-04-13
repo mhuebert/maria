@@ -50,8 +50,7 @@
 
   (page/root "Maria"
              {:meta {:viewport "width=device-width, initial-scale=1"}
-              :styles [{:href "/css/prosemirror.css"}
-                       {:href "/css/tailwind.css"}]
+              :styles [{:href "/css/maria.css"}]
               :scripts/head [{:src "https://polyfill.io/v3/polyfill.min.js?version=3.111.0&features=URLSearchParams%2CURL"}]
               :props/html {:class "bg-neutral-100"}
               :body [:div#maria-live]
