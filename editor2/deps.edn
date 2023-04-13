@@ -25,7 +25,7 @@
         maria/friendly {:local/root "../friendly"}
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
-        io.github.mhuebert/re-db {:git/sha "567a547dbccaee20265a1d4f0c739692150d1a9c"}
+        io.github.mhuebert/re-db {:git/sha "4492511e7a84725990a2cb025084af809548ef70"}
         io.github.mhuebert/yawn {:git/sha "5c85e6f524b28d89830fbf86910a0ed9ca5844bd"}}
  :aliases
  {:local {:extra-deps {#_#_io.github.babashka/sci {:local/root "../../sci"}
