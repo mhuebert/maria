@@ -13,8 +13,8 @@
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
    :module-loader true
-   :modules {:main {:init-fn maria.cloud.core/init}
+   :modules {:core {:init-fn maria.cloud.core/init}
              :landing {:entries [maria.cloud.pages.landing]
-                       :depends-on #{:main}}
+                       :depends-on #{:core}}
              :ext.katex {:entries [maria.editor.extensions.katex]
-                         :depends-on #{:main}}}}}}
+                         :depends-on #{:core}}}}}}

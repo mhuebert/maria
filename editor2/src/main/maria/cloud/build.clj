@@ -50,18 +50,18 @@
 
   (page/root "Maria"
              {:meta {:viewport "width=device-width, initial-scale=1"}
-              :styles [{:href "/maria.cloud.css"}]
+              :styles [{:href (assets/path "/maria.cloud.css")}]
               :scripts/head [{:src "https://polyfill.io/v3/polyfill.min.js?version=3.111.0&features=URLSearchParams%2CURL"}]
               :props/html {:class "bg-neutral-100"}
               :body [:div#maria-live]
               :scripts/body [{:type "application/re-db:schema"
                               :value (str {:curriculum/name (merge schema/unique-id
-                                                                        schema/string)})}
+                                                                   schema/string)})}
                              {:type "application/re-db:tx"
                               :value (conj (read-curriculum-namespaces)
                                            {:db/id :maria.cloud/env
                                             :git/sha (current-sha)})}
-                             {:src (shadow/module-path :editor :main)}]}))
+                             {:src (shadow/module-path :editor :core)}]}))
 
 (defn tailwind-watch!
   {:shadow.build/stage :flush}
