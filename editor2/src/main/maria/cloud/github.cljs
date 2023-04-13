@@ -33,16 +33,16 @@
                            [{github-uid :uid}] :providerData}]
   (if (and user
            (= uid (:uid @!token)))
-    (reset! !user
-            {:photo-url photoURL
-             :email email
-             :display-name displayName})
+    (do (reset! !user
+                {:photo-url photoURL
+                 :email email
+                 :display-name displayName})
+        (p/-> (u/fetch (str "https://api.github.com/user/" github-uid) :headers (auth-headers))
+              (j/call :json)
+              (j/get :login)
+              (->> (swap! !user assoc :username))))
     (do (reset! !token nil)
-        (reset! !user false)))
-  (p/-> (u/fetch (str "https://api.github.com/user/" github-uid) :headers (auth-headers))
-        (j/call :json)
-        (j/get :login)
-        (->> (swap! !user assoc :username))))
+        (reset! !user false))))
 
 (defn handle-token! [uid token]
   (assert token)
