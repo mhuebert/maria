@@ -9,14 +9,10 @@
             [re-db.api :as db]
             [yawn.hooks :as h]))
 
-
 (ui/defview curriculum
   [{:as props :curriculum/keys [name]}]
   (let [{:curriculum/keys [hash file-name]} (db/get [:curriculum/name name])
-        url (str "/curriculum/" file-name
-                 "?v="
-                 (db/get [:curriculum/name name]
-                         :curriculum/hash))
+        url (str "/curriculum/" file-name "?v=" hash)
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
       [prose/editor {:initial-value text
