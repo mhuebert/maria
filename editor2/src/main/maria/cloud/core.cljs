@@ -36,7 +36,7 @@
       [:<>
        (ui/use-global-keymap {:mod-k (fn [& _] (command-bar/toggle!))
                               :shift-mod-k (fn [& _] (swap! ui/!state update :sidebar/visible? not))})
-       [command-bar/view]
+       #_[command-bar/view]
        [sidebar/with-sidebar
         [sidebar/content]
         [:div

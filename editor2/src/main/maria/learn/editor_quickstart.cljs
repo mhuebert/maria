@@ -1,4 +1,4 @@
-(ns maria.curriculum.editor-quickstart
+(ns maria.learn.editor-quickstart
   (:require [shapes.core :refer :all]))
 
 ;; # Editor Quickstart

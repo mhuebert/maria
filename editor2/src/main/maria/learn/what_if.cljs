@@ -1,4 +1,4 @@
-(ns maria.curriculum.what-if
+(ns maria.learn.what-if
   (:require [shapes.core :refer :all]
             [maria.editor.code-blocks.repl :refer :all]))
 

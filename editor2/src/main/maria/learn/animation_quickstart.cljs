@@ -1,4 +1,4 @@
-(ns maria.curriculum.animation-quickstart
+(ns maria.learn.animation-quickstart
   {:description "Get a running start at making basic animations using the Shapes library."}
   (:require [cells.api :refer :all]
             [shapes.core :refer :all]))

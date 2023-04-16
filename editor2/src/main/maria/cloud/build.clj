@@ -44,7 +44,7 @@
            (assoc m :curriculum/file-name file-name
                     :curriculum/name (last (str/split (str (:name m)) #"\."))
                     :curriculum/hash (assets/md5 (slurp file))))
-        (fs/list-dir (fs/file "src/main/maria/curriculum"))))
+        (fs/list-dir (fs/file "src/main/maria/learn"))))
 
 (defn index-html []
 

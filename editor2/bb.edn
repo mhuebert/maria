@@ -3,8 +3,8 @@
  {dev (shell "yarn shadow-cljs -A:local watch editor")
   server (shell "yarn shadow-cljs -A:local server")
   copy-curriculum (do
-                    (shell "mkdir -p public/curriculum")
-                    (shell "rsync -av src/main/maria/curriculum/ public/curriculum"))
+                    (shell "mkdir -p public/learn")
+                    (shell "rsync -av src/main/maria/learn/ public/learn"))
   css (shell "npx tailwindcss -i src/maria.cloud.css -o public/maria.cloud.css")
   release (do (run 'copy-curriculum)
               (shell "yarn shadow-cljs release editor --debug")

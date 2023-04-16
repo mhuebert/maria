@@ -23,17 +23,23 @@
 /* ProseMirror */
 
 .ProseMirror {
-    @apply m-4 p-0 text-xl font-serif;
+    @apply p-0 text-xl font-serif;
+}
+
+.ProseMirror ul, .ProseMirror ol, .ProseMirror p, .ProseMirror blockquote .ProseMirror pre {
+    @apply mt-4;
+}
+.ProseMirror ul, .ProseMirror ol {
+    @apply ml-5;
+}
+.ProseMirror li {
+    @apply list-disc;
 }
 
 
 .ProseMirror > *:not(div) {
     @apply md:w-1/2 leading-relaxed;
 
-}
-
-.ProseMirror li {
-    list-style: disc;
 }
 
 .ProseMirror hr {
@@ -46,8 +52,8 @@ svg {
     display: inline-block;
 }
 
-.notebook pre, .notebook h1, .notebook h2, .notebook h3, .notebook h4 {
-    @apply mb-4;
+.notebook h1, .notebook h2, .notebook h3, .notebook h4 {
+    @apply mt-6;
 }
 
 

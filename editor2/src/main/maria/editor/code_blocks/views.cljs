@@ -55,16 +55,14 @@
   (let [ref (h/use-callback (fn [el] (when el (mounted! el))))
         !minimize? (h/use-state initialNs)]
     (if @!minimize?
-
-
       [:div.text-sm.text-zinc-400.font-mono.hover:underline.cursor-pointer
        {:class "md:ml-[50%]"
         :on-click #(reset! !minimize? false)}
        "show ns" #_(str "ns: " (second (edn/read-string (commands/code:block-str this))))]
-      [:div.-mx-4.mb-4.md:flex.w-full
+      [:div.my-4.md:flex.w-full
        {:ref ref :id id}
        [:div {:class "md:w-1/2 text-base"
               :style {:color "#c9c9c9"}}]
        [:div
-        {:class "md:w-1/2 font-mono text-sm m-3 md:my-0 max-h-screen overflow-auto pb-4"}
+        {:class "md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
         [value-viewer this]]])))

@@ -1,4 +1,4 @@
-(ns maria.curriculum.learn-clojure-with-shapes
+(ns maria.learn.clojure-with-shapes
   {:title "Learn Clojure with Shapes"
    :description "Your journey begins here!"}
   (:require [shapes.core :refer :all]))

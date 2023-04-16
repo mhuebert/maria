@@ -125,16 +125,5 @@
     #(do (when (identical? @!mounted-view view) (reset! !mounted-view nil))
          (j/call view :destroy))))
 
-(defn ^:el editor [options]
-  (let [element-ref (react/useRef nil)]
-    (js
-      (react/useEffect
-       (fn []
-         (when-let [element (j/get element-ref :current)]
-           (init options element)))
-       [(:initial-value options)]))
-    (js (react/createElement "div" {:class "relative notebook"
-                                    :ref element-ref}))))
-
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

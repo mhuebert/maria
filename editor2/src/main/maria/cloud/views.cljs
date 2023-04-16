@@ -17,7 +17,7 @@
        (when-let [element @!element-ref]
          (prose/init options element)))
      [@!element-ref (:initial-value options)])
-    [:div.relative.notebook {:ref !element-ref}]))
+    [:div.relative.notebook.m-4 {:ref !element-ref}]))
 
 (defn doc-title [title]
   (menubar/title!
@@ -25,14 +25,14 @@
     title
     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]))
 
-(ui/defview curriculum
+(ui/defview learn
   [{:as props :curriculum/keys [name]}]
   (let [{:curriculum/keys [hash file-name]} (db/get [:curriculum/name name])
-        url (str "/curriculum/" file-name "?v=" hash)
+        url (str "/learn/" file-name "?v=" hash)
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
       [:<>
-       (doc-title (str "curriculum / " name))
+       (doc-title (str "learn / " name))
        [editor {:initial-value text
                 :id url}]])))
 

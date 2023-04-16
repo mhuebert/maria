@@ -50,7 +50,7 @@
 (def code-theme
   (j/lit {".cm-content" {:padding "1rem 1rem 1rem 0"
                          :background-color "white"
-                         :margin-left "1rem"
+                         :margin-left 0
                          :border-radius "4px"
                          :white-space "pre-wrap"
                          :max-width "100%"}

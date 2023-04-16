@@ -68,7 +68,7 @@
                     curriculum/hash
                     title
                     description]}]
-         (let [path (routes/path-for 'maria.cloud.views/curriculum
+         (let [path (routes/path-for 'maria.cloud.views/learn
                                      {:curriculum/name name
                                       :query {:v hash}})
                current? (= path current-path)]
@@ -86,13 +86,16 @@
 (ui/defview content []
   (let [{current-path ::routes/path} @routes/!location]
     [:> acc/Root {:type "multiple" :defaultValue #js["curriculum"] :class "relative"}
-     [:div {:class "flex flex-row h-[40px] items-center"}
+
+     [:div {:class "flex flex-row h-[40px] items-center border-b border-zinc-100"}
       [:a.p-2.hover:bg-slate-300.cursor-pointer.text-black {:href "/"} [icon:home "w-4 h-4"]]
       [:div.flex-grow]
       [:div.flex.items-center.justify-center.p-2.cursor-pointer.text-zinc-500.hover:text-zinc-700
        {:on-click #(swap! ui/!state assoc :sidebar/visible? false)
         :style {:margin-top 3}}
        [icons/x-mark:mini "w-5 h-5 rotate-180"]]]
+
+
      [acc-section "Learn"
       (curriculum-list current-path)]
      (when-let [username (:username @gh/!user)]

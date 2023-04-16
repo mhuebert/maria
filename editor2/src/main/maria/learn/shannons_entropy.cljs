@@ -1,4 +1,4 @@
-(ns maria.curriculum.shannons-entropy
+(ns maria.learn.shannons-entropy
   {:title "Shannon's Entropy"})
 ;; # Shannon's entropy calculation
 

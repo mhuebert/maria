@@ -20,11 +20,11 @@
    (impl/resolve-views
     ["/"
      {"" 'maria.cloud.pages.landing/page
-      ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
+      ["curriculum/" :curriculum/name] 'maria.cloud.views/learn
       ["gist/" :gist/id] 'maria.cloud.views/gist
 
 
-      "intro" [::redirect "/curriculum/learn-clojure-with-shapes"]}])))
+      "intro" [::redirect "/curriculum/clojure-with-shapes"]}])))
 
 (defn match-route [path]
   (when-let [{:keys [route-params
@@ -58,7 +58,7 @@
      (pushy/start! history)))
 
 (comment
- (bidi/path-for @!routes 'maria.cloud.views/curriculum {:curriculum/name "x"})
+ (bidi/path-for @!routes 'maria.cloud.views/learn {:curriculum/name "x"})
  (bidi/match-route @!routes "/curriculum/x")
 
  (match-route "/curriculum/x"))

@@ -55,7 +55,7 @@
 (def button-small-dark
   (v/from-element :a
     {:class ["rounded flex items-center px-2 py-1 shadow cursor-pointer text-sm"
-             ui/c:button-dark]}))
+             ui/c:button-med]}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Menubar
@@ -93,8 +93,7 @@
             [item {:on-click #(gh/sign-out)} "Sign Out"]]]]
          [button-small-dark
           {:on-click #(gh/sign-in-with-popup!)}
-          [:div.mr-1 [icons/arrow-left-on-rect:mini "w-4 h-4"]]
-          "Sign In with GitHub"]))]]])
+          "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]]))]]])
 
 (defn title! [content]
   (v/portal :menubar-title (v/x content)))
