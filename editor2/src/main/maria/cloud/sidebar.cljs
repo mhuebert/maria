@@ -12,16 +12,12 @@
             [re-db.hooks :as hooks]
             [yawn.view :as v]))
 
-(r/redef !state (r/atom {:visible? true
-                         :width 250
-                         :transition "all 0.2s ease 0s"}))
-
 (defn sidebar-width []
-  (let [{:keys [visible? width transition]} @!state]
+  (let [{:sidebar/keys [visible? width transition]} @ui/!state]
     (if visible? width 0)))
 
 (ui/defview with-sidebar [sidebar content]
-  (let [{:keys [visible? width transition]} (hooks/use-deref !state)]
+  (let [{:sidebar/keys [visible? width transition]} (hooks/use-deref ui/!state)]
     [:div
      {:style {:padding-left (if visible? width 0)
               :transition transition}}
@@ -83,14 +79,20 @@
                  title])))
        (db/where [:curriculum/name])))
 
+(defn icon:home [class]
+  [:svg {:class class :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 20 20" :fill "currentColor"}
+   [:path {:fillRule "evenodd" :d "M9.293 2.293a1 1 0 011.414 0l7 7A1 1 0 0117 11h-1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-3a1 1 0 00-1-1H9a1 1 0 00-1 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-6H3a1 1 0 01-.707-1.707l7-7z" :clipRule "evenodd"}]])
 
 (ui/defview content []
   (let [{current-path ::routes/path} @routes/!location]
     [:> acc/Root {:type "multiple" :defaultValue #js["curriculum"] :class "relative"}
-     [:div.flex.items-center.justify-center.p-2.cursor-pointer.text-zinc-500.hover:text-zinc-700.absolute.top-0.right-0
-      {:on-click #(swap! !state assoc :visible? false)
-       :style {:margin-top 3}}
-      [icons/x-mark:mini "w-5 h-5 rotate-180"]]
+     [:div {:class "flex flex-row h-[40px] items-center"}
+      [:a.p-2.hover:bg-slate-300.cursor-pointer.text-black {:href "/"} [icon:home "w-4 h-4"]]
+      [:div.flex-grow]
+      [:div.flex.items-center.justify-center.p-2.cursor-pointer.text-zinc-500.hover:text-zinc-700
+       {:on-click #(swap! ui/!state assoc :sidebar/visible? false)
+        :style {:margin-top 3}}
+       [icons/x-mark:mini "w-5 h-5 rotate-180"]]]
      [acc-section "Learn"
       (curriculum-list current-path)]
      (when-let [username (:username @gh/!user)]

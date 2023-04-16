@@ -10,6 +10,10 @@
             [re-db.xform :as xf])
   #?(:cljs (:require-macros [maria.ui :as ui])))
 
+(r/redef !state (r/atom {:sidebar/visible? false
+                         :sidebar/width 250
+                         :sidebar/transition "all 0.2s ease 0s"}))
+
 (defmacro x [& args] `(v/x (do ~@args)))
 
 (defmacro defview [name & args]

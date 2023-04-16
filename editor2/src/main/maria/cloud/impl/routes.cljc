@@ -11,7 +11,13 @@
      (resolve-handler [this m] (bidi/succeed this m))
      (unresolve-handler [this m] (when (= this (:handler m)) ""))
      Delay
+     (resolve-handler [this m] (bidi/succeed @this m))
+     (unresolve-handler [this m] (when (= this (:handler m)) ""))
+     string
      (resolve-handler [this m] (bidi/succeed this m))
+     (unresolve-handler [this m] (when (= this (:handler m)) ""))
+     PersistentVector
+     (resolve-handler [this m] (bidi/succeed {(this 0) (this 1)} m))
      (unresolve-handler [this m] (when (= this (:handler m)) ""))))
 
 #?(:clj
@@ -38,7 +44,7 @@
                         (if (and (list? x)
                                  (= 'quote (first x))
                                  (qualified-symbol? (second x)))
-                          `(~'bidi.bidi/tag (~'shadow.lazy/loadable ~(second x)) ~x)
+                          `(~'bidi.bidi/tag (delay {:maria.cloud.routes/view (~'shadow.lazy/loadable ~(second x))}) ~x)
                           x))
                       (resolve-syms m))
        m)))

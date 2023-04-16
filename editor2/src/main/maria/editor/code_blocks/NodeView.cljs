@@ -9,6 +9,7 @@
             ["react" :as react]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
+            [clojure.string :as str]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.completions :as completions]
             [maria.editor.code-blocks.docbar :as eldoc]
@@ -22,6 +23,14 @@
             [nextjournal.clojure-mode.util :as u]
             [re-db.reactive :as r]
             [yawn.root :as root]))
+
+(defonce !focused-view (atom nil))
+
+(defn set-focus! [^js view _]
+  (if (.-hasFocus view)
+    (reset! !focused-view view)
+    (when (identical? view @!focused-view)
+      (reset! !focused-view nil))))
 
 (js
   (defn focus! [{:keys [codeView on-mount]}]
@@ -44,6 +53,8 @@
     "When the code-editor is focused, forward events from it to ProseMirror."
     [{:keys [codeView proseView getPos code-updating?]} code-update]
     (let [{prose-state :state} proseView]
+      (when (.-focusChanged code-update)
+        (set-focus! codeView (.-hasFocus codeView)))
       (when (and (.-hasFocus codeView) (not code-updating?))
         (let [start-pos (inc (getPos))
               {from' :from to' :to} (.. code-update -state -selection -main)
@@ -152,7 +163,8 @@
           this (j/obj :id (str (gensym "code-view-")))
           root (root/create el (views/code-row this))]
       (j/extend! this
-        {:getPos getPos
+        {:initialNs (str/starts-with? textContent "(ns ")
+         :getPos getPos
          :proseView proseView
          :proseNode proseNode
          :mounted! (fn [el]
@@ -164,8 +176,7 @@
                      (when-not (j/get this :mounted?)
                        (j/!set this :mounted? true)
                        ^:clj (doseq [f (j/get this :on-mounts)] (f))
-                       (j/delete! this :on-mounts)
-                       ))
+                       (j/delete! this :on-mounts)))
          :codeView (-> (new EditorView
                             {:state
                              (.create EditorState
@@ -179,8 +190,6 @@
                                                     (clj-mode/close-brackets)
                                                     (clj-mode/selection-history)
                                                     (clj-mode/format-changed-lines)
-
-
 
                                                     (.theme EditorView styles/code-theme)
                                                     (cmd/history)

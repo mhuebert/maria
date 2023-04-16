@@ -11,22 +11,33 @@
 (defonce !location
   (r/atom {}))
 
+(declare path-for)
+
+;; TODO - when CLJS-3399 is fixed, we can use :as-alias with symbols
+
 (r/redef !routes
   (r/atom
    (impl/resolve-views
     ["/"
      {"" 'maria.cloud.pages.landing/page
       ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
-      ["gist/" :gist/id] `maria.cloud.views/gist}])))
+      ["gist/" :gist/id] 'maria.cloud.views/gist
+
+
+      "intro" [::redirect "/curriculum/learn-clojure-with-shapes"]}])))
 
 (defn match-route [path]
   (when-let [{:keys [route-params
                      handler]} (bidi/match-route @!routes path)]
-    (assoc route-params ::view handler ::path path)))
+    (merge route-params handler {::path path})))
+
+#?(:cljs (declare history))
 
 #?(:cljs
-   (defn handle-match [{:as match ::keys [view]}]
-     (lazy/load view (fn [view] (reset! !location (assoc match ::view view))))))
+   (defn handle-match [{:as match ::keys [view redirect]}]
+     (if redirect
+       (pushy/set-token! history redirect)
+       (lazy/load view (fn [view] (reset! !location (assoc match ::view view)))))))
 
 #?(:cljs
    (defonce history (pushy/pushy handle-match match-route)))
@@ -35,18 +46,12 @@
    (defn merge-query! [params]
      (let [{::keys [path query-params]} (query-params/merge-query (::path @!location) params)]
        (pushy/set-token! history path)
-       query-params
-       #_(swap! !current-location assoc :query-params query-params))))
+       query-params)))
 
-#?(:clj
-   (defmacro path-for [view & {:as params}]
-     ;; TODO - when CLJS-3399 is fixed, this can be a function again
-    `(let [{:as params# query# :query} ~params]
-       (cond-> (bidi/path-for @!routes ~(impl/resolve-syms view) (dissoc params# :query))
-               query#
-               (-> (query-params/merge-query query#) :path)))))
-
-
+(defn path-for [view & {:as params :keys [query]}]
+  (cond-> (bidi/path-for @!routes view (dissoc params :query))
+          query
+          (-> (query-params/merge-query query) :path)))
 
 #?(:cljs
    (defn init []

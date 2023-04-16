@@ -34,9 +34,10 @@
   ([ctx ns sym]
    (merge (meta (resolve-symbol ctx ns sym))
           (helpful/doc-map sym)
-          (when-let [sci-ns (sci.ns/sci-find-ns ctx sym)]
-            {:doc (:doc (meta sci-ns))
-             :name sym}))))
+          (try (when-let [sci-ns (sci.ns/sci-find-ns ctx sym)]
+                 {:doc (:doc (meta sci-ns))
+                  :name sym})
+               (catch js/Error e nil)))))
 
 (defn html
   "Renders hiccup forms to html (via underlying view layer, eg. React)"
@@ -103,7 +104,8 @@
 
 (defn ^:macro what-is "Returns a string describing what kind of thing `thing` is."
   [&form &env thing]
-  (let [{:keys [special-form macro]} (doc-map thing)]
+  (let [ctx (store/get-ctx)
+        {:keys [special-form macro]} (doc-map ctx (current-ns ctx) thing)]
     (cond special-form "a special form: a primitive which is evaluated in a special way"
           macro "a macro: a function that transforms source code before it is evaluated."
           :else `(what-is* ~thing))))

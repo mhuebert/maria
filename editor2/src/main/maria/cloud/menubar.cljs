@@ -66,8 +66,8 @@
    [:div.w-100.fixed.top-0.right-0.flex.items-center.shadow.px-2.text-sm.z-50.bg-neutral-50
     {:style {:height 40
              :left (sidebar/sidebar-width)}}
-    (when-not (:visible? @sidebar/!state)
-      [icon-btn {:on-click #(swap! sidebar/!state update :visible? not)}
+    (when-not (:sidebar/visible? @ui/!state)
+      [icon-btn {:on-click #(swap! ui/!state update :sidebar/visible? not)}
        [icons/bars3 "w-4 h-4"]])
     [:el Root {:class "flex flex-row w-full items-center"}
      [menu "File"
@@ -78,7 +78,7 @@
       separator
       [item {:disabled (not (gh/token))} "Save" [shortcut "⌘S"]]]
      [menu "View"
-      [item {:on-click #(swap! sidebar/!state update :visible? not)} "Sidebar" [shortcut "⇧⌘K"]]
+      [item {:on-click #(swap! ui/!state update :sidebar/visible? not)} "Sidebar" [shortcut "⇧⌘K"]]
       [item "Command Bar" [shortcut "⌘K"]]]
      [:div.flex-grow]
      [:div#menubar-title]
@@ -97,4 +97,4 @@
           "Sign In with GitHub"]))]]])
 
 (defn title! [content]
-  (v/portal :menubar-title content))
+  (v/portal :menubar-title (v/x content)))

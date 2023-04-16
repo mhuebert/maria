@@ -35,7 +35,7 @@
   (let [{:as location ::routes/keys [view]} (h/use-deref routes/!location)]
       [:<>
        (ui/use-global-keymap {:mod-k (fn [& _] (command-bar/toggle!))
-                              :shift-mod-k (fn [& _] (swap! sidebar/!state update :visible? not))})
+                              :shift-mod-k (fn [& _] (swap! ui/!state update :sidebar/visible? not))})
        [command-bar/view]
        [sidebar/with-sidebar
         [sidebar/content]

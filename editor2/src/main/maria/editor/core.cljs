@@ -6,22 +6,19 @@
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
             ["prosemirror-schema-list" :as cmd-list]
+            ["react" :as react]
             ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
-            [maria.cloud.menubar :as menubar]
             [maria.editor.code-blocks.NodeView :as node-view]
             [maria.editor.code-blocks.commands :as commands]
             [maria.editor.code-blocks.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code-blocks.sci :as sci]
-            [maria.editor.icons :as icons]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
-            [maria.editor.prosemirror.schema :as markdown]
-            [maria.ui :as ui]
-            [yawn.hooks :as h]))
+            [maria.editor.prosemirror.schema :as markdown]))
 
 ;; 1. print markdown normally, but add a marker prefix to code lines.
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
@@ -104,6 +101,8 @@
      (history)
      ~@(links/plugins)]))
 
+(defonce !mounted-view (atom nil))
+
 (defn init [{:as opts :keys [initial-value
                              make-sci-ctx]
              :or {make-sci-ctx sci/initial-context}}
@@ -114,29 +113,28 @@
                                         :plugins (plugins)}))
         view (-> (js (EditorView. element {:state state
                                            :nodeViews {:code_block node-view/editor}
+                                           #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
                                            ;; no-op tx for debugging
                                            #_#_:dispatchTransaction (fn [tx]
                                                                       (this-as ^js view
                                                                         (let [state (.apply (.-state view) tx)]
                                                                           (.updateState view state))))}))
                  (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
+    (reset! !mounted-view view)
     (commands/prose:eval-doc! view)
-    #(j/call view :destroy)))
+    #(do (when (identical? @!mounted-view view) (reset! !mounted-view nil))
+         (j/call view :destroy))))
 
-(ui/defview editor [options]
-  [:<>
-
-   [menubar/title!
-    [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
-     (:title options)
-     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]]
-
-   (let [!ref (h/use-ref nil)]
-     (h/use-effect
-      (fn [] (some->> @!ref (init options)))
-      [@!ref (:initial-value options)])
-
-     [:div.relative.notebook {:ref !ref}])])
+(defn ^:el editor [options]
+  (let [element-ref (react/useRef nil)]
+    (js
+      (react/useEffect
+       (fn []
+         (when-let [element (j/get element-ref :current)]
+           (init options element)))
+       [(:initial-value options)]))
+    (js (react/createElement "div" {:class "relative notebook"
+                                    :ref element-ref}))))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

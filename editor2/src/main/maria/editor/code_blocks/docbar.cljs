@@ -9,7 +9,6 @@
             [maria.editor.code-blocks.repl :as repl]
             [maria.editor.views :as views]
             [maria.ui :as ui]
-            [maria.ui :refer [defview]]
             [nextjournal.clojure-mode.node :as n]
             [re-db.reactive :as r]
             [yawn.hooks :as h]
@@ -57,13 +56,13 @@
                                          (try (repl/doc-map @!sci-ctx ns sym)
                                               (catch js/Error e nil)))))))}))]))
 
-(defview view []
-  (let [sidebar (h/use-deref sidebar/!state)]
+(ui/defview view []
+  (let [{:sidebar/keys [visible? width transition]} @ui/!state]
     [:<>
      [:div {:style {:height 35}}]
      [:div.fixed.bottom-0.right-0
-      {:style {:left (if (:visible? sidebar) (:width sidebar) 0)
-               :transition (:transition sidebar)}}
+      {:style {:left (if visible? width 0)
+               :transition transition}}
       (when-let [{:as m :keys [ns name doc arglists]} @!state]
         (views/doc-tooltip m
                            (v/x
