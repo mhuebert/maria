@@ -73,3 +73,8 @@
                        :shutdown bp/destroy-tree}
                       "npx tailwindcss -w -i src/maria.cloud.css -o public/maria.cloud.css"))
   state)
+
+(defn copy-curriculum! {:shadow.build/stage :flush}
+  [state]
+  (bp/sh "bb" "copy-curriculum")
+  state)

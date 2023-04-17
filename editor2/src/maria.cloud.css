@@ -26,6 +26,10 @@
     @apply p-0 text-xl font-serif;
 }
 
+.ProseMirror:focus {
+    outline: none;
+}
+
 .ProseMirror ul, .ProseMirror ol, .ProseMirror p, .ProseMirror blockquote .ProseMirror pre {
     @apply mt-4;
 }

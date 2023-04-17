@@ -13,8 +13,8 @@
    [:div.pt-5 {:class "text-[3rem]"} "Welcome to Maria,"]
    [:div.text-2xl "a coding environment for beginners."]
 
-   [:div.flex.flex-row.items-center.bg-zinc-200.rounded.my-6.p-6.gap-4
-    "Start Here: "
+   [:div.flex.flex-col.bg-zinc-200.rounded.my-6.p-6.gap-4
+    [:div "Start Here: "]
     [:a.rounded-md.p-3.block.flex-grow
      {:class ["text-base" ui/c:button-light]
       :href "/intro"} "Learn Clojure with Shapes"]]

@@ -88,12 +88,12 @@
     [:> acc/Root {:type "multiple" :defaultValue #js["curriculum"] :class "relative"}
 
      [:div {:class "flex flex-row h-[40px] items-center border-b border-zinc-100"}
-      [:a.p-2.hover:bg-slate-300.cursor-pointer.text-black {:href "/"} [icon:home "w-4 h-4"]]
-      [:div.flex-grow]
-      [:div.flex.items-center.justify-center.p-2.cursor-pointer.text-zinc-500.hover:text-zinc-700
+      [:div.flex.items-center.justify-center.py-2.px-3.cursor-pointer.text-zinc-500.hover:text-zinc-700
        {:on-click #(swap! ui/!state assoc :sidebar/visible? false)
         :style {:margin-top 3}}
-       [icons/x-mark:mini "w-5 h-5 rotate-180"]]]
+       [icons/x-mark:mini "w-5 h-5 rotate-180"]]
+      [:div.flex-grow]
+      [:a.p-2.hover:bg-slate-300.cursor-pointer.text-black {:href "/"} [icon:home "w-4 h-4"]]]
 
 
      [acc-section "Learn"

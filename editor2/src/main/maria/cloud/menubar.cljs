@@ -25,9 +25,9 @@
 
 (def trigger
   (v/from-element menu/Trigger
-    {:class ["px-2 py-1 my-[2px] bg-transparent hover:bg-zinc-50 rounded"
-             "data-[highlighted]:bg-zinc-50"
-             "data-[state=open]:bg-zinc-50"]}))
+    {:class ["px-1 py-1 my-[2px] bg-transparent hover:bg-zinc-200 rounded"
+             "data-[highlighted]:bg-zinc-200"
+             "data-[state=open]:bg-zinc-200"]}))
 
 (def content
   (v/from-element menu/Content
@@ -47,12 +47,12 @@
                       (take 2)
                       str/join)]
     [:el ava/Root {:class ["inline-flex items-center justify-center align-middle"
-                           "overflow-hidden select-none w-7 h-6 rounded bg-zinc-300"]}
+                           "overflow-hidden select-none w-6 h-6 rounded-full bg-zinc-300"]}
      [:el ava/Image {:src photo-url}]
      [:el ava/Fallback {:delayMs 600
                         :class "text-xs font-bold text-zinc-700"} initials]]))
 
-(def button-small-dark
+(def button-small-med
   (v/from-element :a
     {:class ["rounded flex items-center px-2 py-1 shadow cursor-pointer text-sm"
              ui/c:button-med]}))
@@ -70,6 +70,14 @@
       [icon-btn {:on-click #(swap! ui/!state update :sidebar/visible? not)}
        [icons/bars3 "w-4 h-4"]])
     [:el Root {:class "flex flex-row w-full items-center"}
+     (when-some [{:as user :keys [photo-url display-name]} @gh/!user]
+       (when user
+         [:el Menu
+          [:el Trigger {:class "cursor-pointer px-2"}
+           [avatar photo-url display-name]]
+          [:el Portal
+           [:el Content {:class "MenubarContent mt-[4px]"}
+            [item {:on-click #(gh/sign-out)} "Sign Out"]]]]))
      [menu "File"
       [item "New" [shortcut "⌘N"]]
       [item "Duplicate"]
@@ -83,17 +91,11 @@
      [:div.flex-grow]
      [:div#menubar-title]
      [:div.flex-grow]
-     (when-some [{:as user :keys [photo-url display-name]} @gh/!user]
-       (if user
-         [:el Menu
-          [:el Trigger {:class "cursor-pointer"}
-           [avatar photo-url display-name]]
-          [:el Portal
-           [:el Content {:class "MenubarContent mt-[4px]"}
-            [item {:on-click #(gh/sign-out)} "Sign Out"]]]]
-         [button-small-dark
-          {:on-click #(gh/sign-in-with-popup!)}
-          "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]]))]]])
+     (when-not @gh/!user
+       [button-small-med
+        {:on-click #(gh/sign-in-with-popup!)}
+        "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]])
+     ]]])
 
 (defn title! [content]
   (v/portal :menubar-title (v/x content)))

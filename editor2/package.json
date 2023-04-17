@@ -58,7 +58,7 @@
     "react-dom": "^18.2.0",
     "react-refresh": "^0.14.0",
     "shadow-cljs": "^2.20.1",
-    "tailwindcss": "^3.2.1",
+    "tailwindcss": "^3.3.1",
     "use-sync-external-store": "^1.2.0",
     "w3c-keyname": "^2.2.4"
   },
