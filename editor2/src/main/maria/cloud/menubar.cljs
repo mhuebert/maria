@@ -1,8 +1,12 @@
 (ns maria.cloud.menubar
-  (:require ["@radix-ui/react-menubar" :as menu :refer [Item Separator Root Menu Trigger Portal Content]]
+  (:require ["jszip" :as jszip]
+            ["file-saver" :as file-saver]
+            ["@radix-ui/react-menubar" :as menu :refer [Item Separator Root Menu Trigger Portal Content]]
             ["@radix-ui/react-avatar" :as ava]
+            [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.cloud.sidebar :as sidebar]
+            [maria.editor.core]
             [maria.editor.icons :as icons]
             [maria.cloud.github :as gh]
             [maria.ui :as ui]
@@ -60,6 +64,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Menubar
 
+(defn download-clerkified-zip
+  "Creates & downloads ZIP file of current editor view, packaged up to run locally with NextJournal's Clerk.
+  Approach adapted from https://stackoverflow.com/a/49836948/706499"
+  [_e]
+  (-> (new jszip)
+      (.file "deps.edn" "{}") ;; FIXME
+      (.file "src/hello.clj" ;; HACK hardcoded filename
+             (-> @maria.editor.core/!mounted-view
+                 (j/get-in [:state :doc])
+                 maria.editor.core/doc->clj))
+      (.generateAsync #js{:type "blob"})
+      (.then (fn [content]
+               (file-saver/saveAs content "clerkified-maria.zip")))))
+
 (ui/defview menubar []
   [:<>
    [:div {:style {:height 40}}]
@@ -84,7 +102,9 @@
       separator
       [item "Revert"]
       separator
-      [item {:disabled (not (gh/token))} "Save" [shortcut "⌘S"]]]
+      [item {:disabled (not (gh/token))} "Save" [shortcut "⌘S"]]
+      [item {:on-click download-clerkified-zip}
+       "Download for Clerk"]]
      [menu "View"
       [item {:on-click #(swap! ui/!state update :sidebar/visible? not)} "Sidebar" [shortcut "⇧⌘K"]]
       [item "Command Bar" [shortcut "⌘K"]]]
@@ -94,8 +114,7 @@
      (when-not @gh/!user
        [button-small-med
         {:on-click #(gh/sign-in-with-popup!)}
-        "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]])
-     ]]])
+        "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]])]]])
 
 (defn title! [content]
   (v/portal :menubar-title (v/x content)))
