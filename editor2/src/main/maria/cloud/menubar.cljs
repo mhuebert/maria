@@ -74,7 +74,7 @@
         io.github.applied-science/clerk-tools.repl {:local/root \"../clerk-tools.repl\"}}}")
 
 (def clerk-ns-form
-  "Stringy namespace form for Clerkified Maria docs"
+  "Namespace form String for Clerkified Maria doc"
   "^{:nextjournal.clerk/visibility {:code :fold}}
 (ns fixme
   (:require [applied-science.shapes :refer :all]
@@ -87,7 +87,8 @@
   (-> (new jszip)
       (.file "deps.edn" clerk-deps-edn)
       (.file "src/hello.clj" ;; HACK hardcoded filename
-             (str clerk-ns-form "\n\n"
+             (str clerk-ns-form ;; TODO fn taking ns from doc info
+                  "\n\n"
                   (-> @maria.editor.core/!mounted-view
                       (j/get-in [:state :doc])
                       maria.editor.core/doc->clj)))
