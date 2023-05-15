@@ -64,16 +64,33 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Menubar
 
+(def clerk-deps-edn
+  "deps.edn String for Clerkified Maria doc"
+  "{:paths [\"src\"]
+ :deps {org.clojure/clojure {:mvn/version \"1.11.1\"}
+        io.github.applied-science/shapes {:git/sha \"da44031cf79a649932cb502f17388db23f2b8ace\"}
+        io.github.nextjournal/clerk {:mvn/version \"0.13.842\"}
+        ;; HACK local dep for now
+        io.github.applied-science/clerk-tools.repl {:local/root \"../clerk-tools.repl\"}}}")
+
+(def clerk-ns-form
+  "Stringy namespace form for Clerkified Maria docs"
+  "^{:nextjournal.clerk/visibility {:code :fold}}
+(ns fixme
+  (:require [applied-science.shapes :refer :all]
+            [applied-science.clerk-tools.repl :refer :all]))")
+
 (defn download-clerkified-zip
   "Creates & downloads ZIP file of current editor view, packaged up to run locally with NextJournal's Clerk.
   Approach adapted from https://stackoverflow.com/a/49836948/706499"
   [_e]
   (-> (new jszip)
-      (.file "deps.edn" "{}") ;; FIXME
+      (.file "deps.edn" clerk-deps-edn)
       (.file "src/hello.clj" ;; HACK hardcoded filename
-             (-> @maria.editor.core/!mounted-view
-                 (j/get-in [:state :doc])
-                 maria.editor.core/doc->clj))
+             (str clerk-ns-form "\n\n"
+                  (-> @maria.editor.core/!mounted-view
+                      (j/get-in [:state :doc])
+                      maria.editor.core/doc->clj)))
       (.generateAsync #js{:type "blob"})
       (.then (fn [content]
                (file-saver/saveAs content "clerkified-maria.zip")))))
