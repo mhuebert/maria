@@ -66,19 +66,42 @@
 
 (def clerk-deps-edn
   "deps.edn String for Clerkified Maria doc"
-  "{:paths [\"src\"]
+  "{:paths [\"dev\" ;; <-- automatically loads user.clj on start-up, launching Clerk
+         \"src\"]
  :deps {org.clojure/clojure {:mvn/version \"1.11.1\"}
-        io.github.applied-science/shapes {:git/sha \"da44031cf79a649932cb502f17388db23f2b8ace\"}
         io.github.nextjournal/clerk {:mvn/version \"0.13.842\"}
-        ;; HACK local dep for now
-        io.github.applied-science/clerk-tools.repl {:local/root \"../clerk-tools.repl\"}}}")
+        io.github.applied-science/shapes {:git/sha \"da44031cf79a649932cb502f17388db23f2b8ace\"}
+        io.github.applied-science/clerk-helpers {:git/sha \"3e42e4d73cc557170c8dbf3f4e5a39cec644a2e2\"}}}")
+
+(def clerk-user-clj
+  "user.clj String, per Clerk instructions"
+  "(require '[nextjournal.clerk :as clerk])
+
+;; start Clerk's built-in webserver on the default port 7777, opening the browser when done
+(clerk/serve! {:browse? true
+               ;;:watch-paths [\"notebooks\"]
+               })
+
+;; call `clerk/show!` explicitly to show a given notebook
+(clerk/show! \"notebooks/clerkified_maria.clj\")")
 
 (def clerk-ns-form
   "Namespace form String for Clerkified Maria doc"
-  "^{:nextjournal.clerk/visibility {:code :fold}}
-(ns fixme
-  (:require [applied-science.shapes :refer :all]
-            [applied-science.clerk-tools.repl :refer :all]))")
+  "^{:nextjournal.clerk/visibility {:code :hide, :result :hide}}
+(ns clerkified-maria
+  (:require
+   ;; It's often bad form to bring in all vars from multiple lib
+   ;; namespaces. Here we do it so that code from Maria works as-is. See
+   ;; https://github.com/bbatsov/clojure-style-guide#prefer-require-over-use
+   [applied-science.shapes :refer :all]
+   [applied-science.clerk-helpers :refer :all]
+   [nextjournal.clerk :as clerk]))
+
+^{::clerk/visibility {:code :hide, :result :hide}}
+(clerk/add-viewers! [{:pred shape?
+                      ;; Make Clerk \"present\" Shapes as they are shown with Maria:
+                      :transform-fn (clerk/update-val (comp clerk/html
+                                                            to-hiccup))}])")
 
 (defn download-clerkified-zip
   "Creates & downloads ZIP file of current editor view, packaged up to run locally with NextJournal's Clerk.
@@ -86,8 +109,10 @@
   [_e]
   (-> (new jszip)
       (.file "deps.edn" clerk-deps-edn)
-      (.file "src/hello.clj" ;; HACK hardcoded filename
-             (str clerk-ns-form ;; TODO fn taking ns from doc info
+      (.file "dev/user.clj" clerk-user-clj)
+      ;; TODO fn taking ns & file name from doc info?
+      (.file "notebooks/clerkified_maria.clj"
+             (str clerk-ns-form
                   "\n\n"
                   (-> @maria.editor.core/!mounted-view
                       (j/get-in [:state :doc])
