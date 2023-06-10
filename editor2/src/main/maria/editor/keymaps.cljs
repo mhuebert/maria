@@ -157,13 +157,13 @@
                  :doc "Indent document (or selection)"
                  :when :code
                  :f (:indent paredit-index)}
-   :code/unwrap {:bindings [:Alt-S]
+   :code/unwrap {:bindings [:Alt-s]
                  :doc "Lift contents of collection into parent"
                  :when :code
                  :f (:unwrap paredit-index)}
    :code/slurp {:bindings [:Ctrl-ArrowRight
                            :Mod-Shift-ArrowRight
-                           :Mod-Shift-K]
+                           :Mod-Shift-k]
                 :doc "Expand collection to include form to the right"
                 :when :code
                 :f (:slurp-forward paredit-index)}

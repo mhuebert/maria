@@ -193,7 +193,7 @@
 
                                                     (.theme EditorView styles/code-theme)
                                                     (cmd/history)
-                                                    (.. EditorState -allowMultipleSelections (of true))
+
                                                     (lang/syntaxHighlighting styles/code-highlight-style)
                                                     (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
@@ -201,6 +201,10 @@
                                                                                                  true)})
                                                     keymaps/code-keymap
                                                     (.of cm.view/keymap cmd/historyKeymap)
+
+                                                    (.. EditorState -allowMultipleSelections (of true))
+                                                    
+                                                    (cm.view/drawSelection)
 
                                                     (.. EditorView
                                                         -updateListener
