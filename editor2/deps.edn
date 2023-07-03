@@ -4,7 +4,7 @@
         thheller/shadow-cljs {:mvn/version "2.22.2"}
         applied-science/js-interop {:mvn/version "0.4.1"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
-                                  :git/sha "2720bd140ac8625890d558b6748b09a17a7214e2"}
+                                  :git/sha "ce5a6751dd72af4809df6d49a68e5e71237334fd"}
         org.babashka/sci {:mvn/version "0.7.39"}
         babashka/fs {:mvn/version "0.3.17"}
         babashka/process {:mvn/version "0.4.16"}

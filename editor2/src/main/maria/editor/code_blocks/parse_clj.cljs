@@ -1,5 +1,5 @@
 (ns maria.editor.code-blocks.parse-clj
-  (:require ["lezer-clojure" :as lezer-clj]
+  (:require ["@nextjournal/lezer-clojure" :as lezer-clj]
             [applied-science.js-interop :as j]
             [clojure.string :as str]))
 

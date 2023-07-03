@@ -3,7 +3,7 @@
             ["@codemirror/language" :as lang]
             ["@codemirror/state" :refer [EditorState]]
             ["@codemirror/view" :as cm.view :refer [EditorView]]
-            ["lezer-clojure" :as lezer-clojure]
+            ["@nextjournal/lezer-clojure" :as lezer-clojure]
             ["prosemirror-history" :as history]
             ["prosemirror-state" :refer [TextSelection Selection]]
             ["react" :as react]
@@ -20,6 +20,10 @@
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.schema :as prose-schema]
             [nextjournal.clojure-mode :as clj-mode]
+            [nextjournal.clojure-mode.extensions.close-brackets :as close-brackets]
+            [nextjournal.clojure-mode.extensions.formatting :as formatting]
+            [nextjournal.clojure-mode.extensions.match-brackets :as match-brackets]
+            [nextjournal.clojure-mode.extensions.selection-history :as sel-history]
             [nextjournal.clojure-mode.util :as u]
             [re-db.reactive :as r]
             [yawn.root :as root]))
@@ -153,7 +157,7 @@
   (.define lang/LRLanguage
            (js
              {:parser (.configure lezer-clojure/parser
-                                  {:props [clj-mode/format-props
+                                  {:props [formatting/props
                                            (.add lang/foldNodeProp clj-mode/fold-node-props)
                                            styles/code-styles]})})))
 
@@ -186,10 +190,10 @@
                                                                                             (#'completions/completions this context))}))
                                                     (completions/plugin)
 
-                                                    (clj-mode/match-brackets)
-                                                    (clj-mode/close-brackets)
-                                                    (clj-mode/selection-history)
-                                                    (clj-mode/format-changed-lines)
+                                                    (close-brackets/extension)
+                                                    (match-brackets/extension)
+                                                    (sel-history/extension)
+                                                    (formatting/ext-format-changed-lines)
 
                                                     (.theme EditorView styles/code-theme)
                                                     (cmd/history)
@@ -203,23 +207,24 @@
                                                     (.of cm.view/keymap cmd/historyKeymap)
 
                                                     (.. EditorState -allowMultipleSelections (of true))
-                                                    
+
                                                     (cm.view/drawSelection)
 
                                                     (.. EditorView
                                                         -updateListener
                                                         (of #(code:forward-update this %)))
                                                     (eldoc/extension this)
-                                                    (error-marks/extension)]})})
+                                                    (error-marks/extension)
+                                                    ]})})
                        (j/!set :node-view this))
-         :!result (atom nil)
+         :!result   (atom nil)
 
          :on-mounts []
-         :mounted? false
-         :on-mount (fn [f]
-                     (if (j/get this :mounted?)
-                       (f)
-                       (j/update! this :on-mounts j/push! f)))
+         :mounted?  false
+         :on-mount  (fn [f]
+                      (if (j/get this :mounted?)
+                        (f)
+                        (j/update! this :on-mounts j/push! f)))
 
          :code-updating? false
 

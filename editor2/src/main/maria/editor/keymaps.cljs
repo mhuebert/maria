@@ -22,234 +22,307 @@
 (def chain pm.cmd/chainCommands)
 
 
-(def palette-commands:prose
+(def commands:prose
   ;; prose commands + metadata accessible to command-palette
-  (j/let [^js {{:keys [strong em code]} :marks
+  (j/let [^js {{:keys [strong em code]}                     :marks
                {:keys [bullet_list ordered_list blockquote
                        hard_break list_item paragraph
-                       code_block heading horizontal_rule]} :nodes} schema]
-    {:font/bold {:doc "Toggle bold"
-                 :when :prose
-                 :bindings [:Mod-b]
-                 :f (pm.cmd/toggleMark strong)}
-     :font/italic {:doc "Toggle italic"
-                   :when :prose
-                   :bindings [:Mod-i]
-                   :f (pm.cmd/toggleMark em)}
-     :font/code {:doc "Toggle inline code"
-                 :when :prose
-                 :bindings ["Mod-`"]
-                 :f (pm.cmd/toggleMark code)}
+                       code_block heading horizontal_rule]} :nodes} schema
+          hard-break-cmd (chain
+                           pm.cmd/exitCode
+                           (fn [^js state dispatch]
+                             (when dispatch
+                               (dispatch (.. state -tr
+                                             (replaceSelectionWith (.create hard_break))
+                                             (pm.cmd/scrollIntoView))))
+                             true))]
+    {:font/bold             {:doc      "Toggle bold"
+                             :kind     :prose
+                             :bindings [:Mod-b]
+                             :f        (pm.cmd/toggleMark strong)}
+     :font/italic           {:doc      "Toggle italic"
+                             :kind     :prose
+                             :bindings [:Mod-i]
+                             :f        (pm.cmd/toggleMark em)}
+     :font/code             {:doc      "Toggle inline code"
+                             :kind     :prose
+                             :bindings ["Mod-`"]
+                             :f        (pm.cmd/toggleMark code)}
 
-     :block/paragraph {:bindings [:Shift-Ctrl-0]
-                       :f (pm.cmd/setBlockType paragraph)}
-     :block/code {:bindings ["Shift-Ctrl-\\\\"]
-                  :when :prose
-                  :f (pm.cmd/setBlockType code_block)}
-     :block/h1 {:bindings [:Shift-Ctrl-1]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 1})}
-     :block/h2 {:bindings [:Shift-Ctrl-2]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 2})}
-     :block/h3 {:bindings [:Shift-Ctrl-3]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 3})}
-     :block/h4 {:bindings [:Shift-Ctrl-4]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 4})}
-     :block/h5 {:bindings [:Shift-Ctrl-5]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 5})}
-     :block/h6 {:bindings [:Shift-Ctrl-6]
-                :when :prose
-                :f (pm.cmd/setBlockType heading #js{:level 6})}
-     :block/bullet-list {:bindings [:Shift-Ctrl-8]
-                         :when :prose
-                         :f (pm.schema-list/wrapInList bullet_list)}
-     :block/blockquote {:bindings [:Ctrl->]
-                        :when :prose
-                        :f (pm.cmd/wrapIn blockquote)}
+     :block/paragraph       {:doc      "Convert block to paragraph"
+                             :bindings [:Shift-Ctrl-0]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType paragraph)}
+     :block/code            {:doc      "Convert block to code"
+                             :bindings ["Shift-Ctrl-\\\\"]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType code_block)}
+     :block/h1              {:doc      "Convert block to heading 1"
+                             :bindings [:Shift-Ctrl-1]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 1})}
+     :block/h2              {:doc      "Convert block to heading 2"
+                             :bindings [:Shift-Ctrl-2]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 2})}
+     :block/h3              {:doc      "Convert block to heading 3"
+                             :bindings [:Shift-Ctrl-3]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 3})}
+     :block/h4              {:doc      "Convert block to heading 4"
+                             :bindings [:Shift-Ctrl-4]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 4})}
+     :block/h5              {:doc      "Convert block to heading 5"
+                             :bindings [:Shift-Ctrl-5]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 5})}
+     :block/h6              {:doc      "Convert block to heading 6"
+                             :bindings [:Shift-Ctrl-6]
+                             :kind     :prose
+                             :f        (pm.cmd/setBlockType heading #js{:level 6})}
+     :block/bullet-list     {:doc      "Convert block to bullet list"
+                             :bindings [:Shift-Ctrl-8]
+                             :kind     :prose
+                             :f        (pm.schema-list/wrapInList bullet_list)}
+     :block/blockquote      {:doc      "Convert block to blockquote"
+                             :bindings [:Ctrl->]
+                             :kind     :prose
+                             :f        (pm.cmd/wrapIn blockquote)}
      ;; does not work
      #_#_:block/ordered-list {:bindings [:Shift-Ctrl-9]
-                              :f (pm.schema-list/wrapInList ordered_list)}
-     :history/undo {:bindings [:Mod-z]
-                    :f pm.history/undo}
-     :history/redo {:bindings (cond-> [:Shift-Mod-z]
-                                      (not mac?)
-                                      (conj :Mod-y))
-                    :f pm.history/redo}
-     :list/outdent {:bindings ["Mod-["
-                               :Shift-Tab]
-                    :when :prose
-                    :f (pm.schema-list/liftListItem list_item)}
-     :list/indent {:bindings ["Mod-]"
-                              :Tab]
-                   :when :prose
-                   :f (pm.schema-list/sinkListItem list_item)}
-     :block/horizontal-rule {:bindings [:Mod-_]
-                             :when :prose
-                             :f (fn [^js state dispatch]
-                                  (when dispatch
-                                    (dispatch (.. state -tr
-                                                  (replaceSelectionWith (.create horizontal_rule))
-                                                  (scrollIntoView))))
-                                  true)}
-     :eval/doc {:bindings [:Mod-Alt-Enter]
-                :f (fn [state dispatch view]
-                     (commands/prose:eval-doc! view)
-                     true)}}))
+                              :f        (pm.schema-list/wrapInList ordered_list)}
+     :history/undo          {:bindings [:Mod-z]
+                             :kind     :prose
+                             :f        pm.history/undo}
+     :history/redo          {:bindings (cond-> [:Shift-Mod-z]
+                                               (not mac?)
+                                               (conj :Mod-y))
+                             :kind     :prose
+                             :f        pm.history/redo}
+     :list/outdent          {:doc      "Outdent list item"
+                             :bindings ["Mod-["
+                                        :Shift-Tab]
+                             :kind     :prose
+                             :f        (pm.schema-list/liftListItem list_item)}
+     :list/indent           {:doc      "Indent list item"
+                             :bindings ["Mod-]"
+                                        :Tab]
+                             :kind     :prose
+                             :f        (pm.schema-list/sinkListItem list_item)}
+     :block/horizontal-rule {:doc      "Insert horizontal rule"
+                             :bindings [:Mod-_]
+                             :kind     :prose
+                             :f        (fn [^js state dispatch]
+                                         (when dispatch
+                                           (dispatch (.. state -tr
+                                                         (replaceSelectionWith (.create horizontal_rule))
+                                                         (scrollIntoView))))
+                                         true)}
+     :eval/doc              {:doc      "Evaluate document"
+                             :kind     :prose
+                             :bindings [:Mod-Alt-Enter]
+                             :f        (fn [state dispatch view]
+                                         (commands/prose:eval-doc! view)
+                                         true)}
+     #_#_:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
+     :prose/backspace       {:bindings [:Backspace]
+                             :hidden?  true
+                             :f        (chain links/open-link-on-backspace
+                                              pm.cmd/selectNodeBackward
+                                              pm.cmd/deleteSelection
+                                              pm.cmd/joinBackward)
+                             :kind     :prose}
+     :prose/join-up         {:bindings     [:Alt-ArrowUp]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            pm.cmd/joinUp
+                             :kind         :prose}
+     :prose/join-down       {:bindings     [:Alt-ArrowDown]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            pm.cmd/joinDown
+                             :kind         :prose}
+     :prose/lift            {:bindings     [:Mod-BracketLeft]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            pm.cmd/lift
+                             :kind         :prose}
+     :prose/select-parent   {:bindings     [:Escape]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            pm.cmd/selectParentNode
+                             :kind         :prose}
 
-(defn ->pm [out commands]
-  (doseq [[_ {:keys [bindings f]}] commands
-          binding bindings]
-    (j/!set out (name binding) f))
-  out)
+     :prose/enter           {:bindings     [:Enter]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            (chain (pm.schema-list/splitListItem list_item)
+                                                  commands/prose:convert-to-code)
+                             :kind         :prose}
+     :prose/arrow-left      {:bindings     [:ArrowLeft]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            (commands/prose:arrow-handler -1)
+                             :kind         :prose}
+     :prose/arrow-up        {:bindings     [:ArrowUp]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            (commands/prose:arrow-handler -1)
+                             :kind         :prose}
+     :prose/arrow-right     {:bindings     [:ArrowRight]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            (commands/prose:arrow-handler 1)
+                             :kind         :prose}
+     :prose/arrow-down      {:bindings     [:ArrowDown]
+                             :hidden?      true
+                             :command-bar? false
+                             :f            (commands/prose:arrow-handler 1)
+                             :kind         :prose}
 
-(js
-  (def prose-keymap
-    (let [{{:keys [hard_break list_item]} :nodes} schema
-          hard-break-cmd (chain
-                          pm.cmd/exitCode
-                          (fn [state dispatch]
-                            (when dispatch
-                              (dispatch (.. state -tr
-                                            (replaceSelectionWith (.create hard_break))
-                                            (pm.cmd/scrollIntoView))))
-                            true))]
-      (pm.keymap/keymap
-       (-> {#_#_:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
-            :Backspace (chain links/open-link-on-backspace
-                              pm.cmd/selectNodeBackward
-                              pm.cmd/deleteSelection
-                              pm.cmd/joinBackward)
-            :Alt-ArrowUp pm.cmd/joinUp
-            :Alt-ArrowDown pm.cmd/joinDown
-            :Mod-BracketLeft pm.cmd/lift
-            :Escape pm.cmd/selectParentNode
+     :prose/hard-break      {:bindings (cond-> [:Mod-Enter
+                                                :Shift-Enter]
+                                               mac?
+                                               (conj :Ctrl-Enter))
+                             :hidden?  true
+                             :kind     :prose
+                             :f        hard-break-cmd}}))
 
-            :Enter (chain (pm.schema-list/splitListItem list_item)
-                          commands/prose:convert-to-code)
-            :ArrowLeft (commands/prose:arrow-handler -1)
-            :ArrowUp (commands/prose:arrow-handler -1)
-            :ArrowRight (commands/prose:arrow-handler 1)
-            :ArrowDown (commands/prose:arrow-handler 1)}
-           (->pm palette-commands:prose)
-           (j/extend!
-             {[:Mod-Enter
-               :Shift-Enter] hard-break-cmd}
-             (when mac?
-               {:Ctrl-Enter hard-break-cmd})))))))
+(def prose-keymap
+  (let [out #js{}]
+    (doseq [[_ {:keys [bindings f]}] commands:prose
+            binding bindings]
+      (j/!set out (name binding) f))
+    (pm.keymap/keymap out)))
 
-(def palette-commands:code
+(def commands:code
   ;; code commands + metadata accessible to command-palette
-  {:eval/block {:bindings [:Shift-Enter]
-                ;; TODO :f
-                :when :code}
-   :eval/region {:bindings [:Mod-Enter]
-                 ;; TODO :f
-                 :when :code}
+  {:eval/block              {:bindings [:Shift-Enter]
+                             ;; TODO :f
+                             :when     :code}
+   :eval/region             {:bindings [:Mod-Enter]
+                             ;; TODO :f
+                             :when     :code}
    :navigate/next-code-cell {:bindings [:Shift-Tab]
-                             :when :code
+                             :when     :code
                              ;; TODO fix :f, its quoted and references `this`
-                             :f '#(commands/prose:next-code-cell (j/get this :proseView))}
-   :code/format {:bindings [:Alt-Tab]
-                 :doc "Indent document (or selection)"
-                 :when :code
-                 :f (:indent paredit-index)}
-   :code/unwrap {:bindings [:Alt-s]
-                 :doc "Lift contents of collection into parent"
-                 :when :code
-                 :f (:unwrap paredit-index)}
-   :code/slurp {:bindings [:Ctrl-ArrowRight
-                           :Mod-Shift-ArrowRight
-                           :Mod-Shift-k]
-                :doc "Expand collection to include form to the right"
-                :when :code
-                :f (:slurp-forward paredit-index)}
-   :code/barf-last {:bindings [:Ctrl-ArrowLeft
-                               :Mod-Shift-ArrowLeft]
-                    :doc "Push last element of collection out to the right"
-                    :when :code
-                    :f (:barf-forward paredit-index)}
-   :code/slurp-backward {:bindings [:Shift-Ctrl-ArrowLeft]
-                         :doc "Expand collection to include form to the right"
-                         :when :code
-                         :f (:slurp-backward paredit-index)}
-   :code/barf-first {:bindings [:Shift-Ctrl-ArrowRight]
-                     :doc "Push first element of collection out to the left"
-                     :when :code
-                     :f (:barf-backward paredit-index)}
-   :kill {:bindings [:Ctrl-K]
-          :doc "Remove all forms from cursor to end of line"
-          :when :code
-          :f (:kill paredit-index)}
-   :navigate/hop-right {:bindings [:Alt-ArrowRight]
-                        :doc "Move cursor one form to the right"
-                        :when :code
-                        :f (:nav-right paredit-index)}
-   :navigate/hop-left {:bindings [:Alt-ArrowLeft]
-                       :doc "Move cursor one form to the left"
-                       :when :code
-                       :f (:nav-left paredit-index)}
-   :select/hop-right {:bindings [:Shift-Alt-ArrowRight]
-                      :doc "Expand selection one form to the left"
-                      :when :code
-                      :f (:nav-select-right paredit-index)}
-   :select/hop-left {:bindings [:Shift-Alt-ArrowLeft]
-                     :doc "Expand selection one form to the right"
-                     :when :code
-                     :f (:nav-select-left paredit-index)}
-   :select/grow {:bindings [:Mod-1
-                            :Alt-ArrowUp
-                            :Mod-ArrowUp]
-                 :doc "Grow selection"
-                 :when :code
-                 :f (:selection-grow paredit-index)}
-   :select/shrink {:bindings [:Mod-2
-                              :Alt-ArrowDown
-                              :Mod-ArrowDown]
-                   :doc "Shrink selection"
-                   :when :code
-                   :f (:selection-return paredit-index)}})
+                             :f        '#(commands/prose:next-code-cell (j/get this :proseView))}
+   :code/format             {:bindings [:Alt-Tab]
+                             :doc      "Indent document (or selection)"
+                             :when     :code
+                             :f        (:indent paredit-index)}
+   :code/unwrap             {:bindings [:Alt-s]
+                             :doc      "Lift contents of collection into parent"
+                             :when     :code
+                             :f        (:unwrap paredit-index)}
+   :code/slurp              {:bindings [:Ctrl-ArrowRight
+                                        :Mod-Shift-ArrowRight
+                                        :Mod-Shift-k]
+                             :doc      "Expand collection to include form to the right"
+                             :when     :code
+                             :f        (:slurp-forward paredit-index)}
+   :code/barf-last          {:bindings [:Ctrl-ArrowLeft
+                                        :Mod-Shift-ArrowLeft]
+                             :doc      "Push last element of collection out to the right"
+                             :when     :code
+                             :f        (:barf-forward paredit-index)}
+   :code/slurp-backward     {:bindings [:Shift-Ctrl-ArrowLeft]
+                             :doc      "Expand collection to include form to the right"
+                             :when     :code
+                             :f        (:slurp-backward paredit-index)}
+   :code/barf-first         {:bindings [:Shift-Ctrl-ArrowRight]
+                             :doc      "Push first element of collection out to the left"
+                             :when     :code
+                             :f        (:barf-backward paredit-index)}
+   :kill                    {:bindings [:Ctrl-K]
+                             :doc      "Remove all forms from cursor to end of line"
+                             :when     :code
+                             :f        (:kill paredit-index)}
+   :navigate/hop-right      {:bindings [:Alt-ArrowRight]
+                             :doc      "Move cursor one form to the right"
+                             :when     :code
+                             :f        (:nav-right paredit-index)}
+   :navigate/hop-left       {:bindings [:Alt-ArrowLeft]
+                             :doc      "Move cursor one form to the left"
+                             :when     :code
+                             :f        (:nav-left paredit-index)}
+   :select/hop-right        {:bindings [:Shift-Alt-ArrowRight]
+                             :doc      "Expand selection one form to the left"
+                             :when     :code
+                             :f        (:nav-select-right paredit-index)}
+   :select/hop-left         {:bindings [:Shift-Alt-ArrowLeft]
+                             :doc      "Expand selection one form to the right"
+                             :when     :code
+                             :f        (:nav-select-left paredit-index)}
+   :select/grow             {:bindings [:Mod-1
+                                        :Alt-ArrowUp
+                                        :Mod-ArrowUp]
+                             :doc      "Grow selection"
+                             :when     :code
+                             :f        (:selection-grow paredit-index)}
+   :select/shrink           {:bindings [:Mod-2
+                                        :Alt-ArrowDown
+                                        :Mod-ArrowDown]
+                             :doc      "Shrink selection"
+                             :when     :code
+                             :f        (:selection-return paredit-index)}
+   :code/arrow-up           {:bindings [:ArrowUp]
+                             :kind     :code
+                             :hidden?  true
+                             :f        (commands/code:arrow-handler :line -1)}
+   :code/arrow-left         {:bindings [:ArrowLeft]
+                             :kind     :code
+                             :hidden?  true
+                             :f        (commands/code:arrow-handler :char -1)}
+   :code/arrow-down         {:bindings [:ArrowDown]
+                             :kind     :code
+                             :hidden?  true
+                             :f        (commands/code:arrow-handler :line 1)}
+   :code/arrow-right        {:bindings [:ArrowRight]
+                             :kind     :code
+                             :hidden?  true
+                             :f        (commands/code:arrow-handler :char 1)}
+   :code/code->paragraph    {:bindings [:Enter]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "Convert empty code block to paragraph"
+                             :f        commands/code:convert-to-paragraph}
+   :code/new-block          {:bindings [:Enter]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "New code block after code block"
+                             :f        commands/code:insert-another-code-block}
+   :code/split-block        {:bindings [:Enter]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "Split code block"
+                             :f        commands/code:split}
+   :code/insert-indented    {:bindings [:Enter]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "Insert newline and indent"
+                             :f        ^:clj (:enter-and-indent paredit-index)}
+   :code/remove-empty       {:bindings [:Backspace]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "Remove empty code block"
+                             :f        commands/code:remove-on-backspace}
+   :code/copy               {:bindings [:Mod-c]
+                             :kind     :code
+                             :hidden?  true
+                             :doc      "Copy code"
+                             :f        commands/code:copy-current-region}})
 
-(defn ->cm [out commands]
-  (doseq [[_ {:keys [doc bindings f]}] commands
-          binding bindings]
-    (j/push! out #js{:key (name binding)
-                     :run f}))
-  out)
 
-(js
-  (def code-keymap
-    (.of cm.view/keymap
-         (-> [{:key :ArrowUp
-               :run (commands/code:arrow-handler :line -1)}
-              {:key :ArrowLeft
-               :run (commands/code:arrow-handler :char -1)}
-              {:key :ArrowDown
-               :run (commands/code:arrow-handler :line 1)}
-              {:key :ArrowRight
-               :run (commands/code:arrow-handler :char 1)}
-              {:key :Enter
-               :doc "Convert empty code block to paragraph"
-               :run commands/code:convert-to-paragraph}
-              {:key :Enter
-               :doc "New code block after code block"
-               :run commands/code:insert-another-code-block}
-              {:key :Enter
-               :doc "Split code block"
-               :run commands/code:split}
-              {:key :Enter
-               :doc "Insert newline and indent"
-               :run ^:clj (:enter-and-indent paredit-index)}
-              {:key :Backspace
-               :doc "Remove empty code block"
-               :run commands/code:remove-on-backspace}
-              {:key :Mod-c
-               :doc "Copy code"
-               :run commands/code:copy-current-region}]
-             (->cm palette-commands:code)
-             (.concat clj-mode/builtin-keymap)))))
+(def code-keymap
+  (.of cm.view/keymap
+       (-> (let [out #js []]
+             (doseq [[_ {:keys [doc bindings f]}] commands:code
+                     binding bindings]
+               (j/push! out #js{:key (name binding)
+                                :run f}))
+             out)
+           (.concat clj-mode/builtin-keymap))))
 
 
