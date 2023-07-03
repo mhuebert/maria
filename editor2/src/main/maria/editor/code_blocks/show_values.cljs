@@ -273,6 +273,12 @@
           ;; should we indicate that this is a cell somehow?
           :else (show opts value))))
 
+(v/defview show-ns [opts ns]
+  [:div.text-sm.font-mono
+
+   [:div.text-slate-800 (str ns)]
+   [:span.mr-2.text-slate-500 "namespace"]])
+
 (defn by-type [views]
   (fn [opts x]
     (when-some [f (views (type x))]
@@ -310,7 +316,7 @@
                       List show-list
                       LazySeq show-list
                       shapes/Shape show-shape
-                      sci.lang/Namespace (show-terminal str)})
+                      sci.lang/Namespace show-ns})
 
             (fn [opts x] (when (satisfies? IWatchable x)
                            (show-watchable opts x)))

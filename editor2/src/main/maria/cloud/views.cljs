@@ -25,14 +25,14 @@
     title
     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]))
 
-(ui/defview learn
+(ui/defview curriculum
   [{:as props :curriculum/keys [name]}]
   (let [{:curriculum/keys [hash file-name]} (db/get [:curriculum/name name])
-        url (str "/learn/" file-name "?v=" hash)
+        url (str "/curriculum/" file-name "?v=" hash)
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
       [:<>
-       (doc-title (str "learn / " name))
+       (doc-title (str "curriculum / " name))
        [editor {:initial-value text
                 :id url}]])))
 

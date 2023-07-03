@@ -33,22 +33,22 @@
   (re-matches #"(?i)clj\w?|clojure|clojurescript" lang))
 
 (def clj-serializer (js
-                      (let [{:keys [nodes marks]
+                      (let [{:keys                  [nodes marks]
                              {original :code_block} :nodes} md/defaultMarkdownSerializer]
                         (new md/MarkdownSerializer
                              (j/extend! {}
-                               nodes
-                               {:code_block
-                                (fn [{:as state :keys [delim]}
-                                     {:as node :keys [textContent] {lang :params} :attrs}]
-                                  (if (and (str/blank? delim)
-                                           (or (clojure-block? lang)
-                                               (str/blank? lang)))
-                                    (do
-                                      (when-not (str/blank? textContent)
-                                        (.text state (-> textContent str/trim prefix-lines) false))
-                                      (.closeBlock state node))
-                                    (original state node)))})
+                                        nodes
+                                        {:code_block
+                                         (fn [{:as state :keys [delim]}
+                                              {:as node :keys [textContent] {lang :params} :attrs}]
+                                           (if (and (str/blank? delim)
+                                                    (or (clojure-block? lang)
+                                                        (str/blank? lang)))
+                                             (do
+                                               (when-not (str/blank? textContent)
+                                                 (.text state (-> textContent str/trim prefix-lines) false))
+                                               (.closeBlock state node))
+                                             (original state node)))})
                              marks))))
 
 (defn doc->clj
@@ -78,18 +78,18 @@
   (-> md-string markdown/md->doc doc->clj))
 
 (comment
- (= (md->clj "# hello")
-    ";; # hello")
- (= (clj->md ";; # hello")
-    "# hello")
- (= (md->clj "```\n(+ 1 2)\n```")
-    "(+ 1 2)")
- (= (md->clj "Hello\n```\n(+ 1 2)\n```")
-    ";; Hello\n\n(+ 1 2)")
- (= (md->clj "- I see\n```\n1\n```")
-    ";; * I see\n\n1")
- (= (md->clj "```\na\n```\n\n```\nb\n```")
-    "a\n\nb"))
+  (= (md->clj "# hello")
+     ";; # hello")
+  (= (clj->md ";; # hello")
+     "# hello")
+  (= (md->clj "```\n(+ 1 2)\n```")
+     "(+ 1 2)")
+  (= (md->clj "Hello\n```\n(+ 1 2)\n```")
+     ";; Hello\n\n(+ 1 2)")
+  (= (md->clj "- I see\n```\n1\n```")
+     ";; * I see\n\n1")
+  (= (md->clj "```\na\n```\n\n```\nb\n```")
+     "a\n\nb"))
 
 (js
   (defn plugins []
@@ -107,18 +107,19 @@
                              make-sci-ctx]
              :or {make-sci-ctx sci/initial-context}}
             ^js element]
-  (let [state (js (.create EditorState {:doc (-> initial-value
-                                                 parse-clj/clj->md
-                                                 markdown/md->doc)
+  (let [state (js (.create EditorState {:doc     (-> initial-value
+                                                     parse-clj/clj->md
+                                                     markdown/md->doc)
                                         :plugins (plugins)}))
-        view (-> (js (EditorView. element {:state state
-                                           :nodeViews {:code_block node-view/editor}
-                                           #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
-                                           ;; no-op tx for debugging
-                                           #_#_:dispatchTransaction (fn [tx]
-                                                                      (this-as ^js view
-                                                                        (let [state (.apply (.-state view) tx)]
-                                                                          (.updateState view state))))}))
+        view (-> (js (EditorView. {:mount element}
+                                  {:state     state
+                                   :nodeViews {:code_block node-view/editor}
+                                   #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
+                                   ;; no-op tx for debugging
+                                   #_#_:dispatchTransaction (fn [tx]
+                                                              (this-as ^js view
+                                                                (let [state (.apply (.-state view) tx)]
+                                                                  (.updateState view state))))}))
                  (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
     (reset! !mounted-view view)
     (commands/prose:eval-doc! view)

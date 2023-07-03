@@ -857,6 +857,11 @@
     mkdirp "^1.0.4"
     rimraf "^3.0.2"
 
+"@nytimes/react-prosemirror@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@nytimes/react-prosemirror/-/react-prosemirror-0.2.3.tgz#a408a815dd00106b43938add2235a692ffe136c3"
+  integrity sha512-ockCx4M/4QpszDnCXEnGWWmfB8IoCzx6++QIRJxK8XnN83RQtXtbVL/2Ji6MHwD4KbW/ykG8RyXtfrLZf5hgaQ==
+
 "@opentelemetry/api@^1.0.0":
   version "1.4.1"
   resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.4.1.tgz#ff22eb2e5d476fbc2450a196e40dd243cc20c28f"

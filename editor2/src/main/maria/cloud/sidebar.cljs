@@ -66,9 +66,9 @@
              :keys [curriculum/file-name
                     curriculum/name
                     curriculum/hash
-                    title
-                    description]}]
-         (let [path (routes/path-for 'maria.cloud.views/learn
+                    curriculum/title
+                    curriculum/description]}]
+         (let [path (routes/path-for 'maria.cloud.views/curriculum
                                      {:curriculum/name name
                                       :query {:v hash}})
                current? (= path current-path)]

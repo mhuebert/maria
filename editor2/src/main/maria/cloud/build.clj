@@ -18,14 +18,14 @@
         [opts args] (if (map? (first args))
                       [(merge opts (first args)) (rest args)]
                       [opts args])
-        opts (if-let [title (or (:title opts)
+        opts (if-let [title (or (:curriculum/title opts)
                                 (->> (str/split-lines src)
                                      (drop (:end-row (meta form)))
                                      (drop-while str/blank?)
                                      first
                                      (re-find #";+\s+#+\s*(.*)")
                                      second))]
-               (assoc opts :title title)
+               (assoc opts :curriculum/title title)
                opts)]
 
     opts))
@@ -44,7 +44,7 @@
            (assoc m :curriculum/file-name file-name
                     :curriculum/name (last (str/split (str (:name m)) #"\."))
                     :curriculum/hash (assets/md5 (slurp file))))
-        (fs/list-dir (fs/file "src/main/maria/learn"))))
+        (fs/list-dir (fs/file "src/main/maria/curriculum"))))
 
 (defn index-html []
 

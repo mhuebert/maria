@@ -1,5 +1,5 @@
-(ns maria.learn.shannons-entropy
-  {:title "Shannon's Entropy"})
+(ns maria.curriculum.shannons-entropy
+  {:curriculum/title "Shannon's Entropy"})
 ;; # Shannon's entropy calculation
 
 ;; [Claude Shannon](https://en.wikipedia.org/wiki/Claude_Shannon)'s measure of entropy is essentially a measure of the unpredictability of a signal that has been converted into a stream of samples. His work was initially concerned with efficient representation of a signal over a network of switching relays, but it has turned out to be of great value in many areas of computer science. Applications include error correcting codes for noisy channels (how many extra bits does it take to tolerate a given level of noise?), data compression (what is the least number of bits that can represent a signal?), machine learning (which of the available sub-samples is the most informative?), and so on. One should also remember that a signal sent from one place to another in space has the same properties as ones stored, for example on a disk, which are in effect signals sent through time.

@@ -1,4 +1,6 @@
-(ns maria.learn.what-if
+(ns maria.curriculum.what-if
+  {:curriculum/title "What if"
+   :curriculum/description "The if statement explained."}
   (:require [shapes.core :refer :all]
             [maria.editor.code-blocks.repl :refer :all]))
 

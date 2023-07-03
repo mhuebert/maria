@@ -16,8 +16,9 @@
 
 
 (defonce !result-key (volatile! 0))
-(j/defn set-result! [^js {:keys [!result]} v]
-  (reset! !result (assoc v :key (vswap! !result-key inc))))
+(j/defn set-result! [^js {:keys [!result proseView]} v]
+  (when-not (j/get proseView :isDestroyed)
+    (reset! !result (assoc v :key (vswap! !result-key inc)))))
 
 (js
   (defn bind-prose-command [cmd]
@@ -45,11 +46,11 @@
         (u/guard #(= (count %) 1))
         first))
 
-  (defn code:split [{:keys [state]
+  (defn code:split [{:keys                      [state]
                      {:keys [getPos proseView]} :node-view}]
     (if-let [cursor-prose-pos (some-> (code:cursor state)
                                       (u/guard #(n/program? (n/tree state %)))
-                                      u/type:number ;; cljs bug doesn't like use of `guard` above
+                                      u/type:number         ;; cljs bug doesn't like use of `guard` above
                                       (+ 1 (getPos)))]
       (do
         (.dispatch proseView (.. proseView -state -tr
@@ -60,8 +61,8 @@
 
   (defn code:length [state] (.. state -doc -length))
 
-  (defn code:insert-another-code-block [{:keys [state]
-                                    {:keys [proseView getPos]} :node-view}]
+  (defn code:insert-another-code-block [{:keys                      [state]
+                                         {:keys [proseView getPos]} :node-view}]
     (let [code-length (code:length state)]
       (if (= (code:cursor state) code-length)
         (let [insert-pos (+ (getPos) code-length 1)
@@ -92,8 +93,8 @@
             at-end-of-block? (>= to (.-length doc))
             at-end-of-doc? (= (+ (getPos) (.-nodeSize proseNode))
                               (.. proseView -state -doc -content -size))]
-        (cond (not (.-empty main)) false ;; something is selected
-              (and (neg? dir) (pos? from)) false ;; moving backwards but not at beginning
+        (cond (not (.-empty main)) false                    ;; something is selected
+              (and (neg? dir) (pos? from)) false            ;; moving backwards but not at beginning
               (and (pos? dir) (not at-end-of-block?)) false ;; moving forwards, not at end
               (and (= "line" unit)
                    at-end-of-block?
@@ -116,16 +117,16 @@
   (defn prose:arrow-handler [dir]
     (fn [state dispatch view]
       (boolean
-       (when (and (.. state -selection -empty) (.endOfTextblock view dir))
-         (let [$head (.. state -selection -$head)
-               {:keys [doc]} state
-               pos (if (pos? dir)
-                     (.after $head)
-                     (.before $head))
-               next-pos (.near Selection (.resolve doc pos) dir)]
-           (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
-             (dispatch (.. state -tr (setSelection next-pos)))
-             true))))))
+        (when (and (.. state -selection -empty) (.endOfTextblock view dir))
+          (let [$head (.. state -selection -$head)
+                {:keys [doc]} state
+                pos (if (pos? dir)
+                      (.after $head)
+                      (.before $head))
+                next-pos (.near Selection (.resolve doc pos) dir)]
+            (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
+              (dispatch (.. state -tr (setSelection next-pos)))
+              true))))))
 
   (defn code:empty? [{{:keys [length text]} :doc}]
     (or (zero? length)
@@ -147,13 +148,13 @@
     true)
 
   (defn code:remove-on-backspace [{:keys [state]
-                                   this :node-view}]
+                                   this  :node-view}]
     (when (zero? (code:cursor state))
       (when (code:empty? state)
         (code:remove this))
       true))
 
-  (defn code:convert-to-paragraph [{:keys [state]
+  (defn code:convert-to-paragraph [{:keys                      [state]
                                     {:keys [proseView getPos]} :node-view}]
     (when (code:empty? state)
       (let [{{:keys [paragraph]} :nodes} schema
@@ -172,8 +173,12 @@
   )
 
 (js
-  (defn index [{:keys [proseView getPos]}]
-    (.. proseView -state -doc (resolve (getPos)) (index 0))))
+  (defn index [this]
+    (reduce (j/fn [out ^js {:keys [spec]}]
+              (if (identical? spec this)
+                (reduced out)
+                (inc out))) 0
+            (.. this -proseView -docView -children))))
 
 (j/defn code-nodes [^js {:as this :keys [proseView]}]
   (into []
@@ -188,14 +193,16 @@
 (j/defn code:ns
   "Returns the first evaluated namespace above this code block, or user"
   [^js {:as this :keys [proseView]}]
-  (or (u/akeep-first #(some-> (j/get-in % [:spec :!result])
-                              deref
-                              :value
-                              (u/guard (partial instance? sci.lang/Namespace)))
-                     (dec (index this))
-                     -1
-                     (.. proseView -docView -children))
-      (sci.ns/sci-find-ns @(j/get proseView :!sci-ctx) 'user)))
+  (let [children (.. proseView -docView -children)]
+    (or (u/akeep-first #(some-> (j/get-in % [:spec :!result])
+                                deref
+                                :value
+                                (u/guard (partial instance? sci.lang/Namespace)))
+                       (dec (index this))
+                       -1
+                       children)
+        (sci.ns/sci-find-ns @(j/get proseView :!sci-ctx) 'user))))
+
 
 (j/defn code:eval-string!
   ([node-view source] (code:eval-string! nil node-view source))
@@ -210,9 +217,9 @@
      (if (a/await? result)
        (do (set-result! node-view {:value :maria.editor.code-blocks.show-values/loading})
            (a/await
-            (-> result
-                (.then (fn [result] (set-result! node-view result)))
-                (.catch (fn [e] (set-result! node-view {:error e}))))))
+             (-> result
+                 (.then (fn [result] (set-result! node-view result)))
+                 (.catch (fn [e] (set-result! node-view {:error e}))))))
        (set-result! node-view result)))))
 
 (defn code:eval-block! [this]
@@ -229,11 +236,12 @@
         {:as ctx :keys [last-ns]} @(j/get proseView :!sci-ctx)]
     (vreset! last-ns (sci.ns/sci-find-ns ctx 'user))
     ((fn continue [i]
-       (when-let [node-view (nth node-views i nil)]
-         (let [value (code:eval-string! node-view (code:block-str node-view))]
-           (if (a/await? value)
-             (p/do value (continue (inc i)))
-             (continue (inc i)))))
+       (when-not (j/get proseView :isDestroyed)
+         (when-let [node-view (nth node-views i nil)]
+           (let [value (code:eval-string! node-view (code:block-str node-view))]
+             (if (a/await? value)
+               (p/do value (continue (inc i)))
+               (continue (inc i))))))
        nil) 0)))
 
 (j/defn prose:next-code-cell [proseView]
@@ -247,7 +255,7 @@
       (js (let [{:keys [codeView dom]} next-node]
             (.dispatch codeView
                        {:selection {:anchor 0
-                                    :head 0}})
+                                    :head   0}})
             (.focus codeView)
             (.scrollIntoView dom {:block :center})))
       true)))

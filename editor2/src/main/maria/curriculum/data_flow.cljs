@@ -1,4 +1,5 @@
-(ns maria.learn.data-flow
+(ns maria.curriculum.data-flow
+  {:curriculum/title "Data Flow"}
   (:require [cells.api :as cell :refer [defcell cell]]
             [shapes.core :refer :all]))
 

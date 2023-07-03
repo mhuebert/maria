@@ -20,7 +20,7 @@
    (impl/resolve-views
     ["/"
      {"" 'maria.cloud.pages.landing/page
-      ["curriculum/" :curriculum/name] 'maria.cloud.views/learn
+      ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
       ["gist/" :gist/id] 'maria.cloud.views/gist
 
 
@@ -58,7 +58,7 @@
      (pushy/start! history)))
 
 (comment
- (bidi/path-for @!routes 'maria.cloud.views/learn {:curriculum/name "x"})
+ (bidi/path-for @!routes 'maria.cloud.views/curriculum {:curriculum/name "x"})
  (bidi/match-route @!routes "/curriculum/x")
 
  (match-route "/curriculum/x"))

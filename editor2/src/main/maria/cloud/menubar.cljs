@@ -131,14 +131,6 @@
       [icon-btn {:on-click #(swap! ui/!state update :sidebar/visible? not)}
        [icons/bars3 "w-4 h-4"]])
     [:el Root {:class "flex flex-row w-full items-center"}
-     (when-some [{:as user :keys [photo-url display-name]} @gh/!user]
-       (when user
-         [:el Menu
-          [:el Trigger {:class "cursor-pointer px-2"}
-           [avatar photo-url display-name]]
-          [:el Portal
-           [:el Content {:class "MenubarContent mt-[4px]"}
-            [item {:on-click #(gh/sign-out)} "Sign Out"]]]]))
      [menu "File"
       [item "New" [shortcut "⌘N"]]
       [item "Duplicate"]
@@ -154,7 +146,13 @@
      [:div.flex-grow]
      [:div#menubar-title]
      [:div.flex-grow]
-     (when-not @gh/!user
+     (if-some [{:as user :keys [photo-url display-name]} @gh/!user]
+       [:el Menu
+        [:el Trigger {:class "cursor-pointer px-2"}
+         [avatar photo-url display-name]]
+        [:el Portal
+         [:el Content {:class "MenubarContent mt-[4px]"}
+          [item {:on-click #(gh/sign-out)} "Sign Out"]]]]
        [button-small-med
         {:on-click #(gh/sign-in-with-popup!)}
         "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]])]]])

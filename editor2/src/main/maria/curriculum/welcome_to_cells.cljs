@@ -1,6 +1,6 @@
-(ns maria.learn.welcome-to-cells
-  {:title "Cells Quickstart"
-   :description "Learn how to make things come alive and change over time."}
+(ns maria.curriculum.welcome-to-cells
+  {:curriculum/title "Cells Quickstart"
+   :curriculum/description "Learn how to make things come alive and change over time."}
   (:require [cells.api :refer :all]
             [shapes.core :refer :all]))
 

@@ -9,6 +9,7 @@
             [shapes.core :as shapes]
             [yawn.hooks :as h]
             [yawn.view :as v]
+            [maria.editor.icons :as icons]
             [cljs.tools.reader.edn :as edn]
             [maria.editor.code-blocks.commands :as commands]))
 
@@ -51,18 +52,22 @@
     [:path {:d "M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"}]
     [:path {:fillRule "evenodd" :d "M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" :clipRule "evenodd"}]]))
 
-(v/defview code-row [^js {:as this :keys [!result mounted! id initialNs]}]
+(v/defview code-row [^js {:as this :keys [!result mounted! id]}]
   (let [ref (h/use-callback (fn [el] (when el (mounted! el))))
-        !minimize? (h/use-state initialNs)]
-    (if @!minimize?
-      [:div.text-sm.text-zinc-400.font-mono.hover:underline.cursor-pointer
-       {:class "md:ml-[50%]"
-        :on-click #(reset! !minimize? false)}
-       "show ns" #_(str "ns: " (second (edn/read-string (commands/code:block-str this))))]
-      [:div.my-4.md:flex.w-full
-       {:ref ref :id id}
-       [:div {:class "md:w-1/2 text-base"
-              :style {:color "#c9c9c9"}}]
-       [:div
-        {:class "md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
-        [value-viewer this]]])))
+        !code-collapsed? (h/use-state (:curriculum/title (meta (:value @!result))))
+        toggle (v/x [:div.top-0.right-0.text-zinc-400.hover:text-zinc-700.inline-flex.cursor-pointer.absolute.z-10
+                     {:on-click #(swap! !code-collapsed? not)}
+                     (if @!code-collapsed?
+                       (icons/code-bracket:mini "w-6 h-6 bg-white rounded p-1")
+                       (icons/minus-small:mini "w-5 h-5 opacity-0 hover:opacity-100 transition-opacity"))])]
+    [:div.my-4.md:flex.w-full
+     [:div {:class "w-full md:w-1/2 relative text-base"}
+      (when-not @!code-collapsed?
+        [:div {:class "w-full text-base relative"
+               :style {:color "#c9c9c9"}
+               :ref   ref
+               :id    id}])
+      toggle]
+     [:div
+      {:class "md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
+      [value-viewer this]]]))
