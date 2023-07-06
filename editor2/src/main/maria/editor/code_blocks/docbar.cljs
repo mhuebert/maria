@@ -53,8 +53,7 @@
                                (assert !sci-ctx "eldoc extension requires sci context")
                                (reset! !state
                                        (when sym
-                                         (try (repl/doc-map @!sci-ctx ns sym)
-                                              (catch js/Error e nil)))))))}))]))
+                                         (repl/doc-map @!sci-ctx ns sym))))))}))]))
 
 (ui/defview view []
   (let [{:sidebar/keys [visible? width transition]} @ui/!state]

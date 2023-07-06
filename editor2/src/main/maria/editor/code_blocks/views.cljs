@@ -55,12 +55,12 @@
 (v/defview code-row [^js {:as this :keys [!result mounted! id]}]
   (let [ref (h/use-callback (fn [el] (when el (mounted! el))))
         !code-collapsed? (h/use-state (:curriculum/title (meta (:value @!result))))
-        toggle (v/x [:div.top-0.right-0.text-zinc-400.hover:text-zinc-700.inline-flex.cursor-pointer.absolute.z-10
+        toggle (v/x [:div.top-0.right-0.text-zinc-400.hover:text-zinc-700.inline-flex.cursor-pointer.absolute.z-10.p-1
                      {:on-click #(swap! !code-collapsed? not)}
                      (if @!code-collapsed?
-                       (icons/code-bracket:mini "w-6 h-6 bg-white rounded p-1")
+                       [:div.rounded-full.p-1.bg-white.w-6.h-6.inline-flex.items-center.justify-center (icons/code-bracket:mini "w-4 h-4")]
                        (icons/minus-small:mini "w-5 h-5 opacity-0 hover:opacity-100 transition-opacity"))])]
-    [:div.my-4.md:flex.w-full
+    [:<>
      [:div {:class "w-full md:w-1/2 relative text-base"}
       (when-not @!code-collapsed?
         [:div {:class "w-full text-base relative"
@@ -69,5 +69,5 @@
                :id    id}])
       toggle]
      [:div
-      {:class "md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
+      {:class "w-full md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
       [value-viewer this]]]))

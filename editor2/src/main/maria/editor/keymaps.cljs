@@ -8,7 +8,10 @@
             ["prosemirror-history" :as pm.history]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
+            [clerkify.maria :as clerkify]
             [maria.editor.code-blocks.commands :as commands]
+            [maria.ui :as ui]
+            [maria.editor.doc :as editor.doc]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :refer [schema]]
             [nextjournal.clojure-mode :as clj-mode]
@@ -20,7 +23,6 @@
 (def default-keys (pm.keymap/keymap baseKeymap))
 
 (def chain pm.cmd/chainCommands)
-
 
 (def commands:prose
   ;; prose commands + metadata accessible to command-palette
@@ -125,6 +127,12 @@
                              :f        (fn [state dispatch view]
                                          (commands/prose:eval-doc! view)
                                          true)}
+     :clerkify              {:doc  "Save as Clerk project"
+                             :kind :prose
+                             :f    (fn [state dispatch view]
+                                     (clerkify/download-clerkified-zip
+                                       (-> (j/get-in view [:state :doc])
+                                           editor.doc/doc->clj)))}
      #_#_:Shift-Tab (fn [_ _ proseView] (commands/prose:next-code-cell proseView))
      :prose/backspace       {:bindings [:Backspace]
                              :hidden?  true
@@ -200,72 +208,72 @@
   ;; code commands + metadata accessible to command-palette
   {:eval/block              {:bindings [:Shift-Enter]
                              ;; TODO :f
-                             :when     :code}
+                             :kind     :code}
    :eval/region             {:bindings [:Mod-Enter]
                              ;; TODO :f
-                             :when     :code}
-   :navigate/next-code-cell {:bindings [:Shift-Tab]
-                             :when     :code
-                             ;; TODO fix :f, its quoted and references `this`
-                             :f        '#(commands/prose:next-code-cell (j/get this :proseView))}
+                             :kind     :code}
+   :navigate/prev-code-cell {:bindings [:Shift-Tab]
+                             :kind     :code
+                             :f        (fn [codeView]
+                                         (commands/prose:prev-code-cell (j/get-in codeView [:node-view :proseView])))}
    :code/format             {:bindings [:Alt-Tab]
                              :doc      "Indent document (or selection)"
-                             :when     :code
+                             :kind     :code
                              :f        (:indent paredit-index)}
    :code/unwrap             {:bindings [:Alt-s]
                              :doc      "Lift contents of collection into parent"
-                             :when     :code
+                             :kind     :code
                              :f        (:unwrap paredit-index)}
    :code/slurp              {:bindings [:Ctrl-ArrowRight
                                         :Mod-Shift-ArrowRight
                                         :Mod-Shift-k]
                              :doc      "Expand collection to include form to the right"
-                             :when     :code
+                             :kind     :code
                              :f        (:slurp-forward paredit-index)}
    :code/barf-last          {:bindings [:Ctrl-ArrowLeft
                                         :Mod-Shift-ArrowLeft]
                              :doc      "Push last element of collection out to the right"
-                             :when     :code
+                             :kind     :code
                              :f        (:barf-forward paredit-index)}
    :code/slurp-backward     {:bindings [:Shift-Ctrl-ArrowLeft]
                              :doc      "Expand collection to include form to the right"
-                             :when     :code
+                             :kind     :code
                              :f        (:slurp-backward paredit-index)}
    :code/barf-first         {:bindings [:Shift-Ctrl-ArrowRight]
                              :doc      "Push first element of collection out to the left"
-                             :when     :code
+                             :kind     :code
                              :f        (:barf-backward paredit-index)}
    :kill                    {:bindings [:Ctrl-K]
                              :doc      "Remove all forms from cursor to end of line"
-                             :when     :code
+                             :kind     :code
                              :f        (:kill paredit-index)}
    :navigate/hop-right      {:bindings [:Alt-ArrowRight]
                              :doc      "Move cursor one form to the right"
-                             :when     :code
+                             :kind     :code
                              :f        (:nav-right paredit-index)}
    :navigate/hop-left       {:bindings [:Alt-ArrowLeft]
                              :doc      "Move cursor one form to the left"
-                             :when     :code
+                             :kind     :code
                              :f        (:nav-left paredit-index)}
    :select/hop-right        {:bindings [:Shift-Alt-ArrowRight]
                              :doc      "Expand selection one form to the left"
-                             :when     :code
+                             :kind     :code
                              :f        (:nav-select-right paredit-index)}
    :select/hop-left         {:bindings [:Shift-Alt-ArrowLeft]
                              :doc      "Expand selection one form to the right"
-                             :when     :code
+                             :kind     :code
                              :f        (:nav-select-left paredit-index)}
    :select/grow             {:bindings [:Mod-1
                                         :Alt-ArrowUp
                                         :Mod-ArrowUp]
                              :doc      "Grow selection"
-                             :when     :code
+                             :kind     :code
                              :f        (:selection-grow paredit-index)}
    :select/shrink           {:bindings [:Mod-2
                                         :Alt-ArrowDown
                                         :Mod-ArrowDown]
                              :doc      "Shrink selection"
-                             :when     :code
+                             :kind     :code
                              :f        (:selection-return paredit-index)}
    :code/arrow-up           {:bindings [:ArrowUp]
                              :kind     :code
@@ -314,7 +322,6 @@
                              :doc      "Copy code"
                              :f        commands/code:copy-current-region}})
 
-
 (def code-keymap
   (.of cm.view/keymap
        (-> (let [out #js []]
@@ -325,4 +332,21 @@
              out)
            (.concat clj-mode/builtin-keymap))))
 
+(def commands:global
+  {:toggle-sidebar     {:bindings [:Shift-Mod-k]
+                        :kind     :global
+                        :f        (fn [_]
+                                    (swap! ui/!state update :sidebar/visible? not))}
+   :toggle-command-bar {:bindings [:Mod-k]
+                        :kind     :global
+                        :f        (fn [_]
+                                    (prn :ho "toggle command bar")
+                                    (when-let [el (:command-bar/element @ui/!state)]
+                                      (if (identical? el (.-activeElement js/document))
+                                        (.blur el)
+                                        (.focus el))))}})
 
+(def commands:all
+  (merge commands:prose
+         commands:code
+         commands:global))

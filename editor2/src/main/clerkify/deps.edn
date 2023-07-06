@@ -1,0 +1,7 @@
+;; deps.edn for Clerkified Maria doc
+{:paths ["dev" ;; <-- automatically loads user.clj on start-up, launching Clerk
+         "src"]
+ :deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        io.github.nextjournal/clerk {:mvn/version "0.13.842"}
+        io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
+        io.github.applied-science/clerk-helpers {:git/sha "3e42e4d73cc557170c8dbf3f4e5a39cec644a2e2"}}}

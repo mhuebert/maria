@@ -1,6 +1,5 @@
 (ns maria.ui
-  (:require #?(:cljs ["prosemirror-keymap" :refer [keydownHandler]])
-            [clojure.pprint]
+  (:require [clojure.pprint]
             [yawn.view :as v]
             [re-db.fast :as fast]
             [re-db.hooks :as hooks]
@@ -28,16 +27,6 @@
 
 (memo/defn-memo $gets [ref & ks]
   (r/reaction (apply fast/gets (hooks/use-deref ref) ks)))
-
-#?(:cljs
-   (defn use-global-keymap [bindings]
-     (hooks/use-effect
-      (fn []
-        (let [on-keydown (let [handler (keydownHandler (clj->js bindings))]
-                           (fn [event]
-                             (handler #js{} event)))]
-          (.addEventListener js/window "keydown" on-keydown)
-          #(.removeEventListener js/window "keydown" on-keydown))))))
 
 (defmacro pprinted [x]
   `(with-out-str (~(if (:ns &env) 'cljs.pprint/pprint 'clojure.pprint/pprint) ~x)))

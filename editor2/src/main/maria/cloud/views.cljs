@@ -17,7 +17,7 @@
        (when-let [element @!element-ref]
          (prose/init options element)))
      [@!element-ref (:initial-value options)])
-    [:div.relative.notebook.m-4 {:ref !element-ref}]))
+    [:div.relative.notebook.my-4 {:ref !element-ref}]))
 
 (defn doc-title [title]
   (menubar/title!

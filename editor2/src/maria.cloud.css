@@ -41,8 +41,8 @@
 }
 
 
-.ProseMirror > *:not(div) {
-    @apply md:w-1/2 leading-relaxed;
+.ProseMirror > *:not(.node-view) {
+    @apply md:w-1/2 leading-relaxed pl-4;
 
 }
 
@@ -168,7 +168,6 @@ button {
     background-color: white;
     padding: 3px;
     border-radius: 6px;
-    box-shadow: 0 2px 10px var(--blackA7);
 }
 
 .MenubarTrigger {
@@ -194,11 +193,8 @@ button {
 
 .MenubarContent,
 .MenubarSubContent {
+    @apply shadow rounded bg-white z-20 p-[2px];
     min-width: 220px;
-    background-color: white;
-    border-radius: 4px;
-    padding: 5px;
-    box-shadow: 0px 5px 10px -5px rgba(22, 23, 24, 0.35), 0px 10px 20px -15px rgba(22, 23, 24, 0.2);
     animation-duration: 400ms;
     animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, opacity;
@@ -216,7 +212,6 @@ button {
     display: flex;
     align-items: center;
     height: 25px;
-    padding: 0 10px;
     position: relative;
     user-select: none;
 }

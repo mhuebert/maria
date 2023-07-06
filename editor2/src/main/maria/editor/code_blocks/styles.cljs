@@ -48,12 +48,13 @@
        (.define highlight/HighlightStyle)))
 
 (def code-theme
-  (j/lit {".cm-content" {:padding "1rem 1rem 1rem 0"
+  (j/lit {".cm-content" {:padding "1rem 0"
                          :background-color "white"
                          :margin-left 0
                          :border-radius "4px"
                          :white-space "pre-wrap"
                          :max-width "100%"}
+          ".cm-line" {:padding "0 1rem"}
           ".cm-scroller" {:overflow-x "hidden"}
           ".cm-matchingBracket" {:color "black"}
           "&.cm-editor, &.cm-editor.cm-focused" {:outline "1px solid transparent"}}))

@@ -163,7 +163,8 @@
 
 (js
   (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
-    (let [el (js/document.createElement "div")
+    (let [el (doto (js/document.createElement "div")
+               (.. -classList (add "my-4" "md:flex" "node-view")))
           this (j/obj :id (str (gensym "code-view-")))
           root (root/create el (views/code-row this))]
       (j/extend! this

@@ -21,9 +21,6 @@
     (reset! !result (assoc v :key (vswap! !result-key inc)))))
 
 (js
-  (defn bind-prose-command [cmd]
-    (fn [{{{:keys [state dispatch]} :proseView} :node-view}]
-      (cmd state dispatch)))
 
   (defn prose:cursor-node [state]
     (let [sel (.-selection state)]
@@ -36,11 +33,13 @@
                  (= 0 (.-size (.-content node))))
         ((pm.cmd/setBlockType code_block) state dispatch)
         true)))
+
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
               (if (not= from to)
                 (reduced nil)
                 (j/push! out from))) [] ranges))
+
   (defn code:cursor [state]
     (-> (code:cursors state)
         (u/guard #(= (count %) 1))
@@ -252,6 +251,22 @@
                               (drop (inc index))
                               (keep (j/get :spec))
                               first)]
+      (js (let [{:keys [codeView dom]} next-node]
+            (.dispatch codeView
+                       {:selection {:anchor 0
+                                    :head   0}})
+            (.focus codeView)
+            (.scrollIntoView dom {:block :center})))
+      true)))
+
+(j/defn prose:prev-code-cell [proseView]
+  (when-let [index (.. proseView -state -selection -$anchor (index 0))]
+    (when-let [next-node (->> proseView
+                              .-docView
+                              .-children
+                              (take index)
+                              (keep (j/get :spec))
+                              last)]
       (js (let [{:keys [codeView dom]} next-node]
             (.dispatch codeView
                        {:selection {:anchor 0
