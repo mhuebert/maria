@@ -243,38 +243,6 @@
                (continue (inc i))))))
        nil) 0)))
 
-(j/defn prose:next-code-cell [proseView]
-  (when-let [index (.. proseView -state -selection -$anchor (index 0))]
-    (when-let [next-node (->> proseView
-                              .-docView
-                              .-children
-                              (drop (inc index))
-                              (keep (j/get :spec))
-                              first)]
-      (js (let [{:keys [codeView dom]} next-node]
-            (.dispatch codeView
-                       {:selection {:anchor 0
-                                    :head   0}})
-            (.focus codeView)
-            (.scrollIntoView dom {:block :center})))
-      true)))
-
-(j/defn prose:prev-code-cell [proseView]
-  (when-let [index (.. proseView -state -selection -$anchor (index 0))]
-    (when-let [next-node (->> proseView
-                              .-docView
-                              .-children
-                              (take index)
-                              (keep (j/get :spec))
-                              last)]
-      (js (let [{:keys [codeView dom]} next-node]
-            (.dispatch codeView
-                       {:selection {:anchor 0
-                                    :head   0}})
-            (.focus codeView)
-            (.scrollIntoView dom {:block :center})))
-      true)))
-
 (js
 
   #_(defn code:eval-current-region [{:as this {:keys [state]} :codeView}]

@@ -3,6 +3,7 @@
             ["cmdk" :refer [useCommandState]]
             ["prosemirror-keymap" :refer [keydownHandler]]
             ["@radix-ui/react-popover" :as Popover]
+            [clojure.string :as str]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.core :as editor.core]
             [maria.editor.code-blocks.commands :as commands]
@@ -22,38 +23,57 @@
 
 (defn get-context []
   (when-let [^js proseView @editor.core/!mounted-view]
-    (or (let [^js node (commands/prose:cursor-node (.-state proseView))]
-          (when (= (.-type node) (.. schema -nodes -code_block))
-            (-> proseView
-                (j/get-in [:docView :children])
-                (u/find-first #(identical? node (j/get % :node)))
-                (j/get-in [:spec :codeView :node-view]))))
-        #js{:proseView proseView})))
+    (let [code-context (let [^js node (commands/prose:cursor-node (.-state proseView))]
+                         (when (= (.-type node) (.. schema -nodes -code_block))
+                           (let [codeView (-> proseView
+                                              (j/get-in [:docView :children])
+                                              (u/find-first #(identical? node (j/get % :node)))
+                                              (j/get-in [:spec :codeView]))]
+                             {:node-view (j/get codeView :node-view)
+                              :codeView  codeView})))]
 
-(def command-list (reduce-kv (fn [out id cmd]
-                               (if (:hidden? cmd)
-                                 out
-                                 (conj out (assoc cmd :id id))))
-                             []
-                             keymaps/commands:all))
+      (merge {:proseView proseView}
+             code-context
+             (if code-context
+               {:focused/code true}
+               {:focused/prose true})))))
 
-(defn resolve-command [cmd]
-  (if (keyword? cmd)
-    (keymaps/commands:all cmd)
-    cmd))
+(def command-list (remove :hidden? (vals @keymaps/!commands)))
+
+(defn active? [context cmd]
+  (let [{:as ctx :keys [proseView codeView]} context
+        {:keys [kind] pred :when
+         :or   {pred (constantly true)}} cmd]
+    (boolean
+      (case kind :prose (and proseView (pred ctx))
+                 :code (and codeView (pred ctx))
+                 (pred ctx)))))
+
+(defn resolve-command
+  ([cmd] (resolve-command (get-context) cmd))
+  ([context cmd]
+   (let [cmd (if (keyword? cmd)
+               (@keymaps/!commands cmd)
+               cmd)
+         cmd (assoc cmd :active? (active? context cmd))
+         cmd (if-let [prepare (:prepare cmd)]
+               (prepare cmd context)
+               cmd)]
+     cmd)))
 
 (defn run-command
   ([cmd] (run-command (get-context) cmd))
   ([context cmd]
-   (j/let [{:keys [f kind]} (resolve-command cmd)
-           ^js {:as context :keys [proseView codeView]} context]
-     (case kind
-       :prose (when proseView
-                (j/let [^js {:as view :keys [state dispatch]} proseView]
-                  (f state dispatch view)))
-       :code (when codeView
-               (f codeView))
-       (f context)))))
+   (let [{:keys [proseView codeView]} context
+         {:keys [f kind active?]} (resolve-command context cmd)]
+     (when active?
+       (case kind
+         :prose (when proseView
+                  (j/let [^js {:as view :keys [state dispatch]} proseView]
+                    (f state dispatch view)))
+         :code (when codeView
+                 (f codeView))
+         (f context))))))
 
 (defn use-global-keymap []
   (h/use-effect
@@ -71,24 +91,33 @@
         #(.removeEventListener js/window "keydown" on-keydown)))))
 
 (defn current-commands []
-  (j/let [^js {:as ctx :keys [proseView codeView]} (get-context)]
-    (into []
-          (remove (fn [{:keys [kind when]}]
-                    (or (and (nil? proseView) (= kind :prose))
-                        (and (nil? codeView) (= kind :code))
-                        (and when (not (when ctx))))))
-          command-list)))
+  (into []
+        (comp (map (partial resolve-command (get-context)))
+              (filter :active?))
+        command-list))
+
 (comment
   command-list
   (time (count (current-commands))))
 
-(defn menu-item [label]
-  (v/x [:el.px-2.py-1 Command/Item {:class "data-[selected]:bg-sky-100"} label]))
+(v/defview command-item [{:as cmd :keys [ns title bindings]}]
+  (let [value (str ns " " title)]
+    (v/x [:el.px-2.py-1.rounded.mx-1.flex Command/Item
+          {:key      value
+           :value    value
+           :onSelect (fn [_]
+                       (run-command cmd)
+                       (keymaps/hide-command-bar!))
+           :class    "data-[selected]:bg-sky-500 data-[selected]:text-white"}
+          [:div.w-20.truncate.text-menu-muted.pr-2 (when (and ns (not= \_ (first ns))) ns)]
+          title
+          [:div.ml-auto.pl-3.text-menu-muted (some-> (first bindings) keymaps/show-binding)]])))
+
 
 (v/defview input []
   (let [!search (h/use-state "")
         !open (h/use-state false)
-        close! (fn [& _] (prn :close) (.blur (:command-bar/element @ui/!state)))
+        close! (fn [& _] (keymaps/hide-command-bar!))
         keydown-handler (h/use-memo #(partial (keydownHandler
                                                 #js {:Escape close!
                                                      :Mod-.  close!}) #js{}))]
@@ -96,20 +125,27 @@
      [:el.relative Command {:label "Command Menu"}
       [:el Popover/Anchor {:asChild true}
        [:el.rounded.border-slate-300.h-6.px-2.py-0.text-sm Command/Input
-        {:value @!search
-         :on-key-down keydown-handler
-         :on-focus #(reset! !open true)
-         :on-blur #(reset! !open false)
+        {:value         @!search
+         :on-mouse-down #(reset! keymaps/!prev-selected-element (.-activeElement js/document))
+         :on-key-down   keydown-handler
+         :on-focus      #(reset! !open true)
+         :on-blur       #(do (reset! !open false)
+                             (reset! !search "")
+                             (keymaps/hide-command-bar!))
          :onValueChange #(reset! !search %)
-         :ref #(swap! ui/!state assoc :command-bar/element %)}]]
-      [:el.bg-white.rounded.shadow.w-full Popover/Content
+         :ref           #(swap! ui/!state assoc :command-bar/element %)}]]
+      [:el.bg-white.rounded.shadow.w-full.overflow-y-scroll Popover/Content
        {:sideOffset 10
-        :align "end"
+        :align      "end"
         :class      ["min-w-[200px]"
-                     (when-not @!open "hidden")]}
-       [:el Command/List
-        {:style {:height "var(--cmdk-list-height)"}}
-        [:el.px-2.py-1 Command/Empty "Nothing found"]
-        [menu-item "Apple"]
-        [menu-item "Banana"]
-        [menu-item "Carrot"]]]]]))
+                     (when-not @!open "hidden")]
+        :style      {:min-width  "var(--radix-popover-trigger-width)"
+                     :max-height "calc(var(--radix-popover-content-available-height) - 1rem)"}}
+       (when @!open
+         [:el.py-1 Command/List
+          {:style {:max-height "300px"}}
+          [:el.px-2.py-1 Command/Empty "Nothing found"]
+          (map command-item (current-commands))])]]]))
+
+;; TODO
+;; try uFuzzy or similar

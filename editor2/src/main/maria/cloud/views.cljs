@@ -31,7 +31,9 @@
         url (str "/curriculum/" file-name "?v=" hash)
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
-      [:<>
+      [:<> {}
+       ;; todo, fix yawn to not treat a portal as props
+       ;; (the :<> fragment here is giving an error w/o this empty map)
        (doc-title (str "curriculum / " name))
        [editor {:initial-value text
                 :id url}]])))

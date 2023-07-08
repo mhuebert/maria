@@ -33,9 +33,11 @@
 .ProseMirror ul, .ProseMirror ol, .ProseMirror p, .ProseMirror blockquote .ProseMirror pre {
     @apply mt-4;
 }
+
 .ProseMirror ul, .ProseMirror ol {
     @apply ml-5;
 }
+
 .ProseMirror li {
     @apply list-disc;
 }
@@ -260,15 +262,6 @@ button {
     margin: 5px;
 }
 
-.RightSlot {
-    margin-left: auto;
-    padding-left: 20px;
-}
-
-[data-highlighted] > .RightSlot {
-    color: white;
-}
-
 /* radix-ui accordion */
 .AccordionChevron {
     transition: transform 300ms;
@@ -276,4 +269,15 @@ button {
 
 .AccordionTrigger[data-state='open'] > .AccordionChevron {
     transform: rotate(90deg);
+}
+
+.bg-selection {
+    @apply bg-black/10 py-[0.3rem];
+}
+
+.text-menu-muted {
+    @apply text-black/40
+}
+*[data-highlighted] .text-menu-muted, .text-menu-muted[data-highlighted], *[data-selected] .text-menu-muted, .text-menu-muted[data-selected] {
+    color: inherit;
 }

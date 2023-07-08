@@ -1,6 +1,6 @@
 (ns maria.editor.core
-  (:require ["prosemirror-view" :refer [EditorView]]
-            ["prosemirror-state" :refer [EditorState]]
+  (:require ["prosemirror-view" :refer [EditorView Decoration DecorationSet]]
+            ["prosemirror-state" :refer [EditorState Plugin PluginKey]]
             ["prosemirror-history" :refer [history]]
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
@@ -18,6 +18,37 @@
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]))
 
+(defonce focused-state-key (new PluginKey "focused-state"))
+
+(defn focused-state-plugin []
+  (js
+    (new Plugin {:key   focused-state-key
+                 :state {:init  (fn [] false)
+                         :apply (fn [transaction prev-focus]
+                                  (if-some ^:clj [new-focus (.getMeta transaction focused-state-key)]
+                                    new-focus
+                                    prev-focus))}
+                 :props {:handleDOMEvents
+                         {:blur
+                          (fn [view]
+                            (.dispatch view (.. view -state -tr (setMeta focused-state-key false)))
+                            false)
+                          :focus
+                          (fn [view]
+                            (.dispatch view (.. view -state -tr (setMeta focused-state-key true)))
+                            false)}}})))
+
+
+(defn selection-decoration []
+  (new Plugin (js
+                {:props
+                 {:decorations
+                  (fn [{:as state :keys [doc] {:keys [from to]} :selection}]
+                    (if (.getState focused-state-key state)
+                      (.-empty DecorationSet)
+                      (.create DecorationSet doc
+                               [(.inline Decoration from to {:class "bg-selection"})])))}})))
+
 (js
   (defn plugins []
     [keymaps/prose-keymap
@@ -26,7 +57,9 @@
      (dropCursor)
      (gapCursor)
      (history)
-     ~@(links/plugins)]))
+     ~@(links/plugins)
+     (focused-state-plugin)
+     (selection-decoration)]))
 
 (defonce !mounted-view (atom nil))
 

@@ -209,7 +209,7 @@
 
                                                     (.. EditorState -allowMultipleSelections (of true))
 
-                                                    (cm.view/drawSelection)
+                                                    #_(cm.view/drawSelection)
 
                                                     (.. EditorView
                                                         -updateListener
@@ -231,16 +231,11 @@
 
          ;; NodeView API
          :dom el
-         :update (fn [node]
-                   #_(j/log :prose:update)
-                   (prose:forward-update this node))
-         :selectNode (fn [this]
-                       (j/log :selectNode this)
-                       (prose:select-node this))
+         :update (partial prose:forward-update this)
+         :selectNode prose:select-node
          :deselectNode (fn []
                          #_(j/log :deselectNode this))
-         :setSelection (fn [anchor head]
-                         (prose:set-selection this anchor head))
+         :setSelection (partial prose:set-selection this)
          :stopEvent (fn [e]
                       ;; keyboard events that are handled by a keymap are already stopped;
                       ;; not sure what events should be stopped here.

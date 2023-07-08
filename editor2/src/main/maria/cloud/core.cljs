@@ -1,6 +1,7 @@
 (ns maria.cloud.core
   (:require [applied-science.js-interop :as j]
             [clojure.edn :as edn]
+            [maria.cloud.persistence]
             [maria.cloud.menubar :as menu]
             [maria.cloud.routes :as routes]
             [maria.cloud.sidebar :as sidebar]

@@ -9,7 +9,8 @@
             [maria.cloud.local :as local]
             [maria.editor.util :as u]
             [promesa.core :as p]
-            [re-db.reactive :as r]))
+            [re-db.reactive :as r]
+            [maria.editor.keymaps :as keymaps]))
 
 ;; TODO ...
 ;; wait to load gist page until we have an auth result (in/out)
@@ -84,3 +85,8 @@
            :clojure-files files
            :html_url html_url
            :updated_at updated_at}))
+
+(keymaps/register-commands! {:account/sign-in {:f (fn [_] (sign-in-with-popup!))
+                                               :when (fn [_] (not @!user))}
+                             :account/sign-out {:f    (fn [_] (sign-out))
+                                                :when (fn [_] (boolean @!user))}})
