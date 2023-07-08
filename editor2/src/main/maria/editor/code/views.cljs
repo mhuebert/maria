@@ -52,9 +52,9 @@
      [:path {:d "M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"}]
      [:path {:fillRule "evenodd" :d "M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" :clipRule "evenodd"}]]))
 
-(v/defview code-row [^js {:as this :keys [!result mounted! id]}]
+(v/defview code-row [^js {:as this :keys [!result !ui-state mounted! id]}]
   (let [ref (h/use-callback (fn [el] (when el (mounted! el))))
-        !code-collapsed? (h/use-state (:curriculum/title (meta (:value @!result))))
+        hide-source? (:hide-source? (h/use-deref !ui-state) (:curriculum/title (meta (:value @!result))))
         classes (v/classes ["absolute top-0 right-1 z-10"
                             "w-6 h-6"
                             "inline-flex items-center justify-center"
@@ -62,20 +62,20 @@
                             "cursor-pointer"
                             "rounded-full bg-white"
                             "focus:ring"])
-        toggle (if @!code-collapsed?
+        toggle (if hide-source?
                  (v/x
                    [:button
-                    {:on-click #(swap! !code-collapsed? not)
+                    {:on-click #(swap! !ui-state assoc :hide-source? false)
                      :class    [classes "shadow"]}
                     (icons/code-bracket:mini "w-4 h-4")])
                  (v/x
                    [:div
-                    {:on-click #(swap! !code-collapsed? not)
+                    {:on-click #(swap! !ui-state assoc :hide-source? true)
                      :class    [classes "opacity-0 focus:opacity-100 hover:opacity-100 transition-opacity"]}
                     (icons/minus-small:mini "w-5 h-5")]))]
     [:<>
      [:div {:class "w-full md:w-1/2 relative text-base"}
-      (when-not @!code-collapsed?
+      (when-not hide-source?
         [:div {:class "w-full text-base relative"
                :style {:color "#c9c9c9"}
                :ref   ref

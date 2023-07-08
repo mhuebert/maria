@@ -29,7 +29,7 @@
                                               (u/find-first #(identical? node (j/get % :node)))
                                               (j/get-in [:spec :CodeView]))]
                              {:NodeView (j/get CodeView :NodeView)
-                              :CodeView  CodeView})))]
+                              :CodeView CodeView})))]
 
       (merge {:ProseView ProseView}
              code-context
@@ -130,6 +130,7 @@
       [:el Popover/Anchor {:asChild true}
        [:el.rounded.border-slate-300.h-6.px-2.py-0.text-sm Command/Input
         {:value         @!search
+         :placeholder   "Commands..."
          :on-mouse-down #(reset! keymaps/!prev-selected-element (.-activeElement js/document))
          :on-key-down   keydown-handler
          :on-focus      #(reset! !open true)

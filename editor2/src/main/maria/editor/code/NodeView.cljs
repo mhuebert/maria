@@ -63,7 +63,7 @@
         (let [start-pos (inc (getPos))
               {from' :from to' :to} (.. code-update -state -selection -main)
               {code-changed? :docChanged
-               code-changes :changes} code-update
+               code-changes  :changes} code-update
               {:keys [tr doc]} prose-state]
           (when (or code-changed? (not (.eq (.. prose-state -selection)
                                             (.create TextSelection
@@ -109,7 +109,7 @@
     [{:as this :keys [CodeView dom]} anchor head]
     (controlled-update this
                        #(do (.dispatch CodeView {:selection {:anchor anchor
-                                                             :head head}})
+                                                             :head   head}})
                             (when-not (.contains dom (.. js/document (getSelection) -focusNode))
                               (focus! this))))))
 (js
@@ -130,25 +130,25 @@
                      (.charCodeAt new-text (dec new-end))))
           (recur (dec old-end)
                  (dec new-end))
-          {:from start
-           :to old-end
+          {:from   start
+           :to     old-end
            :insert (.slice new-text start new-end)})))))
 
 (js
-  (defn prose:forward-update [{:as this :keys [CodeView]
+  (defn prose:forward-update [{:as       this :keys [CodeView]
                                prev-node :proseNode} new-node]
     (boolean
-     (when (= (.-type prev-node)
-              (.-type new-node))
-       (j/!set this :proseNode new-node)
-       (let [new-text (.-textContent new-node)
-             old-text (code-text CodeView)]
-         (when (not= new-text old-text)
-           (controlled-update this
-                              (fn []
-                                (.dispatch CodeView {:changes (text-diff old-text new-text)
-                                                     :annotations [(u/user-event-annotation "noformat")]})))))
-       true))))
+      (when (= (.-type prev-node)
+               (.-type new-node))
+        (j/!set this :proseNode new-node)
+        (let [new-text (.-textContent new-node)
+              old-text (code-text CodeView)]
+          (when (not= new-text old-text)
+            (controlled-update this
+                               (fn []
+                                 (.dispatch CodeView {:changes     (text-diff old-text new-text)
+                                                      :annotations [(u/user-event-annotation "noformat")]})))))
+        true))))
 
 (defn prose:select-node [^js this]
   (.. this -CodeView focus))
@@ -168,81 +168,82 @@
           this (j/obj :id (str (gensym "code-view-")))
           root (root/create el (views/code-row this))]
       (j/extend! this
-        {:initialNs (str/starts-with? textContent "(ns ")
-         :getPos getPos
-         :ProseView ProseView
-         :proseNode proseNode
-         :mounted! (fn [el]
-                     (.appendChild el (.. this -CodeView -dom))
-                     (doto (.. this -CodeView -dom -classList)
-                       (.add "rounded-r")
-                       (.add "overflow-hidden"))
-                     (set-initial-focus! this)
-                     (when-not (j/get this :mounted?)
-                       (j/!set this :mounted? true)
-                       ^:clj (doseq [f (j/get this :on-mounts)] (f))
-                       (j/delete! this :on-mounts)))
-         :CodeView (-> (new EditorView
-                            {:state
-                             (.create EditorState
-                                      {:doc textContent
-                                       :extensions [language
-                                                    (.. language -data (of {:autocomplete (fn [context]
-                                                                                            (#'completions/completions this context))}))
-                                                    (completions/plugin)
+        {:initialNs      (str/starts-with? textContent "(ns ")
+         :getPos         getPos
+         :ProseView      ProseView
+         :proseNode      proseNode
+         :mounted!       (fn [el]
+                           (.appendChild el (.. this -CodeView -dom))
+                           (doto (.. this -CodeView -dom -classList)
+                             (.add "rounded-r")
+                             (.add "overflow-hidden"))
+                           (set-initial-focus! this)
+                           (when-not (j/get this :mounted?)
+                             (j/!set this :mounted? true)
+                             ^:clj (doseq [f (j/get this :on-mounts)] (f))
+                             (j/delete! this :on-mounts)))
+         :CodeView       (-> (new EditorView
+                                  {:state
+                                   (.create EditorState
+                                            {:doc        textContent
+                                             :extensions [language
+                                                          (.. language -data (of {:autocomplete (fn [context]
+                                                                                                  (#'completions/completions this context))}))
+                                                          (completions/plugin)
 
-                                                    (close-brackets/extension)
-                                                    (match-brackets/extension)
-                                                    (sel-history/extension)
-                                                    (formatting/ext-format-changed-lines)
+                                                          (close-brackets/extension)
+                                                          (match-brackets/extension)
+                                                          (sel-history/extension)
+                                                          (formatting/ext-format-changed-lines)
 
-                                                    (.theme EditorView styles/code-theme)
-                                                    (cmd/history)
+                                                          (.theme EditorView styles/code-theme)
+                                                          (cmd/history)
 
-                                                    (lang/syntaxHighlighting styles/code-highlight-style)
-                                                    (lang/syntaxHighlighting lang/defaultHighlightStyle)
+                                                          (lang/syntaxHighlighting styles/code-highlight-style)
+                                                          (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
-                                                    (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
-                                                                                                 true)})
-                                                    keymaps/code-keymap
-                                                    (.of cm.view/keymap cmd/historyKeymap)
+                                                          (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-string! this %)
+                                                                                                       true)})
+                                                          keymaps/code-keymap
+                                                          (.of cm.view/keymap cmd/historyKeymap)
 
-                                                    (.. EditorState -allowMultipleSelections (of true))
+                                                          (.. EditorState -allowMultipleSelections (of true))
 
-                                                    #_(cm.view/drawSelection)
+                                                          #_(cm.view/drawSelection)
 
-                                                    (.. EditorView
-                                                        -updateListener
-                                                        (of #(code:forward-update this %)))
-                                                    (eldoc/extension this)
-                                                    (error-marks/extension)
-                                                    ]})})
-                       (j/!set :NodeView this))
-         :!result   (atom nil)
+                                                          (.. EditorView
+                                                              -updateListener
+                                                              (of #(code:forward-update this %)))
+                                                          (eldoc/extension this)
+                                                          (error-marks/extension)
+                                                          ]})})
+                             (j/!set :NodeView this))
+         :!result        (atom nil)
+         :!ui-state      (atom ^:clj {})
 
-         :on-mounts []
-         :mounted?  false
-         :on-mount  (fn [f]
-                      (if (j/get this :mounted?)
-                        (f)
-                        (j/update! this :on-mounts j/push! f)))
+         :on-mounts      []
+         :mounted?       false
+         :on-mount       (fn [f]
+                           (if (j/get this :mounted?)
+                             (f)
+                             (j/update! this :on-mounts j/push! f)))
 
          :code-updating? false
 
          ;; NodeView API
-         :dom el
-         :update (partial prose:forward-update this)
-         :selectNode prose:select-node
-         :deselectNode (fn []
-                         #_(j/log :deselectNode this))
-         :setSelection (partial prose:set-selection this)
-         :stopEvent (fn [e]
-                      ;; keyboard events that are handled by a keymap are already stopped;
-                      ;; not sure what events should be stopped here.
-                      (instance? js/MouseEvent e))
-         :destroy #(let [{:keys [CodeView !result]} this]
-                     (.destroy CodeView)
-                     (root/unmount-soon root)
-                     ^:clj (let [value (:value @!result)]
-                             (when (satisfies? r/IReactiveValue value)
-                               (r/dispose! value))))}))))
+         :dom            el
+         :update         (partial prose:forward-update this)
+         :selectNode     prose:select-node
+         :deselectNode   (fn []
+                           #_(j/log :deselectNode this))
+         :setSelection   (partial prose:set-selection this)
+         :stopEvent      (fn [e]
+                           ;; keyboard events that are handled by a keymap are already stopped;
+                           ;; not sure what events should be stopped here.
+                           (instance? js/MouseEvent e))
+         :destroy        #(let [{:keys [CodeView !result]} this]
+                            (.destroy CodeView)
+                            (root/unmount-soon root)
+                            ^:clj (let [value (:value @!result)]
+                                    (when (satisfies? r/IReactiveValue value)
+                                      (r/dispose! value))))}))))

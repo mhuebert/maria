@@ -137,11 +137,14 @@
                                                           (replaceSelectionWith (.create horizontal_rule))
                                                           (scrollIntoView))))
                                           true)}
-     :eval/document          {:kind     :prose
+     :code/eval-doc          {:kind     :prose
                               :bindings [:Mod-Alt-Enter]
                               :f        (fn [state dispatch view]
                                           (code.commands/prose:eval-doc! view)
                                           true)}
+     :code/hide-source       {:when :NodeView
+                              :f    (fn [{:keys [NodeView]}]
+                                      (swap! (j/get NodeView :!ui-state) update :hide-source? (fnil not false)))}
      :prose/backspace        {:bindings [:Backspace]
                               :hidden?  true
                               :f        (chain links/open-link-on-backspace
@@ -359,18 +362,24 @@
     (identical? el (.-activeElement js/document))))
 
 (def commands:global
-  {:toggle-sidebar     {:bindings [:Shift-Mod-k]
-                        :kind     :global
-                        :f        (fn [_]
-                                    (swap! ui/!state update :sidebar/visible? not)
-                                    false)}
-   :toggle-command-bar {:bindings [:Mod-k]
-                        :kind     :global
-                        :f        (fn [_]
-                                    (if (command-bar-open?)
-                                      (hide-command-bar!)
-                                      (show-command-bar!))
-                                    true)}})
+  {:editor/toggle-sidebar     {:bindings [:Shift-Mod-k]
+                               :kind     :global
+                               :prepare  (fn [cmd _]
+                                           (assoc cmd
+                                             :title (if (:sidebar/visible? @ui/!state)
+                                                      "Hide sidebar"
+                                                      "Show sidebar")))
+                               :f        (fn [_]
+                                           (swap! ui/!state update :sidebar/visible? not)
+                                           false)}
+   :editor/toggle-command-bar {:bindings [:Mod-k]
+                               :kind     :global
+                               :prepare  (fn [cmd _]
+                                           (merge cmd (if (command-bar-open?)
+                                                        {:title "Hide command bar"
+                                                         :f     hide-command-bar!}
+                                                        {:title "Show command bar"
+                                                         :f     show-command-bar!})))}})
 
 (defonce !command-registry (atom {}))
 (defonce !binding-overrides (atom {}))
