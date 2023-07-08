@@ -1,4 +1,4 @@
-(ns maria.editor.code-blocks.examples)
+(ns maria.editor.code.examples)
 
 
 (def js-interop "
@@ -50,7 +50,7 @@ js/Promise
 (.-x nil)
 
 ;; errors in cells
-(require '[cells.api :refer :all])
+(require '[cells.core :refer :all])
 [(cell (x)) (cell (x))]
 "
   )
@@ -115,7 +115,7 @@ js/Promise
 
 ;; Using the cells library.
 
-(require '[cells.api :refer :all])
+(require '[cells.core :refer :all])
 
 (defcell counter (interval 400 inc))
 

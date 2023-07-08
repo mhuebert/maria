@@ -43,7 +43,7 @@
 }
 
 
-.ProseMirror > *:not(.node-view) {
+.ProseMirror > *:not(.NodeView) {
     @apply md:w-1/2 leading-relaxed pl-4;
 
 }
@@ -58,17 +58,32 @@ svg {
     display: inline-block;
 }
 
-.notebook h1, .notebook h2, .notebook h3, .notebook h4 {
+h1, h2, h3, h4, h5 {
     @apply mt-6;
 }
 
-
+p code {
+    font-size: 1.1rem;
+    line-height: 1.5rem;
+}
 h1 {
     @apply text-4xl;
 }
 
 h2 {
     @apply text-[1.6rem];
+}
+
+h3 {
+    @apply font-bold;
+}
+
+h4 {
+    @apply font-bold  text-base;
+}
+
+h5 {
+    @apply font-bold text-sm uppercase;
 }
 
 .font-serif {
@@ -278,6 +293,7 @@ button {
 .text-menu-muted {
     @apply text-black/40
 }
+
 *[data-highlighted] .text-menu-muted, .text-menu-muted[data-highlighted], *[data-selected] .text-menu-muted, .text-menu-muted[data-selected] {
     color: inherit;
 }

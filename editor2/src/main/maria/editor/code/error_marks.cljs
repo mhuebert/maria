@@ -1,9 +1,9 @@
-(ns maria.editor.code-blocks.error-marks
+(ns maria.editor.code.error-marks
   (:require ["@codemirror/view" :refer [EditorView Decoration]]
             ["@codemirror/state" :refer [StateEffect StateField]]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
-            [maria.editor.code-blocks.eval-region :refer [uppermost-edge-here]]
+            [maria.editor.code.eval-region :refer [uppermost-edge-here]]
             [nextjournal.clojure-mode.node :as n]))
 
 (defn pos [^js state [line column]]

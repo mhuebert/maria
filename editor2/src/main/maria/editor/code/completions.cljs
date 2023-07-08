@@ -1,11 +1,11 @@
-(ns maria.editor.code-blocks.completions
+(ns maria.editor.code.completions
   (:require ["@codemirror/autocomplete" :as a]
             ["@codemirror/view" :as cm.view]
             [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
             [clojure.core :as c]
             [edamame.core :as edamame]
-            [maria.editor.code-blocks.commands :as commands]
+            [maria.editor.code.commands :as commands]
             [maria.editor.util :as u]
             [nextjournal.clojure-mode.node :as n]
             [sci.core :as sci]
@@ -17,7 +17,7 @@
                     "Symbol"})
 
 
-(j/defn completions [node-view ^:js {:keys [state explicit pos]}]
+(j/defn completions [NodeView ^:js {:keys [state explicit pos]}]
   (when-let [node (some-> (n/nearest-touching state pos -1)
                           (u/guard #(or explicit (= (n/end %) pos)))
                           (u/guard (comp symbol-nodes n/name)))]
@@ -29,8 +29,8 @@
       ;; x                     no ns, look at whole current-ns
       (when-let [sym (try (edamame/parse-string text)
                           (catch js/Error e nil))]
-        (let [ctx @(j/get-in node-view [:proseView :!sci-ctx])
-              current-ns (commands/code:ns node-view)
+        (let [ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
+              current-ns (commands/code:ns NodeView)
               ns-name (namespace sym)
               from (if ns-name
                      (+ from 1 (count ns-name))

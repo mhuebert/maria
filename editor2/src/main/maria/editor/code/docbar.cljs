@@ -1,17 +1,15 @@
-(ns maria.editor.code-blocks.docbar
+(ns maria.editor.code.docbar
   (:require ["@codemirror/view" :refer [ViewPlugin]]
             ["@codemirror/state" :refer [StateField]]
             ["@codemirror/autocomplete" :as autocomplete]
-            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
-            [maria.cloud.sidebar :as sidebar]
-            [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.code-blocks.repl :as repl]
+            [applied-science.js-interop.alpha :refer [js]]
+            [maria.editor.code.commands :as commands]
+            [maria.editor.code.repl :as repl]
             [maria.editor.views :as views]
             [maria.ui :as ui]
             [nextjournal.clojure-mode.node :as n]
             [re-db.reactive :as r]
-            [yawn.hooks :as h]
             [yawn.view :as v]))
 
 (defn closest-operator [state node]
@@ -39,17 +37,17 @@
 (defonce !state (r/atom nil))
 
 (js
-  (defn extension [node-view]
+  (defn extension [NodeView]
     [operator-field
      (.define ViewPlugin
               (fn [_]
                 {:update (fn [{:as view-update :keys [view state]}]
                            (when (.-hasFocus view)
-                             (let [ns (commands/code:ns node-view)
+                             (let [ns (commands/code:ns NodeView)
                                    sym (or (-> (autocomplete/selectedCompletion state)
                                                (j/get :sym))
                                            (.field state operator-field))
-                                   {:keys [!sci-ctx]} (.-proseView node-view)]
+                                   {:keys [!sci-ctx]} (.-ProseView NodeView)]
                                (assert !sci-ctx "eldoc extension requires sci context")
                                (reset! !state
                                        (when sym

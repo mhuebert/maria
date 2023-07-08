@@ -1,6 +1,9 @@
-(ns clerkify.maria
+(ns maria.clerkify
   (:require ["jszip" :as jszip]
             ["file-saver" :as file-saver]
+            [applied-science.js-interop :as j]
+            [maria.editor.doc :as editor.doc]
+            [maria.editor.keymaps :as keymaps]
             [shadow.resource :as rc]))
 
 (defn download-clerkified-zip
@@ -18,3 +21,10 @@
       (.generateAsync #js{:type "blob"})
       (.then (fn [content]
                (file-saver/saveAs content "clerkified-maria.zip")))))
+
+(keymaps/register-commands!
+  {:file/save-as-clerk-project {:kind :prose
+                                :f    (fn [state dispatch view]
+                                        (download-clerkified-zip
+                                          (-> (j/get-in view [:state :title])
+                                              editor.doc/doc->clj)))}})

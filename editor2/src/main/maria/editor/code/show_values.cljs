@@ -1,13 +1,13 @@
-(ns maria.editor.code-blocks.show-values
+(ns maria.editor.code.show-values
   (:refer-clojure :exclude [var?])
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
             [clojure.core]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.code-blocks.error-marks :as error-marks]
-            [maria.editor.code-blocks.repl :as repl]
+            [maria.editor.code.commands :as commands]
+            [maria.editor.code.error-marks :as error-marks]
+            [maria.editor.code.repl :as repl]
             [maria.editor.icons :as icons]
             [maria.editor.util]
             [maria.ui :refer [defview]]
@@ -18,7 +18,7 @@
             [shapes.core :as shapes]
             [yawn.hooks :as h]
             [yawn.view :as v]
-            [cells.api :as cells]))
+            [cells.core :as cells]))
 
 (def COLL-PADDING 4)
 
@@ -26,19 +26,19 @@
 
 (declare show)
 
-(defn set-error-highlight! [node-view id location]
-  (some-> (commands/code-node-by-id node-view id)
-          (j/get :codeView)
+(defn set-error-highlight! [NodeView id location]
+  (some-> (commands/code-node-by-id NodeView id)
+          (j/get :CodeView)
           (error-marks/set-highlight! location)))
 
-(defn inline-form [node-view id location]
-  (when-let [state (some-> (commands/code-node-by-id node-view id)
-                           (j/get-in [:codeView :state]))]
+(defn inline-form [NodeView id location]
+  (when-let [state (some-> (commands/code-node-by-id NodeView id)
+                           (j/get-in [:CodeView :state]))]
     (j/let [^:js {:keys [from to]} (error-marks/get-range state location)]
       (n/string state from to))))
 
 (defn get-ctx [opts]
-  (let [ctx (-> opts :node-view (j/get-in [:proseView :!sci-ctx]) deref)]
+  (let [ctx (-> opts :NodeView (j/get-in [:ProseView :!sci-ctx]) deref)]
     (assert ctx "show-opts requires a sci context")
     ctx))
 
@@ -63,12 +63,12 @@
                             (symbol (str (:ns m)) (str (:name m)))
                             fqn)
                       inline-str (when (and (not fqn) line)
-                                   (inline-form (:node-view opts) file [line column]))]
+                                   (inline-form (:NodeView opts) file [line column]))]
                   [:div.flex.flex-row.gap-1.py-1.px-2
                    (when (and file line)
                      {:class "hover:bg-gray-200"
-                      :on-mouse-enter #(set-error-highlight! (:node-view opts) file [line column])
-                      :on-mouse-leave #(set-error-highlight! (:node-view opts) file nil)})
+                      :on-mouse-enter #(set-error-highlight! (:NodeView opts) file [line column])
+                      :on-mouse-leave #(set-error-highlight! (:NodeView opts) file nil)})
                    (when (and code-cell line)
                      [:div.no-underline.cursor-pointer.text-gray-700.hover:underline
                       {:href code-cell}

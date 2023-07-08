@@ -1,15 +1,15 @@
-(ns maria.editor.code-blocks.sci
+(ns maria.editor.code.sci
   (:refer-clojure :exclude [eval])
-  (:require-macros [maria.editor.code-blocks.sci])
+  (:require-macros [maria.editor.code.sci])
   (:require ["@codemirror/view" :as view]
             [applied-science.js-interop]
-            [cells.api]
+            [cells.core]
             [cells.hooks]
             [cells.impl]
             [clojure.pprint :refer [pprint]]
             [clojure.string :as str]
-            [maria.editor.code-blocks.docs]
-            [maria.editor.code-blocks.repl]
+            [maria.editor.code.docs]
+            [maria.editor.code.repl]
             [maria.editor.views]
             [maria.editor.views]
             [promesa.core :as p]
@@ -122,14 +122,14 @@
                           promesa.sci/namespaces
                           yawn.sci-config/namespaces
                           re-db.sci-config/namespaces)}
-      (maria.editor.code-blocks.sci/require-namespaces [shapes.core
-                                                        maria.editor.code-blocks.repl
+      (maria.editor.code.sci/require-namespaces [shapes.core
+                                                        maria.editor.code.repl
                                                         sci.core
                                                         sci.async
                                                         cells.hooks
                                                         cells.impl
-                                                        cells.api
-                                                        maria.editor.code-blocks.docs
+                                                        cells.core
+                                                        maria.editor.code.docs
                                                         maria.editor.views])))
 
 (defn refer-all! [{:as ctx :keys [env]} targets]
@@ -143,12 +143,12 @@
 
 (defn initial-context []
   (-> (sci/init sci-opts)
-      (intern-core 'clojure.core '[maria.editor.code-blocks.repl/doc
-                                   maria.editor.code-blocks.repl/dir
-                                   maria.editor.code-blocks.repl/await
-                                   maria.editor.code-blocks.repl/what-is])
-      (refer-all! '{cells.api user
-                    maria.editor.code-blocks.repl user
+      (intern-core 'clojure.core '[maria.editor.code.repl/doc
+                                   maria.editor.code.repl/dir
+                                   maria.editor.code.repl/await
+                                   maria.editor.code.repl/what-is])
+      (refer-all! '{cells.core user
+                    maria.editor.code.repl user
                     shapes.core user})
       (sci/add-class! 'Math js/Math)
       (assoc :last-ns (volatile! @sci/ns))))

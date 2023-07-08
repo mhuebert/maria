@@ -1,4 +1,4 @@
-(ns maria.editor.code-blocks.styles
+(ns maria.editor.code.styles
   (:require ["@codemirror/language" :as highlight]
             ["@lezer/highlight" :refer [tags styleTags]]
             [applied-science.js-interop :as j]))

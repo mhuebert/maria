@@ -1,4 +1,4 @@
-(ns cells.api
+(ns cells.core
   (:require [cells.async :as async]
             [cells.hooks :as hooks]
             [cells.impl :as impl]

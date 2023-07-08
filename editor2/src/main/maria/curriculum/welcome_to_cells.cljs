@@ -1,7 +1,7 @@
 (ns maria.curriculum.welcome-to-cells
   {:curriculum/title "Cells Quickstart"
    :curriculum/description "Learn how to make things come alive and change over time."}
-  (:require [cells.api :refer :all]
+  (:require [cells.core :refer :all]
             [shapes.core :refer :all]))
 
 ;; # Say Hello to Cells

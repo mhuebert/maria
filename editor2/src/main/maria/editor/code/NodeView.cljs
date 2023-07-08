@@ -1,4 +1,4 @@
-(ns maria.editor.code-blocks.NodeView
+(ns maria.editor.code.NodeView
   (:require ["@codemirror/commands" :as cmd]
             ["@codemirror/language" :as lang]
             ["@codemirror/state" :refer [EditorState]]
@@ -10,13 +10,13 @@
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
-            [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.code-blocks.completions :as completions]
-            [maria.editor.code-blocks.docbar :as eldoc]
-            [maria.editor.code-blocks.error-marks :as error-marks]
-            [maria.editor.code-blocks.eval-region :as eval-region]
-            [maria.editor.code-blocks.styles :as styles]
-            [maria.editor.code-blocks.views :as views]
+            [maria.editor.code.commands :as commands]
+            [maria.editor.code.completions :as completions]
+            [maria.editor.code.docbar :as eldoc]
+            [maria.editor.code.error-marks :as error-marks]
+            [maria.editor.code.eval-region :as eval-region]
+            [maria.editor.code.styles :as styles]
+            [maria.editor.code.views :as views]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.schema :as prose-schema]
             [nextjournal.clojure-mode :as clj-mode]
@@ -37,16 +37,16 @@
       (reset! !focused-view nil))))
 
 (js
-  (defn focus! [{:keys [codeView on-mount]}]
-    (on-mount #(.focus codeView))))
+  (defn focus! [{:keys [CodeView on-mount]}]
+    (on-mount #(.focus CodeView))))
 
 (js
   (defn set-initial-focus!
     "If ProseMirror cursor is within code view, focus it."
-    [{:as this :keys [getPos proseView codeView]}]
-    (let [cursor (dec (.. proseView -state -selection -$anchor -pos))
+    [{:as this :keys [getPos ProseView CodeView]}]
+    (let [cursor (dec (.. ProseView -state -selection -$anchor -pos))
           start (getPos)
-          length (.. codeView -state -doc -length)
+          length (.. CodeView -state -doc -length)
           end (+ (getPos) length)]
       (when (and (>= cursor start)
                  (< cursor end))
@@ -55,11 +55,11 @@
 (js
   (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
-    [{:keys [codeView proseView getPos code-updating?]} code-update]
-    (let [{prose-state :state} proseView]
+    [{:keys [CodeView ProseView getPos code-updating?]} code-update]
+    (let [{prose-state :state} ProseView]
       (when (.-focusChanged code-update)
-        (set-focus! codeView (.-hasFocus codeView)))
-      (when (and (.-hasFocus codeView) (not code-updating?))
+        (set-focus! CodeView (.-hasFocus CodeView)))
+      (when (and (.-hasFocus CodeView) (not code-updating?))
         (let [start-pos (inc (getPos))
               {from' :from to' :to} (.. code-update -state -selection -main)
               {code-changed? :docChanged
@@ -94,21 +94,21 @@
                                        (.-doc tr)
                                        (+ start-pos from')
                                        (+ start-pos to')))
-            (.dispatch proseView tr)))))))
+            (.dispatch ProseView tr)))))))
 
 (defn- controlled-update [this f]
   (j/!set this :code-updating? true)
   (f)
   (j/!set this :code-updating? false))
 
-(defn code-text [^js codeView] (.. codeView -state -doc (toString)))
+(defn code-text [^js CodeView] (.. CodeView -state -doc (toString)))
 
 (js
   (defn prose:set-selection
     "Called when ProseMirror tries to put the selection inside the node."
-    [{:as this :keys [codeView dom]} anchor head]
+    [{:as this :keys [CodeView dom]} anchor head]
     (controlled-update this
-                       #(do (.dispatch codeView {:selection {:anchor anchor
+                       #(do (.dispatch CodeView {:selection {:anchor anchor
                                                              :head head}})
                             (when-not (.contains dom (.. js/document (getSelection) -focusNode))
                               (focus! this))))))
@@ -135,23 +135,23 @@
            :insert (.slice new-text start new-end)})))))
 
 (js
-  (defn prose:forward-update [{:as this :keys [codeView]
+  (defn prose:forward-update [{:as this :keys [CodeView]
                                prev-node :proseNode} new-node]
     (boolean
      (when (= (.-type prev-node)
               (.-type new-node))
        (j/!set this :proseNode new-node)
        (let [new-text (.-textContent new-node)
-             old-text (code-text codeView)]
+             old-text (code-text CodeView)]
          (when (not= new-text old-text)
            (controlled-update this
                               (fn []
-                                (.dispatch codeView {:changes (text-diff old-text new-text)
+                                (.dispatch CodeView {:changes (text-diff old-text new-text)
                                                      :annotations [(u/user-event-annotation "noformat")]})))))
        true))))
 
 (defn prose:select-node [^js this]
-  (.. this -codeView focus))
+  (.. this -CodeView focus))
 
 (def language
   (.define lang/LRLanguage
@@ -162,19 +162,19 @@
                                            styles/code-styles]})})))
 
 (js
-  (defn editor [{:as proseNode :keys [textContent]} proseView getPos]
+  (defn editor [{:as proseNode :keys [textContent]} ProseView getPos]
     (let [el (doto (js/document.createElement "div")
-               (.. -classList (add "my-4" "md:flex" "node-view")))
+               (.. -classList (add "my-4" "md:flex" "NodeView")))
           this (j/obj :id (str (gensym "code-view-")))
           root (root/create el (views/code-row this))]
       (j/extend! this
         {:initialNs (str/starts-with? textContent "(ns ")
          :getPos getPos
-         :proseView proseView
+         :ProseView ProseView
          :proseNode proseNode
          :mounted! (fn [el]
-                     (.appendChild el (.. this -codeView -dom))
-                     (doto (.. this -codeView -dom -classList)
+                     (.appendChild el (.. this -CodeView -dom))
+                     (doto (.. this -CodeView -dom -classList)
                        (.add "rounded-r")
                        (.add "overflow-hidden"))
                      (set-initial-focus! this)
@@ -182,7 +182,7 @@
                        (j/!set this :mounted? true)
                        ^:clj (doseq [f (j/get this :on-mounts)] (f))
                        (j/delete! this :on-mounts)))
-         :codeView (-> (new EditorView
+         :CodeView (-> (new EditorView
                             {:state
                              (.create EditorState
                                       {:doc textContent
@@ -217,7 +217,7 @@
                                                     (eldoc/extension this)
                                                     (error-marks/extension)
                                                     ]})})
-                       (j/!set :node-view this))
+                       (j/!set :NodeView this))
          :!result   (atom nil)
 
          :on-mounts []
@@ -240,8 +240,8 @@
                       ;; keyboard events that are handled by a keymap are already stopped;
                       ;; not sure what events should be stopped here.
                       (instance? js/MouseEvent e))
-         :destroy #(let [{:keys [codeView !result]} this]
-                     (.destroy codeView)
+         :destroy #(let [{:keys [CodeView !result]} this]
+                     (.destroy CodeView)
                      (root/unmount-soon root)
                      ^:clj (let [value (:value @!result)]
                              (when (satisfies? r/IReactiveValue value)

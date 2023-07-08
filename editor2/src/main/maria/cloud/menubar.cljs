@@ -2,14 +2,13 @@
   (:require ["@radix-ui/react-menubar" :as menu :refer [Item Separator Root Menu Trigger Portal Content]]
             ["@radix-ui/react-avatar" :as ava]
             [clojure.string :as str]
+            [maria.cloud.github :as gh]
             [maria.cloud.sidebar :as sidebar]
             [maria.editor.command-bar :as command-bar]
             [maria.editor.icons :as icons]
-            [maria.cloud.github :as gh]
             [maria.editor.keymaps :as keymaps]
             [maria.ui :as ui]
-            [yawn.view :as v]
-            [shadow.resource :as rc]))
+            [yawn.view :as v]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Components

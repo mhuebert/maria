@@ -1,8 +1,8 @@
-(ns maria.editor.code-blocks.views
+(ns maria.editor.code.views
   (:require ["react" :as react]
             [applied-science.js-interop :as j]
             [cells.async]
-            [maria.editor.code-blocks.show-values :refer [show]]
+            [maria.editor.code.show-values :refer [show]]
             [sci.core :as sci]
             [sci.lang]
             [shadow.cljs.modern :refer [defclass]]
@@ -11,7 +11,7 @@
             [yawn.view :as v]
             [maria.editor.icons :as icons]
             [cljs.tools.reader.edn :as edn]
-            [maria.editor.code-blocks.commands :as commands]))
+            [maria.editor.code.commands :as commands]))
 
 (defclass ErrorBoundary
           (extends react/Component)
@@ -35,9 +35,9 @@
   (let [{:keys [value error key]} (h/use-deref (j/get this :!result))]
     [:... {:key key}
      (if error
-       (show {:node-view this} error)
+       (show {:NodeView this} error)
        (j/lit [ErrorBoundary {:key    key
-                              :render #(show {:node-view this} %)
+                              :render #(show {:NodeView this} %)
                               :value  value}]))]))
 
 (defn eye-slash [class]

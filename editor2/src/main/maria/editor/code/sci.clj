@@ -1,4 +1,4 @@
-(ns maria.editor.code-blocks.sci
+(ns maria.editor.code.sci
   (:require [sci.core :as sci]))
 
 (defn dequote [x]
@@ -30,7 +30,7 @@
 
 (comment
  (require-namespaces {}
-                     '[[cells.api :as cells]
+                     '[[cells.core :as cells]
                        shapes.core])
  (macroexpand '(require-namespaces {}
                                    '[shapes.core]))

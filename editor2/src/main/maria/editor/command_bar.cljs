@@ -3,18 +3,17 @@
             ["cmdk" :refer [useCommandState]]
             ["prosemirror-keymap" :refer [keydownHandler]]
             ["@radix-ui/react-popover" :as Popover]
-            [clojure.string :as str]
-            [maria.editor.keymaps :as keymaps]
-            [maria.editor.core :as editor.core]
-            [maria.editor.code-blocks.commands :as commands]
-            [maria.editor.prosemirror.schema :refer [schema]]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
+            [maria.editor.code.commands :as commands]
+            [maria.editor.core :as editor.core]
+            [maria.editor.keymaps :as keymaps]
+            [maria.editor.prosemirror.schema :refer [schema]]
             [maria.ui :as ui]
             [re-db.reactive :as r]
             [re-db.util :as u]
-            [yawn.view :as v]
-            [yawn.hooks :as h]))
+            [yawn.hooks :as h]
+            [yawn.view :as v]))
 
 (r/redef !state (r/atom {:sidebar/visible? false}))
 
@@ -22,38 +21,38 @@
   (swap! !state update :sidebar/visible? not))
 
 (defn get-context []
-  (when-let [^js proseView @editor.core/!mounted-view]
-    (let [code-context (let [^js node (commands/prose:cursor-node (.-state proseView))]
+  (when-let [^js ProseView @editor.core/!mounted-view]
+    (let [code-context (let [^js node (commands/prose:cursor-node (.-state ProseView))]
                          (when (= (.-type node) (.. schema -nodes -code_block))
-                           (let [codeView (-> proseView
+                           (let [CodeView (-> ProseView
                                               (j/get-in [:docView :children])
                                               (u/find-first #(identical? node (j/get % :node)))
-                                              (j/get-in [:spec :codeView]))]
-                             {:node-view (j/get codeView :node-view)
-                              :codeView  codeView})))]
+                                              (j/get-in [:spec :CodeView]))]
+                             {:NodeView (j/get CodeView :NodeView)
+                              :CodeView  CodeView})))]
 
-      (merge {:proseView proseView}
+      (merge {:ProseView ProseView}
              code-context
              (if code-context
                {:focused/code true}
-               {:focused/prose true})))))
+               {:focus/prose true})))))
 
-(def command-list (remove :hidden? (vals @keymaps/!commands)))
+(defonce !command-list (r/reaction (remove :hidden? (vals @keymaps/!commands))))
 
 (defn active? [context cmd]
-  (let [{:as ctx :keys [proseView codeView]} context
+  (let [{:as ctx :keys [ProseView CodeView]} context
         {:keys [kind] pred :when
          :or   {pred (constantly true)}} cmd]
     (boolean
-      (case kind :prose (and proseView (pred ctx))
-                 :code (and codeView (pred ctx))
+      (case kind :prose (and ProseView (pred ctx))
+                 :code (and CodeView (pred ctx))
                  (pred ctx)))))
 
 (defn resolve-command
   ([cmd] (resolve-command (get-context) cmd))
   ([context cmd]
    (let [cmd (if (keyword? cmd)
-               (@keymaps/!commands cmd)
+               (@keymaps/!command-registry cmd)
                cmd)
          cmd (assoc cmd :active? (active? context cmd))
          cmd (if-let [prepare (:prepare cmd)]
@@ -64,37 +63,42 @@
 (defn run-command
   ([cmd] (run-command (get-context) cmd))
   ([context cmd]
-   (let [{:keys [proseView codeView]} context
+   (let [{:keys [ProseView CodeView]} context
          {:keys [f kind active?]} (resolve-command context cmd)]
      (when active?
        (case kind
-         :prose (when proseView
-                  (j/let [^js {:as view :keys [state dispatch]} proseView]
+         :prose (when ProseView
+                  (j/let [^js {:as view :keys [state dispatch]} ProseView]
                     (f state dispatch view)))
-         :code (when codeView
-                 (f codeView))
+         :code (when CodeView
+                 (f CodeView))
          (f context))))))
 
 (defn use-global-keymap []
-  (h/use-effect
-    (fn []
-      (let [bindings (->> keymaps/commands:global
-                          (mapcat (fn [[id {:as cmd :keys [bindings f]}]]
-                                    (for [binding bindings]
-                                      [binding (fn [& _] (run-command cmd))])))
-                          (into {})
-                          clj->js)
-            on-keydown (let [handler (keydownHandler bindings)]
-                         (fn [event]
-                           (handler #js{} event)))]
-        (.addEventListener js/window "keydown" on-keydown)
-        #(.removeEventListener js/window "keydown" on-keydown)))))
+  (let [bindings (h/use-deref
+                   (h/use-memo
+                     #(r/reaction
+                        (->> @keymaps/!commands
+                             (filter (comp #{:global} :kind val))
+                             (mapcat (fn [[id {:as cmd :keys [bindings f]}]]
+                                       (for [binding bindings]
+                                         [binding (fn [& _] (run-command cmd))])))
+                             (into {})
+                             clj->js))))]
+    (h/use-effect
+      (fn []
+        (let [on-keydown (let [handler (keydownHandler bindings)]
+                           (fn [event]
+                             (handler #js{} event)))]
+          (.addEventListener js/window "keydown" on-keydown)
+          #(.removeEventListener js/window "keydown" on-keydown)))
+      [bindings])))
 
 (defn current-commands []
   (into []
         (comp (map (partial resolve-command (get-context)))
               (filter :active?))
-        command-list))
+        @!command-list))
 
 (comment
   command-list

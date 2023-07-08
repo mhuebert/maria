@@ -2,7 +2,7 @@
   {:curriculum/title "What if"
    :curriculum/description "The if statement explained."}
   (:require [shapes.core :refer :all]
-            [maria.editor.code-blocks.repl :refer :all]))
+            [maria.editor.code.repl :refer :all]))
 
 ;; # What if?
 

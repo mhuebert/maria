@@ -1,8 +1,8 @@
-(ns maria.editor.code-blocks.repl
+(ns maria.editor.code.repl
   (:refer-clojure :exclude [atom])
   (:require #?(:cljs ["react" :as react])
             #?(:cljs [sci.async :as a])
-            [maria.editor.code-blocks.docs :as helpful]
+            [maria.editor.code.docs :as helpful]
             [maria.editor.views :as ui]
             [promesa.core :as p]
             [sci.core :as sci]

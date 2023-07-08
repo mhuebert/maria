@@ -7,10 +7,10 @@
             [applied-science.js-interop :as j]
             [maria.cloud.config.public :refer [env]]
             [maria.cloud.local :as local]
+            [maria.editor.keymaps :as keymaps]
             [maria.editor.util :as u]
             [promesa.core :as p]
-            [re-db.reactive :as r]
-            [maria.editor.keymaps :as keymaps]))
+            [re-db.reactive :as r]))
 
 ;; TODO ...
 ;; wait to load gist page until we have an auth result (in/out)

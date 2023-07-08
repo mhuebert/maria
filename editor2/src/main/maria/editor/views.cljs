@@ -1,9 +1,9 @@
 (ns maria.editor.views
   (:require ["@radix-ui/react-tooltip" :as Tooltip]
             [clojure.string :as str]
-            [yawn.view :as v]
+            [maria.ui :as ui]
             [re-db.react]
-            [maria.ui :as ui]))
+            [yawn.view :as v]))
 
 (def tag-el :span.text-stone-500.text-xs.bg-stone-100.p-1.ml-1)
 

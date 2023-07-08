@@ -1,4 +1,4 @@
-(ns maria.editor.code-blocks.docs
+(ns maria.editor.code.docs
   "Utilities for looking up docstrings, including special forms."
   (:require [clojure.set :as set]))
 
