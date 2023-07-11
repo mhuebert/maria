@@ -8,22 +8,17 @@
             [maria.ui :as ui]
             [promesa.core :as p]
             [re-db.api :as db]
-            [yawn.hooks :as hooks]))
+            [yawn.hooks :as hooks]
+            [yawn.view :as v]))
 
 (ui/defview editor [options]
-  (let [!element-ref (hooks/use-ref nil)]
-    (hooks/use-effect
-     (fn []
-       (when-let [element @!element-ref]
-         (prose/init options element)))
-     [@!element-ref (:initial-value options)])
-    [:div.relative.notebook.my-4 {:ref !element-ref}]))
+  [:div.relative.notebook.my-4 {:ref (prose/use-editor options)}])
 
 (defn doc-title [title]
   (menubar/title!
-   [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
-    title
-    [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]))
+    [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
+     title
+     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]))
 
 (ui/defview curriculum
   [{:as props :curriculum/keys [name]}]
@@ -31,16 +26,14 @@
         url (str "/curriculum/" file-name "?v=" hash)
         text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
     (when text
-      [:<> {}
-       ;; todo, fix yawn to not treat a portal as props
-       ;; (the :<> fragment here is giving an error w/o this empty map)
+      [:<>
        (doc-title (str "curriculum / " name))
-       [editor {:initial-value text
-                :id url}]])))
+       [editor {:id              url
+                :persisted-value text}]])))
 
 (ui/defview gist [{:gist/keys [id]}]
-  (let [{:keys [gist/id]
-         [{:gist/keys [filename content]}] :gist/clojure-files}
+  (let [{:keys                             [gist/id]
+         [{:gist/keys  [filename content]}] :gist/clojure-files}
         (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" id)
                                        :headers (gh/auth-headers))
                               (j/call :json)
@@ -48,7 +41,6 @@
                        [id])]
     (when content
       [:<>
-       (doc-title filename)
-       [editor {:id id
-                :initial-value content}]])))
-
+       [doc-title filename]
+       [editor {:id              id
+                :persisted-value content}]])))

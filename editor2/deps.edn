@@ -22,7 +22,7 @@
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
         io.github.mhuebert/re-db {:git/sha "4492511e7a84725990a2cb025084af809548ef70"}
-        io.github.mhuebert/yawn {:git/sha "8f506c78bb3d9c1c489fe8f2fb601a6566641d22"}}
+        io.github.mhuebert/yawn {:git/sha "98fea9a681f4507afaba65590aed33b58fff294c"}}
  :aliases
  {:local {:extra-deps {#_#_io.github.babashka/sci {:local/root "../../sci"}
                        #_#_applied-science/js-interop {:local/root "../../js-interop"}

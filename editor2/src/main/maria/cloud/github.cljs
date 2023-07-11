@@ -17,7 +17,7 @@
 ;; to avoid load failure while waiting for auth to complete?
 
 (defonce !token (local/ratom nil))
-(defonce !user (r/atom nil)) ;; `nil` means not loaded, `false` means signed out
+(defonce !user (r/atom nil))                                ;; `nil` means not loaded, `false` means signed out
 
 (defn token [] (when @!user @!token))
 
@@ -86,7 +86,14 @@
            :html_url html_url
            :updated_at updated_at}))
 
-(keymaps/register-commands! {:account/sign-in {:f (fn [_] (sign-in-with-popup!))
-                                               :when (fn [_] (not @!user))}
-                             :account/sign-out {:f    (fn [_] (sign-out))
-                                                :when (fn [_] (boolean @!user))}})
+(defn new-gist! [])
+(defn save-gist [])
+(defn revert-gist [])
+
+
+
+(keymaps/register-commands!
+  {:account/sign-in {:f (fn [_] (sign-in-with-popup!))
+                     :when (fn [_] (not @!user))}
+   :account/sign-out {:f (fn [_] (sign-out))
+                      :when (fn [_] (boolean @!user))}})

@@ -3,15 +3,12 @@
             [applied-science.js-interop :as j]
             [cells.async]
             [maria.editor.code.show-values :refer [show]]
-            [sci.core :as sci]
+            [maria.editor.icons :as icons]
             [sci.lang]
             [shadow.cljs.modern :refer [defclass]]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [maria.editor.icons :as icons]
-            [cljs.tools.reader.edn :as edn]
-            [maria.editor.code.commands :as commands]))
+            [yawn.view :as v]))
 
 (defclass ErrorBoundary
           (extends react/Component)
@@ -25,9 +22,7 @@
                            (js/console.debug (.-stack e))
                            (render e))))))
 
-(j/!set ErrorBoundary :getDerivedStateFromError (fn [error]
-                                                  (j/log :found-error)
-                                                  #js{:error error}))
+(j/!set ErrorBoundary :getDerivedStateFromError (fn [error] #js{:error error}))
 
 (defn shape? [x] (instance? shapes/Shape x))
 
@@ -76,8 +71,7 @@
     [:<>
      [:div {:class "w-full md:w-1/2 relative text-base"}
       (when-not hide-source?
-        [:div {:class "w-full text-base relative"
-               :style {:color "#c9c9c9"}
+        [:div {:class "w-full text-base relative text-brackets"
                :ref   ref
                :id    id}])
       toggle]

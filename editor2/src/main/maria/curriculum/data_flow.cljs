@@ -129,5 +129,5 @@
 
 (cell/dependencies inline-count)
 
-[(cell :a (cell/interval 1000 inc))
- (cell :b (cell/interval 500 #(rand-nth [\q \r \s \t \u \v])))]
+[(cell (cell/interval 1000 inc))
+ (cell (cell/interval 500 #(rand-nth [\q \r \s \t \u \v])))]

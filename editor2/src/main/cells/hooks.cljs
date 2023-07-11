@@ -75,12 +75,9 @@
                                        (a/complete! self))
 
                                      :else
-                                     (do
-                                       (j/log XhrIo)
-                                       (aset js/window "x" XhrIo)
-                                       (if-let [error-message (xhrio-error-message XhrIo)]
-                                         (a/error! self (ex-info error-message {:cell self}))
-                                         (v! "No error message"))))))]
+                                     (if-let [error-message (xhrio-error-message XhrIo)]
+                                       (a/error! self (ex-info error-message {:cell self}))
+                                       (v! "No error message")))))]
          #(j/call XhrIo :abort)))
      [url])
     v))

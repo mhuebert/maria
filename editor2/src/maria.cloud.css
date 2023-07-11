@@ -4,20 +4,23 @@
 @tailwind utilities;
 
 :root {
-    --code-number: #987aa0;
-    --code-string: #a78938;
+    --code-number: #5999ec;
+    --code-string: #c47a10;
     --code-docString: #a78938;
-    --code-variableName: #98a14b;
+    --code-variableName: #63945c;
     --code-regexp: #a78938;
     --code-null: #888;
-    --code-keyword: #987aa0;
+    --code-keyword: #8e649c;
     --code-comment: #a3685a;
-    --code-operator: #c66;
+    --code-operator: #117301;
     --code-bool: #987aa0;
+    --code-brackets: #9f9f9f;
 }
 
-.gap-list {
-    @apply gap-[6px]
+@layer utilities {
+    .gap-list {
+        @apply gap-[6px]
+    }
 }
 
 /* ProseMirror */

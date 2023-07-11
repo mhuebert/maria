@@ -9,10 +9,9 @@
   [x]
   (get (meta x) `status))
 
-(defn error! [cell e] (reset! (!status cell)
-                              {:error (cond-> e
-                                              (string? e)
-                                              (ex-info {:cell cell}))}))
+(defn error! [cell e] (reset! cell (cond-> e
+                                           (string? e)
+                                           (ex-info {:cell cell}))))
 (defn loading! [cell] (reset! (!status cell) {:loading true}))
 (defn complete!
   ([cell] (reset! (!status cell) nil))

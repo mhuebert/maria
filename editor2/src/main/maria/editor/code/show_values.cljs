@@ -14,6 +14,7 @@
             [maria.editor.views :as views]
             [nextjournal.clojure-mode.node :as n]
             [promesa.core :as p]
+            [re-db.reactive :as r]
             [sci.core :as sci]
             [shapes.core :as shapes]
             [yawn.hooks :as h]
@@ -66,7 +67,7 @@
                                    (inline-form (:NodeView opts) file [line column]))]
                   [:div.flex.flex-row.gap-1.py-1.px-2
                    (when (and file line)
-                     {:class "hover:bg-gray-200"
+                     {:class          "hover:bg-gray-200"
                       :on-mouse-enter #(set-error-highlight! (:NodeView opts) file [line column])
                       :on-mouse-leave #(set-error-highlight! (:NodeView opts) file nil)})
                    (when (and code-cell line)
@@ -97,7 +98,7 @@
    [:div.bg-red-100.text-red-800.border.border-red-200.flex.items-start
     [:div.m-2.flex-grow (ex-message error)]
     [:a.m-2.cursor-pointer.text-red-800.hover:text-red-900
-     {:title "Print to console"
+     {:title    "Print to console"
       :on-click #(do (js/console.error error)
                      (some-> (sci/stacktrace error) seq pprint))} (icons/command-line:mini "w-5 h-5")]]
    (when-let [stack (seq (sci/stacktrace error))]
@@ -126,7 +127,7 @@
 
 (defview show-brackets [left right more children !wrapper !parent]
   (let [bracket-classes "flex flex-none"]
-    [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap {:ref !wrapper}
+    [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap.text-brackets {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
      (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden.interpose-comma {:ref !parent}]
@@ -164,10 +165,10 @@
                 (and (neg? available-height) (neg? available-width)) ;; return, dimensions exceeded
                 limit
 
-                (neg? available-width) ;; wrap, width exceeded
+                (neg? available-width)                      ;; wrap, width exceeded
                 (recur (- available-height item-height COLL-PADDING) (- wrapper-width item-width COLL-PADDING) (inc limit))
 
-                :else ;; width is available, add to row
+                :else                                       ;; width is available, add to row
                 (recur available-height available-width (inc limit))))))))
 
 (defn use-limit [coll initial-limit]
@@ -211,15 +212,15 @@
 (defview show-promise [opts p]
   (let [[v v!] (h/use-state ::loading)]
     (h/use-effect
-     (fn []
-       (v! ::loading)
-       (p/then p v!)
-       nil)
-     [p])
+      (fn []
+        (v! ::loading)
+        (p/then p v!)
+        nil)
+      [p])
     (v/x
-     (if (= v ::loading)
-       loader
-       (show opts v)))))
+      (if (= v ::loading)
+        loader
+        (show opts v)))))
 
 (defview show-var [opts x]
   (v/x [:<>
@@ -232,9 +233,9 @@
                                             (> (count x) 200)))
         x (str \" x \")]
     (if collapse
-      [:div.line-clamp-6 {:on-click #(toggle! not)} x]
-      [:div {:class ["max-h-[80vh] overflow-y-auto"]
-             :on-click #(toggle! not)} x])))
+      [:div.line-clamp-6.text-string {:on-click #(toggle! not)} x]
+      [:div.text-string {:class    ["max-h-[80vh] overflow-y-auto"]
+                         :on-click #(toggle! not)} x])))
 
 (def show-map (partial show-coll "{" "}"))
 (def show-set (partial show-coll "#{" "}"))
@@ -253,6 +254,9 @@
 
 (defn show-identity [opts x] x)
 (defn show-terminal [f] (fn [opts x] (f x)))
+(defn show-inline
+  ([^string classes xf] (fn [opts x] (v/x [:span {:class classes} (xf x)])))
+  ([^string classes] (fn [opts x] (v/x [:span {:class classes} x]))))
 
 (defview show-watchable [opts x]
   (show opts (h/use-deref x)))
@@ -266,7 +270,8 @@
 (defview show-cell [opts cell]
   ;; always watch status & value together, to avoid cell value being unwatched during loading/error states.
   (let [{:keys [loading error]} (h/use-deref (cells.async/!status cell))
-        value (h/use-deref cell)]
+        [cell-error value] (r/deref-result cell)
+        error (or error cell-error)]
     (cond loading loader
           error (show-error opts error)
           #_cell-value-circle
@@ -286,54 +291,55 @@
 
 (def builtin-viewers
   (flatten (list
-            (fn [_ x]
-              (when (= x ::loading)
-                loader))
-            (fn [opts x]
-              (when (cells/cell? x)
-                (show-cell opts x)))
+             (fn [_ x]
+               (when (= x ::loading)
+                 loader))
+             (fn [opts x]
+               (when (cells/cell? x)
+                 (show-cell opts x)))
 
-            (fn [opts x]
-              (when (react/isValidElement x)
-                x))
+             (fn [opts x]
+               (when (react/isValidElement x)
+                 x))
 
-            (fn [opts x] (when (:hiccup (meta x))
-                           (v/x x)))
+             (fn [opts x] (when (:hiccup (meta x))
+                            (v/x x)))
 
-            (by-type {js/Number (show-terminal identity)
-                      Symbol (show-terminal str) js/String show-str
-                      js/Boolean (show-terminal pr-str)
-                      Keyword (show-terminal str)
-                      MapEntry show-map-entry
-                      Var show-var
-                      js/Function show-function
-                      js/Promise show-promise
-                      PersistentArrayMap show-map
-                      PersistentHashMap show-map
-                      TransientHashMap show-map
-                      PersistentTreeSet show-set
-                      PersistentHashSet show-set
-                      List show-list
-                      LazySeq show-list
-                      shapes/Shape show-shape
-                      sci.lang/Namespace show-ns})
+             (by-type {js/Number          (show-inline "text-number")
+                       Symbol             (show-inline "text-variableName" str)
+                       js/String          show-str
+                       js/Boolean         (show-inline "text-bool" pr-str)
+                       Keyword            (show-inline "text-keyword" str)
+                       MapEntry           show-map-entry
+                       Var                show-var
+                       js/Function        show-function
+                       js/Promise         show-promise
+                       PersistentArrayMap show-map
+                       PersistentHashMap  show-map
+                       TransientHashMap   show-map
+                       PersistentTreeSet  show-set
+                       PersistentHashSet  show-set
+                       List               show-list
+                       LazySeq            show-list
+                       shapes/Shape       show-shape
+                       sci.lang/Namespace show-ns})
 
-            (fn [opts x] (when (satisfies? IWatchable x)
-                           (show-watchable opts x)))
+             (fn [opts x] (when (satisfies? IWatchable x)
+                            (show-watchable opts x)))
 
-            (fn [opts x] (when (vector? x) (show-coll \[ \] opts x)))
-            (fn [opts x] (when (map? x) (show-map opts x)))
-            (fn [opts x] (when (set? x) (show-set opts x)))
-            (fn [opts x] (when (seq? x) (show-list opts x)))
-            (fn [opts x] (when (fn? x) (show-function opts x)))
-            (fn [opts x] (when (var? x) (show-var opts x)))
-            (fn [opts x] (when (nil? x) (punctuate "nil")))
-            (fn [opts x] (when (symbol? x) (show-str opts x)))
+             (fn [opts x] (when (vector? x) (show-coll \[ \] opts x)))
+             (fn [opts x] (when (map? x) (show-map opts x)))
+             (fn [opts x] (when (set? x) (show-set opts x)))
+             (fn [opts x] (when (seq? x) (show-list opts x)))
+             (fn [opts x] (when (fn? x) (show-function opts x)))
+             (fn [opts x] (when (var? x) (show-var opts x)))
+             (fn [opts x] (when (nil? x) (punctuate "nil")))
+             (fn [opts x] (when (symbol? x) (show-str opts x)))
 
-            (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
-            (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
-            (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
-            #_(fn [x] (clerk.sci-viewer/inspect x)))))
+             (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
+             (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
+             (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
+             #_(fn [x] (clerk.sci-viewer/inspect x)))))
 
 (defn add-viewers
   [ctx key viewers]
@@ -349,3 +355,4 @@
   (into builtin-viewers
         (mapcat second)
         (get-in ctx [::viewers (repl/current-ns-name ctx)])))
+

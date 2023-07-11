@@ -1,6 +1,6 @@
 (ns maria.editor.core
-  (:require ["prosemirror-view" :refer [EditorView Decoration DecorationSet]]
-            ["prosemirror-state" :refer [EditorState Plugin PluginKey]]
+  (:require ["prosemirror-view" :as p.view]
+            ["prosemirror-state" :as p.state]
             ["prosemirror-history" :refer [history]]
             ["prosemirror-dropcursor" :refer [dropCursor]]
             ["prosemirror-gapcursor" :refer [gapCursor]]
@@ -14,40 +14,43 @@
             [maria.editor.code.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code.sci :as sci]
             [maria.editor.keymaps :as keymaps]
+            [maria.cloud.persistence :as persist]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
-            [maria.editor.prosemirror.schema :as markdown]))
+            [maria.editor.prosemirror.schema :as markdown]
+            [yawn.hooks :as h]
+            [maria.cloud.local :as local]))
 
-(defonce focused-state-key (new PluginKey "focused-state"))
+(defonce focused-state-key (new p.state/PluginKey "focused-state"))
 
 (defn focused-state-plugin []
   (js
-    (new Plugin {:key   focused-state-key
-                 :state {:init  (fn [] false)
-                         :apply (fn [transaction prev-focus]
-                                  (if-some ^:clj [new-focus (.getMeta transaction focused-state-key)]
-                                    new-focus
-                                    prev-focus))}
-                 :props {:handleDOMEvents
-                         {:blur
-                          (fn [view]
-                            (.dispatch view (.. view -state -tr (setMeta focused-state-key false)))
-                            false)
-                          :focus
-                          (fn [view]
-                            (.dispatch view (.. view -state -tr (setMeta focused-state-key true)))
-                            false)}}})))
+    (new p.state/Plugin {:key   focused-state-key
+                         :state {:init  (fn [] false)
+                                 :apply (fn [transaction prev-focus]
+                                          (if-some ^:clj [new-focus (.getMeta transaction focused-state-key)]
+                                            new-focus
+                                            prev-focus))}
+                         :props {:handleDOMEvents
+                                 {:blur
+                                  (fn [view]
+                                    (.dispatch view (.. view -state -tr (setMeta focused-state-key false)))
+                                    false)
+                                  :focus
+                                  (fn [view]
+                                    (.dispatch view (.. view -state -tr (setMeta focused-state-key true)))
+                                    false)}}})))
 
 
 (defn selection-decoration []
-  (new Plugin (js
-                {:props
-                 {:decorations
-                  (fn [{:as state :keys [doc] {:keys [from to]} :selection}]
-                    (if (.getState focused-state-key state)
-                      (.-empty DecorationSet)
-                      (.create DecorationSet doc
-                               [(.inline Decoration from to {:class "bg-selection"})])))}})))
+  (new p.state/Plugin (js
+                        {:props
+                         {:decorations
+                          (fn [{:as ProseState :keys [doc] {:keys [from to]} :selection}]
+                            (if (.getState focused-state-key ProseState)
+                              (.-empty p.view/DecorationSet)
+                              (.create p.view/DecorationSet doc
+                                       [(.inline p.view/Decoration from to {:class "bg-selection"})])))}})))
 
 (js
   (defn plugins []
@@ -63,28 +66,45 @@
 
 (defonce !mounted-view (atom nil))
 
-(defn init [{:as opts :keys [initial-value
+(defn init [{:as opts :keys [id
+                             persisted-value
                              make-sci-ctx]
              :or {make-sci-ctx sci/initial-context}}
             ^js element]
-  (let [state (js (.create EditorState {:doc     (-> initial-value
-                                                     parse-clj/clj->md
-                                                     markdown/md->doc)
-                                        :plugins (plugins)}))
-        view (-> (js (EditorView. {:mount element}
-                                  {:state     state
-                                   :nodeViews {:code_block NodeView/editor}
-                                   #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
-                                   ;; no-op tx for debugging
-                                   #_#_:dispatchTransaction (fn [tx]
-                                                              (this-as ^js view
-                                                                (let [state (.apply (.-state view) tx)]
-                                                                  (.updateState view state))))}))
-                 (j/assoc! :!sci-ctx (atom (make-sci-ctx))))]
-    (reset! !mounted-view view)
-    (commands/prose:eval-doc! view)
-    #(do (when (identical? @!mounted-view view) (reset! !mounted-view nil))
-         (j/call view :destroy))))
+  ;; TODO
+  ;; think through how we access local/persisted values for a doc
+  (let [ProseState (js (.create p.state/EditorState {:doc     (-> (or (local/get id) persisted-value)
+                                                                  parse-clj/clj->md
+                                                                  markdown/md->doc)
+                                                     :plugins (plugins)}))
+        autosave! (persist/autosave-fn)
+        ProseView (js (-> (p.view/EditorView. {:mount element}
+                                              {:state               ProseState
+                                               :nodeViews           {:code_block NodeView/editor}
+                                               #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
+                                               ;; no-op tx for debugging
+                                               :dispatchTransaction (fn [tx]
+                                                                      (this-as ^js view
+                                                                        (let [prev-state (.-state view)
+                                                                              next-state (.apply prev-state tx)]
+                                                                          (.updateState view next-state)
+                                                                          (autosave! id prev-state next-state))))})
+                          (j/assoc! :!sci-ctx (atom (make-sci-ctx)))))]
+    (reset! !mounted-view ProseView)
+    (commands/prose:eval-doc! ProseView)
+    #(do (when (identical? @!mounted-view ProseView) (reset! !mounted-view nil))
+         (j/call ProseView :destroy))))
+
+(defn use-editor
+  "Returns a ref for the element where the editor is to be mounted."
+  [options]
+  (let [!ref (h/use-ref nil)]
+    (h/use-effect
+      (fn []
+        (when-let [element @!ref]
+          (init options element)))
+      [@!ref (:id options)])
+    !ref))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))

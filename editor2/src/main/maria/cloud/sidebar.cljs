@@ -27,13 +27,14 @@
       [:div.flex-grow.overflow-y-auto sidebar]]
      content]))
 
-(def acc-item (v/from-element :a.block.px-2.mx-1.py-1.my-1.text-sm.no-underline.rounded))
+(def acc-item (v/from-element :a.block
+                              {:class ["text-sm text-black no-underline"
+                                       "px-2 mx-1 py-1 rounded"
+                                       "hover:bg-black/5 hover:text-black visited:text-black"
+                                       "data-[selected=true]:bg-sky-500 data-[selected=true]:text-white"]}))
 
 (defn acc-props [current? props]
-  (merge {:style {:color (when current? "white")}
-          :class (if current?
-                   "bg-sky-600"
-                   "hover:bg-zinc-100")}
+  (merge {:data-selected current?}
          props))
 
 (ui/defview acc-section [title items]
@@ -41,11 +42,11 @@
    {:value title
     :class ui/c:divider}
    [:> acc/Header
-    {:class "flex flex-row h-[40px]"}
+    {:class "flex flex-row h-[40px] m-0"}
     [:> acc/Trigger {:class "text-sm font-bold cursor-pointer p-2 AccordionTrigger flex-grow"}
      [icons/chevron-right:mini "w-4 h-4 -ml-1 mr-1 AccordionChevron"]
      title]]
-   (into [:el acc/Content] items)])
+   (into [:el.flex.flex-col.gap-1 acc/Content] items)])
 
 (ui/defview user-gist-list [{:keys [username current-path]}]
   (let [gists (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/users/" username "/gists")

@@ -35,8 +35,8 @@
 
 (defview root []
   (let [{:as location ::routes/keys [view]} (h/use-deref routes/!location)]
-      [:<>
-       (command-bar/use-global-keymap)
+    (command-bar/use-global-keymap)
+    [:<>
        [sidebar/with-sidebar
         [sidebar/content]
         [:div

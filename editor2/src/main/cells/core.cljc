@@ -50,10 +50,12 @@
   (hooks/use-geo-location))
 
 (def loading? (comp async/loading? deref async/!status))
-(def message (comp async/error deref async/!status))
-(def error? (comp boolean message))
-(defn status [cell] (some #{:error :loading} @(async/!status cell)))
+(def message (comp first r/deref-result))
+(def error? (comp some? message))
 
+(defn status [cell]
+  (cond (loading? cell) :loading
+        (error? cell) :error))
 
 (defn dependencies [cell] (filter impl/cell? (r/get-derefs cell)))
 
