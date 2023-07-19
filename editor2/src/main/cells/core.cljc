@@ -25,6 +25,11 @@
        ~(vary-meta the-name merge options (when doc {:doc doc}))
        (impl/make-cell (fn [~'self] ~@body)))))
 
+(defn ^:macro with-view [&form &env the-cell view-expr]
+  `(~'cells.impl/->WithMeta ~the-cell {'~'cells.impl/view (fn [~'self] ~view-expr)}))
+
+(defn get-view [cell] (get (meta cell) 'cells.impl/view))
+
 (defn ^:macro timeout
   "Runs body after timeout of n milliseconds."
   [&form &env n & body]

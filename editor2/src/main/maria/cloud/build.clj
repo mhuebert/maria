@@ -8,7 +8,7 @@
             [edamame.core :as eda]
             [re-db.schema :as schema]))
 
-(defn parse-ns-meta [file]
+(defn parse-meta [file]
   (let [src (slurp file)
         [_ns name & args :as form] (eda/parse-string src)
         opts (merge {:name name} (dissoc (meta name) :row :col :end-row :end-col))
@@ -18,14 +18,14 @@
         [opts args] (if (map? (first args))
                       [(merge opts (first args)) (rest args)]
                       [opts args])
-        opts (if-let [title (or (:curriculum/title opts)
+        opts (if-let [title (or (:title opts)
                                 (->> (str/split-lines src)
                                      (drop (:end-row (meta form)))
                                      (drop-while str/blank?)
                                      first
                                      (re-find #";+\s+#+\s*(.*)")
                                      second))]
-               (assoc opts :curriculum/title title)
+               (assoc opts :title title)
                opts)]
 
     opts))
@@ -40,10 +40,16 @@
 (defn read-curriculum-namespaces []
   (mapv #(let [file (fs/file %)
                file-name (fs/file-name file)
-               m (parse-ns-meta file)]
-           (assoc m :curriculum/file-name file-name
-                    :curriculum/name (last (str/split (str (:name m)) #"\."))
-                    :curriculum/hash (assets/md5 (slurp file))))
+               m (parse-meta file)
+               hash (assets/md5 (slurp file))]
+           {:db/id [:curriculum/name (last (str/split (str (:name m)) #"\."))]
+            :file/title (:title m)
+            :file/doc (:doc m)
+            :file/id (str "curriculum:" file-name)
+            :file/hash hash
+            :file/name file-name
+            :file/url (str "/curriculum/" file-name "?v=" hash)
+            :file/provider :file.provider/curriculum})
         (fs/list-dir (fs/file "src/main/maria/curriculum"))))
 
 (defn index-html []
@@ -55,7 +61,9 @@
               :props/html {:class "bg-neutral-100"}
               :body [:div#maria-live]
               :scripts/body [{:type "application/re-db:schema"
-                              :value (str {:curriculum/name (merge schema/unique-id
+                              :value (str {:file/id (merge schema/unique-id
+                                                           schema/string)
+                                           :curriculum/name (merge schema/unique-id
                                                                    schema/string)})}
                              {:type "application/re-db:tx"
                               :value (conj (read-curriculum-namespaces)
@@ -67,11 +75,11 @@
   {:shadow.build/stage :flush}
   [state]
   (defonce _tailwind (bp/process
-                      {:in :inherit
-                       :out :inherit
-                       :err :inherit
-                       :shutdown bp/destroy-tree}
-                      "npx tailwindcss -w -i src/maria.cloud.css -o public/maria.cloud.css"))
+                       {:in :inherit
+                        :out :inherit
+                        :err :inherit
+                        :shutdown bp/destroy-tree}
+                       "npx tailwindcss -w -i src/maria.cloud.css -o public/maria.cloud.css"))
   state)
 
 (defn copy-curriculum! {:shadow.build/stage :flush}

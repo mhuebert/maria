@@ -21,6 +21,17 @@
     .gap-list {
         @apply gap-[6px]
     }
+    .rotate-4s {
+        animation: rotation 4s infinite linear;
+    }
+
+    .rotate-3s {
+        animation: rotation 3s infinite linear;
+    }
+
+    .rotate-2s {
+        animation: rotation 2s infinite linear;
+    }
 }
 
 /* ProseMirror */
@@ -299,4 +310,13 @@ button {
 
 *[data-highlighted] .text-menu-muted, .text-menu-muted[data-highlighted], *[data-selected] .text-menu-muted, .text-menu-muted[data-selected] {
     color: inherit;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

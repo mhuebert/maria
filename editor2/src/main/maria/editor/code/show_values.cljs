@@ -276,7 +276,9 @@
           error (show-error opts error)
           #_cell-value-circle
           ;; should we indicate that this is a cell somehow?
-          :else (show opts value))))
+          :else (show opts (if-let [v (cells/get-view cell)]
+                             (v cell)
+                             value)))))
 
 (v/defview show-ns [opts ns]
   [:div.text-sm.font-mono

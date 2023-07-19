@@ -1,6 +1,5 @@
 (ns maria.curriculum.example-gallery
-  {:curriculum/title "Example Gallery"
-   :curriculum/description "See what other people have made using Maria"}
+  "See what other people have made using Maria"
   (:require [cells.core :refer :all]
             [shapes.core :refer :all]))
 

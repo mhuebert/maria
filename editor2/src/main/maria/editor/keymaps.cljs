@@ -9,6 +9,7 @@
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
+            [maria.editor.code.commands :as commands]
             [maria.editor.code.commands :as code.commands]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :refer [schema]]
@@ -17,6 +18,7 @@
             [nextjournal.clojure-mode.commands :refer [paredit-index]]
             [re-db.hooks :as h]
             [re-db.reactive :as r]
+            [re-db.util :as u]
             [yawn.view :as v]))
 
 (def mac? (and (exists? js/navigator)
@@ -399,26 +401,116 @@
 (register-commands! commands:code)
 (register-commands! commands:global)
 
+(defn segment-str [segment]
+  (case segment
+    "Mod" (if mac? "⌘" "Ctrl")
+    "Alt" (if mac? "⌥" "Alt")
+    "Ctrl" (if mac? "⌃" "Ctrl")
+    ;"m3" (if mac? "Ctrl" "Meta")
+    "ArrowLeft" "◄"
+    "ArrowRight" "►"
+    "ArrowUp" "▲"
+    "ArrowDown" "▼"
+    "Backspace" "⌫"
+    "Shift" "⇧"
+    "Tab" "⇥"
+    "Enter" "⏎"
+    "\\" "\\"
+    ;; ⌫
+    (str/capitalize segment)))
+
+(defn binding-str [binding]
+  (str/join (map segment-str (str/split (name binding) #"\-"))))
+
 (defn show-binding [binding]
   (v/x [:div.inline-flex
         {:class "gap-[2px]"}
         (map-indexed (fn [i segment]
-                       [:span {:key i}
-                        (case segment
-                          "Mod" (if mac? "⌘" "Ctrl")
-                          "Alt" (if mac? "⌥" "Alt")
-                          "Ctrl" (if mac? "⌃" "Ctrl")
-                          ;"m3" (if mac? "Ctrl" "Meta")
-                          "ArrowLeft" "◄"
-                          "ArrowRight" "►"
-                          "ArrowUp" "▲"
-                          "ArrowDown" "▼"
-                          "Backspace" "⌫"
-                          "Shift" "⇧"
-                          "Tab" "⇥"
-                          "Enter" "⏎"
-                          "\\" "\\"
-                          ;; ⌫
-                          (str/capitalize segment))])
+                       [:span {:key i} (segment-str segment)])
                      (str/split (name binding) #"\-"))]))
 
+(defn active? [context cmd]
+  (let [{:as ctx :keys [ProseView CodeView]} context
+        {:keys [kind] pred :when
+         :or   {pred (constantly true)}} cmd]
+    (boolean
+      (case kind :prose (and ProseView (pred ctx))
+                 :code (and CodeView (pred ctx))
+                 (pred ctx)))))
+
+(defonce !context (atom {}))
+
+(defn get-context []
+  (merge @!context
+         (when-let [^js ProseView (:ProseView @!context)]
+           (let [code-context (let [^js node (commands/prose:cursor-node (.-state ProseView))]
+                                (when (= (.-type node) (.. schema -nodes -code_block))
+                                  (let [CodeView (-> ProseView
+                                                     (j/get-in [:docView :children])
+                                                     (u/find-first #(identical? node (j/get % :node)))
+                                                     (j/get-in [:spec :CodeView]))]
+                                    {:NodeView (j/get CodeView :NodeView)
+                                     :CodeView CodeView})))]
+
+             (merge {:ProseView ProseView
+                     :file/id (j/get ProseView "file/id")}
+                    code-context
+                    (if code-context
+                      {:focused/code true}
+                      {:focus/prose true}))))))
+
+(defn resolve-command
+  ([cmd] (resolve-command (get-context) cmd))
+  ([context cmd]
+   (let [cmd (if (keyword? cmd)
+               (@!command-registry cmd)
+               cmd)
+         cmd (assoc cmd :active? (active? context cmd))
+         cmd (if-let [prepare (:prepare cmd)]
+               (prepare cmd context)
+               cmd)]
+     (assoc cmd :context context))))
+
+(defn run-prosemirror [{:keys [ProseView]} f]
+  (when ProseView
+    (j/let [^js {:as view :keys [state dispatch]} ProseView]
+      (f state dispatch view))))
+
+(defn run-codemirror [{:keys [CodeView]} f]
+  (when CodeView
+    (f CodeView)))
+
+(defn run-command
+  ([cmd] (run-command (get-context) cmd))
+  ([context cmd]
+   (let [{:keys [f kind active?]} (resolve-command context cmd)]
+     (when active?
+       (case kind
+         :prose (run-prosemirror context f)
+         :code (run-codemirror context f)
+         (f context))))))
+
+(defn use-global-keymap []
+  (let [bindings (h/use-deref
+                   (h/use-memo
+                     #(r/reaction
+                        (->> @!commands
+                             (remove (comp #{:prose :code} :kind val))
+                             (mapcat (fn [[id {:as cmd :keys [bindings f]}]]
+                                       (for [binding bindings]
+                                         [binding (fn [& _] (run-command cmd))])))
+                             (into {})))))]
+    (h/use-effect
+      (fn []
+        (let [on-keydown (ui/keydown-handler bindings)]
+          (.addEventListener js/window "keydown" on-keydown)
+          #(.removeEventListener js/window "keydown" on-keydown)))
+      [bindings])))
+
+(defonce !command-list (r/reaction (remove :hidden? (vals @!commands))))
+
+(defn current-commands []
+  (into []
+        (comp (map (partial resolve-command (get-context)))
+              (filter :active?))
+        @!command-list))

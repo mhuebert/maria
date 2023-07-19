@@ -9,26 +9,30 @@
             ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
+            [maria.cloud.persistence :as persist]
+            [maria.cloud.menubar :as menu]
             [maria.editor.code.NodeView :as NodeView]
             [maria.editor.code.commands :as commands]
             [maria.editor.code.parse-clj :as parse-clj :refer [clj->md]]
             [maria.editor.code.sci :as sci]
             [maria.editor.keymaps :as keymaps]
-            [maria.cloud.persistence :as persist]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :as markdown]
+            [maria.editor.util :as u]
+            [maria.ui :as ui]
+            [re-db.reactive :as r]
             [yawn.hooks :as h]
-            [maria.cloud.local :as local]))
+            [yawn.view :as v]))
 
 (defonce focused-state-key (new p.state/PluginKey "focused-state"))
 
 (defn focused-state-plugin []
   (js
-    (new p.state/Plugin {:key   focused-state-key
-                         :state {:init  (fn [] false)
+    (new p.state/Plugin {:key focused-state-key
+                         :state {:init (fn [] false)
                                  :apply (fn [transaction prev-focus]
-                                          (if-some ^:clj [new-focus (.getMeta transaction focused-state-key)]
+                                          (if-some [new-focus (.getMeta transaction focused-state-key)]
                                             new-focus
                                             prev-focus))}
                          :props {:handleDOMEvents
@@ -67,20 +71,20 @@
 (defonce !mounted-view (atom nil))
 
 (defn init [{:as opts :keys [id
-                             persisted-value
+                             on-doc
+                             default-value
                              make-sci-ctx]
              :or {make-sci-ctx sci/initial-context}}
             ^js element]
-  ;; TODO
-  ;; think through how we access local/persisted values for a doc
-  (let [ProseState (js (.create p.state/EditorState {:doc     (-> (or (local/get id) persisted-value)
-                                                                  parse-clj/clj->md
-                                                                  markdown/md->doc)
+  {:pre [default-value]}
+  (let [ProseState (js (.create p.state/EditorState {:doc (-> default-value
+                                                              parse-clj/clj->md
+                                                              markdown/md->doc)
                                                      :plugins (plugins)}))
-        autosave! (persist/autosave-fn)
+        autosave! (persist/autosave-local-fn)
         ProseView (js (-> (p.view/EditorView. {:mount element}
-                                              {:state               ProseState
-                                               :nodeViews           {:code_block NodeView/editor}
+                                              {:state ProseState
+                                               :nodeViews {:code_block NodeView/editor}
                                                #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
                                                ;; no-op tx for debugging
                                                :dispatchTransaction (fn [tx]
@@ -89,22 +93,37 @@
                                                                               next-state (.apply prev-state tx)]
                                                                           (.updateState view next-state)
                                                                           (autosave! id prev-state next-state))))})
-                          (j/assoc! :!sci-ctx (atom (make-sci-ctx)))))]
-    (reset! !mounted-view ProseView)
+                          (j/assoc! :!sci-ctx (atom (make-sci-ctx))
+                                    "file/id" id)))]
+    (swap! keymaps/!context assoc :ProseView ProseView)
     (commands/prose:eval-doc! ProseView)
-    #(do (when (identical? @!mounted-view ProseView) (reset! !mounted-view nil))
+    (j/call ProseView :focus)
+    #(do (swap! keymaps/!context u/dissoc-value :ProseView ProseView)
          (j/call ProseView :destroy))))
-
-(defn use-editor
-  "Returns a ref for the element where the editor is to be mounted."
-  [options]
-  (let [!ref (h/use-ref nil)]
-    (h/use-effect
-      (fn []
-        (when-let [element @!ref]
-          (init options element)))
-      [@!ref (:id options)])
-    !ref))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))
+
+(defn use-global-doc-id! [id]
+  (let [!content (ui/use-context ::menu/!content)]
+    (h/use-effect
+      (fn []
+        (let [content (v/x [menu/doc-menu id])]
+          (reset! !content content)
+          #(swap! !content (fn [x]
+                             (if (identical? x content)
+                               nil
+                               x)))))
+      [id])))
+
+(ui/defview editor [options]
+  "Returns a ref for the element where the editor is to be mounted."
+  (let [!ref (h/use-state nil)]
+    ;; mount the editor
+    (h/use-effect
+      #(when-let [element @!ref]
+         (init options element))
+      [@!ref (:id options)])
+    ;; set global doc id
+    (use-global-doc-id! (:id options))
+    [:div.relative.notebook.my-4 {:ref #(when % (reset! !ref %))}]))

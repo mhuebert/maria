@@ -72,10 +72,10 @@
 
 (js
   (defn open-link-on-backspace [{:keys [selection]} dispatch view]
-    (let [$cursor (.-$cursor selection)
-          [_ _ to] (resolve-mark $cursor mark:link)]
-      (when (= to (.-pos $cursor))
-        (open-link view $cursor)
+    (let [$from (.-$from selection)
+          [_ _ to] (resolve-mark $from mark:link)]
+      (when (= to (.-pos $from))
+        (open-link view $from)
         true))))
 
 (defn on-keys

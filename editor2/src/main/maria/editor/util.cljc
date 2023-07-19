@@ -92,3 +92,14 @@
                             (when (= @!current-key key) (v! result))))
                      deps)
        v)))
+
+(defn update-some [m updaters]
+  (reduce-kv (fn [m k f]
+               (if-let [v (get m k)]
+                 (assoc m k (f v))
+                 m)) m updaters))
+
+(defn dissoc-value [m k v]
+  (cond-> m
+          (identical? (m k) v)
+          (dissoc k)))

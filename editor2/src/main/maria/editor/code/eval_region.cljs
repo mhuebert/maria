@@ -59,20 +59,18 @@
   (dispatch #js{:effects (.of modifier-effect value)
                 :userEvent "evalregion"}))
 
-(j/defn mark [spec ^:js {:keys [from to]}]
-  (-> (.mark Decoration spec)
-      (.range from to)))
-
-
 (defn cursor-range [^js state]
   (if (.. state -selection -main -empty)
     (node-at-cursor state)
     (.. state -selection -main)))
 
-(defn deco-set
+(j/defn deco-set
   ([] (.-none Decoration))
-  ([spec range]
-   (.set Decoration #js[(mark spec range)])))
+  ([spec ^js {:keys [from to]}]
+   (if (= from to)
+     (deco-set)
+     (.set Decoration #js[(-> (.mark Decoration spec)
+                              (.range from to))]))))
 
 (def eval-regions
   (let [bg (fn [color] (j/lit {:attributes {:style (str "background-color: " color ";")}}))

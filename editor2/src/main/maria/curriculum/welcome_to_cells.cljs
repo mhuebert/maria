@@ -1,10 +1,9 @@
 (ns maria.curriculum.welcome-to-cells
-  {:curriculum/title "Cells Quickstart"
-   :curriculum/description "Learn how to make things come alive and change over time."}
+  "Learn how to make things come alive and change over time."
   (:require [cells.core :refer :all]
             [shapes.core :refer :all]))
 
-;; # Say Hello to Cells
+;; # Welcome to Cells
 
 ;; Welcome! On this page, we are going to introduce something called a ‘cell’, which will help you make code come alive.
 

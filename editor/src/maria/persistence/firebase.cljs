@@ -42,7 +42,6 @@
   (tokens/clear-tokens)
   (.signOut Auth))
 
-
 (defonce _auth_callback_
          (try
            (.onAuthStateChanged

@@ -1,9 +1,7 @@
 (ns maria.curriculum.clojure-with-shapes
-  {:curriculum/title "Learn Clojure with Shapes"
-   :curriculum/description "Your journey begins here!"}
   (:require [shapes.core :refer :all]))
 
-;; # Hi!
+;; # Learn Clojure with Shapes
 
 ;; This environment is called Maria. We're going to learn to program with Maria. 😃 Don't worry if anything's new or a little confusing at first–we'll explain everything as we go.
 

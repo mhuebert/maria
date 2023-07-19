@@ -49,7 +49,7 @@
 
 (v/defview code-row [^js {:as this :keys [!result !ui-state mounted! id]}]
   (let [ref (h/use-callback (fn [el] (when el (mounted! el))))
-        hide-source? (:hide-source? (h/use-deref !ui-state) (:curriculum/title (meta (:value @!result))))
+        hide-source? (:hide-source? (h/use-deref !ui-state) (:title (meta (:value @!result))))
         classes (v/classes ["absolute top-0 right-1 z-10"
                             "w-6 h-6"
                             "inline-flex items-center justify-center"

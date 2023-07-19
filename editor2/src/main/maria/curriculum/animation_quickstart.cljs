@@ -1,10 +1,9 @@
 (ns maria.curriculum.animation-quickstart
-  {:curriculum/title "Animation Quickstart"
-   :curriculum/description "Get a running start at making basic animations using the Shapes library."}
+  "Get a running start at making basic animations using the Shapes library."
   (:require [cells.core :refer :all]
             [shapes.core :refer :all]))
 
-;; # Animations Quick-Start
+;; # Animation Quick-Start
 
 ;; This is a quick-start guide for drawing animations. The goal of this document is to equip you with templates to give you a running start at making basic animations. From there you can do many fun and complex things.
 

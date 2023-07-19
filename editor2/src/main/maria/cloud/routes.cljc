@@ -22,8 +22,7 @@
      {"" 'maria.cloud.pages.landing/page
       ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
       ["gist/" :gist/id] 'maria.cloud.views/gist
-
-
+      ["local/" :local/id] 'maria.cloud.views/local
       "intro" [::redirect "/curriculum/clojure-with-shapes"]}])))
 
 (defn match-route [path]
@@ -52,6 +51,10 @@
   (cond-> (bidi/path-for @!routes view (dissoc params :query))
           query
           (-> (query-params/merge-query query) :path)))
+
+#?(:cljs
+   (defn navigate! [view & {:as params}]
+     (pushy/set-token! history (path-for view params))))
 
 #?(:cljs
    (defn init []

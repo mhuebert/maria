@@ -1,46 +1,54 @@
 (ns maria.cloud.views
   (:require [applied-science.js-interop :as j]
             [maria.cloud.github :as gh]
-            [maria.cloud.menubar :as menubar]
             [maria.editor.core :as prose]
-            [maria.editor.icons :as icons]
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [promesa.core :as p]
             [re-db.api :as db]
-            [yawn.hooks :as hooks]
-            [yawn.view :as v]))
+            [yawn.hooks :as h]
+            [maria.cloud.persistence :as persist]))
 
-(ui/defview editor [options]
-  [:div.relative.notebook.my-4 {:ref (prose/use-editor options)}])
-
-(defn doc-title [title]
-  (menubar/title!
-    [:div.m-1.px-3.py-1.bg-zinc-100.border.border-zinc-200.rounded
-     title
-     [icons/chevron-down:mini "w-4 h-4 ml-1 -mr-1 text-zinc-500"]]))
+(defn use-persisted-file [id v]
+  (h/use-effect (fn []
+                  (when (and id v)
+                    (reset! (persist/persisted-ratom id) v)))
+                [id v]))
 
 (ui/defview curriculum
   [{:as props :curriculum/keys [name]}]
-  (let [{:curriculum/keys [hash file-name]} (db/get [:curriculum/name name])
-        url (str "/curriculum/" file-name "?v=" hash)
-        text (u/use-promise #(p/-> (u/fetch url) (j/call :text)) [url])]
-    (when text
-      [:<>
-       (doc-title (str "curriculum / " name))
-       [editor {:id              url
-                :persisted-value text}]])))
+  (let [{:as file
+         :keys [file/id
+                file/url]} (db/get [:curriculum/name name])
+        source (u/use-promise #(p/-> (u/fetch url)
+                                     (j/call :text))
+                              name)]
+    (use-persisted-file id (assoc file :file/source source))
+    (when source
+      [prose/editor {:id id
+                     :default-value (or (:file/source @(persist/local-ratom id))
+                                        source)}])))
 
-(ui/defview gist [{:gist/keys [id]}]
-  (let [{:keys                             [gist/id]
-         [{:gist/keys  [filename content]}] :gist/clojure-files}
-        (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" id)
-                                       :headers (gh/auth-headers))
-                              (j/call :json)
-                              gh/parse-gist)
-                       [id])]
-    (when content
-      [:<>
-       [doc-title filename]
-       [editor {:id              id
-                :persisted-value content}]])))
+
+
+(ui/defview gist
+  {:key :gist/id}
+  [{gist-id :gist/id}]
+  (let [{:keys [file/id file/source] :as file} (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" gist-id)
+                                                                              :headers (gh/auth-headers))
+                                                                     (j/call :json)
+                                                                     gh/parse-gist)
+                                                              [gist-id])]
+    (use-persisted-file id file)
+    (when source
+      [prose/editor {:id id
+                     :default-value (or (:file/source @(persist/local-ratom id))
+                                        source)}])))
+
+(defn local-file [id]
+  {:file/id (str "local:" id)
+   :file/provider :file.provider/local})
+
+(ui/defview local [{:keys [local/id]}]
+  [prose/editor {:id id
+                 :default-value (:file/source @(persist/local-ratom id))}])

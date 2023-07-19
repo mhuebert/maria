@@ -1,6 +1,7 @@
 (ns maria.cloud.sidebar
   (:require ["@radix-ui/react-accordion" :as acc]
             [applied-science.js-interop :as j]
+            [clojure.string :as str]
             [maria.cloud.github :as gh]
             [maria.cloud.routes :as routes]
             [maria.editor.icons :as icons]
@@ -55,26 +56,29 @@
                                     (j/call :json))
                              [username])]
     [acc-section "My Gists"
-     (for [{:gist/keys [id description clojure-files]} (keep gh/parse-gist gists)]
+     (for [{:keys [file/name :gist/id :gist/description]} (keep gh/parse-gist gists)]
        (v/x [acc-item {:href (routes/path-for 'maria.cloud.views/gist
                                               {:gist/id id})
                        :key id}
-             (or (u/guard description seq) (:gist/filename (first clojure-files)))]))]))
+             (or (some-> description
+                         str/trim
+                         (str/split-lines)
+                         first
+                         (u/guard (complement str/blank?)))
+                 name)]))]))
 
 (defn curriculum-list [current-path]
   (map (fn [{:as m
-             :keys [curriculum/file-name
-                    curriculum/name
-                    curriculum/hash
-                    curriculum/title
-                    curriculum/description]}]
+             :keys [curriculum/name
+                    file/hash
+                    file/title]}]
          (let [path (routes/path-for 'maria.cloud.views/curriculum
                                      {:curriculum/name name
                                       :query {:v hash}})
                current? (= path current-path)]
            (v/x [acc-item
                  (acc-props current?
-                            {:key file-name
+                            {:key name
                              :href path})
                  title])))
        (db/where [:curriculum/name])))
@@ -98,6 +102,7 @@
 
      [acc-section "Learn"
       (curriculum-list current-path)]
-     (when-let [username (:username @gh/!user)]
+     (str (db/get ::super))
+     (when-let [username (:username (gh/get-user))]
        (user-gist-list {:username username
                         :current-path current-path}))]))

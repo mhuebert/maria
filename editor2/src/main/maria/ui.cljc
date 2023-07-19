@@ -1,5 +1,8 @@
 (ns maria.ui
-  (:require [clojure.pprint]
+  (:require #?(:cljs ["react" :as react])
+            #?(:cljs ["prosemirror-keymap" :refer [keydownHandler]])
+            [applied-science.js-interop :as j]
+            [clojure.pprint]
             [yawn.view :as v]
             [re-db.fast :as fast]
             [re-db.hooks :as hooks]
@@ -21,9 +24,9 @@
 (defmacro use-> [ref & forms]
   `(let [ref# ~ref]
      (hooks/use-deref
-      (hooks/use-memo
-       (fn []
-         (xf/map #(-> % ~@forms) ref#))))))
+       (hooks/use-memo
+         (fn []
+           (xf/map #(-> % ~@forms) ref#))))))
 
 (memo/defn-memo $gets [ref & ks]
   (r/reaction (apply fast/gets (hooks/use-deref ref) ks)))
@@ -47,3 +50,29 @@
                          "font-sans font-bold no-underline "
                          "text-black visited:text-black hover:text-black "
                          "cursor-pointer"))
+
+#?(:cljs
+   (defonce get-context (memoize (fn [_k] (react/createContext nil)))))
+
+#?(:cljs
+   (defn use-context
+     ([k not-found]
+      (or (get-context k) not-found))
+     ([k]
+      (react/useContext (get-context k)))))
+
+#?(:clj
+   (defmacro provide-context [values child]
+     (loop [values values
+            out child]
+       (if (empty? values)
+         `(v/x ~out)
+         (let [[k v] (first values)]
+           (recur (rest values)
+                  `[:el (j/get (~'maria.ui/get-context ~k) :Provider)
+                    {:value ~v}
+                    ~out]))))))
+
+(defn keydown-handler [bindings]
+  (let [handler (keydownHandler (clj->js bindings))]
+    (fn [e] (handler #js{} e))))

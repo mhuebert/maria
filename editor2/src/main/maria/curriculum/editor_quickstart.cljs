@@ -1,6 +1,5 @@
 (ns maria.curriculum.editor-quickstart
-  {:curriculum/title "Editor Quickstart"
-   :curriculum/description "How to use the Maria.cloud editor"}
+  "How to use the Maria.cloud editor"
   (:require [shapes.core :refer :all]))
 
 ;; # Editor Quickstart
