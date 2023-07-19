@@ -54,14 +54,14 @@
          (str/join "\n\n"))))
 
 (comment
-  (-> "```\n(+ 1 2)\n```" markdown/md->doc doc->clj))
+  (-> "```\n(+ 1 2)\n```" markdown/markdown->doc doc->clj))
 
 (defn md->clj
   "Given a Markdown string, returns Clojure source.
   Code blocks (```) are treated as Clojure code unless marked with a
   non-clj language (eg. ```python). Everything else becomes a line comment."
   [md-string]
-  (-> md-string markdown/md->doc doc->clj))
+  (-> md-string markdown/markdown->doc doc->clj))
 
 (comment
   (= (md->clj "# hello")

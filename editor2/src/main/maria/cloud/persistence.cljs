@@ -9,7 +9,8 @@
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [promesa.core :as p]
-            [re-db.api :as db]))
+            [re-db.api :as db]
+            [maria.editor.code.commands :as commands]))
 
 ;; Maria is currently a single-file editor.
 ;; When loading a gist, we pick the first Clojure file.
@@ -151,10 +152,11 @@
                            (new-local-file! {:file/source source
                                              :file/name (some-> (:file/name (current-file id))
                                                                 (swap-name (partial str "copy_of_")))})))}
-   :file/revert {:when (comp changes :file/id)
-                 ;; :when local state diverges from gist state.
-                 ;; reset local state to gist state.
-                 :f #(reset! (local-ratom (:file/id %)) nil)}
+   :file/revert {:when (comp seq changes :file/id)
+                 :f (fn [{:keys [file/id ProseView]}]
+                      (j/let [source (:file/source @(persisted-ratom id))]
+                        (reset! (local-ratom id) nil)
+                        (commands/prose:replace-doc ProseView source)))}
    :file/save {:bindings [:Ctrl-s]
                :when (fn [{:keys [file/id]}]
                        (and (gh/get-token)

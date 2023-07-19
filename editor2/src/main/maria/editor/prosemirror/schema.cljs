@@ -3,5 +3,5 @@
 
 (def schema md/schema)
 (def parser md/defaultMarkdownParser)
-(defn md->doc [source] (.parse parser source))
-(defn doc->md [doc] (.serialize md/defaultMarkdownSerializer doc))
+(defn markdown->doc [source] (.parse parser source))
+(defn doc->markdown [doc] (.serialize md/defaultMarkdownSerializer doc))

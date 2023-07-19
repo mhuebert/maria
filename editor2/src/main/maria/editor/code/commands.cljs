@@ -6,8 +6,9 @@
             [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
             [maria.editor.code.eval-region :as eval-region]
+            [maria.editor.code.parse-clj :as parse-clj]
             [maria.editor.code.sci :as sci]
-            [maria.editor.prosemirror.schema :refer [schema]]
+            [maria.editor.prosemirror.schema :refer [schema markdown->doc]]
             [maria.editor.util :as u]
             [nextjournal.clojure-mode.commands :refer [paredit-index]]
             [nextjournal.clojure-mode.node :as n]
@@ -20,6 +21,18 @@
 (j/defn set-result! [^js {:keys [!result ProseView]} v]
   (when-not (j/get ProseView :isDestroyed)
     (reset! !result (assoc v :key (vswap! !result-key inc)))))
+
+(js
+  (defn prose:replace-doc [{:as ProseView :keys [state]} new-source]
+    (let [new-doc (-> new-source
+                      parse-clj/clojure->markdown
+                      markdown->doc)]
+      (.dispatch ProseView
+                 (.. state -tr
+                     (replace 0
+                              (.. state -doc -content -size)
+                              (new Slice (.-content new-doc) 0 0))))
+      true)))
 
 (js
   (defn prose:cursor-node [{:as state :keys [selection]}]

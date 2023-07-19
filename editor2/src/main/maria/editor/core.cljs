@@ -13,12 +13,12 @@
             [maria.cloud.menubar :as menu]
             [maria.editor.code.NodeView :as NodeView]
             [maria.editor.code.commands :as commands]
-            [maria.editor.code.parse-clj :as parse-clj :refer [clj->md]]
+            [maria.editor.code.parse-clj :as parse-clj :refer [clojure->markdown]]
             [maria.editor.code.sci :as sci]
             [maria.editor.keymaps :as keymaps]
             [maria.editor.prosemirror.input-rules :as input-rules]
             [maria.editor.prosemirror.links :as links]
-            [maria.editor.prosemirror.schema :as markdown]
+            [maria.editor.prosemirror.schema :as schema]
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [re-db.reactive :as r]
@@ -78,8 +78,8 @@
             ^js element]
   {:pre [default-value]}
   (let [ProseState (js (.create p.state/EditorState {:doc (-> default-value
-                                                              parse-clj/clj->md
-                                                              markdown/md->doc)
+                                                              parse-clj/clojure->markdown
+                                                              schema/markdown->doc)
                                                      :plugins (plugins)}))
         autosave! (persist/autosave-local-fn)
         ProseView (js (-> (p.view/EditorView. {:mount element}

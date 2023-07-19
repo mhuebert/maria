@@ -1,5 +1,6 @@
 (ns maria.editor.code.parse-clj
   (:require ["@nextjournal/lezer-clojure" :as lezer-clj]
+            [maria.editor.prosemirror.schema :as schema]
             [applied-science.js-interop :as j]
             [clojure.string :as str]))
 
@@ -66,7 +67,7 @@
                 :prose source)))
        (str/join \newline)))
 
-(def clj->md (comp blocks->md clj->blocks))
+(def clojure->markdown (comp blocks->md clj->blocks))
 
 (def sample-source
   "(ns my.app)
