@@ -6,7 +6,8 @@
             [cljs-static.assets :as assets]
             [clojure.string :as str]
             [edamame.core :as eda]
-            [re-db.schema :as schema]))
+            [re-db.schema :as schema]
+            [maria.editor.util :as u]))
 
 (defn parse-meta [file]
   (let [src (slurp file)
@@ -18,16 +19,9 @@
         [opts args] (if (map? (first args))
                       [(merge opts (first args)) (rest args)]
                       [opts args])
-        opts (if-let [title (or (:title opts)
-                                (->> (str/split-lines src)
-                                     (drop (:end-row (meta form)))
-                                     (drop-while str/blank?)
-                                     first
-                                     (re-find #";+\s+#+\s*(.*)")
-                                     second))]
+        opts (if-let [title (u/extract-title src)]
                (assoc opts :title title)
                opts)]
-
     opts))
 
 (defn current-sha

@@ -87,7 +87,7 @@
 
 (ui/defview doc-menu [id]
   (let [current (persist/current-file id)
-        title (or (:file/name current) "Untitled.cljs")
+        title (or (:file/name current) "untitled.cljs")
         !initial-title (h/use-ref title)
         !editing? (h/use-state false)
         stop-editing! (fn [& _]
@@ -135,8 +135,7 @@
          [icons/chevron-down:mini "w-4 h-4"]]]]
       [:el menu/Portal
        [:el menu/Content {:class "MenubarContent mt-2"}
-        (when (#{:file.provider/local
-                 :file.provider/gist} provider)
+        (when (persist/writable? id)
           [item {:on-click start-editing!} "Rename"])
 
 

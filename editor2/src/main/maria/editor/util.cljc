@@ -11,12 +11,12 @@
    (defn use-watch [x]
      (let [id (h/use-callback #js{})]
        (h/use-sync-external-store
-        (h/use-callback
-         (fn [changed!]
-           (add-watch x id (fn [_ _ _ _] (changed!)))
-           #(remove-watch x id))
-         #js[x])
-        #(r/peek x)))))
+         (h/use-callback
+           (fn [changed!]
+             (add-watch x id (fn [_ _ _ _] (changed!)))
+             #(remove-watch x id))
+           #js[x])
+         #(r/peek x)))))
 
 (defn guard
   "Returns x when (f x) is truthy"
@@ -67,10 +67,10 @@
      "Uses browser's fetch api to request url"
      [url & {:as opts :keys [headers then] :or {then identity}}]
      (.catch
-      (p/-> (js/fetch url (j/lit {:method "GET"
-                                  :headers (clj->js (or headers {}))}))
-            then)
-      (fn [e] (js/console.debug e)))))
+       (p/-> (js/fetch url (j/lit {:method "GET"
+                                   :headers (clj->js (or headers {}))}))
+             then)
+       (fn [e] (js/console.debug e)))))
 
 #?(:cljs
    (defn use-fetch
@@ -103,3 +103,30 @@
   (cond-> m
           (identical? (m k) v)
           (dissoc k)))
+
+(defn extract-title [source]
+  (some->> (str/split-lines source)
+           (drop-while #(not (re-find #"^\s*;" %)))
+           (drop-while #(re-find #"^[;\s]+$" %))
+           first
+           (re-find #"\s*;+[\s#]*(.*)")
+           second))
+
+(defn slug [title]
+  (-> title
+      (str/replace #"\s+" "_")
+      (str/replace #"[^\w\d_]" "")
+      str/lower-case
+      (str/split #"_+")
+      (as-> slug
+            (->> (reduce (fn [out segment]
+                           (if (>= (count out) 35)
+                             (reduced out)
+                             (str out "_" segment)))
+                         (first slug)
+                         (rest slug))))))
+
+(comment
+  (some-> "; Issue #256"
+          extract-title
+          slug))

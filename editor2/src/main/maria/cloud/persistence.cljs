@@ -12,38 +12,14 @@
             [re-db.api :as db]))
 
 ;; Maria is currently a single-file editor.
-;;
-;; What we get from gist is a project; we ignore the project and just use the first Clojure file.
+;; When loading a gist, we pick the first Clojure file.
 
-(def animals
-  ["pig"
-   "cow"
-   "mole"
-   "vole"
-   "goat"
-   "sheep"
-   "horse"
-   "donkey"
-   "chicken"
-   "duck"
-   "goose"
-   "turkey"
-   "pigeon"
-   "rabbit"
-   "guinea pig"
-   "hamster"
-   "gerbil"
-   "rat"
-   "mouse"
-   "cat"
-   "dog"
-   "ferret"
-   "parrot"])
+(defn extract-filename [source]
+  (some-> (u/extract-title source)
+          u/slug
+          (str ".cljs")))
 
-(defn untitled-filename []
-  (str "untitled_" (rand-nth animals) ".cljs"))
-
-(def ratom
+(def entity-ratom
   (memoize
     (fn [db-id]
       (reify
@@ -64,18 +40,19 @@
 
 (defn local-ratom [id]
   (local-sync/sync-entity! id)
-  (ratom (local-sync/db-id id)))
+  (entity-ratom (local-sync/db-id id)))
 
 (defn persisted-ratom [id]
-  (ratom [:file/id id]))
+  (entity-ratom [:file/id id]))
 
 (def state-source (comp doc/doc->clj (j/get :doc)))
 
-(defn new-local-file! [& [{:file/keys [source name]}]]
+(defn new-local-file! [& [{:as file
+                           :file/keys [source name]}]]
   (let [id (str (random-uuid))]
     (reset! (local-ratom id)
             {:file/source (or source "")
-             :file/name (or name (untitled-filename))})
+             :file/name (or name (extract-filename source))})
     (routes/navigate! 'maria.cloud.views/local {:local/id id})))
 
 (defn current-file [id]
@@ -145,7 +122,10 @@
         local @!local
         !persisted (persisted-ratom id)
         source (:file/source local)
-        body {:files {(:file/name local) {:content source}}}]
+        filename (or (:file/name local)
+                     (extract-filename source)
+                     "untitled.cljs")
+        body {:files {filename {:content source}}}]
     (when (seq body)
       (p/let [file (p/-> (gh-fetch (str "https://api.github.com/gists")
                                    {:method "POST"
@@ -157,8 +137,7 @@
           (routes/navigate! 'maria.cloud.views/gist {:gist/id (:gist/id file)}))))))
 
 (defn writable? [id]
-  (#{:file.provider/local
-     :file.provider/gist} (:file/provider (current-file id))))
+  (not= :file.provider/curriculum (:file/provider (current-file id))))
 
 (keymaps/register-commands!
   {:file/new {:bindings [(if keymaps/mac?
@@ -168,10 +147,10 @@
    :file/duplicate {:when (every-pred :ProseView :file/id)
                     ;; create a new gist with contents of current doc.
                     :f (fn [{:keys [ProseView file/id]}]
-                         (new-local-file! {:file/source (state-source (j/get ProseView :state))
-                                           :file/name (if-let [name (:file/name (current-file id))]
-                                                        (swap-name name str "_copy")
-                                                        (untitled-filename))}))}
+                         (let [source (state-source (j/get ProseView :state))]
+                           (new-local-file! {:file/source source
+                                             :file/name (some-> (:file/name (current-file id))
+                                                                (swap-name (partial str "copy_of_")))})))}
    :file/revert {:when (comp changes :file/id)
                  ;; :when local state diverges from gist state.
                  ;; reset local state to gist state.
@@ -179,7 +158,7 @@
    :file/save {:bindings [:Ctrl-s]
                :when (fn [{:keys [file/id]}]
                        (and (gh/get-token)
-                           (writable? id)))
+                            (writable? id)))
                ;; if local, create a new gist and then navigate there.
                ;; if gist, save a new revision of that gist.
                :f (fn [{:keys [file/id]}]
