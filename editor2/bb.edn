@@ -7,7 +7,7 @@
                     (shell "rsync -av src/main/maria/curriculum/ public/curriculum"))
   css (shell "npx tailwindcss -i src/maria.cloud.css -o public/maria.cloud.css")
   release (do (run 'copy-curriculum)
-              (shell "yarn shadow-cljs release editor --debug")
+              (shell "yarn shadow-cljs release editor")
               (prn :public (shell "ls public"))
               (run 'css))
   debug (shell "yarn shadow-cljs release editor --debug")}}
