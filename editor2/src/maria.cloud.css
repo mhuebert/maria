@@ -18,6 +18,10 @@
 }
 
 @layer utilities {
+
+    ::placeholder, .placeholder {
+        @apply text-black/50
+    }
     .gap-list {
         @apply gap-[6px]
     }
@@ -320,3 +324,4 @@ button {
         transform: rotate(360deg);
     }
 }
+

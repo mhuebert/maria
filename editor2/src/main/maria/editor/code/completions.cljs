@@ -50,16 +50,21 @@
                           (to-array
                            (keep (fn [[s s-var]]
                                    (when-let [{:as m :keys [ns name]} (meta s-var)]
-                                     (let [sym-name (c/name name)
-                                           ns-name (sci.ns/sci-ns-name ns)]
-                                       #js{:label sym-name
-                                           :sym (symbol ns-name sym-name)
-                                           :detail ns-name
-                                           ;; :type "y" ;; indicates icon
-                                           ;; :detail ;; short string shown after label
-                                           ;; :info ;; shown when completion is selected
-                                           ;; :apply ".." ;; a string to replace completion range with, or function that will be called
-                                           })))
+                                     (try
+                                       (let [sym-name (c/name name)
+                                             ns-name (sci.ns/sci-ns-name ns)]
+                                         #js{:label sym-name
+                                             :sym (symbol ns-name sym-name)
+                                             :detail ns-name
+                                             ;; :type "y" ;; indicates icon
+                                             ;; :detail ;; short string shown after label
+                                             ;; :info ;; shown when completion is selected
+                                             ;; :apply ".." ;; a string to replace completion range with, or function that will be called
+                                             })
+                                       (catch js/Error e
+                                         (js/console.error e)
+                                         (prn :s-var s-var)
+                                         (prn :meta (meta s-var))))))
                                  syms))}]
           results)))))
 

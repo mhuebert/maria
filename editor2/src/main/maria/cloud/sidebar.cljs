@@ -30,7 +30,7 @@
 
 (def acc-item (v/from-element :a.block
                               {:class ["text-sm text-black no-underline"
-                                       "px-2 mx-1 py-1 rounded"
+                                       "pr-2 pl-4 mx-1 py-1 rounded"
                                        "hover:bg-black/5 hover:text-black visited:text-black"
                                        "data-[selected=true]:bg-sky-500 data-[selected=true]:text-white"]}))
 
@@ -45,7 +45,7 @@
    [:> acc/Header
     {:class "flex flex-row h-[40px] m-0"}
     [:> acc/Trigger {:class "text-sm font-bold cursor-pointer p-2 AccordionTrigger flex-grow"}
-     [icons/chevron-right:mini "w-4 h-4 -ml-1 mr-1 AccordionChevron"]
+     [icons/chevron-right:mini "w-4 h-4 -ml-1 AccordionChevron"]
      title]]
    (into [:el.flex.flex-col.gap-1 acc/Content] items)])
 

@@ -1,12 +1,12 @@
 (ns maria.editor.code.eval-region
   (:require
-   ["@codemirror/state" :as state :refer [StateEffect StateField]]
-   ["@codemirror/view" :as view :refer [EditorView Decoration keymap]]
-   ["w3c-keyname" :refer [keyName]]
-   [applied-science.js-interop :as j]
-   [clojure.string :as str]
-   [nextjournal.clojure-mode.node :as n]
-   [nextjournal.clojure-mode.util :as u]))
+    ["@codemirror/state" :as state :refer [StateEffect StateField]]
+    ["@codemirror/view" :as view :refer [EditorView Decoration keymap]]
+    ["w3c-keyname" :refer [keyName]]
+    [applied-science.js-interop :as j]
+    [clojure.string :as str]
+    [nextjournal.clojure-mode.node :as n]
+    [nextjournal.clojure-mode.util :as u]))
 
 (defn uppermost-edge-here
   "Returns node or its highest ancestor that starts or ends at the cursor position."
@@ -46,12 +46,12 @@
 ;; Modifier field
 (defonce modifier-effect (.define StateEffect))
 (defonce modifier-field
-         (.define StateField
-                  (j/lit {:create (constantly #{})
-                          :update (fn [value ^js tr]
-                                    (or (some-> (first (filter #(.is ^js % modifier-effect) (.-effects tr)))
-                                                (j/get :value))
-                                        value))})))
+  (.define StateField
+           (j/lit {:create (constantly #{})
+                   :update (fn [value ^js tr]
+                             (or (some-> (first (filter #(.is ^js % modifier-effect) (.-effects tr)))
+                                         (j/get :value))
+                                 value))})))
 
 (defn get-modifier-field [^js state] (.field state modifier-field))
 
@@ -89,17 +89,17 @@
      #{"Meta" "Enter"} cursor-node:highlight}))
 
 (defonce region-field
-         (let [bg (fn [color] (j/lit {:attributes {:style (str "background-color: " color ";")}}))
-               mark:none (bg "transparent")
-               mark:selected (bg "rgba(0, 243, 255, 0.14)")]
-           (.define StateField
-                    (j/lit
-                     {:create (constantly (.-none Decoration))
-                      :update (j/fn [_value ^:js {:keys [state]}]
-                                (or (when (n/within-program? state)
-                                      (when-let [f (eval-regions (get-modifier-field state))]
-                                        (f state)))
-                                    (deco-set)))}))))
+  (let [bg (fn [color] (j/lit {:attributes {:style (str "background-color: " color ";")}}))
+        mark:none (bg "transparent")
+        mark:selected (bg "rgba(0, 243, 255, 0.14)")]
+    (.define StateField
+             (j/lit
+               {:create (constantly (.-none Decoration))
+                :update (j/fn [_value ^:js {:keys [state]}]
+                          (or (when (n/within-program? state)
+                                (when-let [f (eval-regions (get-modifier-field state))]
+                                  (f state)))
+                              (deco-set)))}))))
 
 (defn get-region-field [^js state] (.field state region-field))
 
@@ -115,6 +115,13 @@
   [^js state]
   (u/range-str state (or (current-range state)
                          (.. state -selection -main))))
+
+(j/defn handle-backspace [^:js {:as view :keys [state dispatch]}]
+  (j/let [^:js {:keys [from to]} (current-range state)]
+    (when (not= from to)
+      (dispatch (j/lit {:changes {:from from :to to :insert ""}
+                        :annotations (u/user-event-annotation "delete")})))
+    true))
 
 (defn extension
   "Maintains modifier-state-field, containing a map of {<modifier> true}, including Enter."
@@ -143,13 +150,7 @@
                                               (conj "Enter"))]
                              (when (not= prev next)
                                (set-modifier-field! view next))
-                             false))
-        handle-backspace (j/fn [^:js {:as view :keys [state dispatch]}]
-                           (j/let [^:js {:keys [from to]} (current-range state)]
-                             (when (not= from to)
-                               (dispatch (j/lit {:changes {:from from :to to :insert ""}
-                                                 :annotations (u/user-event-annotation "delete")})))
-                             true))]
+                             false))]
     #js[region-field
         (.. EditorView -decorations (from region-field))
         modifier-field

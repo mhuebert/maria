@@ -43,11 +43,12 @@
           (when (:bindings cmd)
             [shortcut (keymaps/show-binding (first (:bindings cmd)))])])))
 
+(def trigger-classes (v/classes ["px-1 h-7 bg-transparent hover:bg-zinc-200 rounded"
+                                 "data-[highlighted]:bg-zinc-200"
+                                 "data-[state=open]:bg-zinc-200"]))
 (def trigger
   (v/from-element menu/Trigger
-                  {:class ["px-1 h-7 bg-transparent hover:bg-zinc-200 rounded"
-                           "data-[highlighted]:bg-zinc-200"
-                           "data-[state=open]:bg-zinc-200"]}))
+                  {:class trigger-classes}))
 
 (def content
   (v/from-element menu/Content
@@ -186,7 +187,8 @@
        [:div.flex-grow]
        [command-bar/input]
        (if-let [{:as user :keys [photo-url display-name]} (gh/get-user)]
-         [menu [avatar photo-url display-name]
+         [menu [:el menu/Trigger {:class [trigger-classes
+                                          "rounded-full"]} [avatar photo-url display-name]]
           [command-item :account/sign-out]]
          (if (gh/any-tokens?)
            [icons/loading "w-5 h-5 opacity-30"]

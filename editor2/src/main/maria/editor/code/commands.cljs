@@ -2,13 +2,14 @@
   (:require ["prosemirror-model" :refer [Fragment Slice]]
             ["prosemirror-state" :refer [TextSelection Selection NodeSelection insertPoint]]
             ["prosemirror-commands" :as pm.cmd]
-            [applied-science.js-interop.alpha :refer [js]]
             [applied-science.js-interop :as j]
+            [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
             [maria.editor.code.eval-region :as eval-region]
             [maria.editor.code.sci :as sci]
             [maria.editor.prosemirror.schema :refer [schema]]
             [maria.editor.util :as u]
+            [nextjournal.clojure-mode.commands :refer [paredit-index]]
             [nextjournal.clojure-mode.node :as n]
             [promesa.core :as p]
             [sci.async :as a]
@@ -21,31 +22,34 @@
     (reset! !result (assoc v :key (vswap! !result-key inc)))))
 
 (js
+  (defn prose:cursor-node [{:as state :keys [selection]}]
+    (or (.-node selection) (.-parent (.-$from selection)))))
 
-  (defn prose:cursor-node [state]
-    (let [sel (.-selection state)]
-      (or (.-node sel) (.-parent (.-$from sel)))))
-
+(js
   (defn prose:convert-to-code [state dispatch]
     (let [{:as node :keys [type]} (prose:cursor-node state)
           {{:keys [heading paragraph code_block]} :nodes} schema]
       (when (and (#{heading paragraph} type)
                  (= 0 (.-size (.-content node))))
         ((pm.cmd/setBlockType code_block) state dispatch)
-        true)))
+        true))))
 
+
+(js
   (defn code:cursors [{{:keys [ranges]} :selection}]
     (reduce (fn [out {:keys [from to]}]
               (if (not= from to)
                 (reduced nil)
-                (j/push! out from))) [] ranges))
+                (j/push! out from))) [] ranges)))
 
+(js
   (defn code:cursor [state]
     (-> (code:cursors state)
         (u/guard #(= (count %) 1))
-        first))
+        first)))
 
-  (defn code:split [{:keys                      [state]
+(js
+  (defn code:split [{:keys [state]
                      {:keys [getPos ProseView]} :NodeView}]
     (if-let [cursor-prose-pos (some-> (code:cursor state)
                                       (u/guard #(n/program? (n/tree state %)))
@@ -56,27 +60,33 @@
                                  (split cursor-prose-pos)
                                  (scrollIntoView)))
         true)
-      false))
+      false)))
 
-  (defn code:length [state] (.. state -doc -length))
+(js
+  (defn code:length [state] (.. state -doc -length)))
 
-  (defn code:insert-another-code-block [{:keys                      [state]
+(js
+  (defn code:empty? [{:as state {:keys [length text]} :doc}]
+    (or (zero? length)
+        (and (= 1 (count text))
+             (str/blank? (first text))))))
+
+(js
+  (defn code:insert-another-code-block [{:keys [state]
                                          {:keys [ProseView getPos]} :NodeView}]
-    (let [code-length (code:length state)]
-      (if (= (code:cursor state) code-length)
-        (let [insert-pos (+ (getPos) code-length 1)
-              {{:keys [code_block]} :nodes} schema]
-          (.dispatch ProseView
-                     (doto (.. ProseView -state -tr)
-                       (.insert insert-pos (.create code_block))
-                       (as-> tr
-                             (.setSelection tr (.near TextSelection
-                                                      (.. tr -doc (resolve (+ insert-pos 2))) 1)))
-                       (.scrollIntoView)))
-          (.focus ProseView)
-          true)
-        false)))
+    (let [insert-pos (+ (getPos) (code:length state) 1)
+          {{:keys [code_block]} :nodes} schema]
+      (.dispatch ProseView
+                 (doto (.. ProseView -state -tr)
+                   (.insert insert-pos (.create code_block))
+                   (as-> tr
+                         (.setSelection tr (.near TextSelection
+                                                  (.. tr -doc (resolve (+ insert-pos 2))) 1)))
+                   (.scrollIntoView)))
+      (.focus ProseView)
+      true)))
 
+(js
   (defn code:arrow-handler
     "Moves cursor out of code block when navigating out of an edge"
     [unit dir]
@@ -111,8 +121,9 @@
                   (.dispatch (.. tr
                                  (setSelection selection)
                                  (scrollIntoView)))
-                  (.focus)))))))
+                  (.focus))))))))
 
+(js
   (defn prose:arrow-handler [dir]
     (fn [state dispatch view]
       (boolean
@@ -125,14 +136,11 @@
                 next-pos (.near Selection (.resolve doc pos) dir)]
             (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
               (dispatch (.. state -tr (setSelection next-pos)))
-              true))))))
+              true)))))))
 
-  (defn code:empty? [{{:keys [length text]} :doc}]
-    (or (zero? length)
-        (and (= 1 (count text))
-             (str/blank? (first text)))))
-
-  (defn code:remove [{:keys [getPos ProseView CodeView proseNode]}]
+(js
+  (defn code:remove [{:as CodeView
+                      {:keys [getPos ProseView proseNode]} :NodeView}]
     (let [pos (getPos)
           tr (.. ProseView -state -tr)]
       (doto tr
@@ -144,16 +152,19 @@
       (doto ProseView
         (.dispatch tr)
         (.focus)))
-    true)
+    true))
 
-  (defn code:remove-on-backspace [{:keys [state]
-                                   this  :NodeView}]
+(js
+  (defn code:remove-on-backspace [{:as CodeView
+                                   :keys [state]}]
     (when (zero? (code:cursor state))
       (when (code:empty? state)
-        (code:remove this))
-      true))
+        (code:remove CodeView))
+      true)))
 
-  (defn code:convert-to-paragraph [{:keys                      [state]
+(js
+  (defn code:convert-to-paragraph [{:as CodeView
+                                    :keys [state]
                                     {:keys [ProseView getPos]} :NodeView}]
     (when (code:empty? state)
       (let [{{:keys [paragraph]} :nodes} schema
@@ -164,12 +175,27 @@
         (doto ProseView
           (.dispatch tr)
           (.focus))
-        true)))
+        true))))
 
+(js
+  (defn code:handle-escape [{:as CodeView :keys [state]}]
+    (when (code:empty? state)
+      (code:remove CodeView)
+      true)))
+(js
+  (defn code:handle-enter [{:as CodeView :keys [state]}]
+    (or (and (code:empty? state)
+             (code:convert-to-paragraph CodeView))
+        (and (= (code:cursor state) (code:length state))
+             (code:insert-another-code-block CodeView))
+        (code:split CodeView)
+        ((:enter-and-indent paredit-index) CodeView))))
+
+(js
   (defn code:block-str [{:keys [CodeView]}]
-    (.. CodeView -state -doc (toString)))
+    (.. CodeView -state -doc (toString))))
 
-  )
+
 
 (js
   (defn index [this]
@@ -228,10 +254,10 @@
 
 (j/defn prose:eval-doc! [^js ProseView]
   (let [NodeViews (->> ProseView
-                        .-docView
-                        .-children
-                        (keep (j/get :spec))
-                        (filterv (j/get :CodeView)))
+                       .-docView
+                       .-children
+                       (keep (j/get :spec))
+                       (filterv (j/get :CodeView)))
         {:as ctx :keys [last-ns]} @(j/get ProseView :!sci-ctx)]
     (vreset! last-ns (sci.ns/sci-find-ns ctx 'user))
     ((fn continue [i]
@@ -252,4 +278,8 @@
 
   (defn code:copy-current-region [{:keys [state]}]
     (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-selection-str state))
-    true))
+    true)
+
+  (defn code:cut-current-region [{:as CodeView :keys [state]}]
+    (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-selection-str state))
+    (eval-region/handle-backspace CodeView)))

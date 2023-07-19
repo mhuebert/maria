@@ -137,8 +137,6 @@
                                           ;; event handlers are passed in as props with keys like :event/mousedown
                                           (util/handle-captured-events this)
 
-                                          (when on-mount (on-mount editor this))
-
                                           (when on-update
                                             (.on editor "change" #(do (prn :on-update (.getValue %1)) (on-update (.getValue %1)))))
 

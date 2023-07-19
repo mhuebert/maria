@@ -73,6 +73,7 @@
                     {:value ~v}
                     ~out]))))))
 
-(defn keydown-handler [bindings]
-  (let [handler (keydownHandler (clj->js bindings))]
-    (fn [e] (handler #js{} e))))
+#?(:cljs
+   (defn keydown-handler [bindings]
+     (let [handler (keydownHandler (clj->js bindings))]
+       (fn [e] (handler #js{} e)))))

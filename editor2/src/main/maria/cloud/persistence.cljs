@@ -1,12 +1,11 @@
 (ns maria.cloud.persistence
   (:require [applied-science.js-interop :as j]
-            [clojure.string :as str]
+            [goog.functions :as gf]
             [maria.cloud.github :as gh]
             [maria.cloud.local-sync :as local-sync]
+            [maria.cloud.routes :as routes]
             [maria.editor.doc :as doc]
             [maria.editor.keymaps :as keymaps]
-            [goog.functions :as gf]
-            [maria.cloud.routes :as routes]
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [promesa.core :as p]
@@ -42,8 +41,7 @@
    "parrot"])
 
 (defn untitled-filename []
-  (str
-    "untitled-" (rand-nth animals) ".cljs"))
+  (str "untitled_" (rand-nth animals) ".cljs"))
 
 (def ratom
   (memoize
@@ -158,6 +156,10 @@
           (reset! !local (select-keys file [:file/source]))
           (routes/navigate! 'maria.cloud.views/gist {:gist/id (:gist/id file)}))))))
 
+(defn writable? [id]
+  (#{:file.provider/local
+     :file.provider/gist} (:file/provider (current-file id))))
+
 (keymaps/register-commands!
   {:file/new {:bindings [(if keymaps/mac?
                            :Ctrl-n
@@ -174,10 +176,10 @@
                  ;; :when local state diverges from gist state.
                  ;; reset local state to gist state.
                  :f #(reset! (local-ratom (:file/id %)) nil)}
-   :file/rename {:f (fn [{:keys [ProseView]}]
-                      (let [id (j/get ProseView "file/id")]))}
    :file/save {:bindings [:Ctrl-s]
-               :when (fn [_] (gh/get-token))
+               :when (fn [{:keys [file/id]}]
+                       (and (gh/get-token)
+                           (writable? id)))
                ;; if local, create a new gist and then navigate there.
                ;; if gist, save a new revision of that gist.
                :f (fn [{:keys [file/id]}]
