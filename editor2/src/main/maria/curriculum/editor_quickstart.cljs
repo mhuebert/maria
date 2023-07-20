@@ -1,6 +1,6 @@
+^:hide-source
 (ns maria.curriculum.editor-quickstart
   "How to use the Maria.cloud editor"
-  {:hide-source true}
   (:require [shapes.core :refer :all]))
 
 ;; # Editor Quickstart

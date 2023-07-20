@@ -1,5 +1,5 @@
+^:hide-source
 (ns maria.curriculum.clojure-with-shapes
-  {:hide-source true}
   (:require [shapes.core :refer :all]))
 
 ;; # Learn Clojure with Shapes

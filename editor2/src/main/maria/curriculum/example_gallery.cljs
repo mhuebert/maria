@@ -1,6 +1,6 @@
+^:hide-source
 (ns maria.curriculum.example-gallery
   "See what other people have made using Maria"
-  {:hide-source true}
   (:require [cells.core :refer :all]
             [shapes.core :refer :all]))
 
