@@ -51,4 +51,4 @@
 
 (ui/defview local [{:keys [local/id]}]
   [prose/editor {:id id
-                 :default-value (:file/source @(persist/local-ratom id))}])
+                 :default-value (or (:file/source @(persist/local-ratom id)) "")}])

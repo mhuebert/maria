@@ -1,8 +1,8 @@
 module.exports = {
-    content: ["./src/**/*", "./public/index.html"],
+    content: ["./public/js/*.js", "./src/**/*", "./public/index.html"],
     theme: {
         extend: {
-            colors:{
+            colors: {
                 "variableName": "var(--code-variableName)",
                 "operator": "var(--code-operator)",
                 "bool": "var(--code-bool)",

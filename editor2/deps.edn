@@ -13,7 +13,7 @@
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
         funcool/promesa {:mvn/version "10.0.571"}
         com.lucasbradstreet/cljs-uuid-utils {:mvn/version "1.0.2"}
-        com.taoensso/encore {:mvn/version "3.32.0"}
+        com.taoensso/encore {:mvn/version "3.43.0"}
         kibu/pushy {:mvn/version "0.3.8"}
         bidi/bidi {:git/url "https://github.com/mhuebert/bidi"
                    :git/sha "21afb221b7e290e4a1d0a4aff4cf2a02fdb7f151"}
@@ -24,7 +24,16 @@
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
         io.github.mhuebert/re-db {:git/sha "066439e228ae4a48383055970af74b2600b48050"}
-        io.github.mhuebert/yawn {:git/sha "4fee46087eb907b1e2cd62aea9f05549d08e11a8"}}
+        io.github.mhuebert/yawn {:git/sha "4fee46087eb907b1e2cd62aea9f05549d08e11a8"}
+
+        ;; emmy / clerk
+        org.mentat/emmy-viewers {:mvn/version "0.2.0"}
+        io.github.nextjournal/clerk {:git/sha "d80187013d7b7b96db3d8b114b8d99f687170668"}
+        io.github.nextjournal/clerk.render {:git/url "https://github.com/nextjournal/clerk"
+                                            :git/sha "d80187013d7b7b96db3d8b114b8d99f687170668"
+                                            :deps/root "render"}
+
+        }
  :aliases
  {:local {:extra-deps {#_#_io.github.babashka/sci {:local/root "../../sci"}
                        #_#_applied-science/js-interop {:local/root "../../js-interop"}

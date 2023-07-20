@@ -19,7 +19,8 @@
             [shapes.core :as shapes]
             [yawn.hooks :as h]
             [yawn.view :as v]
-            [cells.core :as cells]))
+            [cells.core :as cells]
+            [reagent.core :as reagent]))
 
 (def COLL-PADDING 4)
 
@@ -67,7 +68,7 @@
                                    (inline-form (:NodeView opts) file [line column]))]
                   [:div.flex.flex-row.gap-1.py-1.px-2
                    (when (and file line)
-                     {:class          "hover:bg-gray-200"
+                     {:class "hover:bg-gray-200"
                       :on-mouse-enter #(set-error-highlight! (:NodeView opts) file [line column])
                       :on-mouse-leave #(set-error-highlight! (:NodeView opts) file nil)})
                    (when (and code-cell line)
@@ -98,7 +99,7 @@
    [:div.bg-red-100.text-red-800.border.border-red-200.flex.items-start
     [:div.m-2.flex-grow (ex-message error)]
     [:a.m-2.cursor-pointer.text-red-800.hover:text-red-900
-     {:title    "Print to console"
+     {:title "Print to console"
       :on-click #(do (js/console.error error)
                      (some-> (sci/stacktrace error) seq pprint))} (icons/command-line:mini "w-5 h-5")]]
    (when-let [stack (seq (sci/stacktrace error))]
@@ -234,7 +235,7 @@
         x (str \" x \")]
     (if collapse
       [:div.line-clamp-6.text-string {:on-click #(toggle! not)} x]
-      [:div.text-string {:class    ["max-h-[80vh] overflow-y-auto"]
+      [:div.text-string {:class ["max-h-[80vh] overflow-y-auto"]
                          :on-click #(toggle! not)} x])))
 
 (def show-map (partial show-coll "{" "}"))
@@ -301,29 +302,35 @@
                  (show-cell opts x)))
 
              (fn [opts x]
+               (when (and (vector? x)
+                          (:portal.viewer/reagent? (meta x)))
+                 (let [ctx (j/get-in (:NodeView opts) [:ProseView :!sci-ctx])]
+                   (sci/eval-form @ctx (list 'reagent.core/as-element x)))))
+
+             (fn [opts x]
                (when (react/isValidElement x)
                  x))
 
              (fn [opts x] (when (:hiccup (meta x))
                             (v/x x)))
 
-             (by-type {js/Number          (show-inline "text-number")
-                       Symbol             (show-inline "text-variableName" str)
-                       js/String          show-str
-                       js/Boolean         (show-inline "text-bool" pr-str)
-                       Keyword            (show-inline "text-keyword" str)
-                       MapEntry           show-map-entry
-                       Var                show-var
-                       js/Function        show-function
-                       js/Promise         show-promise
+             (by-type {js/Number (show-inline "text-number")
+                       Symbol (show-inline "text-variableName" str)
+                       js/String show-str
+                       js/Boolean (show-inline "text-bool" pr-str)
+                       Keyword (show-inline "text-keyword" str)
+                       MapEntry show-map-entry
+                       Var show-var
+                       js/Function show-function
+                       js/Promise show-promise
                        PersistentArrayMap show-map
-                       PersistentHashMap  show-map
-                       TransientHashMap   show-map
-                       PersistentTreeSet  show-set
-                       PersistentHashSet  show-set
-                       List               show-list
-                       LazySeq            show-list
-                       shapes/Shape       show-shape
+                       PersistentHashMap show-map
+                       TransientHashMap show-map
+                       PersistentTreeSet show-set
+                       PersistentHashSet show-set
+                       List show-list
+                       LazySeq show-list
+                       shapes/Shape show-shape
                        sci.lang/Namespace show-ns})
 
              (fn [opts x] (when (satisfies? IWatchable x)

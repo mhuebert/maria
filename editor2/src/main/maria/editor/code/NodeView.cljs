@@ -206,10 +206,11 @@
                               :render #(show {:NodeView this} %)
                               :value value}]))]))
 
-(v/defview code-row [^js {:as this :keys [!result !ui-state id]}]
+(v/defview code-row [^js {:as this :keys [!result !ui-state id CodeView]}]
   (let [ref (h/use-callback (fn [el] (when el (mount-code-view! el this))))
-        hide-source? (:hide-source (h/use-deref !ui-state)
-                       (:hide-source (meta (:value @!result))))
+        hide-source? (if-some [hide-source (:hide-source (h/use-deref !ui-state))]
+                       hide-source
+                       (str/includes? (.. CodeView -state -doc (lineAt 1) -text) "^:hide-source"))
         classes (v/classes ["absolute top-0 right-1 z-10"
                             "w-6 h-6"
                             "inline-flex items-center justify-center"

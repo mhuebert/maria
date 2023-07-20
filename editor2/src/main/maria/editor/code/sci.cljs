@@ -26,18 +26,27 @@
             [sci.pprint]
             [shadow.lazy :as lazy]
             [shapes.core]
-            [yawn.sci-config]))
+            [yawn.sci-config]
+            [maria.editor.extensions.config :as config]))
 
-;; Extension point for additional lazy-loaded libraries
-(def lazy-libs {})
+(def prefix->loadable
+  (->> config/loadables
+       (reduce-kv (fn [out loadable libnames]
+                    (reduce (fn [out libname]
+                              (assoc out libname loadable))
+                            out libnames)) {})))
+
+(defn lib-prefix [libname]
+  (symbol (first (str/split (str libname) #"\."))))
+
+(def install-loadable!
+  (memoize (fn [ctx loadable]
+             (p/let [install! (lazy/load loadable)]
+               (ctx/with-ctx ctx (install!))))))
 
 (defn lazy-load [{:keys [libname ctx]}]
-  (when-let [loadable (lazy-libs (first (str/split (str libname) #"\.")))]
-    (p/do (if false #_(lazy/ready? loadable)
-            (@loadable ctx)
-            (p/let [init (lazy/load loadable)]
-              (init ctx)))
-          {})))
+  (when-let [loadable (get prefix->loadable (lib-prefix libname))]
+    (install-loadable! ctx loadable)))
 
 (defn async-load-fn [{:as opts :keys [libname ctx]}]
   (or (lazy-load opts)
@@ -59,9 +68,12 @@
                                                        (if (seq? form)
                                                          (if (= 'ns (first form))
                                                            (eval-next (a/await (p/do (a/eval-ns-form ctx form)
-                                                                                     @last-ns)))
-                                                           (eval-next (sci/eval-form ctx form)))
-                                                         (eval-next (sci/eval-form ctx form)))))))]
+                                                                                     {:form form
+                                                                                      :value @last-ns})))
+                                                           (eval-next {:form form
+                                                                       :value (sci/eval-form ctx form)}))
+                                                         (eval-next {:form form
+                                                                     :value (sci/eval-form ctx form)}))))))]
                       (if (await? res)
                         (a/await (-> res
                                      (.then continue)
@@ -78,15 +90,15 @@
    (let [last-ns (if (:ns opts)
                    (volatile! (sci.ns/sci-the-ns ctx (:ns opts)))
                    (:last-ns ctx))
-         value (eval-string* (assoc ctx :last-ns last-ns) opts s)
-         return (fn [v]
+         result (eval-string* (assoc ctx :last-ns last-ns) opts s)
+         return (fn [result]
                   (when-not (:ns opts)
                     (vreset! (:last-ns ctx) @last-ns))
-                  {:value v})]
-     (if (await? value)
+                  result)]
+     (if (await? result)
        (a/await
-        (p/-> value return))
-       (return value)))))
+         (p/-> result return))
+       (return result)))))
 
 (sci/alter-var-root sci/print-fn (constantly *print-fn*))
 
@@ -98,8 +110,8 @@
               (let [resolved (sci.impl.resolve/resolve-symbol ctx sym)]
                 (doto ctx (sci/intern ns
                                       (with-meta
-                                       (symbol (name sym))
-                                       (meta resolved)) @resolved)))) ctx syms)))
+                                        (symbol (name sym))
+                                        (meta resolved)) @resolved)))) ctx syms)))
 
 (def re-db-reactive-ns (sci/create-ns 're-db.reactive nil))
 (def re-db-reactive-namespace (sci/copy-ns re-db.reactive re-db-reactive-ns))
@@ -123,14 +135,14 @@
                           yawn.sci-config/namespaces
                           re-db.sci-config/namespaces)}
       (maria.editor.code.sci/require-namespaces [shapes.core
-                                                        maria.editor.code.repl
-                                                        sci.core
-                                                        sci.async
-                                                        cells.hooks
-                                                        cells.impl
-                                                        cells.core
-                                                        maria.editor.code.docs
-                                                        maria.editor.views])))
+                                                 maria.editor.code.repl
+                                                 sci.core
+                                                 sci.async
+                                                 cells.hooks
+                                                 cells.impl
+                                                 cells.core
+                                                 maria.editor.code.docs
+                                                 maria.editor.views])))
 
 (defn refer-all! [{:as ctx :keys [env]} targets]
   (doseq [[from to] targets]

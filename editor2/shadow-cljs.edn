@@ -18,4 +18,8 @@
              :landing {:entries [maria.cloud.pages.landing]
                        :depends-on #{:core}}
              :ext.katex {:entries [maria.editor.extensions.katex]
-                         :depends-on #{:core}}}}}}
+                         :depends-on #{:core}}
+             :ext.reagent {:entries [maria.editor.extensions.reagent]
+                           :depends-on #{:core}}
+             :ext.emmy {:entries [maria.editor.extensions.emmy]
+                        :depends-on #{:core}}}}}}
