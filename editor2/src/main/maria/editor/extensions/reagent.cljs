@@ -1,5 +1,6 @@
 (ns maria.editor.extensions.reagent
-  (:require [sci.ctx-store :as ctx]
+  (:require [re-db.integrations.reagent]
+            [sci.ctx-store :as ctx]
             [sci.core :as sci]
             [sci.configs.reagent.reagent :as reagent.sci]))
 

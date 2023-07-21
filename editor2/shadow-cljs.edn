@@ -22,4 +22,4 @@
              :ext.reagent {:entries [maria.editor.extensions.reagent]
                            :depends-on #{:core}}
              :ext.emmy {:entries [maria.editor.extensions.emmy]
-                        :depends-on #{:core}}}}}}
+                        :depends-on #{:core :ext.reagent}}}}}}
