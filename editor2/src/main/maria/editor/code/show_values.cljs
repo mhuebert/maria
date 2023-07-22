@@ -10,6 +10,7 @@
             [maria.editor.code.repl :as repl]
             [maria.editor.icons :as icons]
             [maria.editor.util]
+            [maria.ui :as ui]
             [maria.ui :refer [defview]]
             [maria.editor.views :as views]
             [nextjournal.clojure-mode.node :as n]
@@ -102,6 +103,7 @@
      {:title "Print to console"
       :on-click #(do (js/console.error error)
                      (some-> (sci/stacktrace error) seq pprint))} (icons/command-line:mini "w-5 h-5")]]
+   #_[:pre (ui/pprinted (ex-data error))]
    (when-let [stack (seq (sci/stacktrace error))]
      [:div.p-2
       [show-stacktrace opts stack]])])
@@ -241,6 +243,7 @@
 (def show-map (partial show-coll "{" "}"))
 (def show-set (partial show-coll "#{" "}"))
 (def show-list (partial show-coll "(" ")"))
+(def show-vector (partial show-coll \[ \]))
 
 (defview show-function [_ f]
   (let [[showing toggle!] (h/use-state false)]
@@ -292,67 +295,93 @@
     (when-some [f (views (type x))]
       (f opts x))))
 
+(defn reagent-eval
+  "Evaluates reagent form within namespace of current cell"
+  [opts form]
+  (commands/code:eval-form-in-NodeView (:NodeView opts)
+    `(~'reagent.core/as-element [(fn [] ~form)])))
+
+(defn handles-keys
+  "Specify keywords indicating what kind of values a viewer handles.
+   Helpful for adding viewers before or after other viewers."
+  [ks f]
+  (with-meta f {::keys ks}))
+
 (def builtin-viewers
+  "Ordered list of viewers functions"
   (flatten (list
              (fn [_ x]
                (when (= x ::loading)
                  loader))
+
+
              (fn [opts x]
                (when (cells/cell? x)
                  (show-cell opts x)))
 
-             (fn [opts x]
-               (when (and (vector? x)
-                          (:portal.viewer/reagent? (meta x)))
-                 (let [ctx (j/get-in (:NodeView opts) [:ProseView :!sci-ctx])]
-                   (sci/eval-form @ctx (list 'reagent.core/as-element x)))))
+             (handles-keys #{:react-element}
+               (fn [opts x]
+                 (when (react/isValidElement x)
+                   x)))
 
-             (fn [opts x]
-               (when (react/isValidElement x)
-                 x))
+             (handles-keys #{:hiccup}
+               (fn [opts x] (when (:hiccup (meta x))
+                              (v/x x))))
 
-             (fn [opts x] (when (:hiccup (meta x))
-                            (v/x x)))
+             (handles-keys #{:number
+                             :symbol
+                             :var
+                             :keyword
+                             :map-entry
+                             :string
+                             :boolean
+                             :map
+                             :function
+                             :promise
+                             :namespace
+                             :vector
+                             :set
+                             :list
+                             :error}
+               (by-type {js/Number (show-inline "text-number")
+                         Symbol (show-inline "text-variableName" str)
+                         js/String show-str
+                         js/Boolean (show-inline "text-bool" pr-str)
+                         Keyword (show-inline "text-keyword" str)
+                         MapEntry show-map-entry
+                         Var show-var
+                         sci.lang/Var show-var
+                         js/Function show-function
+                         MetaFn show-function
+                         js/Promise show-promise
+                         PersistentArrayMap show-map
+                         PersistentHashMap show-map
+                         TransientHashMap show-map
+                         PersistentTreeSet show-set
+                         PersistentHashSet show-set
+                         List show-list
+                         LazySeq show-list
+                         shapes/Shape show-shape
+                         sci.lang/Namespace show-ns
+                         APersistentVector show-vector
+                         Subvec show-vector
+                         RedNode show-vector
+                         js/Error show-error}))
 
-             (by-type {js/Number (show-inline "text-number")
-                       Symbol (show-inline "text-variableName" str)
-                       js/String show-str
-                       js/Boolean (show-inline "text-bool" pr-str)
-                       Keyword (show-inline "text-keyword" str)
-                       MapEntry show-map-entry
-                       Var show-var
-                       js/Function show-function
-                       js/Promise show-promise
-                       PersistentArrayMap show-map
-                       PersistentHashMap show-map
-                       TransientHashMap show-map
-                       PersistentTreeSet show-set
-                       PersistentHashSet show-set
-                       List show-list
-                       LazySeq show-list
-                       shapes/Shape show-shape
-                       sci.lang/Namespace show-ns})
-
-             (fn [opts x] (when (satisfies? IWatchable x)
-                            (show-watchable opts x)))
-
-             (fn [opts x] (when (vector? x) (show-coll \[ \] opts x)))
-             (fn [opts x] (when (map? x) (show-map opts x)))
-             (fn [opts x] (when (set? x) (show-set opts x)))
-             (fn [opts x] (when (seq? x) (show-list opts x)))
-             (fn [opts x] (when (fn? x) (show-function opts x)))
-             (fn [opts x] (when (var? x) (show-var opts x)))
-             (fn [opts x] (when (nil? x) (punctuate "nil")))
-             (fn [opts x] (when (symbol? x) (show-str opts x)))
-
-             (fn [opts x] (when (instance? js/Error x) (show-error opts x)))
-             (fn [opts x] (when (instance? js/Promise x) (show-promise opts x)))
-             (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true))))
+             (handles-keys #{:cljs.core/IWatchable}
+               (fn [opts x] (when (satisfies? IWatchable x)
+                              (show-watchable opts x))))
+             (handles-keys #{:seq}
+               (fn [opts x] (when (seq? x) (show-list opts x))))
+             (handles-keys #{:nil}
+               (fn [opts x] (when (nil? x) (punctuate "nil"))))
+             (handles-keys #{:object}
+               (fn [opts x] (when (object? x) (show-map opts (js->clj x :keywordize-keys true)))))
              #_(fn [x] (clerk.sci-viewer/inspect x)))))
 
 (defn add-viewers
   [ctx key viewers]
-  (update-in ctx [::viewers (repl/current-ns-name ctx)]
+  (update-in ctx [::ns-viewers (repl/current-ns-name ctx)]
              (fn [x]
                (-> x
                    (->> (filterv #(not= key (first %))))
@@ -361,7 +390,27 @@
 (defn get-viewers [ctx]
   ;; added-viewers are added in front of builtin viewers,
   ;; most recently added viewer takes precedence
-  (into builtin-viewers
+  (into (or @(:!viewers ctx) builtin-viewers)
         (mapcat second)
-        (get-in ctx [::viewers (repl/current-ns-name ctx)])))
+        (get-in ctx [::ns-viewers (repl/current-ns-name ctx)])))
 
+(defn add-global-viewers!
+  "Adds viewers to the global list of viewers, before/after the given viewer-key.
+   See builtin-viewers to see what viewer-keys can be referred to"
+  [ctx where viewer-key added-viewers]
+  {:pre [(#{:before :after} where)]}
+  (let [!viewers (:!viewers ctx)
+        viewers (or @!viewers builtin-viewers)
+        i (reduce (fn [not-found i]
+                    (if (contains? (::keys (meta (nth viewers i))) viewer-key)
+                      (reduced i)
+                      not-found))
+                  ::not-found
+                  (range (count viewers)))
+        i (case where :before i :after (inc i))]
+    (if (= ::not-found i)
+      (js/console.warn (str "Viewer not found: " viewer-key))
+      (reset! !viewers (concat (take i viewers)
+                               added-viewers
+                               (drop i viewers))))
+    ctx))

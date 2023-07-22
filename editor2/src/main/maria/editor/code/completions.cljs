@@ -63,8 +63,9 @@
                                              })
                                        (catch js/Error e
                                          (js/console.error e)
-                                         (prn :s-var s-var)
-                                         (prn :meta (meta s-var))))))
+                                         (prn ::s-var s-var)
+                                         (prn :meta (meta s-var))
+                                         (prn :meta-name (:name (meta s-var)))))))
                                  syms))}]
           results)))))
 

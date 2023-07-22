@@ -11,7 +11,6 @@
             [maria.editor.code.docs]
             [maria.editor.code.repl]
             [maria.editor.views]
-            [maria.editor.views]
             [promesa.core :as p]
             [re-db.reactive]
             [re-db.sci-config]
@@ -54,6 +53,11 @@
 
 
 (defn await? [x] (and (instance? js/Promise x) (a/await? x)))
+
+(defn eval-form-sync [ctx ns form]
+  (ctx/with-ctx ctx
+    (sci/binding [sci/ns (sci.ns/sci-the-ns ctx ns)]
+                 (sci/eval-form ctx form))))
 
 (defn eval-string*
   [{:as ctx :keys [last-ns]} opts s]
@@ -163,4 +167,5 @@
                     maria.editor.code.repl user
                     shapes.core user})
       (sci/add-class! 'Math js/Math)
-      (assoc :last-ns (volatile! @sci/ns))))
+      (assoc :last-ns (volatile! @sci/ns)
+             :!viewers (atom nil))))

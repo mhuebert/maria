@@ -85,9 +85,9 @@
              (str/blank? (first text))))))
 
 (js
-  (defn code:insert-another-code-block [{:keys [state]
+  (defn code:insert-another-code-block [{:as CodeView CodeState :state
                                          {:keys [ProseView getPos]} :NodeView}]
-    (let [insert-pos (+ (getPos) (code:length state) 1)
+    (let [insert-pos (+ (getPos) (code:length CodeState) 1)
           {{:keys [code_block]} :nodes} schema]
       (.dispatch ProseView
                  (doto (.. ProseView -state -tr)
@@ -242,14 +242,21 @@
         (sci.ns/sci-find-ns @(j/get ProseView :!sci-ctx) 'user))))
 
 
-(j/defn code:eval-string!
-  ([NodeView source] (code:eval-string! nil NodeView source))
+(j/defn code:eval-form-in-NodeView
+  [NodeView form]
+  (let [ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
+        ns (code:ns NodeView)]
+    (try (sci/eval-form-sync ctx ns form)
+         (catch js/Error e ^:clj {:error e}))))
+
+(j/defn code:eval-result!
+  ([NodeView source] (code:eval-result! nil NodeView source))
   ([opts NodeView source]
    (let [opts (-> opts
                   (update :ns #(or % (code:ns NodeView)))
-                  (assoc :clojure.core/eval-file (j/get NodeView :id)))
+                  (assoc :clojure.core/eval-file (str "eval_" (j/get NodeView :id))))
          ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
-         _ (assert "code:eval-string! requires sci context")
+         _ (assert "sci context not found")
          result (try (sci/eval-string ctx opts source)
                      (catch js/Error e ^:clj {:error e}))]
      (if (a/await? result)
@@ -261,7 +268,7 @@
        (set-result! NodeView result)))))
 
 (defn code:eval-block! [this]
-  (code:eval-string! this (code:block-str this))
+  (code:eval-result! this (code:block-str this))
   true)
 
 
@@ -276,7 +283,7 @@
     ((fn continue [i]
        (when-not (j/get ProseView :isDestroyed)
          (when-let [NodeView (nth NodeViews i nil)]
-           (let [value (code:eval-string! NodeView (code:block-str NodeView))]
+           (let [value (code:eval-result! NodeView (code:block-str NodeView))]
              (if (a/await? value)
                (p/do value (continue (inc i)))
                (continue (inc i))))))
@@ -286,7 +293,7 @@
 
   #_(defn code:eval-current-region [{:as this {:keys [state]} :CodeView}]
       (when-let [source (u/guard (eval-region/current-selection-str state) (complement str/blank?))]
-        (code:eval-string! this source))
+        (code:eval-result! this source))
       true)
 
   (defn code:copy-current-region [{:keys [state]}]
