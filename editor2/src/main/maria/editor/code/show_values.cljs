@@ -366,7 +366,13 @@
                          APersistentVector show-vector
                          Subvec show-vector
                          RedNode show-vector
-                         js/Error show-error}))
+                         js/Error show-error
+                         ExceptionInfo show-error
+                         }))
+
+             (fn [opts x]
+               (when (instance? js/Error x)
+                 (show-error opts x)))
 
              (handles-keys #{:cljs.core/IWatchable}
                (fn [opts x] (when (satisfies? IWatchable x)

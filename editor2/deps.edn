@@ -6,7 +6,7 @@
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "e29e17b2a647006ac0e96307bbc893b01b99c3e9"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
-                                  :git/sha "ce5a6751dd72af4809df6d49a68e5e71237334fd"}
+                                  :git/sha "d21033978507ec9f82642de63e7276512ea37881"}
         org.babashka/sci {:mvn/version "0.7.39"}
         babashka/fs {:mvn/version "0.3.17"}
         babashka/process {:mvn/version "0.4.16"}
@@ -37,6 +37,6 @@
  :aliases
  {:local {:extra-deps {#_#_io.github.babashka/sci {:local/root "../../sci"}
                        #_#_applied-science/js-interop {:local/root "../../js-interop"}
-                       #_#_nextjournal/clojure-mode {:local/root "../../clojure-mode"}
+                       nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        #_#_io.github.mhuebert/yawn {:local/root "../../yawn"}
                        #_#_io.github.mhuebert/re-db {:local/root "../../re-db"}}}}}
