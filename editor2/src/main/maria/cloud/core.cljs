@@ -41,7 +41,10 @@
     (keymaps/use-global-keymap)
     (ui/provide-context {::menu/!content @(h/use-state #(r/atom nil))}
       (when @gh/!initialized?
-        [:<>
+        [:div.h-screen
+         {:on-click #(when (= (j/get % :target)
+                              (j/get % :currentTarget))
+                       (keymaps/run-command :editor/focus!))}
          [sidebar/with-sidebar
           [sidebar/content]
           [:div

@@ -360,7 +360,10 @@
     (identical? el (.-activeElement js/document))))
 
 (def commands:global
-  {:editor/toggle-sidebar {:bindings [:Shift-Mod-k]
+  {:editor/focus! {:f (comp (j/call :focus) :ProseView)
+                   :when :ProseView
+                   :hidden? true}
+   :editor/toggle-sidebar {:bindings [:Shift-Mod-k]
                            :kind :global
                            :prepare (fn [cmd _]
                                       (assoc cmd

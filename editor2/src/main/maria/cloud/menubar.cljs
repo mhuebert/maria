@@ -117,39 +117,47 @@
                       (seq (persist/changes id)))
                 "bg-yellow-500"
                 "bg-transparent")}]
-     [:el menu/Menu
-      [:div.relative.flex.bg-zinc-100.border.border-zinc-200.hover:border-zinc-300.rounded.h-7
-       (when @!editing?
-         [:input.inset-0.absolute.z-20.p-2.pr-6.border-none
-          {:value title
-           :ref #(when (and @!editing? % (not (identical? % (j/get js/document :activeElement))))
-                   (select-name! %))
-           :on-blur stop-editing!
-           :on-key-down on-keydown
-           :on-change #(on-value (.. ^js % -target -value))}])
-       [:el menu/Trigger
-        [:span.p-2.pr-6
-         {:class (when @!editing? "opacity-0 overflow-hidden z-10 relative min-w-8")}
-         title]
-        [:div.px-1.rounded.flex.items-center.justify-center.absolute.top-0.right-0.bottom-0.z-30
-         [icons/chevron-down:mini "w-4 h-4"]]]]
-      [:el menu/Portal
-       [:el menu/Content {:class "MenubarContent mt-2"}
-        (when (persist/writable? id)
-          [item {:on-click start-editing!} "Rename"])
 
-
-        [command-item :file/duplicate]
-        (when (= :file.provider/gist provider)
+     (let [icon (when (= :file.provider/gist provider)
+                  [:div.inset-0.flex.items-center.justify-center.w-7.absolute
+                   [icons/github "w-4 h-4 mx-auto"]])]
+       [:el menu/Menu
+        [:div.relative.flex.bg-zinc-100.border.border-zinc-200.hover:border-zinc-300.rounded.h-7
+         (when @!editing?
+           [:input.inset-0.absolute.z-20.p-2.pr-6.border-none
+            {:class (when icon "pl-7")
+             :value title
+             :ref #(when (and @!editing? % (not (identical? % (j/get js/document :activeElement))))
+                     (select-name! %))
+             :on-blur stop-editing!
+             :on-key-down on-keydown
+             :on-change #(on-value (.. ^js % -target -value))}])
+         [:el menu/Trigger
           [:<>
-           separator
-           [:el menu/Item {:as-child true}
-            [:a
-             {:href (str "https://gist.github.com/" (:gist/id current))
-              :target "_blank"
-              :class item-classes}
-             "View on GitHub"
-             [icons/arrow-top-right-on-square:mini "w-4 h-4 ml-1"]]]])]]]]))
+           (when icon
+             [:div.absolute.top-0.left-0.bottom-0 icon])
+           [:span.p-2.pr-6
+            {:class [(when @!editing? "opacity-0 overflow-hidden z-10 relative min-w-8")
+                     (when icon "pl-7")]}
+            title]]
+          [:div.px-1.rounded.flex.items-center.justify-center.absolute.top-0.right-0.bottom-0.z-30
+           [icons/chevron-down:mini "w-4 h-4"]]]]
+        [:el menu/Portal
+         [:el menu/Content {:class "MenubarContent mt-2"}
+          (when (persist/writable? id)
+            [item {:on-click start-editing!} "Rename"])
+          (when (= :file.provider/gist provider)
+            [:<>
+             separator
+             [:el menu/Item {:as-child true}
+              [:a
+               {:href (str "https://gist.github.com/" (:gist/id current))
+                :target "_blank"
+                :class item-classes}
+               "View on GitHub"
+               [icons/arrow-top-right-on-square:mini "w-4 h-4 ml-1"]]]])
+
+          ]]])]))
 
 (defn has-selection? [el]
   (some-> (j/get el :selectionStart)
@@ -178,9 +186,6 @@
         separator
         [command-item :file/save]
         [command-item :file/save-as-clerk-project]]
-       [menu "View"
-        [item {:on-click #(swap! ui/!state update :sidebar/visible? not)} "Sidebar" [shortcut "⇧⌘K"]]
-        [item "Command Bar" [shortcut "⌘K"]]]
        [:div.flex-grow]
        menubar-content
        [:div.flex-grow]
