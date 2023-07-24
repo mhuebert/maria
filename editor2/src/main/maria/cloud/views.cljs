@@ -1,5 +1,6 @@
 (ns maria.cloud.views
   (:require [applied-science.js-interop :as j]
+            [clojure.string :as str]
             [maria.cloud.github :as gh]
             [maria.editor.core :as prose]
             [maria.editor.util :as u]
@@ -52,3 +53,20 @@
 (ui/defview local [{:keys [local/id]}]
   [prose/editor {:id id
                  :default-value (or (:file/source @(persist/local-ratom id)) "")}])
+
+(ui/defview http-text [{:keys [url]}]
+  (let [url (cond-> url
+                    (str/includes? url "%2F")
+                    (js/decodeURIComponent))
+        url (cond->> url
+                     (not (str/starts-with? url "http"))
+                     (str "https://"))
+        source (u/use-promise #(p/-> (u/fetch url)
+                                     (j/call :text))
+                              [url])]
+    (use-persisted-file url {:file/source source
+                             :file/id url})
+    (when source
+      [prose/editor {:id url
+                     :default-value (or (:file/source @(persist/local-ratom url))
+                                        source)}])))
