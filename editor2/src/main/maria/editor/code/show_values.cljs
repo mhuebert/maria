@@ -116,7 +116,12 @@
             (update :viewers #(or % (get-viewers (:sci/context opts)))))]
     (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
                              (reduced out)
-                             _)) "No viewer" (:viewers opts))))
+                             _))
+            (do (js/console.log x)
+                [:<>
+                 [:div.italic "No viewer"]
+                 [:div (str (type x))]])
+            (:viewers opts))))
 
 (defview more-btn [on-click]
   [:div.inline-block.-mt-1 {:on-click on-click}
@@ -370,6 +375,10 @@
              (fn [opts x]
                (when (instance? js/Error x)
                  (show-error opts x)))
+
+             (fn [opts x]
+               (when (fn? x)
+                 (show-function opts x)))
 
              (handles-keys #{:cljs.core/IWatchable}
                (fn [opts x] (when (satisfies? IWatchable x)

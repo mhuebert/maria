@@ -9,7 +9,9 @@
             [maria.editor.util :as u]
             [nextjournal.clojure-mode.node :as n]
             [sci.core :as sci]
-            [sci.impl.namespaces :as sci.ns]))
+            [sci.impl.namespaces :as sci.ns]
+            [clojure.pprint :refer [pprint]]
+            [sci.lang]))
 
 (def symbol-nodes #{"Operator"
                     "DefLike"
@@ -47,26 +49,26 @@
                           :to to
                           :validFor #"^[^ \[\](){}@#]+"
                           :options
-                          (to-array
-                           (keep (fn [[s s-var]]
-                                   (when-let [{:as m :keys [ns name]} (meta s-var)]
-                                     (try
-                                       (let [sym-name (c/name name)
-                                             ns-name (sci.ns/sci-ns-name ns)]
-                                         #js{:label sym-name
-                                             :sym (symbol ns-name sym-name)
-                                             :detail ns-name
-                                             ;; :type "y" ;; indicates icon
-                                             ;; :detail ;; short string shown after label
-                                             ;; :info ;; shown when completion is selected
-                                             ;; :apply ".." ;; a string to replace completion range with, or function that will be called
-                                             })
-                                       (catch js/Error e
-                                         (js/console.error e)
-                                         (prn ::s-var s-var)
-                                         (prn :meta (meta s-var))
-                                         (prn :meta-name (:name (meta s-var)))))))
-                                 syms))}]
+                          (->> syms
+                               (keep (fn [[s s-var]]
+                                       (let [{:as m :keys [ns name]} (meta s-var)]
+                                         (if (and ns name)
+                                           (try
+                                             (let [sym-name (c/name name)
+                                                   ns-name (sci.ns/sci-ns-name ns)]
+                                               #js{:label sym-name
+                                                   :sym (symbol ns-name sym-name)
+                                                   :detail ns-name
+                                                   ;; :type "y" ;; indicates icon
+                                                   ;; :detail ;; short string shown after label
+                                                   ;; :info ;; shown when completion is selected
+                                                   ;; :apply ".." ;; a string to replace completion range with, or function that will be called
+                                                   })
+                                             (catch js/Error e
+                                               (js/console.error e)))
+                                           #js{:label (str s)
+                                               #_#_:sym (when ns-name (symbol ns-name (str s)))}))))
+                               to-array)}]
           results)))))
 
 
