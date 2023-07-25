@@ -151,7 +151,7 @@
      :code/eval-doc {:kind :prose
                      :bindings [:Mod-Alt-Enter]
                      :f (fn [state dispatch view]
-                          (code.commands/prose:eval-doc! view)
+                          (code.commands/prose:eval-prose-view! view)
                           true)}
      :code/hide-source {:when :NodeView
                         :f (fn [{:keys [NodeView]}]

@@ -18,9 +18,6 @@
 
 
 (defonce !result-key (volatile! 0))
-(j/defn set-result! [^js {:keys [!result ProseView]} v]
-  (when-not (j/get ProseView :isDestroyed)
-    (reset! !result (assoc v :key (vswap! !result-key inc)))))
 
 (js
   (defn prose:replace-doc [{:as ProseView :keys [state]} new-source]
@@ -241,38 +238,36 @@
                        children)
         (sci.ns/sci-find-ns @(j/get ProseView :!sci-ctx) 'user))))
 
+(j/defn code:eval-form-in-show
+  [{:sci/keys [context get-ns]} form]
+  (try (sci/eval-form-sync context (get-ns) form)
+       (catch js/Error e ^:clj {:error e})))
 
-(j/defn code:eval-form-in-NodeView
-  [NodeView form]
-  (let [ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
-        ns (code:ns NodeView)]
-    (try (sci/eval-form-sync ctx ns form)
-         (catch js/Error e ^:clj {:error e}))))
+(j/defn code:eval-result! [{:sci/keys [context get-ns file]} source on-result]
+  (let [_ (assert "sci context not found")
+        result (try (sci/eval-string context
+                                     {:ns (get-ns)
+                                      :clojure.core/eval-file file}
+                                     source)
+                    (catch js/Error e ^:clj {:error e}))]
+    (if (a/await? result)
+      (do (on-result {:value :maria.editor.code.show-values/loading})
+          (a/await
+            (-> result
+                (.then (fn [result] (on-result result)))
+                (.catch (fn [e] (on-result {:error e}))))))
+      (on-result result))))
 
-(j/defn code:eval-result!
-  ([NodeView source] (code:eval-result! nil NodeView source))
-  ([opts NodeView source]
-   (let [opts (-> opts
-                  (update :ns #(or % (code:ns NodeView)))
-                  (assoc :clojure.core/eval-file (str "eval_" (j/get NodeView :id))))
-         ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
-         _ (assert "sci context not found")
-         result (try (sci/eval-string ctx opts source)
-                     (catch js/Error e ^:clj {:error e}))]
-     (if (a/await? result)
-       (do (set-result! NodeView {:value :maria.editor.code.show-values/loading})
-           (a/await
-             (-> result
-                 (.then (fn [result] (set-result! NodeView result)))
-                 (.catch (fn [e] (set-result! NodeView {:error e}))))))
-       (set-result! NodeView result)))))
+(j/defn code:eval-NodeView! [^js {:as this :keys [ProseView !result]}]
+  (code:eval-result! {:sci/context @(j/get ProseView :!sci-ctx)
+                      :sci/get-ns (partial code:ns this)
+                      :sci/file (str "eval_" (j/get this :id))}
+                     (code:block-str this)
+                     (fn [v]
+                       (when-not (j/get ProseView :isDestroyed)
+                         (reset! !result (assoc v :key (vswap! !result-key inc)))))))
 
-(defn code:eval-block! [this]
-  (code:eval-result! this (code:block-str this))
-  true)
-
-
-(j/defn prose:eval-doc! [^js ProseView]
+(j/defn prose:eval-prose-view! [^js ProseView]
   (let [NodeViews (->> ProseView
                        .-docView
                        .-children
@@ -283,18 +278,13 @@
     ((fn continue [i]
        (when-not (j/get ProseView :isDestroyed)
          (when-let [NodeView (nth NodeViews i nil)]
-           (let [value (code:eval-result! NodeView (code:block-str NodeView))]
+           (let [value (code:eval-NodeView! NodeView)]
              (if (a/await? value)
                (p/do value (continue (inc i)))
                (continue (inc i))))))
        nil) 0)))
 
 (js
-
-  #_(defn code:eval-current-region [{:as this {:keys [state]} :CodeView}]
-      (when-let [source (u/guard (eval-region/current-selection-str state) (complement str/blank?))]
-        (code:eval-result! this source))
-      true)
 
   (defn code:copy-current-region [{:keys [state]}]
     (j/call-in js/navigator [:clipboard :writeText] (eval-region/current-selection-str state))

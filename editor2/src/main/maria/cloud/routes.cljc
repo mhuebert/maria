@@ -17,20 +17,21 @@
 
 (r/redef !routes
   (r/atom
-   (impl/resolve-views
-    ["/"
-     {"" 'maria.cloud.pages.landing/page
-      ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
-      ["gist/" :gist/id] 'maria.cloud.views/gist
-      ["local/" :local/id] 'maria.cloud.views/local
-      ["http-text/" [#".*" :url ]] 'maria.cloud.views/http-text
-      "intro" [::redirect "/curriculum/clojure-with-shapes"]}])))
+    (impl/resolve-views
+      ["/"
+       {"" 'maria.cloud.pages.landing/page
+        ["curriculum/" :curriculum/name] 'maria.cloud.views/curriculum
+        ["gist/" :gist/id] 'maria.cloud.views/gist
+        ["local/" :local/id] 'maria.cloud.views/local
+        ["http-text/" [#".*" :url]] 'maria.cloud.views/http-text
+        "intro" [::redirect "/curriculum/clojure-with-shapes"]}])))
 
 (defn match-route [path]
   (when-let [{:keys [route-params
                      handler]} (bidi/match-route @!routes path)]
-    (merge route-params handler {::path path})))
-
+    (merge route-params handler {::path path
+                                 ::query-params (query-params/path->map path)
+                                 ::hash (some-> js/location.hash (subs 1))})))
 #?(:cljs (declare history))
 
 #?(:cljs
@@ -62,7 +63,7 @@
      (pushy/start! history)))
 
 (comment
- (bidi/path-for @!routes 'maria.cloud.views/curriculum {:curriculum/name "x"})
- (bidi/match-route @!routes "/curriculum/x")
+  (bidi/path-for @!routes 'maria.cloud.views/curriculum {:curriculum/name "x"})
+  (bidi/match-route @!routes "/curriculum/x")
 
- (match-route "/curriculum/x"))
+  (match-route "/curriculum/x"))

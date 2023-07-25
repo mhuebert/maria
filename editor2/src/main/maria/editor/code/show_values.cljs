@@ -40,11 +40,6 @@
     (j/let [^:js {:keys [from to]} (error-marks/get-range state location)]
       (n/string state from to))))
 
-(defn get-ctx [opts]
-  (let [ctx (-> opts :NodeView (j/get-in [:ProseView :!sci-ctx]) deref)]
-    (assert ctx "show-opts requires a sci context")
-    ctx))
-
 (defview show-stacktrace [opts stack]
   ;; - for built-in, look up clojure.core metadata / link to source?
   (into [:div.flex.flex-col.-mx-2]
@@ -57,7 +52,7 @@
                       code-cell (when (and file (str/starts-with? file "code-"))
                                   (str "#" file))
                       m (when fqn
-                          (let [m (meta (repl/resolve-symbol (get-ctx opts)
+                          (let [m (meta (repl/resolve-symbol (:sci/context opts)
                                                              nil
                                                              fqn))]
                             (when (or (:doc m) (not-empty (:arglists m)))
@@ -112,11 +107,13 @@
 
 (defview show
   [opts x]
+  (assert (:sci/context opts))
+  (assert (:sci/get-ns opts))
   (let [opts
         (-> opts
             (update :depth (fnil inc -1))
             (update :stack (fnil conj ()) x)
-            (update :viewers #(or % (get-viewers (get-ctx opts)))))]
+            (update :viewers #(or % (get-viewers (:sci/context opts)))))]
     (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
                              (reduced out)
                              _)) "No viewer" (:viewers opts))))
@@ -298,7 +295,7 @@
 (defn reagent-eval
   "Evaluates reagent form within namespace of current cell"
   [opts form]
-  (commands/code:eval-form-in-NodeView (:NodeView opts)
+  (commands/code:eval-form-in-show opts
     `(~'reagent.core/as-element [(fn [] ~form)])))
 
 (defn handles-keys

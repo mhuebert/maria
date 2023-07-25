@@ -198,12 +198,16 @@
 (defn shape? [x] (instance? shapes/Shape x))
 
 (v/defview value-viewer [this]
-  (let [{:keys [value error key]} (h/use-deref (j/get this :!result))]
+  (let [{:keys [value error key]} (h/use-deref (j/get this :!result))
+        opts {:NodeView this
+              :sci/context @(j/get-in this [:ProseView :!sci-ctx])
+              :sci/get-ns #(commands/code:ns this)}]
     [:... {:key key}
      (if error
-       (show {:NodeView this} error)
+       (show opts error)
        (j/lit [ErrorBoundary {:key key
-                              :render #(show {:NodeView this} %)
+                              :render (fn [x]
+                                        (show opts x))
                               :value value}]))]))
 
 (v/defview code-row [^js {:as this :keys [!result !ui-state id CodeView]}]
@@ -271,7 +275,7 @@
                                                              (lang/syntaxHighlighting styles/code-highlight-style)
                                                              (lang/syntaxHighlighting lang/defaultHighlightStyle)
 
-                                                             (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-result! this %)
+                                                             (eval-region/extension ^:clj {:on-enter #(do (commands/code:eval-NodeView! this)
                                                                                                           true)})
                                                              keymaps/code-keymap
                                                              (.of cm.view/keymap cmd/historyKeymap)

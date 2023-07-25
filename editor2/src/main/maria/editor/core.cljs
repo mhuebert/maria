@@ -21,9 +21,10 @@
             [maria.editor.prosemirror.schema :as schema]
             [maria.editor.util :as u]
             [maria.ui :as ui]
-            [re-db.reactive :as r]
+            [promesa.core :as p]
             [yawn.hooks :as h]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            [sci.impl.namespaces :as sci.ns]))
 
 (defonce focused-state-key (new p.state/PluginKey "focused-state"))
 
@@ -70,6 +71,30 @@
 
 (defonce !mounted-view (atom nil))
 
+(def clj->doc
+  "Returns a ProseMirror Markdown doc representing Clojure source code."
+  (comp schema/markdown->doc parse-clj/clojure->markdown))
+
+(defn doc->cells
+  "Returns vector of code cells in a doc."
+  [^js doc]
+  (into []
+        (comp (filter #(some->> (j/get-in % [:attrs :params])
+                                (re-find #"^clj")))
+              (map (j/get :textContent)))
+        (j/get-in doc [:content :content])))
+
+(j/defn prose:eval-clojure! [ctx ^js doc]
+  (let [sources (doc->cells doc)]
+    (vreset! (:last-ns ctx) (sci.ns/sci-find-ns ctx 'user))
+    (reduce (fn [out source]
+              (p/let [out out
+                      v (sci/eval-string ctx source)
+                      value (:value v)]
+                (conj out (assoc v :value value))))
+            []
+            sources)))
+
 (defn init [{:as opts :keys [id
                              on-doc
                              default-value
@@ -77,9 +102,7 @@
              :or {make-sci-ctx sci/initial-context}}
             ^js element]
   {:pre [default-value]}
-  (let [ProseState (js (.create p.state/EditorState {:doc (-> default-value
-                                                              parse-clj/clojure->markdown
-                                                              schema/markdown->doc)
+  (let [ProseState (js (.create p.state/EditorState {:doc (clj->doc default-value)
                                                      :plugins (plugins)}))
         autosave! (persist/autosave-local-fn)
         ProseView (js (-> (p.view/EditorView. {:mount element}
@@ -96,7 +119,7 @@
                           (j/assoc! :!sci-ctx (atom (make-sci-ctx))
                                     "file/id" id)))]
     (swap! keymaps/!context assoc :ProseView ProseView)
-    (commands/prose:eval-doc! ProseView)
+    (commands/prose:eval-prose-view! ProseView)
     (j/call ProseView :focus)
     #(do (swap! keymaps/!context u/dissoc-value :ProseView ProseView)
          (j/call ProseView :destroy))))
