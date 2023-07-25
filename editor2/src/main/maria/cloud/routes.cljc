@@ -29,9 +29,11 @@
 (defn match-route [path]
   (when-let [{:keys [route-params
                      handler]} (bidi/match-route @!routes path)]
-    (merge route-params handler {::path path
-                                 ::query-params (query-params/path->map path)
-                                 ::hash (some-> js/location.hash (subs 1))})))
+    (merge route-params handler
+           {::path path
+            ::query-params (query-params/path->map path)}
+           #?(:cljs {::hash (some-> js/location.hash (subs 1))}))))
+
 #?(:cljs (declare history))
 
 #?(:cljs
