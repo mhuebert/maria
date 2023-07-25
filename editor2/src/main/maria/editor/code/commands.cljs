@@ -267,13 +267,16 @@
                        (when-not (j/get ProseView :isDestroyed)
                          (reset! !result (assoc v :key (vswap! !result-key inc)))))))
 
-(j/defn prose:eval-prose-view! [^js ProseView]
-  (let [NodeViews (->> ProseView
-                       .-docView
-                       .-children
-                       (keep (j/get :spec))
-                       (filterv (j/get :CodeView)))
-        {:as ctx :keys [last-ns]} @(j/get ProseView :!sci-ctx)]
+(j/defn prose:NodeViews [^js ProseView]
+  (->> ProseView
+       .-docView
+       .-children
+       (keep (j/get :spec))
+       (filterv (j/get :CodeView))))
+
+(j/defn prose:eval-prose-view! [^js {:as ProseView :keys [!sci-ctx]}]
+  (let [NodeViews (prose:NodeViews ProseView)
+        {:as ctx :keys [last-ns]} @!sci-ctx]
     (vreset! last-ns (sci.ns/sci-find-ns ctx 'user))
     ((fn continue [i]
        (when-not (j/get ProseView :isDestroyed)

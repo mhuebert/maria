@@ -16,16 +16,21 @@
                      :detached true}
      (fn []
        (let [cell r/*owner*]
-         (try (let [^js v (f r/*owner*)]
-                (if (a/promise? v)
-                  (do
-                    (a/loading! cell)
-                    (-> v
-                        (.then #(a/complete! cell %))
-                        (.catch v #(a/error! cell %))))
-                  v)
-                v)
-              (catch js/Error e (a/error! cell e))))))))
+         #?(:cljs
+            (try (let [^js v (f r/*owner*)]
+                   (if (a/promise? v)
+                     (do
+                       (a/loading! cell)
+                       (-> v
+                           (.then #(a/complete! cell %))
+                           (.catch v #(a/error! cell %))))
+                     v)
+                   v)
+                 (catch js/Error e (a/error! cell e)))
+            :clj                                            ;; untested jvm code path
+            (try
+              (a/complete! cell (f r/*owner*))
+              (catch Exception e (a/error! cell e)))))))))
 
 (util/support-clj-protocols
   (deftype WithMeta [cell metadata]

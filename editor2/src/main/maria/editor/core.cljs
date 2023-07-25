@@ -95,15 +95,16 @@
             []
             sources)))
 
-(defn init [{:as opts :keys [id
-                             on-doc
-                             default-value
-                             make-sci-ctx]
+(defn init! [{:keys [id
+                    default-value
+                    make-sci-ctx]
              :or {make-sci-ctx sci/initial-context}}
             ^js element]
   {:pre [default-value]}
-  (let [ProseState (js (.create p.state/EditorState {:doc (clj->doc default-value)
-                                                     :plugins (plugins)}))
+  (let [doc (clj->doc default-value)
+        ProseState (js (.create p.state/EditorState
+                                {:doc doc
+                                 :plugins (plugins)}))
         autosave! (persist/autosave-local-fn)
         ProseView (js (-> (p.view/EditorView. {:mount element}
                                               {:state ProseState
@@ -121,32 +122,41 @@
     (swap! keymaps/!context assoc :ProseView ProseView)
     (commands/prose:eval-prose-view! ProseView)
     (j/call ProseView :focus)
-    #(do (swap! keymaps/!context u/dissoc-value :ProseView ProseView)
-         (j/call ProseView :destroy))))
+    {:ProseView ProseView
+     :dispose #(do (swap! keymaps/!context u/dissoc-value :ProseView ProseView)
+                   (j/call ProseView :destroy))}))
+
+(defn use-prose-view [options]
+  (let [!element-ref (h/use-ref)
+        !prose-view-ref (h/use-ref)]
+    (h/use-effect
+      (fn []
+        (let [{:keys [ProseView dispose]} (when-let [element @!element-ref]
+                                            (init! options element))]
+          (reset! !prose-view-ref ProseView)
+          (fn []
+            (when dispose (dispose))
+            (reset! !prose-view-ref nil))))
+      [(:id options) @!element-ref])
+    [!element-ref !prose-view-ref]))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))
 
-(defn use-global-doc-id! [id]
+(defn use-doc-menu! [doc-id]
   (let [!content (ui/use-context ::menu/!content)]
     (h/use-effect
       (fn []
-        (let [content (v/x [menu/doc-menu id])]
+        (let [content (v/x [menu/doc-menu doc-id])]
           (reset! !content content)
           #(swap! !content (fn [x]
                              (if (identical? x content)
                                nil
                                x)))))
-      [id])))
+      [doc-id])))
 
 (ui/defview editor [options]
   "Returns a ref for the element where the editor is to be mounted."
-  (let [!ref (h/use-state nil)]
-    ;; mount the editor
-    (h/use-effect
-      #(when-let [element @!ref]
-         (init options element))
-      [@!ref (:id options)])
-    ;; set global doc id
-    (use-global-doc-id! (:id options))
+  (let [[!ref !prose-view] (use-prose-view options)]
+    (use-doc-menu! (:id options))
     [:div.relative.notebook.my-4 {:ref #(when % (reset! !ref %))}]))

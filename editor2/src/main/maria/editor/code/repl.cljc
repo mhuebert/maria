@@ -5,6 +5,7 @@
             [maria.editor.code.docs :as helpful]
             [maria.editor.views :as ui]
             [promesa.core :as p]
+            [re-db.util :refer [sci-macro]]
             [sci.core :as sci]
             [sci.ctx-store :as store]
             [sci.impl.namespaces :as sci.ns]
@@ -25,9 +26,9 @@
   ([ns sym] (resolve-symbol (store/get-ctx) ns sym))
   ([ctx ns sym]
    (vars/with-bindings
-    {utils/current-ns (or ns @utils/current-ns)}
-    (try (resolve/resolve-symbol ctx sym)
-         (catch js/Error e nil)))))
+     {utils/current-ns (or ns @utils/current-ns)}
+     (try (resolve/resolve-symbol ctx sym)
+          (catch js/Error e nil)))))
 
 (defn doc-map
   ([sym] (doc-map (store/get-ctx) nil sym))
@@ -44,23 +45,25 @@
   [hiccup-form]
   (v/x hiccup-form))
 
-(defn ^:macro doc
-  "Show documentation for given symbol"
-  [&form &env sym]
-  `(ui/show-doc '~(doc-map sym)))
+(sci-macro
+  (defmacro doc
+    "Show documentation for given symbol"
+    [&form &env sym]
+    `(ui/show-doc '~(doc-map sym))))
 
-(defn ^:macro dir
-  "Display public vars in namespace (symbol)"
-  [&form &env ns]
-  #_`(with-out-str (clojure.repl/dir ~ns))
-  `'~(some->> (store/get-ctx)
-              :env
-              deref
-              :namespaces
-              (#(% ns))
-              keys
-              (filter symbol?)
-              sort))
+(sci-macro
+  (defmacro dir
+    "Display public vars in namespace (symbol)"
+    [&form &env ns]
+    #_`(with-out-str (clojure.repl/dir ~ns))
+    `'~(some->> (store/get-ctx)
+                :env
+                deref
+                :namespaces
+                (#(% ns))
+                keys
+                (filter symbol?)
+                sort)))
 
 #?(:cljs
    (def ^function is-valid-element? react/isValidElement))
@@ -74,11 +77,11 @@
 #?(:cljs
    (defn await [x]
      (a/await
-      (if (instance? sci.lang/Var x)
-        (p/let [v @x]
-          (sci/alter-var-root x (constantly v))
-          x)
-        (js/Promise.resolve x))))
+       (if (instance? sci.lang/Var x)
+         (p/let [v @x]
+           (sci/alter-var-root x (constantly v))
+           x)
+         (js/Promise.resolve x))))
    :clj
    (defn await [x] x))
 
@@ -102,11 +105,12 @@
         (instance? #?(:cljs Atom :clj clojure.lang.Atom) thing) "an Clojure atom, a way to manage data that can change"
         (fn? thing) "a function: something you call with input that returns output"))
 
-(defn ^:macro what-is "Returns a string describing what kind of thing `thing` is."
-  [&form &env thing]
-  (let [ctx (store/get-ctx)
-        {:keys [special-form macro]} (doc-map ctx (current-ns ctx) thing)]
-    (cond special-form "a special form: a primitive which is evaluated in a special way"
-          macro "a macro: a function that transforms source code before it is evaluated."
-          :else `(what-is* ~thing))))
+(sci-macro
+  (defmacro what-is "Returns a string describing what kind of thing `thing` is."
+    [thing]
+    (let [ctx (store/get-ctx)
+          {:keys [special-form macro]} (doc-map ctx (current-ns ctx) thing)]
+      (cond special-form "a special form: a primitive which is evaluated in a special way"
+            macro "a macro: a function that transforms source code before it is evaluated."
+            :else `(what-is* ~thing)))))
 

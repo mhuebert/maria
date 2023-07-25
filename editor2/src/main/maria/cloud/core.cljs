@@ -1,5 +1,6 @@
 (ns maria.cloud.core
   (:require [applied-science.js-interop :as j]
+            [cells.core :as cells]
             [clojure.edn :as edn]
             [maria.clerkify]
             [maria.cloud.github :as gh]
@@ -10,7 +11,6 @@
             [maria.cloud.views]
             [maria.editor.code.docbar :as docbar]
             [maria.editor.code.docbar]
-            [maria.editor.command-bar :as command-bar]
             [maria.editor.keymaps :as keymaps]
             [maria.scratch]
             [maria.ui :as ui :refer [defview]]

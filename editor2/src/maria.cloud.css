@@ -70,6 +70,10 @@
     @apply border-gray-300 my-8
 }
 
+.ProseMirror.hide-all-prose > *:not(.NodeView) {
+    @apply hidden;
+}
+
 /* General Formatting */
 
 svg {

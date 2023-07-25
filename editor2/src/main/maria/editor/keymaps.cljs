@@ -380,7 +380,17 @@
                                                        {:title "Hide command bar"
                                                         :f hide-command-bar!}
                                                        {:title "Show command bar"
-                                                        :f show-command-bar!})))}})
+                                                        :f show-command-bar!})))}
+   :prose/toggle-prose-visibility {:kind :global
+                                   :when :ProseView
+                                   :prepare (fn [cmd {:keys [ProseView]}]
+                                              (merge cmd
+                                                     (let [^js classes (j/get-in ProseView [:dom :classList])]
+                                                       (if (.contains classes "hide-all-prose")
+                                                         {:title "Show all prose"
+                                                          :f #(.remove classes "hide-all-prose")}
+                                                         {:title "Hide all prose"
+                                                          :f #(.add classes "hide-all-prose")}))))}})
 
 (defonce !command-registry (atom {}))
 (defonce !binding-overrides (atom {}))

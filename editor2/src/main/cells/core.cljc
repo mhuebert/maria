@@ -2,7 +2,9 @@
   (:require [cells.async :as async]
             [cells.hooks :as hooks]
             [cells.impl :as impl]
-            [re-db.reactive :as r]))
+            [re-db.reactive :as r]
+            [re-db.util :refer [sci-macro]])
+  #?(:cljs (:require-macros cells.core)))
 
 (defn- defn-opts [body]
   (let [[docstring body] (if (string? (first body))
@@ -13,46 +15,54 @@
                          [nil body])]
     [docstring options body]))
 
-(defn ^:macro cell
-  ([&form &env key expr]
-   `(impl/make-cell ~key (fn [~'self] ~expr)))
-  ([&form &env expr]
-   `(impl/make-cell (fn [~'self] ~expr))))
 
-(defn ^:macro defcell [&form &env the-name & body]
-  (let [[doc options body] (defn-opts body)]
-    `(r/redef
-       ~(vary-meta the-name merge options (when doc {:doc doc}))
-       (impl/make-cell (fn [~'self] ~@body)))))
+(sci-macro
+  (defmacro cell
+    ([key expr]
+     `(impl/make-cell ~key (fn [~'self] ~expr)))
+    ([expr]
+     `(impl/make-cell (fn [~'self] ~expr)))))
 
-(defn ^:macro with-view [&form &env the-cell view-expr]
-  `(~'cells.impl/->WithMeta ~the-cell {'~'cells.impl/view (fn [~'self] ~view-expr)}))
+(sci-macro
+  (defmacro defcell [the-name & body]
+    (let [[doc options body] (defn-opts body)]
+      `(r/redef
+         ~(vary-meta the-name merge options (when doc {:doc doc}))
+         (impl/make-cell (fn [~'self] ~@body))))))
+
+(sci-macro
+  (defmacro with-view [the-cell view-expr]
+    `(~'cells.impl/->WithMeta ~the-cell {'~'cells.impl/view (fn [~'self] ~view-expr)})))
 
 (defn get-view [cell] (get (meta cell) 'cells.impl/view))
 
-(defn ^:macro timeout
-  "Runs body after timeout of n milliseconds."
-  [&form &env n & body]
-  `(~'cells.hooks/use-timeout ~n (fn [] ~@body)))
+(sci-macro
+  (defmacro timeout
+    "Runs body after timeout of n milliseconds."
+    [n & body]
+    `(~'cells.hooks/use-timeout ~n (fn [] ~@body))))
 
-(defn fetch
-  "Fetch a resource from a url. By default, response is parsed as JSON and converted to Clojure via clj->js with :keywordize-keys true.
-  Accepts a :format option (:json, :text, or a function) and :query for supplying query parameters.
-  Accepts options :format, which may be :json or :text"
-  ([url] (fetch url nil))
-  ([url & {:as opts :keys [format query]}]
-   (hooks/use-fetch url opts)))
+#?(:cljs
+   (defn fetch
+     "Fetch a resource from a url. By default, response is parsed as JSON and converted to Clojure via clj->js with :keywordize-keys true.
+     Accepts a :format option (:json, :text, or a function) and :query for supplying query parameters.
+     Accepts options :format, which may be :json or :text"
+     ([url] (fetch url nil))
+     ([url & {:as opts :keys [format query]}]
+      (hooks/use-fetch url opts))))
 
-(defn interval
-  "Calls `f` on interval of n milliseconds, with previous value, starting with optional init value."
-  ([n f] (interval n f nil))
-  ([n f init]
-   (hooks/use-interval n f init)))
+#?(:cljs
+   (defn interval
+     "Calls `f` on interval of n milliseconds, with previous value, starting with optional init value."
+     ([n f] (interval n f nil))
+     ([n f init]
+      (hooks/use-interval n f init))))
 
-(defn geo-location
-  "Requests a user's geographic location using the browser's Navigator.geolocation api."
-  []
-  (hooks/use-geo-location))
+#?(:cljs
+   (defn geo-location
+     "Requests a user's geographic location using the browser's Navigator.geolocation api."
+     []
+     (hooks/use-geo-location)))
 
 (def loading? (comp async/loading? deref async/!status))
 (def message (comp first r/deref-result))

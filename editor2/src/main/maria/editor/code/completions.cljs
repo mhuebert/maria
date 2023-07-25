@@ -6,6 +6,7 @@
             [clojure.core :as c]
             [edamame.core :as edamame]
             [maria.editor.code.commands :as commands]
+            [maria.editor.code.repl :as repl]
             [maria.editor.util :as u]
             [nextjournal.clojure-mode.node :as n]
             [sci.core :as sci]
@@ -66,7 +67,12 @@
                                                    })
                                              (catch js/Error e
                                                (js/console.error e)))
-                                           #js{:label (str s)
+                                           (do
+                                             (prn :try s (repl/resolve-symbol ctx
+                                                                              sci-ns
+                                                                              s))
+                                             )
+                                           #_#js{:label (str s)
                                                #_#_:sym (when ns-name (symbol ns-name (str s)))}))))
                                to-array)}]
           results)))))
