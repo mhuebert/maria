@@ -113,15 +113,16 @@
         (-> opts
             (update :depth (fnil inc -1))
             (update :stack (fnil conj ()) x)
-            (update :viewers #(or % (get-viewers (:sci/context opts)))))]
-    (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
-                             (reduced out)
-                             _))
-            (do (js/console.log x)
-                [:<>
-                 [:div.italic "No viewer"]
-                 [:div (str (type x))]])
-            (:viewers opts))))
+            (update :viewers #(or % (get-viewers (:sci/context opts)))))
+        out (reduce (fn [_ viewer] (if-some [out (viewer opts x)]
+                                     (reduced out)
+                                     _))
+                    ::no-viewer
+                    (:viewers opts))]
+    (if (= ::no-viewer out)
+      (do (js/console.log "no viewer for:" out)
+          (str "No viewer for " (type out)))
+      out)))
 
 (defview more-btn [on-click]
   [:div.inline-block.-mt-1 {:on-click on-click}
