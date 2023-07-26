@@ -18,7 +18,7 @@
        (let [cell r/*owner*]
          #?(:cljs
             (try (let [^js v (f r/*owner*)]
-                   (if (a/promise? v)
+                   (if (instance? js/Promise v)
                      (do
                        (a/loading! cell)
                        (-> v
