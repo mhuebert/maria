@@ -24,3 +24,19 @@
                         `(delay ~(assoc v :view `(shadow.lazy/loadable ~k)))))
                     {}
                     m)))))
+
+(defmacro sci-macro [name & body]
+  (if (:ns &env)
+    (let [[doc body] (if (string? (first body))
+                       [(first body) (rest body)]
+                       [nil body])
+          [options body] (if (map? (first body))
+                           [(first body) (rest body)]
+                           [nil body])
+          arities (if (vector? (first body)) (list body) body)
+          arities (map (fn [[argv & body]] (list* (into '[&form &env] argv) body)) arities)]
+      `(defn ~(vary-meta name assoc :sci/macro true)
+         ~@(when doc [doc])
+         ~@(when options [options])
+         ~@arities))
+    `(~'clojure.core/defmacro ~name ~@body)))

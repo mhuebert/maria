@@ -5,7 +5,7 @@
             [maria.editor.code.docs :as helpful]
             [maria.editor.views :as ui]
             [promesa.core :as p]
-            [re-db.util :refer [sci-macro]]
+            [maria.cloud.macros :refer [sci-macro]]
             [sci.core :as sci]
             [sci.ctx-store :as store]
             [sci.impl.namespaces :as sci.ns]
@@ -45,25 +45,23 @@
   [hiccup-form]
   (v/x hiccup-form))
 
-(sci-macro
-  (defmacro doc
-    "Show documentation for given symbol"
-    [&form &env sym]
-    `(ui/show-doc '~(doc-map sym))))
+(sci-macro doc
+  "Show documentation for given symbol"
+  [sym]
+  `(ui/show-doc '~(doc-map sym)))
 
-(sci-macro
-  (defmacro dir
-    "Display public vars in namespace (symbol)"
-    [&form &env ns]
-    #_`(with-out-str (clojure.repl/dir ~ns))
-    `'~(some->> (store/get-ctx)
-                :env
-                deref
-                :namespaces
-                (#(% ns))
-                keys
-                (filter symbol?)
-                sort)))
+(sci-macro dir
+  "Display public vars in namespace (symbol)"
+  [ns]
+  #_`(with-out-str (clojure.repl/dir ~ns))
+  `'~(some->> (store/get-ctx)
+              :env
+              deref
+              :namespaces
+              (#(% ns))
+              keys
+              (filter symbol?)
+              sort))
 
 #?(:cljs
    (def ^function is-valid-element? react/isValidElement))
@@ -105,12 +103,11 @@
         (instance? #?(:cljs Atom :clj clojure.lang.Atom) thing) "an Clojure atom, a way to manage data that can change"
         (fn? thing) "a function: something you call with input that returns output"))
 
-(sci-macro
-  (defmacro what-is "Returns a string describing what kind of thing `thing` is."
-    [thing]
-    (let [ctx (store/get-ctx)
-          {:keys [special-form macro]} (doc-map ctx (current-ns ctx) thing)]
-      (cond special-form "a special form: a primitive which is evaluated in a special way"
-            macro "a macro: a function that transforms source code before it is evaluated."
-            :else `(what-is* ~thing)))))
+(sci-macro what-is "Returns a string describing what kind of thing `thing` is."
+  [thing]
+  (let [ctx (store/get-ctx)
+        {:keys [special-form macro]} (doc-map ctx (current-ns ctx) thing)]
+    (cond special-form "a special form: a primitive which is evaluated in a special way"
+          macro "a macro: a function that transforms source code before it is evaluated."
+          :else `(what-is* ~thing))))
 

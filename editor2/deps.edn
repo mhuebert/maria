@@ -28,7 +28,7 @@
 
         ;; emmy / clerk
         org.mentat/emmy {:git/url "https://github.com/mhuebert/emmy"
-                         :git/sha "ec25aadc48d28d1f7c7c748d709655180eb0645c"}
+                         :git/sha "9fdb8e832e32b0e0419135830c56fa08ac738caa"}
         org.mentat/emmy-viewers {:mvn/version "0.2.0"}
         io.github.nextjournal/clerk {:git/sha "d80187013d7b7b96db3d8b114b8d99f687170668"}
         io.github.nextjournal/clerk.render {:git/url "https://github.com/nextjournal/clerk"
@@ -37,7 +37,7 @@
 
         }
  :aliases
- {:local {:extra-deps {org.menta/emmy {:local/root "../../emmy"}
+ {:local {:extra-deps {#_#_org.menta/emmy {:local/root "../../emmy"}
                        #_#_io.github.babashka/sci {:local/root "../../sci"}
                        #_#_applied-science/js-interop {:local/root "../../js-interop"}
                        #_#_nextjournal/clojure-mode {:local/root "../../clojure-mode"}

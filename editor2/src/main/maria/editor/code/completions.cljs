@@ -34,16 +34,16 @@
                           (catch js/Error e nil))]
         (let [ctx @(j/get-in NodeView [:ProseView :!sci-ctx])
               current-ns (commands/code:ns NodeView)
-              ns-name (namespace sym)
-              from (if ns-name
-                     (+ from 1 (count ns-name))
+              ns-name-str (namespace sym)
+              from (if ns-name-str
+                     (+ from 1 (count ns-name-str))
                      from)
-              sci-ns (if ns-name
-                       (or (sci/find-ns ctx (symbol ns-name))
+              sci-ns (if ns-name-str
+                       (or (sci/find-ns ctx (symbol ns-name-str))
                            (some-> (sci.ns/sci-ns-aliases ctx current-ns)
-                                   (get (symbol ns-name))))
+                                   (get (symbol ns-name-str))))
                        current-ns)
-              syms (if ns-name
+              syms (if ns-name-str
                      (sci.ns/sci-ns-publics ctx sci-ns)
                      (sci.ns/sci-ns-map ctx sci-ns))
               results #js{:from from
@@ -52,14 +52,15 @@
                           :options
                           (->> syms
                                (keep (fn [[s s-var]]
-                                       (let [{:as m :keys [ns name]} (meta s-var)]
+                                       (let [{:as m :keys [ns name imported-from]} (meta s-var)]
                                          (when (and ns name)
                                            (try
                                              (let [sym-name (c/name name)
-                                                   ns-name (sci.ns/sci-ns-name ns)]
+                                                   ns-name-str (or (some-> imported-from str)
+                                                                   (sci.ns/sci-ns-name ns))]
                                                #js{:label sym-name
-                                                   :sym (symbol ns-name sym-name)
-                                                   :detail ns-name
+                                                   :sym (symbol ns-name-str sym-name)
+                                                   :detail ns-name-str
                                                    ;; :type "y" ;; indicates icon
                                                    ;; :detail ;; short string shown after label
                                                    ;; :info ;; shown when completion is selected
@@ -68,7 +69,7 @@
                                              (catch js/Error e
                                                (js/console.error e)))
                                            #_#js{:label (str s)
-                                               #_#_:sym (when ns-name (symbol ns-name (str s)))}))))
+                                                 #_#_:sym (when ns-name-str (symbol ns-name-str (str s)))}))))
                                to-array)}]
           results)))))
 

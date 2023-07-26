@@ -3,7 +3,7 @@
             [cells.hooks :as hooks]
             [cells.impl :as impl]
             [re-db.reactive :as r]
-            [re-db.util :refer [sci-macro]])
+            [maria.cloud.macros :refer [sci-macro]])
   #?(:cljs (:require-macros cells.core)))
 
 (defn- defn-opts [body]
@@ -16,31 +16,27 @@
     [docstring options body]))
 
 
-(sci-macro
-  (defmacro cell
-    ([key expr]
-     `(impl/make-cell ~key (fn [~'self] ~expr)))
-    ([expr]
-     `(impl/make-cell (fn [~'self] ~expr)))))
+(sci-macro cell
+  ([key expr]
+   `(impl/make-cell ~key (fn [~'self] ~expr)))
+  ([expr]
+   `(impl/make-cell (fn [~'self] ~expr))))
 
-(sci-macro
-  (defmacro defcell [the-name & body]
-    (let [[doc options body] (defn-opts body)]
-      `(r/redef
-         ~(vary-meta the-name merge options (when doc {:doc doc}))
-         (impl/make-cell (fn [~'self] ~@body))))))
+(sci-macro defcell [the-name & body]
+  (let [[doc options body] (defn-opts body)]
+    `(r/redef
+       ~(vary-meta the-name merge options (when doc {:doc doc}))
+       (impl/make-cell (fn [~'self] ~@body)))))
 
-(sci-macro
-  (defmacro with-view [the-cell view-expr]
-    `(~'cells.impl/->WithMeta ~the-cell {'~'cells.impl/view (fn [~'self] ~view-expr)})))
+(sci-macro with-view [the-cell view-expr]
+  `(~'cells.impl/->WithMeta ~the-cell {'~'cells.impl/view (fn [~'self] ~view-expr)}))
 
 (defn get-view [cell] (get (meta cell) 'cells.impl/view))
 
-(sci-macro
-  (defmacro timeout
-    "Runs body after timeout of n milliseconds."
-    [n & body]
-    `(~'cells.hooks/use-timeout ~n (fn [] ~@body))))
+(sci-macro timeout
+  "Runs body after timeout of n milliseconds."
+  [n & body]
+  `(~'cells.hooks/use-timeout ~n (fn [] ~@body)))
 
 #?(:cljs
    (defn fetch

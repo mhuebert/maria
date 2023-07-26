@@ -35,7 +35,7 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.5
         with:
           bb: 0.9.162
-          cli: 1.11.1.1155 # Clojure CLI based on tools.deps
+          cli: 1.11.1.1347 # Clojure CLI based on tools.deps
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: yarn deps
         working-directory: ${{env.dir}}
