@@ -135,7 +135,9 @@
 
   (let [autosave! (h/use-memo persist/autosave-local-fn [id])
         default-value (h/use-memo #(when file
-                                     (or (:file/source file) ""))
+                                     (or (:file/source @(persist/local-ratom id))
+                                         (:file/source file)
+                                         ""))
                                   [id])
         [ProseView ref-fn] (use-prose-view {:default-value default-value
                                             :on-change-state (fn [prev-state next-state]

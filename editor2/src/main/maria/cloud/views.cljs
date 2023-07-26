@@ -73,7 +73,7 @@
     [editor.core/editor params file]))
 
 (defn local-file [id]
-  {:file/id (str "local:" id)
+  {:file/id id
    :file/provider :file.provider/local})
 
 (ui/defview local [{:as params :keys [local/id]}]
