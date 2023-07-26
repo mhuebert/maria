@@ -53,7 +53,7 @@
                           (->> syms
                                (keep (fn [[s s-var]]
                                        (let [{:as m :keys [ns name]} (meta s-var)]
-                                         (if (and ns name)
+                                         (when (and ns name)
                                            (try
                                              (let [sym-name (c/name name)
                                                    ns-name (sci.ns/sci-ns-name ns)]
@@ -67,11 +67,6 @@
                                                    })
                                              (catch js/Error e
                                                (js/console.error e)))
-                                           (do
-                                             (prn :try s (repl/resolve-symbol ctx
-                                                                              sci-ns
-                                                                              s))
-                                             )
                                            #_#js{:label (str s)
                                                #_#_:sym (when ns-name (symbol ns-name (str s)))}))))
                                to-array)}]

@@ -127,7 +127,8 @@
                    (j/call ProseView :destroy))}))
 
 (defn use-prose-view [options]
-  (let [!element-ref (h/use-ref)
+  (let [!element-ref (h/use-state nil)
+        !element-ref-fn (h/use-callback #(when % (reset! !element-ref %)))
         !prose-view-ref (h/use-ref)]
     (h/use-effect
       (fn []
@@ -138,7 +139,7 @@
             (when dispose (dispose))
             (reset! !prose-view-ref nil))))
       [(:id options) @!element-ref])
-    [!element-ref !prose-view-ref]))
+    [!element-ref-fn !prose-view-ref]))
 
 #_(defn ^:dev/before-load clear-console []
     (.clear js/console))
@@ -159,4 +160,4 @@
   "Returns a ref for the element where the editor is to be mounted."
   (let [[!ref !prose-view] (use-prose-view options)]
     (use-doc-menu! (:id options))
-    [:div.relative.notebook.my-4 {:ref #(when % (reset! !ref %))}]))
+    [:div.relative.notebook.my-4 {:ref !ref}]))

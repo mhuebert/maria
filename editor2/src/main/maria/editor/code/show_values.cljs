@@ -120,8 +120,9 @@
                     ::no-viewer
                     (:viewers opts))]
     (if (= ::no-viewer out)
-      (do (js/console.log "no viewer for:" out)
-          (str "No viewer for " (type out)))
+      (do (js/console.log "no viewer for:" x)
+          (prn :no-viewer-for x (type x))
+          (str "No viewer for " (type x)))
       out)))
 
 (defview more-btn [on-click]
@@ -367,6 +368,7 @@
                          shapes/Shape show-shape
                          sci.lang/Namespace show-ns
                          APersistentVector show-vector
+                         PersistentVector show-vector
                          Subvec show-vector
                          RedNode show-vector
                          js/Error show-error
