@@ -5,6 +5,7 @@
                                               signInWithPopup
                                               getAdditionalUserInfo]]
             [applied-science.js-interop :as j]
+            [clojure.string :as str]
             [maria.cloud.config.public :refer [env]]
             [maria.cloud.local-sync :as local-sync]
             [maria.editor.keymaps :as keymaps]
@@ -85,6 +86,11 @@
                              (keep (j/fn [^js {:keys [filename language content]}]
                                      (when (= language "Clojure")
                                        {:file/id (str "gist:" id "/" filename)
+                                        :file/title (some-> description
+                                                            str/trim
+                                                            (str/split-lines)
+                                                            first
+                                                            (u/guard (complement str/blank?)))
                                         :file/name filename
                                         :file/language language
                                         :file/source content

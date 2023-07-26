@@ -3,6 +3,7 @@
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.cloud.github :as gh]
+            [maria.cloud.persistence :as persist]
             [maria.cloud.routes :as routes]
             [maria.editor.icons :as icons]
             [maria.editor.util :as u]
@@ -49,6 +50,15 @@
      title]]
    (into [:el.flex.flex-col.gap-1 acc/Content] items)])
 
+(ui/defview recents [current-path]
+  (when-let [recents (seq @persist/!recents)]
+    [acc-section "Recently Viewed"
+     (for [{:keys [maria/path file/id file/title]} recents]
+       [acc-item (acc-props (= current-path path)
+                            {:key id
+                             :href path})
+        title])]))
+
 (ui/defview user-gist-list [{:keys [username current-path]}]
   (let [gists (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/users/" username "/gists")
                                              :headers (merge {:Content-Type "text/plain"}
@@ -67,21 +77,22 @@
                          (u/guard (complement str/blank?)))
                  name)]))]))
 
-(defn curriculum-list [current-path]
-  (map (fn [{:as m
-             :keys [curriculum/name
-                    file/hash
-                    file/title]}]
-         (let [path (routes/path-for 'maria.cloud.views/curriculum
-                                     {:curriculum/name name
-                                      :query {:v hash}})
-               current? (= path current-path)]
-           (v/x [acc-item
-                 (acc-props current?
-                            {:key name
-                             :href path})
-                 title])))
-       (db/where [:curriculum/name])))
+(ui/defview curriculum-list [current-path]
+  [acc-section "Curriculum"
+   (map (fn [{:as m
+              :keys [curriculum/name
+                     file/hash
+                     file/title]}]
+          (let [path (routes/path-for 'maria.cloud.views/curriculum
+                                      {:curriculum/name name
+                                       :query {:v hash}})
+                current? (= path current-path)]
+            (v/x [acc-item
+                  (acc-props current?
+                             {:key name
+                              :href path})
+                  title])))
+        (db/where [:curriculum/name]))])
 
 (defn icon:home [class]
   [:svg {:class class :xmlns "http://www.w3.org/2000/svg" :viewBox "0 0 20 20" :fill "currentColor"}
@@ -99,10 +110,9 @@
       [:div.flex-grow]
       [:a.p-2.hover:bg-slate-300.cursor-pointer.text-black {:href "/"} [icon:home "w-4 h-4"]]]
 
+     [recents current-path]
+     [curriculum-list current-path]
 
-     [acc-section "Learn"
-      (curriculum-list current-path)]
-     (str (db/get ::super))
      (when-let [username (:username (gh/get-user))]
        (user-gist-list {:username username
                         :current-path current-path}))]))

@@ -41,7 +41,7 @@
            (:value result))])))
 
 (ui/defview curriculum
-  [{:as props :curriculum/keys [name]}]
+  [{:as params :curriculum/keys [name]}]
   (let [{:as file
          :keys [file/id
                 file/url]} (db/get [:curriculum/name name])
@@ -50,13 +50,16 @@
                               name)]
     (use-persisted-file id (assoc file :file/source source))
     (when source
-      [editor.core/editor {:id id
-                           :default-value (or (:file/source @(persist/local-ratom id))
-                                              source)}])))
+      [:<>
+       [persist/save-to-recents! id (::routes/path params)]
+       [editor.core/editor {:id id
+                            :path (::routes/path params)
+                            :default-value (or (:file/source @(persist/local-ratom id))
+                                               source)}]])))
 
 (ui/defview gist
   {:key :gist/id}
-  [{gist-id :gist/id}]
+  [{:as params gist-id :gist/id}]
   (let [{:keys [file/id file/source] :as file} (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" gist-id)
                                                                               :headers (gh/auth-headers))
                                                                      (j/call :json)
@@ -64,19 +67,24 @@
                                                               [gist-id])]
     (use-persisted-file id file)
     (when source
-      [editor.core/editor {:id id
-                           :default-value (or (:file/source @(persist/local-ratom id))
-                                              source)}])))
+      [:<>
+       [persist/save-to-recents! id (::routes/path params)]
+       [editor.core/editor {:id id
+                            :default-value (or (:file/source @(persist/local-ratom id))
+                                               source)}]])))
 
 (defn local-file [id]
   {:file/id (str "local:" id)
    :file/provider :file.provider/local})
 
-(ui/defview local [{:keys [local/id]}]
-  [editor.core/editor {:id id
-                       :default-value (or (:file/source @(persist/local-ratom id)) "")}])
+(ui/defview local [{:as params :keys [local/id]}]
+  (let [source (or (:file/source @(persist/local-ratom id)) "")]
+    [:<>
+     [persist/save-to-recents! id (::routes/path params)]
+     [editor.core/editor {:id id
+                          :default-value source}]]))
 
-(ui/defview http-text [{:keys [url]}]
+(ui/defview http-text [{:as params :keys [url]}]
   (let [url (cond-> url
                     (str/includes? url "%2F")
                     (js/decodeURIComponent))
@@ -89,6 +97,8 @@
     (use-persisted-file url {:file/source source
                              :file/id url})
     (when source
-      [editor.core/editor {:id url
-                           :default-value (or (:file/source @(persist/local-ratom url))
-                                              source)}])))
+      [:...
+       [persist/save-to-recents! url (::routes/path params)]
+       [editor.core/editor {:id url
+                            :default-value (or (:file/source @(persist/local-ratom url))
+                                               source)}]])))

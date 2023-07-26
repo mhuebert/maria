@@ -2,6 +2,7 @@
   (:require [applied-science.js-interop :as j]
             [goog.functions :as gf]
             [maria.cloud.github :as gh]
+            [maria.cloud.local :as local]
             [maria.cloud.local-sync :as local-sync]
             [maria.cloud.routes :as routes]
             [maria.editor.doc :as doc]
@@ -10,7 +11,8 @@
             [maria.ui :as ui]
             [promesa.core :as p]
             [re-db.api :as db]
-            [maria.editor.code.commands :as commands]))
+            [maria.editor.code.commands :as commands]
+            [yawn.hooks :as h]))
 
 ;; Maria is currently a single-file editor.
 ;; When loading a gist, we pick the first Clojure file.
@@ -88,7 +90,6 @@
     (str (apply f pre args) ext)))
 
 (defn gh-fetch [url options]
-  (js/console.log (ui/pprinted options))
   (p/-> (js/fetch url (clj->js (-> options
                                    (u/update-some {:body (comp js/JSON.stringify clj->js)})
                                    (update :headers merge
@@ -167,3 +168,32 @@
                     (if (:gist/id @(persisted-ratom id))
                       (update-gist id)
                       (create-gist id)))}})
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Keep track of recently viewed files
+
+(defonce !recents (local/ratom ::recent-docs ()))
+
+(defn add-to-recents! [id file path]
+  (let [entry {:maria/path path
+               :file/id id
+               :file/title (or (:file/title file)
+                               (some-> (:file/source file) u/extract-title)
+                               (:file/name file))}]
+    (when (:file/title entry)
+      (swap! !recents (fn [xs]
+                        (->> xs
+                             (remove #(= (:file/id %) id))
+                             (cons entry)))))))
+
+(ui/defview save-to-recents! [id path]
+  (let [file (current-file id)]
+    (h/use-effect (fn []
+                    (when (seq (:file/source file))
+                      (add-to-recents! id file path)))
+                  [id
+                   path
+                   (or (:file/title file)
+                       (some-> (:file/source file) u/extract-title)
+                       (:file/name file))]))
+  nil)

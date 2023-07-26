@@ -85,11 +85,12 @@
 #?(:cljs
    (defn use-promise [f deps]
      (let [[v v!] (h/use-state nil)
-           !current-key (h/use-ref key)]
-       (h/use-effect #(do (reset! !current-key key)
-                          (v! nil)
-                          (p/let [result (f)]
-                            (when (= @!current-key key) (v! result))))
+           !current-promise (h/use-ref nil)]
+       (h/use-effect #(do (v! nil)
+                          (let [promise (f)]
+                            (reset! !current-promise promise)
+                            (p/let [result promise]
+                              (when (= @!current-promise promise) (v! result)))))
                      deps)
        v)))
 
@@ -109,7 +110,7 @@
            (drop-while #(not (re-find #"^\s*;" %)))
            (drop-while #(re-find #"^[;\s]+$" %))
            first
-           (re-find #"\s*;+[\s#]*(.*)")
+           (re-find #"\s*;+\s*#+(.*)")
            second))
 
 (defn slug [title]
