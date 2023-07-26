@@ -36,10 +36,11 @@
         IReset
         (-reset! [o new-value]
           (let [prev-value @o]
-            (db/transact! (into [(assoc new-value :db/id db-id)]
-                                (for [[k v] prev-value
+            (db/transact! (into [(assoc new-value :db/id (:db/id prev-value db-id))]
+                                (for [[k v] (dissoc prev-value :db/id)
                                       :when (not (contains? new-value k))]
-                                  [:db/retract db-id k v])))))))))
+                                  [:db/retract db-id k v])))
+            @o))))))
 
 (defn local-ratom [id]
   (local-sync/sync-entity! id)
@@ -61,6 +62,41 @@
 (defn current-file [id]
   (merge @(persisted-ratom id)
          @(local-ratom id)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Keep track of recently viewed files
+
+(defonce !recents (local/ratom ::recent-docs ()))
+
+(comment
+  (swap! !recents empty))
+
+(defn add-to-recents! [path file]
+  (let [entry {:maria/path path
+               :file/id (:file/id file)
+               :file/title (or (:file/title file)
+                               (some-> (:file/source file) u/extract-title)
+                               (:file/name file))}]
+    (when (:file/title entry)
+      (swap! !recents (fn [xs]
+                        (->> xs
+                             (remove #(= (:file/id %) (:file/id file)))
+                             (cons entry)))))))
+
+(defn remove-from-recents! [id]
+  (swap! !recents (partial remove #(= (:file/id %) id))))
+
+(defn use-recents! [path {:as file :keys [file/id]}]
+  (let [possible-title (or (:file/title file)
+                           (some-> (:file/source file) u/extract-title)
+                           (:file/name file))]
+    (h/use-effect
+      (fn []
+        (when (seq (:file/source file))
+          (add-to-recents! path file)))
+      [path
+       id
+       possible-title])))
 
 (defn changes [id]
   (when id
@@ -129,6 +165,7 @@
                      "untitled.cljs")
         body {:files {filename {:content source}}}]
     (when (seq body)
+      (remove-from-recents! id)
       (p/let [file (p/-> (gh-fetch (str "https://api.github.com/gists")
                                    {:method "POST"
                                     :body body})
@@ -169,31 +206,10 @@
                       (update-gist id)
                       (create-gist id)))}})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Keep track of recently viewed files
-
-(defonce !recents (local/ratom ::recent-docs ()))
-
-(defn add-to-recents! [id file path]
-  (let [entry {:maria/path path
-               :file/id id
-               :file/title (or (:file/title file)
-                               (some-> (:file/source file) u/extract-title)
-                               (:file/name file))}]
-    (when (:file/title entry)
-      (swap! !recents (fn [xs]
-                        (->> xs
-                             (remove #(= (:file/id %) id))
-                             (cons entry)))))))
-
-(ui/defview save-to-recents! [id path]
-  (let [file (current-file id)]
-    (h/use-effect (fn []
-                    (when (seq (:file/source file))
-                      (add-to-recents! id file path)))
-                  [id
-                   path
-                   (or (:file/title file)
-                       (some-> (:file/source file) u/extract-title)
-                       (:file/name file))]))
-  nil)
+(defn use-persisted-file
+  "Syncs persisted file to re-db"
+  [id v]
+  (h/use-effect (fn []
+                  (when (and id v (not= :file.provider/local (:file/provider v)))
+                    (reset! (persisted-ratom id) v)))
+    [id v]))

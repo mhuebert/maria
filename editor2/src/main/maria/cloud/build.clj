@@ -19,7 +19,7 @@
         [opts args] (if (map? (first args))
                       [(merge opts (first args)) (rest args)]
                       [opts args])
-        opts (if-let [title (u/extract-title src)]
+        opts (if-let [title (u/extract-title src :headings-only true)]
                (assoc opts :title title)
                opts)]
     opts))

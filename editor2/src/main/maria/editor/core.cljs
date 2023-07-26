@@ -21,10 +21,9 @@
             [maria.editor.prosemirror.schema :as schema]
             [maria.editor.util :as u]
             [maria.ui :as ui]
-            [promesa.core :as p]
             [yawn.hooks :as h]
             [yawn.view :as v]
-            [sci.impl.namespaces :as sci.ns]))
+            [maria.cloud.routes :as routes]))
 
 (defonce focused-state-key (new p.state/PluginKey "focused-state"))
 
@@ -84,80 +83,79 @@
               (map (j/get :textContent)))
         (j/get-in doc [:content :content])))
 
-(j/defn prose:eval-clojure! [ctx ^js doc]
-  (let [sources (doc->cells doc)]
-    (vreset! (:last-ns ctx) (sci.ns/sci-find-ns ctx 'user))
-    (reduce (fn [out source]
-              (p/let [out out
-                      v (sci/eval-string ctx source)
-                      value (:value v)]
-                (conj out (assoc v :value value))))
-            []
-            sources)))
-
-(defn init! [{:keys [id
-                    default-value
-                    make-sci-ctx]
-             :or {make-sci-ctx sci/initial-context}}
-            ^js element]
-  {:pre [default-value]}
-  (let [doc (clj->doc default-value)
-        ProseState (js (.create p.state/EditorState
-                                {:doc doc
-                                 :plugins (plugins)}))
-        autosave! (persist/autosave-local-fn)
-        ProseView (js (-> (p.view/EditorView. {:mount element}
-                                              {:state ProseState
-                                               :nodeViews {:code_block NodeView/editor}
-                                               #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
-                                               ;; no-op tx for debugging
-                                               :dispatchTransaction (fn [tx]
-                                                                      (this-as ^js view
-                                                                        (let [prev-state (.-state view)
-                                                                              next-state (.apply prev-state tx)]
-                                                                          (.updateState view next-state)
-                                                                          (autosave! id prev-state next-state))))})
-                          (j/assoc! :!sci-ctx (atom (make-sci-ctx))
-                                    "file/id" id)))]
-    (swap! keymaps/!context assoc :ProseView ProseView)
-    (commands/prose:eval-prose-view! ProseView)
-    (j/call ProseView :focus)
-    {:ProseView ProseView
-     :dispose #(do (swap! keymaps/!context u/dissoc-value :ProseView ProseView)
-                   (j/call ProseView :destroy))}))
-
-(defn use-prose-view [options]
-  (let [!element-ref (h/use-state nil)
-        !element-ref-fn (h/use-callback #(when % (reset! !element-ref %)))
-        !prose-view-ref (h/use-ref)]
-    (h/use-effect
-      (fn []
-        (let [{:keys [ProseView dispose]} (when-let [element @!element-ref]
-                                            (init! options element))]
-          (reset! !prose-view-ref ProseView)
-          (fn []
-            (when dispose (dispose))
-            (reset! !prose-view-ref nil))))
-      [(:id options) @!element-ref])
-    [!element-ref-fn !prose-view-ref]))
-
-#_(defn ^:dev/before-load clear-console []
-    (.clear js/console))
-
-(defn use-doc-menu! [doc-id]
+(defn use-menubar-title-dropdown! [id]
   (let [!content (ui/use-context ::menu/!content)]
     (h/use-effect
       (fn []
-        (let [content (v/x [menu/doc-menu doc-id])]
-          (reset! !content content)
-          #(swap! !content (fn [x]
-                             (if (identical? x content)
-                               nil
-                               x)))))
-      [doc-id])))
+        (when id
+          (let [content (v/x [menu/doc-menu id])]
+            (reset! !content content)
+            #(swap! !content (fn [x]
+                               (if (identical? x content)
+                                 nil
+                                 x))))))
+      [id])))
 
-(ui/defview editor [options]
+(defn use-prose-view [{:keys [default-value on-change-state]}]
+  (let [!ref (h/use-state nil)
+        ref-fn (h/use-callback #(when % (reset! !ref %)))
+        !prose-view (h/use-state nil)
+        make-prose-view (fn [element]
+                          (js (-> (p.view/EditorView. {:mount element}
+                                                      {:state (js (.create p.state/EditorState
+                                                                           {:doc (clj->doc default-value)
+                                                                            :plugins (plugins)}))
+                                                       :nodeViews {:code_block NodeView/editor}
+                                                       #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
+                                                       ;; no-op tx for debugging
+                                                       :dispatchTransaction (fn [tx]
+                                                                              (this-as ^js view
+                                                                                (let [prev-state (.-state view)
+                                                                                      next-state (.apply prev-state tx)]
+                                                                                  (.updateState view next-state)
+                                                                                  (when on-change-state
+                                                                                    (on-change-state prev-state next-state)))))})
+                                  (j/assoc! :!sci-ctx (atom (sci/initial-context))))))]
+    (h/use-effect
+      (fn []
+        (if-let [element (and default-value @!ref)]
+          (let [ProseView (make-prose-view element)]
+            (reset! !prose-view ProseView)
+            #(j/call ProseView :destroy))
+          (reset! !prose-view nil)))
+      [default-value @!ref])
+    [@!prose-view ref-fn]))
+
+(ui/defview editor [params {:as file :keys [file/id]}]
   "Returns a ref for the element where the editor is to be mounted."
-  (let [[!ref !prose-view] (use-prose-view options)]
-    (use-doc-menu! (:id options))
-    [:div.relative.notebook.my-4 {:ref !ref}]))
+
+  (persist/use-persisted-file id file)
+  (use-menubar-title-dropdown! id)
+  (persist/use-recents! (::routes/path params) file)
+
+  (let [autosave! (h/use-memo persist/autosave-local-fn [id])
+        default-value (h/use-memo #(when file
+                                     (or (:file/source file) ""))
+                                  [id])
+        [ProseView ref-fn] (use-prose-view {:default-value default-value
+                                            :on-change-state (fn [prev-state next-state]
+                                                               (autosave! id prev-state next-state))})]
+
+    ;; initialize new editors
+    (h/use-effect
+      (fn []
+        (when (some-> ProseView (u/guard (complement (j/get :isDestroyed))))
+          (keymaps/add-context :ProseView ProseView)
+          (commands/prose:eval-prose-view! ProseView)
+          (j/call ProseView :focus)))
+      [ProseView])
+
+    ;; set file/id context
+    (h/use-effect (fn []
+                    (keymaps/add-context :file/id id)
+                    #(keymaps/remove-context :file/id id))
+                  [id])
+
+    (if file
+      [:div.relative.notebook.my-4 {:ref ref-fn}]
+      "Loading...")))

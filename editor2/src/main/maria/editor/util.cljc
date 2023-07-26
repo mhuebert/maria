@@ -84,15 +84,18 @@
 
 #?(:cljs
    (defn use-promise [f deps]
-     (let [[v v!] (h/use-state nil)
+     (let [[[v v-deps] v!] (h/use-state nil)
            !current-promise (h/use-ref nil)]
        (h/use-effect #(do (v! nil)
-                          (let [promise (f)]
+                          (let [v-deps deps
+                                promise (f)]
                             (reset! !current-promise promise)
                             (p/let [result promise]
-                              (when (= @!current-promise promise) (v! result)))))
+                              (when (= @!current-promise promise)
+                                (v! [result v-deps])))))
                      deps)
-       v)))
+       (when (= deps v-deps)
+         v))))
 
 (defn update-some [m updaters]
   (reduce-kv (fn [m k f]
@@ -105,12 +108,17 @@
           (identical? (m k) v)
           (dissoc k)))
 
-(defn extract-title [source]
+(defn find-first [coll pred]
+  (reduce (fn [_ x] (if (pred x) (reduced x) _)) nil coll))
+
+(defn extract-title [source & {:keys [headings-only]}]
   (some->> (str/split-lines source)
            (drop-while #(not (re-find #"^\s*;" %)))
            (drop-while #(re-find #"^[;\s]+$" %))
            first
-           (re-find #"\s*;+\s*#+(.*)")
+           (re-find (if headings-only
+                      #"\s*;+\s*#+\s*(.*)"
+                      #"\s*;+[\s#]*(.*)"))
            second))
 
 (defn slug [title]

@@ -13,12 +13,12 @@
             [maria.editor.code.commands :as code.commands]
             [maria.editor.prosemirror.links :as links]
             [maria.editor.prosemirror.schema :refer [schema]]
+            [maria.editor.util :as u]
             [maria.ui :as ui]
             [nextjournal.clojure-mode :as clj-mode]
             [nextjournal.clojure-mode.commands :refer [paredit-index]]
             [re-db.hooks :as h]
             [re-db.reactive :as r]
-            [re-db.util :as u]
             [yawn.view :as v]))
 
 (def mac? (and (exists? js/navigator)
@@ -343,20 +343,20 @@
 
 (def !prev-selected-element (atom nil))
 
-(defn hide-command-bar! []
-  (some-> (:command-bar/element @ui/!state) (j/call :blur))
+(defn hide-command-bar! [{:keys [command-bar/element]}]
+  (some-> element (j/call :blur))
   (when-let [^js prev @!prev-selected-element]
     (reset! !prev-selected-element nil)
     (.focus prev)))
 
-(defn show-command-bar! []
-  (when-let [el (:command-bar/element @ui/!state)]
+(defn show-command-bar! [{:keys [command-bar/element]}]
+  (when-let [el element]
     (when-not (= @!prev-selected-element (.-activeElement js/document))
       (reset! !prev-selected-element (.-activeElement js/document))
       (.focus el))))
 
-(defn command-bar-open? []
-  (when-let [el (:command-bar/element @ui/!state)]
+(defn command-bar-open? [{:keys [command-bar/element]}]
+  (when-let [el element]
     (identical? el (.-activeElement js/document))))
 
 (def commands:global
@@ -375,8 +375,8 @@
                                 false)}
    :editor/toggle-command-bar {:bindings [:Mod-k]
                                :kind :global
-                               :prepare (fn [cmd _]
-                                          (merge cmd (if (command-bar-open?)
+                               :prepare (fn [cmd ctx]
+                                          (merge cmd (if (command-bar-open? ctx)
                                                        {:title "Hide command bar"
                                                         :f hide-command-bar!}
                                                        {:title "Show command bar"
@@ -449,6 +449,9 @@
 
 (defonce !context (atom {}))
 
+(def add-context (partial swap! !context assoc))
+(def remove-context (partial swap! !context u/dissoc-value))
+
 (defn get-context []
   (merge @!context
          (when-let [^js ProseView (:ProseView @!context)]
@@ -461,8 +464,7 @@
                                     {:NodeView (j/get CodeView :NodeView)
                                      :CodeView CodeView})))]
 
-             (merge {:ProseView ProseView
-                     :file/id (j/get ProseView "file/id")}
+             (merge {:ProseView ProseView}
                     code-context
                     (if code-context
                       {:focused/code true}

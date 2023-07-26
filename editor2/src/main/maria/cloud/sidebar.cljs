@@ -14,17 +14,17 @@
             [yawn.view :as v]))
 
 (defn sidebar-width []
-  (let [{:sidebar/keys [visible? width transition]} @ui/!state]
+  (let [{:sidebar/keys [visible? width]} @ui/!state]
     (if visible? width 0)))
 
 (ui/defview with-sidebar [sidebar content]
-  (let [{:sidebar/keys [visible? width transition]} (hooks/use-deref ui/!state)]
+  (let [{:sidebar/keys [visible? width]} (hooks/use-deref ui/!state)]
     [:div
      {:style {:padding-left (if visible? width 0)
-              :transition transition}}
+              :transition ui/sidebar-transition}}
      [:div.fixed.top-0.bottom-0.bg-white.rounded.z-10.drop-shadow-md.divide-y.overflow-hidden.border-r.border-zinc-100.flex
       {:style {:width width
-               :transition transition
+               :transition ui/sidebar-transition
                :left (if visible? 0 (- width))}}
       [:div.flex-grow.overflow-y-auto sidebar]]
      content]))
@@ -100,7 +100,10 @@
 
 (ui/defview content []
   (let [{current-path ::routes/path} @routes/!location]
-    [:> acc/Root {:type "multiple" :defaultValue #js["curriculum"] :class "relative"}
+    [:> acc/Root {:type "multiple"
+                  :value (-> @ui/!state :sidebar/open to-array)
+                  :on-value-change #(swap! ui/!state assoc :sidebar/open (set %))
+                  :class "relative"}
 
      [:div {:class "flex flex-row h-[40px] items-center border-b border-zinc-100"}
       [:div.flex.items-center.justify-center.py-2.px-3.cursor-pointer.text-zinc-500.hover:text-zinc-700

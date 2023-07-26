@@ -24,8 +24,9 @@
           {:key value
            :value value
            :onSelect (fn [_]
-                       (keymaps/run-command cmd)
-                       (keymaps/hide-command-bar!))
+                       (let [ctx (keymaps/get-context)]
+                         (keymaps/run-command ctx cmd)
+                         (keymaps/hide-command-bar! ctx)))
            :class "data-[selected]:bg-sky-500 data-[selected]:text-white"}
           [:div.w-20.truncate.text-menu-muted.pr-2 (when (and ns (not= \_ (first ns))) ns)]
           title
@@ -35,7 +36,8 @@
 (v/defview input []
   (let [!search (h/use-state "")
         !open (h/use-state false)
-        close! (fn [& _] (keymaps/hide-command-bar!))
+        !input (h/use-ref nil)
+        close! (fn [& _] (keymaps/hide-command-bar! {:command-bar/element @!input}))
         keydown-handler (h/use-memo #(ui/keydown-handler {:Escape close!
                                                           :Mod-. close!}))]
     [:el Popover/Root {:open true}
@@ -49,9 +51,10 @@
          :on-focus #(reset! !open true)
          :on-blur #(do (reset! !open false)
                        (reset! !search "")
-                       (keymaps/hide-command-bar!))
+                       (keymaps/hide-command-bar! {:command-bar/element @!input}))
          :onValueChange #(reset! !search %)
-         :ref #(swap! ui/!state assoc :command-bar/element %)}]]
+         :ref #(do (keymaps/add-context :command-bar/element %)
+                   (reset! !input %))}]]
       [:div.absolute.h7.flex.items-center.right-2.top-0.bottom-0.placeholder
        {:class (when (and @!open (not (str/blank? @!search))) "opacity-0")}
        (-> (:editor/toggle-command-bar keymaps/commands:global)

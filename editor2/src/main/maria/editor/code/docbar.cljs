@@ -54,12 +54,12 @@
                                          (repl/doc-map @!sci-ctx ns sym))))))}))]))
 
 (ui/defview view []
-  (let [{:sidebar/keys [visible? width transition]} @ui/!state]
+  (let [{:sidebar/keys [visible? width]} @ui/!state]
     [:<>
      [:div {:style {:height 35}}]
      [:div.fixed.bottom-0.right-0
       {:style {:left (if visible? width 0)
-               :transition transition}}
+               :transition ui/sidebar-transition}}
       (when-let [{:as m :keys [ns name doc arglists]} @!state]
         (views/doc-tooltip m
                            (v/x

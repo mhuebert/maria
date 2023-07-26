@@ -112,14 +112,14 @@
                                                      :Enter stop-editing!}))
         provider (:file/provider current)]
     [:<>
-     [:div.w-2.h-2.rounded-full.transition-all.delay-300
+     [:div.w-2.h-2.rounded-full.transition-all
       {:class (if (or (= provider :file.provider/local)
                       (seq (persist/changes id)))
                 "bg-yellow-500"
                 "bg-transparent")}]
 
      (let [icon (when (= :file.provider/gist provider)
-                  [:div.inset-0.flex.items-center.justify-center.w-7.absolute
+                  [:div.inset-0.flex.items-center.justify-center.w-7.absolute.z-30
                    [icons/github "w-4 h-4 mx-auto"]])]
        [:el menu/Menu
         [:div.relative.flex.bg-zinc-100.border.border-zinc-200.hover:border-zinc-300.rounded.h-7
@@ -190,12 +190,13 @@
        menubar-content
        [:div.flex-grow]
        [command-bar/input]
-       (if-let [{:as user :keys [photo-url display-name]} (gh/get-user)]
+       (if-let [{:keys [photo-url display-name]} (gh/get-user)]
          [menu [:el menu/Trigger {:class [trigger-classes
                                           "rounded-full"]} [avatar photo-url display-name]]
           [command-item :account/sign-out]]
-         (if (gh/any-tokens?)
+         (if (gh/pending?)
            [icons/loading "w-5 h-5 opacity-30"]
            [button-small-med
             {:on-click #(gh/sign-in-with-popup!)}
+            [icons/github "w-4 h-4 mr-2"]
             "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]]))]]]))

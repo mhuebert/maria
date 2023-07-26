@@ -8,19 +8,27 @@
             [maria.ui :as ui]
             [promesa.core :as p]
             [re-db.api :as db]
+            [re-db.reactive :as r]
             [yawn.hooks :as h]
+            [yawn.view :as y]
             [maria.cloud.persistence :as persist]
             [maria.editor.code.show-values :as show]))
 
-(defn use-persisted-file
-  "Syncs persisted file to re-db"
-  [id v]
-  (h/use-effect (fn []
-                  (when (and id v)
-                    (reset! (persist/persisted-ratom id) v)))
-                [id v]))
+;;
+;; - when viewing a doc, save it to recents
+;; -
 
 (comment
+  (j/defn prose:eval-clojure! [ctx ^js doc]
+    (let [sources (doc->cells doc)]
+      (vreset! (:last-ns ctx) (sci.ns/sci-find-ns ctx 'user))
+      (reduce (fn [out source]
+                (p/let [out out
+                        v (sci/eval-string ctx source)
+                        value (:value v)]
+                  (conj out (assoc v :value value))))
+              []
+              sources)))
   ;; this was one approach to "exporting" a cell as a webview.
   ;; would rather try something else: let a user 'maximize' a cell
   ;; and then share a link to it (retaining possibility of minimizing it)
@@ -40,49 +48,37 @@
        (or (:error result)
            (:value result))])))
 
-(ui/defview curriculum
+(defonce !r (r/atom "foo"))
+
+(y/defview curriculum
   [{:as params :curriculum/keys [name]}]
   (let [{:as file
          :keys [file/id
                 file/url]} (db/get [:curriculum/name name])
-        source (u/use-promise #(p/-> (u/fetch url)
-                                     (j/call :text))
-                              name)]
-    (use-persisted-file id (assoc file :file/source source))
-    (when source
-      [:<>
-       [persist/save-to-recents! id (::routes/path params)]
-       [editor.core/editor {:id id
-                            :path (::routes/path params)
-                            :default-value (or (:file/source @(persist/local-ratom id))
-                                               source)}]])))
+        file (u/use-promise #(when url
+                               (p/let [source (p/-> (u/fetch url)
+                                                    (j/call :text))]
+                                 (assoc file :file/source source)))
+                            [id])]
+    [editor.core/editor params file]))
 
 (ui/defview gist
   {:key :gist/id}
   [{:as params gist-id :gist/id}]
-  (let [{:keys [file/id file/source] :as file} (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" gist-id)
-                                                                              :headers (gh/auth-headers))
-                                                                     (j/call :json)
-                                                                     gh/parse-gist)
-                                                              [gist-id])]
-    (use-persisted-file id file)
-    (when source
-      [:<>
-       [persist/save-to-recents! id (::routes/path params)]
-       [editor.core/editor {:id id
-                            :default-value (or (:file/source @(persist/local-ratom id))
-                                               source)}]])))
+  (let [file (u/use-promise #(p/-> (u/fetch (str "https://api.github.com/gists/" gist-id)
+                                            :headers (gh/auth-headers))
+                                   (j/call :json)
+                                   gh/parse-gist)
+                            [gist-id])]
+    [editor.core/editor params file]))
 
 (defn local-file [id]
   {:file/id (str "local:" id)
    :file/provider :file.provider/local})
 
 (ui/defview local [{:as params :keys [local/id]}]
-  (let [source (or (:file/source @(persist/local-ratom id)) "")]
-    [:<>
-     [persist/save-to-recents! id (::routes/path params)]
-     [editor.core/editor {:id id
-                          :default-value source}]]))
+  [editor.core/editor params (merge (local-file id)
+                                    @(persist/local-ratom id))])
 
 (ui/defview http-text [{:as params :keys [url]}]
   (let [url (cond-> url
@@ -91,14 +87,9 @@
         url (cond->> url
                      (not (str/starts-with? url "http"))
                      (str "https://"))
-        source (u/use-promise #(p/-> (u/fetch url)
-                                     (j/call :text))
-                              [url])]
-    (use-persisted-file url {:file/source source
-                             :file/id url})
-    (when source
-      [:...
-       [persist/save-to-recents! url (::routes/path params)]
-       [editor.core/editor {:id url
-                            :default-value (or (:file/source @(persist/local-ratom url))
-                                               source)}]])))
+        file (u/use-promise #(p/let [source (p/-> (u/fetch url)
+                                                  (j/call :text))]
+                               {:file/id url
+                                :file/source source})
+                            [url])]
+    [editor.core/editor params file]))

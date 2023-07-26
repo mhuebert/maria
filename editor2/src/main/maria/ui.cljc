@@ -9,12 +9,23 @@
             [re-db.memo :as memo]
             [re-db.react]
             [re-db.reactive :as r]
-            [re-db.xform :as xf])
+            [re-db.xform :as xf]
+            #?(:cljs [maria.cloud.local :as local]))
   #?(:cljs (:require-macros [maria.ui :as ui])))
 
-(r/redef !state (r/atom {:sidebar/visible? false
-                         :sidebar/width 250
-                         :sidebar/transition "all 0.2s ease 0s"}))
+(def sidebar-transition "all 0.2s ease 0s")
+
+(def default-state {:sidebar/visible? false
+                    :sidebar/width 250
+                    :sidebar/transition "all 0.2s ease 0s"
+                    :sidebar/open #{"curriculum"}})
+
+#?(:cljs
+   (defonce !state (local/ratom ::state default-state)))
+
+(comment
+  @!state
+  (swap! !state merge default-state))
 
 (defmacro x [& args] `(v/x (do ~@args)))
 

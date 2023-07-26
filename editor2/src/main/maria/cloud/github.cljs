@@ -29,11 +29,12 @@
   ([] (get-token (:uid (get-user))))
   ([uid] (get (local-sync/get-entity ::token) uid)))
 
-(defn any-tokens? []
-  (some? (local-sync/get-entity ::token)))
-
 (defn set-token! [uid->token]
   (local-sync/swap-entity ::token (constantly uid->token)))
+
+(defn pending? []
+  (and (not @!initialized?)
+       (some? (local-sync/get-entity ::token))))
 
 (defn auth-headers []
   (when-let [t (get-token)]
@@ -85,7 +86,7 @@
                              (js/Object.values)
                              (keep (j/fn [^js {:keys [filename language content]}]
                                      (when (= language "Clojure")
-                                       {:file/id (str "gist:" id "/" filename)
+                                       {:file/id (str "gist:" id) ;; ":filename"
                                         :file/title (some-> description
                                                             str/trim
                                                             (str/split-lines)
