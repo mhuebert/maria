@@ -145,7 +145,7 @@
   resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
   integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
 
-"@cortex-js/compute-engine@0.12.3", "@cortex-js/compute-engine@^0.12.2":
+"@cortex-js/compute-engine@^0.12.2":
   version "0.12.3"
   resolved "https://registry.yarnpkg.com/@cortex-js/compute-engine/-/compute-engine-0.12.3.tgz#c046b6e233926cd20f3c305b4855dda364e506fe"
   integrity sha512-LuiSWMSlgsLFcRWm5ifR8ZeE9HXWOrJ+hE6F211eVI+S+w9SQQvZhhCdUCBusyspW0+29R8lksJPH4qFFr3Xag==
@@ -4828,12 +4828,10 @@ mathbox@^2.3.2-rc1:
     shadergraph "^2.1.3"
     threestrap "^0.5.1"
 
-mathlive@^0.95.0:
-  version "0.95.0"
-  resolved "https://registry.yarnpkg.com/mathlive/-/mathlive-0.95.0.tgz#5e80b6710b6ef2fae337caf956c1b4c5354e5a43"
-  integrity sha512-/co7zMYoh9BFM1EkawDgGobw87DrFIqUWnBXPvYqns4+HV6zmsmJmf6uEV1fMP5Id4uf73g/ItBF6FUL1U1mlw==
-  dependencies:
-    "@cortex-js/compute-engine" "0.12.3"
+mathlive@0.85.1:
+  version "0.85.1"
+  resolved "https://registry.yarnpkg.com/mathlive/-/mathlive-0.85.1.tgz#498271e1bccc7b35d307eeef1d2c39a7122947f5"
+  integrity sha512-L5s5MJbpm407awCGYLE6NhToyDhRHyAT0KzNHzvYKL06kdpcMUQaMKKPIBRnhC+iHpIod/QtaqXr2R8qQrNg0Q==
 
 md5.js@^1.3.4:
   version "1.3.5"

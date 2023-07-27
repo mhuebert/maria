@@ -56,7 +56,11 @@
                                          (when (and ns name)
                                            (try
                                              (let [sym-name (c/name name)
-                                                   ns-name-str (or (some-> imported-from str)
+                                                   ns-name-str (or (when imported-from
+                                                                     ;; omit imported-from name if equal to sym-name
+                                                                     (if (= (c/name imported-from) sym-name)
+                                                                       (namespace imported-from)
+                                                                       (str imported-from)))
                                                                    (sci.ns/sci-ns-name ns))]
                                                #js{:label sym-name
                                                    :sym (symbol ns-name-str sym-name)
@@ -83,7 +87,7 @@
       :background-color "white"
       :box-shadow "2px 2px 8px 0 rgba(0,0,0,.2)"}
      ".cm-tooltip.cm-tooltip-autocomplete > ul"
-     {:min-width "min(225px, 95vw)"}
+     {:min-width "min(250px, 95vw)"}
      ".cm-tooltip.cm-tooltip-autocomplete > ul > li"
      {:padding "0.4rem"
       :margin-top "-1px"

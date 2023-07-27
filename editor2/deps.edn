@@ -1,13 +1,13 @@
 {:paths ["src/main"]
  :deps {org.clojure/clojure {:mvn/version "1.11.1"}
         org.clojure/clojurescript {:mvn/version "1.11.60"}
-        thheller/shadow-cljs {:mvn/version "2.22.2"}
+        thheller/shadow-cljs {:mvn/version "2.25.1"}
         applied-science/js-interop {#_#_:mvn/version "0.4.1"
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "e29e17b2a647006ac0e96307bbc893b01b99c3e9"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "8248736f7afb12fcd8e03439ff02703174dd0de6"}
-        org.babashka/sci {:mvn/version "0.7.39"}
+        org.babashka/sci {:mvn/version "0.8.40"}
         babashka/fs {:mvn/version "0.3.17"}
         babashka/process {:mvn/version "0.4.16"}
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
@@ -28,7 +28,7 @@
 
         ;; emmy / clerk
         org.mentat/emmy {:git/url "https://github.com/mhuebert/emmy"
-                         :git/sha "9fdb8e832e32b0e0419135830c56fa08ac738caa"}
+                         :git/sha "b7cd9be12f08772b450efcf621ce56e0cc869d9d"}
         org.mentat/emmy-viewers {:mvn/version "0.2.0"}
         io.github.nextjournal/clerk {:git/sha "d80187013d7b7b96db3d8b114b8d99f687170668"}
         io.github.nextjournal/clerk.render {:git/url "https://github.com/nextjournal/clerk"

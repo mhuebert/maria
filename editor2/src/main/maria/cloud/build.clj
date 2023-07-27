@@ -47,7 +47,6 @@
         (fs/list-dir (fs/file "src/main/maria/curriculum"))))
 
 (defn index-html []
-
   (page/root "Maria"
              {:meta {:viewport "width=device-width, initial-scale=1"}
               :styles [{:href (assets/path "/maria.cloud.css")}]
