@@ -79,7 +79,7 @@
      (let [[v v!] (h/use-state nil)]
        (h/use-effect #(do (v! nil)
                           (p/catch (p/-> (fetch url opts) v!) str))
-                     [url])
+         [url])
        v)))
 
 #?(:cljs
@@ -93,7 +93,7 @@
                             (p/let [result promise]
                               (when (= @!current-promise promise)
                                 (v! [result v-deps])))))
-                     deps)
+         deps)
        (when (= deps v-deps)
          v))))
 
@@ -121,21 +121,27 @@
                       #"\s*;+[\s#]*(.*)"))
            second))
 
+(defn truncate-segmented [s n ellipsis]
+  (let [segments (str/split s #"\s+")
+        segments-truncated (reduce (fn [out segment]
+                                     (if (>= (count out) n)
+                                       (reduced out)
+                                       (str out " " segment)))
+                                   (first segments)
+                                   (rest segments))]
+    (if (< (count segments-truncated) (count s))
+      (str segments-truncated ellipsis)
+      segments-truncated)))
+
 (defn slug [title]
   (-> title
-      (str/replace #"\s+" "_")
       (str/replace #"[^\w\d_]" "")
       str/lower-case
-      (str/split #"_+")
-      (as-> slug
-            (->> (reduce (fn [out segment]
-                           (if (>= (count out) 35)
-                             (reduced out)
-                             (str out "_" segment)))
-                         (first slug)
-                         (rest slug))))))
+      (truncate-segmented 35 "")
+      (str/replace #"\s+" "_")))
 
 (comment
+  (truncate-segmented "This is a long string" 7 "...")
   (some-> "; Issue #256"
           extract-title
           slug))

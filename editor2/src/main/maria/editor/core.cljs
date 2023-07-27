@@ -9,6 +9,7 @@
             ["react-dom" :as react-dom]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
+            [maria.cloud.markdown :as markdown]
             [maria.cloud.persistence :as persist]
             [maria.cloud.menubar :as menu]
             [maria.editor.code.NodeView :as NodeView]
@@ -157,7 +158,6 @@
                     (keymaps/add-context :file/id id)
                     #(keymaps/remove-context :file/id id))
                   [id])
-
     (if file
       [:div.relative.notebook.my-4 {:ref ref-fn}]
       "Loading...")))

@@ -1,6 +1,7 @@
 (ns maria.editor.views
   (:require ["@radix-ui/react-tooltip" :as Tooltip]
             [clojure.string :as str]
+            [maria.cloud.markdown :as markdown]
             [maria.ui :as ui]
             [re-db.react]
             [yawn.view :as v]))
@@ -23,17 +24,19 @@
 (defn show-doc [{:as var-meta :keys [ns name arglists doc macro special-form spec]}]
   (when var-meta
     (v/x
-     (into [:<>]
-           (comp (keep identity)
+      (into [:<>]
+            (comp (keep identity)
                  (interpose [:div.mb-1]))
-           [[:div.gap-list.items-center
+            [[:div.gap-list.items-center
              [show-sym ns name]
              (first
               (for [tag [:macro :special-form :spec]
                     :when (tag var-meta)]
                 [tag-el (clojure.core/name tag)]))]
             (when arglists [show-arglists arglists])
-            (some-> doc (str/replace #"\n ( \S)" (fn [[_ x]] x)))]))))
+            (some-> doc
+                    (str/replace #"\n ( \S)" (fn [[_ x]] x))
+                    markdown/show-markdown)]))))
 
 (ui/defview doc-tooltip [m trigger]
   (when m
@@ -43,4 +46,5 @@
       [:> Tooltip/Portal
        [:> Tooltip/Content
         [:> Tooltip/Arrow {:class "fill-white"}]
-        [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"} (show-doc m)]]]]]))
+        [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"}
+         (show-doc m)]]]]]))

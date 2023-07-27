@@ -6,6 +6,7 @@
             [applied-science.js-interop.alpha :refer [js]]
             [maria.editor.code.commands :as commands]
             [maria.editor.code.repl :as repl]
+            [maria.editor.util :as u]
             [maria.editor.views :as views]
             [maria.ui :as ui]
             [nextjournal.clojure-mode.node :as n]
@@ -61,11 +62,13 @@
       {:style {:left (if visible? width 0)
                :transition ui/sidebar-transition}}
       (when-let [{:as m :keys [ns name doc arglists]} @!state]
-        (views/doc-tooltip m
-                           (v/x
-                            [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
-                             {:class ["h-[35px]"
-                                      "border-t border-stone-300"]}
-                             [:div (views/show-sym ns name)]
-                             [:div (views/show-arglists arglists)]
-                             [:div.truncate doc]])))]]))
+        (v/x
+          [:div.bg-stone-200.flex.items-center.px-4.font-mono.text-sm.gap-list.whitespace-nowrap.w-full
+           {:class ["h-[35px]"
+                    "border-t border-stone-300"]}
+           [:div (views/show-sym ns name)]
+           [:div (views/show-arglists arglists)]
+           (when doc
+             (views/doc-tooltip
+               m
+               (v/x [:div.bg-white.m-1.inline-block.py-1.px-2.rounded-md.text-xs.opacity-70.hover:opacity-100.truncated (u/truncate-segmented doc 20 "...")])))]))]]))

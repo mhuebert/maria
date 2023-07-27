@@ -30,17 +30,17 @@
 (defn MarkdownSerializer [nodes marks]
   #js {:serialize (fn [content]
                     (let [state (patch-state (MarkdownSerializerState.
-                                              (doto default-serializer-nodes (j/extend! (clj->js (or nodes #js {}))))
-                                              (doto default-serializer-marks (j/extend! (clj->js (or marks #js {})))) nil))]
+                                               (doto default-serializer-nodes (j/extend! (clj->js (or nodes #js {}))))
+                                               (doto default-serializer-marks (j/extend! (clj->js (or marks #js {})))) nil))]
                       (.renderContent state content)
                       (.-out state)))})
 
-(def fenced-code-nodes {:code_block  (fn [state node]
-                                       (.write state (str "```" (.-params (.-attrs node)) "\n"))
-                                       (.text state (.-textContent node) false)
-                                       (.ensureNewLine state)
-                                       (.write state "```")
-                                       (.closeBlock state node))
+(def fenced-code-nodes {:code_block (fn [state node]
+                                      (.write state (str "```" (.-params (.-attrs node)) "\n"))
+                                      (.text state (.-textContent node) false)
+                                      (.ensureNewLine state)
+                                      (.write state "```")
+                                      (.closeBlock state node))
                         :bullet_list (fn [state node]
                                        (.renderList state node "    " (fn []
                                                                         (str (j/get node [:attrs :bullet] "*") " "))))})
@@ -66,5 +66,5 @@
 
 (def Editor (props/partial base/Editor
                            {:serialize #(.serialize serializer %)
-                                  :parse     #(.parse parser %)
-                                  :schema    schema}))
+                            :parse #(.parse parser %)
+                            :schema schema}))
