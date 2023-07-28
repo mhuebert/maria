@@ -51,13 +51,15 @@
 
 (def state-source (comp doc/doc->clj (j/get :doc)))
 
-(defn new-local-file! [& [{:as file
+(defn new-blank-file! [& [{:as file
                            :file/keys [source name]}]]
+  (some-> js/window.event (j/call :preventDefault))
   (let [id (str (random-uuid))]
     (reset! (local-ratom id)
             {:file/source (or source "")
              :file/name (or name (extract-filename source))})
-    (routes/navigate! 'maria.cloud.views/local {:local/id id})))
+    (routes/navigate! 'maria.cloud.views/local {:local/id id})
+    true))
 
 (defn current-file [id]
   (merge @(persisted-ratom id)
@@ -179,15 +181,13 @@
   (not= :file.provider/curriculum (:file/provider (current-file id))))
 
 (keymaps/register-commands!
-  {:file/new {:bindings [(if keymaps/mac?
-                           :Ctrl-n
-                           :Meta-n)]
-              :f (fn [_] (new-local-file!))}
+  {:file/new {:bindings [:Shift-Mod-b]
+              :f (fn [_] (new-blank-file!))}
    :file/duplicate {:when (every-pred :ProseView :file/id)
                     ;; create a new gist with contents of current doc.
                     :f (fn [{:keys [ProseView file/id]}]
                          (let [source (state-source (j/get ProseView :state))]
-                           (new-local-file! {:file/source source
+                           (new-blank-file! {:file/source source
                                              :file/name (some-> (:file/name (current-file id))
                                                                 (swap-name (partial str "copy_of_")))})))}
    :file/revert {:when (comp seq changes :file/id)
@@ -208,8 +208,8 @@
 
 (defn use-persisted-file
   "Syncs persisted file to re-db"
-  [id v]
+  [{:as file :file/keys [id source provider]}]
   (h/use-effect (fn []
-                  (when (and id v (not= :file.provider/local (:file/provider v)))
-                    (reset! (persisted-ratom id) v)))
-    [id v]))
+                  (when (not= :file.provider/local provider)
+                    (reset! (persisted-ratom id) file)))
+    [id source]))

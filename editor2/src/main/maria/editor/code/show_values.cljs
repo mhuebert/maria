@@ -132,12 +132,14 @@
 (defn punctuate ^v/el [s]
   (v/x [:div.inline-block.font-bold.opacity-60 s]))
 
-(defview show-brackets [left right more children !wrapper !parent]
+(defview show-brackets [left right more children !wrapper !parent interpose-comma?]
   (let [bracket-classes "flex flex-none"]
     [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap.text-brackets {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
-     (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden.interpose-comma {:ref !parent}]
+     (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden
+          {:ref !parent
+           :class (when interpose-comma? "interpose-comma")}]
          (into (map (fn [x] x)) children))
 
      [:div.items-end {:class bracket-classes}
@@ -203,7 +205,8 @@
            (comp (map #(do [:span.inline-flex.align-center (show opts %)])))
            coll)
      !wrapper
-     !parent]))
+     !parent
+     (or (map? coll) (vector? coll))]))
 
 (defview show-map-entry [opts this]
   [:div.inline-flex.gap-list
@@ -303,7 +306,7 @@
   "Evaluates reagent form within namespace of current cell"
   [opts form]
   (commands/code:eval-form-in-show opts
-    `(~'reagent.core/as-element [(fn [] ~form)])))
+                                   `(~'reagent.core/as-element [(fn [] ~form)])))
 
 (defn handles-keys
   "Specify keywords indicating what kind of values a viewer handles.

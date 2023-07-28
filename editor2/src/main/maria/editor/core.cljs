@@ -88,16 +88,15 @@
   (let [!content (ui/use-context ::menu/!content)]
     (h/use-effect
       (fn []
-        (when id
-          (let [content (v/x [menu/doc-menu id])]
-            (reset! !content content)
-            #(swap! !content (fn [x]
-                               (if (identical? x content)
-                                 nil
-                                 x))))))
+        (let [content (v/x [menu/doc-menu id])]
+          (reset! !content content)
+          #(swap! !content (fn [x]
+                             (if (identical? x content)
+                               nil
+                               x)))))
       [id])))
 
-(defn use-prose-view [{:keys [default-value on-change-state]}]
+(defn use-prose-view [{:keys [default-value on-change-state]} deps]
   (let [!ref (h/use-state nil)
         ref-fn (h/use-callback #(when % (reset! !ref %)))
         !prose-view (h/use-state nil)
@@ -124,30 +123,29 @@
             (reset! !prose-view ProseView)
             #(j/call ProseView :destroy))
           (reset! !prose-view nil)))
-      [default-value @!ref])
+      (conj deps @!ref))
     [@!prose-view ref-fn]))
 
-(ui/defview editor [params {:as file :keys [file/id]}]
+(ui/defview editor* [params {:as file :keys [file/id]}]
   "Returns a ref for the element where the editor is to be mounted."
 
-  (persist/use-persisted-file id file)
+  (persist/use-persisted-file file)
   (use-menubar-title-dropdown! id)
   (persist/use-recents! (::routes/path params) file)
 
-  (let [autosave! (h/use-memo persist/autosave-local-fn [id])
-        default-value (h/use-memo #(when file
-                                     (or (:file/source @(persist/local-ratom id))
-                                         (:file/source file)
-                                         ""))
-                                  [id])
-        [ProseView ref-fn] (use-prose-view {:default-value default-value
+  (let [autosave! (h/use-memo persist/autosave-local-fn)
+        [ProseView ref-fn] (use-prose-view {:default-value (or (:file/source @(persist/local-ratom id))
+                                                               (:file/source file)
+                                                               "")
                                             :on-change-state (fn [prev-state next-state]
-                                                               (autosave! id prev-state next-state))})]
+                                                               (autosave! id prev-state next-state))}
+                                           [])]
 
     ;; initialize new editors
     (h/use-effect
       (fn []
         (when (some-> ProseView (u/guard (complement (j/get :isDestroyed))))
+
           (keymaps/add-context :ProseView ProseView)
           (commands/prose:eval-prose-view! ProseView)
           (j/call ProseView :focus)))
@@ -156,8 +154,12 @@
     ;; set file/id context
     (h/use-effect (fn []
                     (keymaps/add-context :file/id id)
-                    #(keymaps/remove-context :file/id id))
-                  [id])
-    (if file
-      [:div.relative.notebook.my-4 {:ref ref-fn}]
-      "Loading...")))
+                    #(keymaps/remove-context :file/id id)))
+    [:div.relative.notebook.my-4 {:ref ref-fn}]))
+
+(ui/defview editor
+  {:key (fn [params file] (:file/id file))}
+  [params file]
+  (if file
+    [editor* params file]
+    "Loading..."))
