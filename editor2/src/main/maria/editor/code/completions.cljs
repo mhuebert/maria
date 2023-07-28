@@ -43,9 +43,10 @@
                            (some-> (sci.ns/sci-ns-aliases ctx current-ns)
                                    (get (symbol ns-name-str))))
                        current-ns)
-              syms (if ns-name-str
-                     (sci.ns/sci-ns-publics ctx sci-ns)
-                     (sci.ns/sci-ns-map ctx sci-ns))
+              syms (when sci-ns
+                     (if ns-name-str
+                       (sci.ns/sci-ns-publics ctx sci-ns)
+                       (sci.ns/sci-ns-map ctx sci-ns)))
               results #js{:from from
                           :to to
                           :validFor #"^[^ \[\](){}@#]+"
