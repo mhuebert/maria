@@ -471,7 +471,9 @@
                       {:focus/prose true}))))))
 
 (defn resolve-command
-  ([cmd] (resolve-command (get-context) cmd))
+  ([cmd] (if (and (map? cmd) (:context cmd))
+           cmd
+           (resolve-command (get-context) cmd)))
   ([context cmd]
    (let [cmd (if (keyword? cmd)
                (@!command-registry cmd)

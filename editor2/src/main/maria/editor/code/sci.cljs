@@ -30,10 +30,10 @@
 
 (def prefix->loadable
   (->> config/loadables
-       (reduce-kv (fn [out loadable libnames]
-                    (reduce (fn [out libname]
-                              (assoc out libname loadable))
-                            out libnames)) {})))
+       (reduce-kv (fn [out k {:keys [loadable provides]}]
+                    (reduce (fn [out lib-prefix]
+                              (assoc out lib-prefix loadable))
+                            out provides)) {})))
 
 (defn lib-prefix [libname]
   (symbol (first (str/split (str libname) #"\."))))

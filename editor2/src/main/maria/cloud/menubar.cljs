@@ -1,6 +1,7 @@
 (ns maria.cloud.menubar
-  (:require ["@radix-ui/react-menubar" :as menu :refer [Item Separator Root Menu Trigger Portal Content]]
-            ["@radix-ui/react-avatar" :as ava]
+  (:require ["@radix-ui/react-avatar" :as ava]
+            ["@radix-ui/react-menubar" :as menu :refer [Item Separator Root Menu Trigger Portal Content]]
+            ["@radix-ui/react-popover" :as Popover]
             [applied-science.js-interop :as j]
             [clojure.string :as str]
             [maria.cloud.github :as gh]
@@ -43,9 +44,11 @@
           (when (:bindings cmd)
             [shortcut (keymaps/show-binding (first (:bindings cmd)))])])))
 
-(def trigger-classes (v/classes ["px-1 h-7 bg-transparent hover:bg-zinc-200 rounded"
+(def trigger-classes (v/classes ["px-1 h-7 bg-transparent rounded"
+                                 "hover:bg-zinc-200"
                                  "data-[highlighted]:bg-zinc-200"
-                                 "data-[state=open]:bg-zinc-200"]))
+                                 "data-[delayed-open]:bg-zinc-200"
+                                 "data-[state*=open]:bg-zinc-200"]))
 (def trigger
   (v/from-element menu/Trigger
                   {:class trigger-classes}))
@@ -146,6 +149,8 @@
          [:el menu/Content {:class "MenubarContent mt-2"}
           (when (persist/writable? id)
             [item {:on-click start-editing!} "Rename"])
+          [command-item :file/revert]
+          [command-item :file/save]
           (when (= :file.provider/gist provider)
             [:<>
              separator
@@ -156,8 +161,8 @@
                 :class item-classes}
                "View on GitHub"
                [icons/arrow-top-right-on-square:mini "w-4 h-4 ml-1"]]]])
-
-          ]]])]))
+          separator
+          [command-item :file/duplicate]]]])]))
 
 (defn has-selection? [el]
   (some-> (j/get el :selectionStart)
@@ -166,6 +171,9 @@
 (comment
   (when (= :file.provider/gist provider)
     [icons/github "w-4 h-5 mr-2"]))
+
+(defn popover [trigger content]
+  )
 
 (ui/defview menubar []
   (let [menubar-content @(ui/use-context ::!content)]
@@ -178,16 +186,16 @@
         [icon-btn {:on-click #(swap! ui/!state update :sidebar/visible? not)}
          [icons/bars3 "w-4 h-4"]])
       [:el Root {:class "flex flex-row w-full items-center gap-1"}
-       [menu "File"
-        [command-item :file/new]
-        [command-item :file/duplicate]
-        separator
-        [command-item :file/revert]
-        separator
-        [command-item :file/save]
-        [command-item :file/save-as-clerk-project]]
        [:div.flex-grow]
        menubar-content
+       (let [cmd (keymaps/resolve-command :file/new)]
+         [ui/tooltip
+          [:div.cursor-pointer.p-1
+           {:class [trigger-classes
+                    "text-zinc-500 hover:text-zinc-700"]
+            :on-click #(keymaps/run-command cmd)}
+           [icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
+          (:title (keymaps/resolve-command :file/new))])
        [:div.flex-grow]
        [command-bar/input]
        (if-let [{:keys [photo-url display-name]} (gh/get-user)]

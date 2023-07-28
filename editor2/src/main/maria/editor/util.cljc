@@ -135,10 +135,11 @@
 
 (defn slug [title]
   (-> title
-      (str/replace #"[^\w\d_]" "")
+      (str/replace #"[^\w\d_ ]" "")
       str/lower-case
       (truncate-segmented 35 "")
-      (str/replace #"\s+" "_")))
+      (str/replace #"[\s_]+" "_")))
+
 
 (comment
   (truncate-segmented "This is a long string" 7 "...")

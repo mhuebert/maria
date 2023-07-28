@@ -1,6 +1,7 @@
 (ns maria.ui
   (:require #?(:cljs ["react" :as react])
             #?(:cljs ["prosemirror-keymap" :refer [keydownHandler]])
+            #?(:cljs ["@radix-ui/react-tooltip" :as Tooltip])
             [applied-science.js-interop :as j]
             [clojure.pprint]
             [yawn.view :as v]
@@ -88,3 +89,13 @@
    (defn keydown-handler [bindings]
      (let [handler (keydownHandler (clj->js bindings))]
        (fn [e] (handler #js{} e)))))
+
+#?(:cljs
+   (ui/defview tooltip [trigger content]
+     [:el Tooltip/Provider {:delay-duration 400}
+      [:el Tooltip/Root
+       [:el Tooltip/Trigger {:asChild true} trigger]
+
+       [:el.bg-zinc-600.text-white.rounded.shadow.text-sm.px-2.py-1.z-60 Tooltip/Content
+        [:el.fill-zinc-600 Tooltip/Arrow]
+        content]]]))
