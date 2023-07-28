@@ -9,13 +9,12 @@
             [sci.ctx-store :refer [get-ctx]]))
 
 (defn show-emmy [opts x]
-  (when (vector? x)
-    (let [m (meta x)]
-      (cond (= emmy.mafs/default-viewer (:nextjournal.clerk/viewer m))
-            (show/reagent-eval opts (emmy.viewer/expand x))
+  (when-let [m (meta x)]
+    (cond (= emmy.mafs/default-viewer (:nextjournal.clerk/viewer m))
+          (show/reagent-eval opts (emmy.viewer/expand x))
 
-            (:portal.viewer/reagent? m)
-            (show/reagent-eval opts x)))))
+          (:portal.viewer/reagent? m)
+          (show/reagent-eval opts x))))
 
 (defn inject-css-source! [source]
   (let [style (.createElement js/document "style")]
