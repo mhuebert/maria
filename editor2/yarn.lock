@@ -2721,7 +2721,7 @@ csv-parse@^5.0.4:
   resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-5.3.6.tgz#181d7c12300a60684bb51261ea9a5c3135ba8688"
   integrity sha512-WI330GjCuEioK/ii8HM2YE/eV+ynpeLvU+RXw4R8bRU8R0laK5zO3fDsc4gH8s472e3Ga38rbIjCAiQh+tEHkw==
 
-d3-require@^1.2.4:
+d3-require@^1.3.0:
   version "1.3.0"
   resolved "https://registry.yarnpkg.com/d3-require/-/d3-require-1.3.0.tgz#2b97f5e2ebcb64ac0c63c11f30056aea1c74f0ec"
   integrity sha512-XaNc2azaAwXhGjmCMtxlD+AowpMfLimVsAoTMpqrvb8CWoA4QqyV12mc4Ue6KSoDvfuS831tsumfhDYxGd4FGA==
@@ -4762,7 +4762,7 @@ markdown-it-sidenote@gerwitz/markdown-it-sidenote#aa5de8ce3168b7d41cb33c3aed071a
   version "0.2.0"
   resolved "https://codeload.github.com/gerwitz/markdown-it-sidenote/tar.gz/aa5de8ce3168b7d41cb33c3aed071a5f41ce0083"
 
-markdown-it-texmath@^0.9.1:
+markdown-it-texmath@^0.9.7:
   version "0.9.7"
   resolved "https://registry.yarnpkg.com/markdown-it-texmath/-/markdown-it-texmath-0.9.7.tgz#4d1256def5f49ac09c48e4a79d715a1bba5025c9"
   integrity sha512-2oZ7WO+xQCvQpfCwxUsCzDpz5jRjiY+FbSJSVz+66+Z9NoPR7ljzUNaOp1CDHYj0JWx+drQLxO0XUjuSsuqc0A==
@@ -4772,7 +4772,7 @@ markdown-it-toc-done-right@^4.2.0:
   resolved "https://registry.yarnpkg.com/markdown-it-toc-done-right/-/markdown-it-toc-done-right-4.2.0.tgz#3ccdce22d5022ffae7b991d07261b1b1de5459d0"
   integrity sha512-UB/IbzjWazwTlNAX0pvWNlJS8NKsOQ4syrXZQ/C72j+jirrsjVRT627lCaylrKJFBQWfRsPmIVQie8x38DEhAQ==
 
-markdown-it@^12.2.0, markdown-it@^12.3.2:
+markdown-it@^12.3.2:
   version "12.3.2"
   resolved "https://registry.yarnpkg.com/markdown-it/-/markdown-it-12.3.2.tgz#bf92ac92283fe983fe4de8ff8abfb5ad72cd0c90"
   integrity sha512-TchMembfxfNVpHkbtriWltGWc+m3xszaRD0CZup7GFFhzIgQqxIfn3eGj1yZpfuflzPvfkt611B2Q/Bsk1YnGg==
@@ -5225,10 +5225,10 @@ object-inspect@^1.9.0:
   resolved "https://registry.yarnpkg.com/object-inspect/-/object-inspect-1.12.3.tgz#ba62dffd67ee256c8c086dfae69e016cd1f198b9"
   integrity sha512-geUvdk7c+eizMNUDkRpW1wJwgfOiOeHbxBR/hLXK1aT6zmVSO0jsQcs7fj6MGw89jC/cjGfLcNOrtMYtGqm81g==
 
-odex@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/odex/-/odex-2.0.4.tgz#54f64ab7066736b8c900686060156f3a9054470f"
-  integrity sha512-Alf/WwrSvGeBhZZQ+c2P6UFGAln+OcarVjTAn2/RAD6W5TZ/d9bFRBM0aOJGQc4pwlRJwkLgKRUR+lg3QNswbg==
+odex@3.0.0-rc.4:
+  version "3.0.0-rc.4"
+  resolved "https://registry.yarnpkg.com/odex/-/odex-3.0.0-rc.4.tgz#083c201e3a5e6504bc71a8d9bd023002f5d78ca7"
+  integrity sha512-NPpR3eFHUJWQWYT9VParetnYF2bVe1p9iel1PHk2PLGgOdfXd7tr67XJi6x6fVzDmoKnUv1e9AtRtdwLxg2Z2Q==
 
 on-finished@2.4.1, on-finished@^2.2.0:
   version "2.4.1"
@@ -6389,10 +6389,10 @@ shadow-cljs-jar@1.3.4:
   resolved "https://registry.yarnpkg.com/shadow-cljs-jar/-/shadow-cljs-jar-1.3.4.tgz#0939d91c468b4bc5eab5a958f79e7ef5696fdf62"
   integrity sha512-cZB2pzVXBnhpJ6PQdsjO+j/MksR28mv4QD/hP/2y1fsIa9Z9RutYgh3N34FZ8Ktl4puAXaIGlct+gMCJ5BmwmA==
 
-shadow-cljs@^2.25.1:
-  version "2.25.1"
-  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.25.1.tgz#e84f73dde5870d4a86f568846cca2e2c23b05032"
-  integrity sha512-DM+nUovgZLLFBNX4zuOzmsRPAO5goiwl6aGnC0MJfxjHvYS+9BsPqGwx6VJn4ErNJP5nPFQybAL3fH3lwLDGLQ==
+shadow-cljs@^2.24.1:
+  version "2.25.2"
+  resolved "https://registry.yarnpkg.com/shadow-cljs/-/shadow-cljs-2.25.2.tgz#ca91ef2be53e09eea5b84455ea462179fb6b319c"
+  integrity sha512-2Pe6LW839rGIPsWxXrjiWRETlCrNPH19u881nwsSkLLLt540lTt1OmbjlGLJjQta2t74WJI7gu6c2tjMSyUGcQ==
   dependencies:
     node-libs-browser "^2.2.1"
     readline-sync "^1.4.7"
@@ -7174,6 +7174,11 @@ w3c-keyname@^2.2.0, w3c-keyname@^2.2.4:
   version "2.2.6"
   resolved "https://registry.yarnpkg.com/w3c-keyname/-/w3c-keyname-2.2.6.tgz#8412046116bc16c5d73d4e612053ea10a189c85f"
   integrity sha512-f+fciywl1SJEniZHD6H+kUO8gOnwIr7f4ijKA6+ZvJFjeGi1r4PDLl53Ayud9O/rk64RqgoQine0feoeOU0kXg==
+
+w3c-keyname@^2.2.6:
+  version "2.2.8"
+  resolved "https://registry.yarnpkg.com/w3c-keyname/-/w3c-keyname-2.2.8.tgz#7b17c8c6883d4e8b86ac8aba79d39e880f8869c5"
+  integrity sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==
 
 wcwidth@^1.0.1:
   version "1.0.1"

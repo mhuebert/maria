@@ -31,7 +31,7 @@
     "@tailwindcss/typography": "^0.5.7",
     "cmdk": "^0.2.0",
     "complex.js": "^2.1.1",
-    "d3-require": "^1.2.4",
+    "d3-require": "^1.3.0",
     "emoji-regex": "^10.0.0",
     "file-saver": "^2.0.5",
     "firebase": "^9.19.1",
@@ -42,16 +42,16 @@
     "katex": "^0.16.2",
     "leva": "^0.9.35",
     "mafs": "^0.17.1",
-    "markdown-it": "^12.2.0",
+    "markdown-it": "^12.3.2",
     "markdown-it-block-image": "^0.0.3",
     "markdown-it-footnote": "^3.0.3",
     "markdown-it-sidenote": "gerwitz/markdown-it-sidenote#aa5de8ce3168b7d41cb33c3aed071a5f41ce0083",
-    "markdown-it-texmath": "^0.9.1",
+    "markdown-it-texmath": "^0.9.7",
     "markdown-it-toc-done-right": "^4.2.0",
     "mathbox": "^2.3.2-rc1",
     "mathbox-react": "^0.2.2",
     "mathlive": "0.85.1",
-    "odex": "^2.0.4",
+    "odex": "3.0.0-rc.4",
     "prosemirror-commands": "^1.3.0",
     "prosemirror-dropcursor": "^1.6.0",
     "prosemirror-example-setup": "^1.2.1",
@@ -75,7 +75,7 @@
     "threestrap": "0.5.1",
     "use-sync-external-store": "^1.2.0",
     "vh-sticky-table-header": "1.2.1",
-    "w3c-keyname": "^2.2.4"
+    "w3c-keyname": "^2.2.6"
   },
   "devDependencies": {
     "firebase-tools": "^11.8.0"
