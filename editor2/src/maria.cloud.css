@@ -56,6 +56,10 @@
     @apply ml-5;
 }
 
+.ProseMirror code {
+    @apply bg-black/5 py-[2px] px-[2px];
+}
+
 .ProseMirror li {
     @apply list-disc;
 }
