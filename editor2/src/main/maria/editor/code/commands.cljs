@@ -1,6 +1,6 @@
 (ns maria.editor.code.commands
   (:require ["prosemirror-model" :refer [Fragment Slice]]
-            ["prosemirror-state" :refer [TextSelection Selection NodeSelection insertPoint]]
+            ["prosemirror-state" :as pm.state :refer [TextSelection Selection NodeSelection insertPoint]]
             ["prosemirror-commands" :as pm.cmd]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
@@ -137,16 +137,22 @@
   (defn prose:arrow-handler [dir]
     (fn [state dispatch view]
       (boolean
-        (when (and (.. state -selection -empty) (.endOfTextblock view dir))
-          (let [$head (.. state -selection -$head)
-                {:keys [doc]} state
-                pos (if (pos? dir)
-                      (.after $head)
-                      (.before $head))
-                next-pos (.near Selection (.resolve doc pos) dir)]
-            (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
-              (dispatch (.. state -tr (setSelection next-pos)))
-              true)))))))
+        (cond (and (.. state -selection -empty) (.endOfTextblock view dir))
+              (let [$head (.. state -selection -$head)
+                    {:keys [doc]} state
+                    pos (if (pos? dir)
+                          (.after $head)
+                          (.before $head))
+                    next-pos (.near Selection (.resolve doc pos) dir)]
+                (when (= :code_block (j/get-in next-pos [:$head :parent :type :name]))
+                  (dispatch (.. state -tr (setSelection next-pos)))
+                  true))
+
+              (instance? pm.state/NodeSelection (.. state -selection))
+              (do (dispatch (.. state -tr (setSelection (.near Selection (if (pos? dir)
+                                                                           (.. state -selection -$to)
+                                                                           (.. state -selection -$from)) dir))))
+                  true))))))
 
 (js
   (defn code:remove [{:as CodeView

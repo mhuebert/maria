@@ -5,7 +5,7 @@
             ["@codemirror/view" :as cm.view :refer [EditorView]]
             ["@nextjournal/lezer-clojure" :as lezer-clojure]
             ["prosemirror-history" :as history]
-            ["prosemirror-state" :refer [TextSelection Selection]]
+            ["prosemirror-state" :as pm.state :refer [TextSelection Selection]]
             ["react" :as react]
             [maria.editor.code.show-values :refer [show]]
             [maria.editor.icons :as icons]
@@ -32,6 +32,8 @@
             [yawn.hooks :as h]
             [yawn.root :as root]
             [yawn.view :as v]))
+
+(def ^:dynamic *selecting-node* false)
 
 (defonce !focused-view (atom nil))
 
@@ -66,44 +68,53 @@
   (defn code:forward-update
     "When the code-editor is focused, forward events from it to ProseMirror."
     [{:keys [CodeView ProseView getPos code-updating?]} code-update]
-    (let [{prose-state :state} ProseView]
-      (when (.-focusChanged code-update)
+    (let [{prose-state :state} ProseView
+          focus-changed? (.-focusChanged code-update)
+          has-focus? (.-hasFocus CodeView)]
+      (when focus-changed?
         (set-focus! CodeView (.-hasFocus CodeView)))
-      (when (and (.-hasFocus CodeView) (not code-updating?))
+
+      (when (and has-focus? (not code-updating?))
         (let [start-pos (inc (getPos))
               {from' :from to' :to} (.. code-update -state -selection -main)
               {code-changed? :docChanged
                code-changes :changes} code-update
-              {:keys [tr doc]} prose-state]
-          (when (or code-changed? (not (.eq (.. prose-state -selection)
-                                            (.create TextSelection
-                                                     doc
-                                                     (+ start-pos from')
-                                                     (+ start-pos to')))))
+              {:keys [tr doc]} prose-state
+              selection-changed? (not (.eq (.. prose-state -selection)
+                                           (.create TextSelection
+                                                    doc
+                                                    (+ start-pos from')
+                                                    (+ start-pos to'))))]
+          (comment
+            ;; or we could compare the selection inside codemirror?
+            (not (.eq (.. code-update -startState -selection)
+                      (.. code-update -state -selection))))
 
-            ;; handle code changes
-            (let [!offset (volatile! start-pos)]
-              (.iterChanges code-changes
-                            (fn [from-a to-a from-b to-b {:as text :keys [length]}]
-                              (let [offset @!offset]
-                                (if (pos-int? length)
-                                  (.replaceWith tr
-                                                (+ offset from-a)
-                                                (+ offset to-a)
-                                                (.text prose-schema/schema (.toString text)))
-                                  (.delete tr
-                                           (+ offset from-a)
-                                           (+ offset to-a))))
-                              ;; adjust offset for changes in length caused by the change,
-                              ;; so further steps are in correct position
-                              (vswap! !offset + (- (- to-b from-b)
-                                                   (- to-a from-a))))))
+          (when (or code-changed? selection-changed?)
 
-            ;; handle selection changes
-            (.setSelection tr (.create TextSelection
-                                       (.-doc tr)
-                                       (+ start-pos from')
-                                       (+ start-pos to')))
+            (when code-changed?
+              (let [!offset (volatile! start-pos)]
+                (.iterChanges code-changes
+                              (fn [from-a to-a from-b to-b {:as text :keys [length]}]
+                                (let [offset @!offset]
+                                  (if (pos-int? length)
+                                    (.replaceWith tr
+                                                  (+ offset from-a)
+                                                  (+ offset to-a)
+                                                  (.text prose-schema/schema (.toString text)))
+                                    (.delete tr
+                                             (+ offset from-a)
+                                             (+ offset to-a))))
+                                ;; adjust offset for changes in length caused by the change,
+                                ;; so further steps are in correct position
+                                (vswap! !offset + (- (- to-b from-b)
+                                                     (- to-a from-a)))))))
+
+            (when selection-changed?
+              (.setSelection tr (.create TextSelection
+                                         (.-doc tr)
+                                         (+ start-pos from')
+                                         (+ start-pos to'))))
             (.dispatch ProseView tr)))))))
 
 (defn- controlled-update [this f]
@@ -114,7 +125,7 @@
 (defn code-text [^js CodeView] (.. CodeView -state -doc (toString)))
 
 (js
-  (defn prose:set-selection
+  (defn prose:set-CodeView-selection
     "Called when ProseMirror tries to put the selection inside the node."
     [{:as this :keys [CodeView dom]} anchor head]
     (controlled-update this
@@ -147,18 +158,20 @@
 (js
   (defn prose:forward-update [{:as this :keys [CodeView]
                                prev-node :proseNode} new-node]
-    (boolean
-      (when (= (.-type prev-node)
-               (.-type new-node))
-        (j/!set this :proseNode new-node)
-        (let [new-text (.-textContent new-node)
-              old-text (code-text CodeView)]
-          (when (not= new-text old-text)
-            (controlled-update this
-                               (fn []
-                                 (.dispatch CodeView {:changes (text-diff old-text new-text)
-                                                      :annotations [(u/user-event-annotation "noformat")]})))))
-        true))))
+    (if *selecting-node*
+      true
+      (boolean
+        (when (= (.-type prev-node)
+                 (.-type new-node))
+          (j/!set this :proseNode new-node)
+          (let [new-text (.-textContent new-node)
+                old-text (code-text CodeView)]
+            (when (not= new-text old-text)
+              (controlled-update this
+                                 (fn []
+                                   (.dispatch CodeView {:changes (text-diff old-text new-text)
+                                                        :annotations [(u/user-event-annotation "noformat")]})))))
+          true)))))
 
 (def language
   (.define lang/LRLanguage
@@ -212,7 +225,8 @@
 
 (v/defview code-row [^js {:as this :keys [!result !ui-state id CodeView]}]
   (let [ref (h/use-callback (fn [el] (when el (mount-code-view! el this))))
-        hide-source? (if-some [hide-source (:hide-source (h/use-deref !ui-state))]
+        {:keys [hide-source node-selected?]} (h/use-deref !ui-state)
+        hide-source? (if (some? hide-source)
                        hide-source
                        (str/includes? (.. CodeView -state -doc (line 1) -text) "^:hide-source"))
         classes (v/classes ["absolute top-0 right-1 z-10"
@@ -236,7 +250,8 @@
     [:<>
      [:div {:class "w-full md:w-1/2 relative text-base"}
       (when-not hide-source?
-        [:div {:class "w-full text-base relative text-brackets"
+        [:div {:class ["w-full text-base relative text-brackets"
+                       (when node-selected? "ring ring-2 ring-selection rounded-r ring-l-none")]
                :ref ref
                :id id}])
       toggle]
@@ -244,12 +259,19 @@
       {:class "w-full md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
       [value-viewer this]]]))
 
+(j/defn select-node [^js {:keys [!ui-state ProseView CodeView]}]
+  (when-not *selecting-node*
+    (binding [*selecting-node* true]
+      (swap! !ui-state assoc :node-selected? true)
+      (.focus ProseView))))
+
 (js
   (defn editor [{:as proseNode :keys [textContent]} ProseView getPos]
     (let [el (doto (js/document.createElement "div")
                (.. -classList (add "my-4" "md:flex" "NodeView")))
           this (j/obj :id (str (gensym "code-view-")))
-          root (root/create el (code-row this))]
+          root (root/create el (code-row this))
+          !ui-state (atom ^:clj {})]
       (j/extend! this
                  {:initialNs (str/starts-with? textContent "(ns ")
                   :getPos getPos
@@ -292,17 +314,17 @@
                                                              ]})})
                                 (j/!set :NodeView this))
                   :!result (atom nil)
-                  :!ui-state (atom ^:clj {})
+                  :!ui-state !ui-state
 
                   :code-updating? false
 
                   ;; NodeView API
                   :dom el
                   :update (partial prose:forward-update this)
-                  :selectNode #(.focus (j/get this :CodeView))
+                  :selectNode (partial select-node this)
                   :deselectNode (fn []
-                                  #_(j/log :deselectNode this))
-                  :setSelection (partial prose:set-selection this)
+                                  (swap! !ui-state assoc :node-selected? false))
+                  :setSelection (partial prose:set-CodeView-selection this)
                   :stopEvent (fn [e]
                                ;; keyboard events that are handled by a keymap are already stopped;
                                ;; not sure what events should be stopped here.
