@@ -1,20 +1,27 @@
 (ns maria.editor.extensions.emmy
-  (:require [clojure.string :as str]
+  (:require ["fraction.js/bigfraction.js$default" :as Fraction]
             [emmy.viewer.sci]
+            [emmy.value]
+            [emmy.expression]
+            [emmy.operator]
             [emmy.portal.css :refer [inject!] :rename {inject! inject-css!}]
             [emmy.viewer.css :refer [css-map]]
             [emmy.mafs]
             [maria.editor.extensions.reagent :as ext.reagent]
-            [maria.editor.code.show-values :as show]
+            [maria.editor.code.show-values :as show :refer [show]]
             [sci.ctx-store :refer [get-ctx]]))
 
 (defn show-emmy [opts x]
-  (when-let [m (meta x)]
-    (cond (= emmy.mafs/default-viewer (:nextjournal.clerk/viewer m))
-          (show/reagent-eval opts (emmy.viewer/expand x))
+  (cond (emmy.operator/operator? x) (show opts (emmy.value/freeze x))
+        (instance? emmy.expression/Literal x) (show opts (emmy.expression/expression-of x))
+        (instance? Fraction x) (str x)
+        :else
+        (when-let [m (meta x)]
+          (cond (= emmy.mafs/default-viewer (:nextjournal.clerk/viewer m))
+                (show/reagent-eval opts (emmy.viewer/expand x))
 
-          (:portal.viewer/reagent? m)
-          (show/reagent-eval opts x))))
+                (:portal.viewer/reagent? m)
+                (show/reagent-eval opts x)))))
 
 (defn inject-css-source! [source]
   (let [style (.createElement js/document "style")]
