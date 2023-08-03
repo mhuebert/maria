@@ -66,7 +66,7 @@
 
 (js
   (defn code:forward-update
-    "When the code-editor is focused, forward events from it to ProseMirror."
+    "Forward events from CodeMirror to ProseMirror (shen the code-editor is focused)"
     [{:keys [CodeView ProseView getPos code-updating?]} code-update]
     (let [{prose-state :state} ProseView
           focus-changed? (.-focusChanged code-update)
@@ -80,7 +80,9 @@
               {code-changed? :docChanged
                code-changes :changes} code-update
               {:keys [tr doc]} prose-state
-              selection-changed? (not (.eq (.. prose-state -selection)
+              selection-changed? (not (.eq (.. code-update -startState -selection)
+                                           (.. code-update -state -selection)))
+              #_(not (.eq (.. prose-state -selection)
                                            (.create TextSelection
                                                     doc
                                                     (+ start-pos from')
