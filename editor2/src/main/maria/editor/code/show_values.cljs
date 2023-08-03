@@ -134,7 +134,7 @@
 
 (defview show-brackets [left right more children !wrapper !parent interpose-comma?]
   (let [bracket-classes "flex flex-none"]
-    [:div.inline-flex.max-w-full.gap-list.whitespace-nowrap.text-brackets {:ref !wrapper}
+    [:div.inline-flex.max-w-full.whitespace-nowrap.text-brackets {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
      (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden
