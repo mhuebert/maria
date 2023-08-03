@@ -1,5 +1,5 @@
 (ns maria.editor.extensions.emmy
-  (:require ["fraction.js/bigfraction.js$default" :as Fraction]
+  (:require [emmy.ratio]
             [emmy.viewer.sci]
             [emmy.value]
             [emmy.expression]
@@ -14,7 +14,8 @@
             [maria.editor.extensions.reagent :as ext.reagent]
             [maria.editor.code.show-values :as show :refer [show]]
             [sci.ctx-store :refer [get-ctx]]
-            [yawn.view :as v]))
+            [yawn.view :as v]
+            #_[maria.editor.extensions.katex :as katex]))
 
 (defn show-frozen [opts x]
   (show opts (emmy.value/freeze x)))
@@ -24,6 +25,14 @@
 
 (defn show-number-string [opts x]
   (v/x [:span.text-number (str x)]))
+
+(defn show-ratio [opts x]
+  (let [[_ n d] (emmy.value/freeze x)]
+    #_(katex/show-katex :span (str "\\dfrac{" n "}{" d "}"))
+    (v/x [:<>
+          [:span.text-number n]
+          [:span.text-brackets "/"]
+          [:span.text-number d]])))
 
 (def viewers-by-type
   {emmy.expression/Literal show-expression-of
@@ -37,8 +46,8 @@
    js/BigInt show-number-string})
 
 (defn show-emmy [opts x]
-  (if (instance? Fraction x)
-    (show-number-string opts x)
+  (if (emmy.ratio/ratio? x)
+    (show-ratio opts x)
     (if-let [viewer (viewers-by-type (type x))]
       (viewer opts x)
       (when-let [m (meta x)]
