@@ -6,6 +6,7 @@
             [emmy.operator]
             [emmy.abstract.function]
             [emmy.series]
+            [emmy.structure]
             [emmy.modint]
             [emmy.portal.css :refer [inject!] :rename {inject! inject-css!}]
             [emmy.viewer.css :refer [css-map]]
@@ -21,9 +22,6 @@
 (defn show-expression-of [opts x]
   (show opts (emmy.expression/expression-of x)))
 
-(defn show-string [opts x]
-  (str x))
-
 (defn show-number-string [opts x]
   (v/x [:span.text-number (str x)]))
 
@@ -34,6 +32,7 @@
    emmy.series/Series (fn [opts x] (show opts (seq x)))
    emmy.abstract.function/Function show-frozen
    emmy.modint/ModInt show-frozen
+   emmy.structure/Structure show-frozen
    emmy.quaternion/Quaternion show-frozen
    js/BigInt show-number-string})
 
