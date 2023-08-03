@@ -57,15 +57,14 @@
                                          (when (and ns name)
                                            (try
                                              (let [sym-name (c/name name)
-                                                   ns-name-str (or (when imported-from
-                                                                     ;; omit imported-from name if equal to sym-name
-                                                                     (if (= (c/name imported-from) sym-name)
-                                                                       (namespace imported-from)
-                                                                       (str imported-from)))
-                                                                   (sci.ns/sci-ns-name ns))]
+                                                   var-sym (or imported-from
+                                                               (symbol (str ns) sym-name))
+                                                   detail (if (= sym-name (c/name var-sym))
+                                                            (namespace var-sym)
+                                                            (str var-sym))]
                                                #js{:label sym-name
-                                                   :sym (symbol ns-name-str sym-name)
-                                                   :detail ns-name-str
+                                                   :sym var-sym
+                                                   :detail detail
                                                    ;; :type "y" ;; indicates icon
                                                    ;; :detail ;; short string shown after label
                                                    ;; :info ;; shown when completion is selected

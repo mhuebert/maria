@@ -4,13 +4,16 @@
             [emmy.value]
             [emmy.expression]
             [emmy.operator]
+            [emmy.abstract.function]
             [emmy.series]
+            [emmy.modint]
             [emmy.portal.css :refer [inject!] :rename {inject! inject-css!}]
             [emmy.viewer.css :refer [css-map]]
             [emmy.mafs]
             [maria.editor.extensions.reagent :as ext.reagent]
             [maria.editor.code.show-values :as show :refer [show]]
-            [sci.ctx-store :refer [get-ctx]]))
+            [sci.ctx-store :refer [get-ctx]]
+            [yawn.view :as v]))
 
 (defn show-frozen [opts x]
   (show opts (emmy.value/freeze x)))
@@ -21,16 +24,22 @@
 (defn show-string [opts x]
   (str x))
 
+(defn show-number-string [opts x]
+  (v/x [:span.text-number (str x)]))
+
 (def viewers-by-type
   {emmy.expression/Literal show-expression-of
    emmy.operator/Operator show-frozen
    emmy.series/PowerSeries show-frozen
-   emmy.series/Series show-frozen
-   js/BigInt show-string})
+   emmy.series/Series (fn [opts x] (show opts (seq x)))
+   emmy.abstract.function/Function show-frozen
+   emmy.modint/ModInt show-frozen
+   emmy.quaternion/Quaternion show-frozen
+   js/BigInt show-number-string})
 
 (defn show-emmy [opts x]
   (if (instance? Fraction x)
-    (str x)
+    (show-number-string opts x)
     (if-let [viewer (viewers-by-type (type x))]
       (viewer opts x)
       (when-let [m (meta x)]
