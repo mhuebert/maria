@@ -21,7 +21,9 @@
             [yawn.hooks :as h]
             [yawn.view :as v]
             [cells.core :as cells]
-            [reagent.core :as reagent]))
+            [reagent.core :as reagent]
+            [shadow.lazy :as lazy]))
+
 
 (def COLL-PADDING 4)
 
@@ -130,11 +132,11 @@
    (icons/ellipsis:mini "w-4 h-4 cursor-pointer ")])
 
 (defn punctuate ^v/el [s]
-  (v/x [:div.inline-block.font-bold.opacity-60 s]))
+  (v/x [:div.inline-block s]))
 
 (defview show-brackets [left right more children !wrapper !parent interpose-comma?]
-  (let [bracket-classes "flex flex-none"]
-    [:div.inline-flex.max-w-full.whitespace-nowrap.text-brackets {:ref !wrapper}
+  (let [bracket-classes "flex flex-none text-brackets"]
+    [:div.inline-flex.max-w-full.whitespace-nowrap {:ref !wrapper}
      [:div.items-start {:class bracket-classes} (punctuate left)]
 
      (-> [:div.inline-flex.flex-wrap.items-end.gap-list.overflow-hidden
@@ -231,6 +233,13 @@
       (if (= v ::loading)
         loader
         (show opts v)))))
+
+(let [show-katex-loadable (lazy/loadable maria.editor.extensions.katex/show-katex)]
+  (defn show-katex [opts x]
+    (if (lazy/ready? show-katex-loadable)
+      (@show-katex-loadable :div x)
+      (show opts (p/do (lazy/load show-katex-loadable)
+                       (@show-katex-loadable :div x))))))
 
 (defview show-var [opts x]
   (v/x [:<>
@@ -334,6 +343,12 @@
              (handles-keys #{:hiccup}
                (fn [opts x] (when (:hiccup (meta x))
                               (v/x x))))
+
+             (handles-keys #{:TeX}
+               ;; THIS IS TEMPORARY FOR TESTING
+               (fn [opts x]
+                 (when-let [s (:TeX (meta x))]
+                   (show-katex opts s))))
 
              (handles-keys #{:number
                              :symbol
