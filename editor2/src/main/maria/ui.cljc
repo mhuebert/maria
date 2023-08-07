@@ -92,7 +92,7 @@
 
 #?(:cljs
    (ui/defview tooltip [trigger content]
-     [:el Tooltip/Provider {:delay-duration 400}
+     [:el Tooltip/Provider {:delay-duration 200}
       [:el Tooltip/Root
        [:el Tooltip/Trigger {:asChild true} trigger]
 

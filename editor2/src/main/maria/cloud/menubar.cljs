@@ -188,6 +188,7 @@
       [:el Root {:class "flex flex-row w-full items-center gap-1"}
        [:div.flex-grow]
        menubar-content
+       [:div.flex-grow]
        (let [cmd (keymaps/resolve-command :file/new)]
          [ui/tooltip
           [:div.cursor-pointer.p-1
@@ -196,7 +197,6 @@
             :on-click #(keymaps/run-command cmd)}
            [icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
           (:title (keymaps/resolve-command :file/new))])
-       [:div.flex-grow]
        [command-bar/input]
        (if-let [{:keys [photo-url display-name]} (gh/get-user)]
          [menu [:el menu/Trigger {:class [trigger-classes
