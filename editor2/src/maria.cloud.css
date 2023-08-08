@@ -16,6 +16,11 @@
     --code-bool: #987aa0;
     --code-brackets: #9f9f9f;
 }
+@layer base {
+    .prose code::before, .prose code::after {
+        content: none;
+    }
+}
 
 @layer utilities {
 
@@ -56,7 +61,7 @@
     @apply ml-5;
 }
 
-.ProseMirror code {
+.ProseMirror code, .prose code {
     @apply bg-black/5 py-[2px] px-[2px];
 }
 

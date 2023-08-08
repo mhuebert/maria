@@ -85,7 +85,8 @@
     {".cm-tooltip.cm-tooltip-autocomplete"
      {:border "none"
       :background-color "white"
-      :box-shadow "2px 2px 8px 0 rgba(0,0,0,.2)"}
+      :box-shadow "2px 2px 8px 0 rgba(0,0,0,.2)"
+      :z-index 10}
      ".cm-tooltip.cm-tooltip-autocomplete > ul"
      {:min-width "min(250px, 95vw)"}
      ".cm-tooltip.cm-tooltip-autocomplete > ul > li"

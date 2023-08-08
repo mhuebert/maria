@@ -331,18 +331,21 @@
                  loader))
 
 
-             (fn [opts x]
-               (when (cells/cell? x)
-                 (show-cell opts x)))
+             (handles-keys #{:maria/cells}
+               (fn [opts x]
+                 (when (cells/cell? x)
+                   (show-cell opts x))))
 
              (handles-keys #{:react-element}
+               ;; show react elements directly
                (fn [opts x]
                  (when (react/isValidElement x)
                    x)))
 
              (handles-keys #{:hiccup}
-               (fn [opts x] (when (:hiccup (meta x))
-                              (v/x x))))
+               (fn [opts x]
+                 (when (:hiccup (meta x))
+                   (v/x x))))
 
              (handles-keys #{:TeX}
                ;; THIS IS TEMPORARY FOR TESTING
@@ -393,13 +396,14 @@
                          ExceptionInfo show-error
                          }))
 
-             (fn [opts x]
-               (when (instance? js/Error x)
-                 (show-error opts x)))
-
-             (fn [opts x]
-               (when (fn? x)
-                 (show-function opts x)))
+             (handles-keys #{:error}
+               (fn [opts x]
+                 (when (instance? js/Error x)
+                   (show-error opts x))))
+             (handles-keys #{:function}
+               (fn [opts x]
+                 (when (fn? x)
+                   (show-function opts x))))
 
              (handles-keys #{:cljs.core/IWatchable}
                (fn [opts x] (when (satisfies? IWatchable x)
@@ -427,23 +431,84 @@
         (mapcat second)
         (get-in ctx [::ns-viewers (repl/current-ns-name ctx)])))
 
+(defn first-index [pred coll]
+  (reduce (fn [out i]
+            (if (pred (nth coll i))
+              (reduced i)
+              i))
+          0
+          (range (count coll))))
+
+(defn last-index [pred coll]
+  (max 0 (- (count coll)
+            (inc (first-index pred (reverse coll))))))
+
+(defn insert [where pred coll x]
+  (let [i (case where :before (first-index pred coll)
+                      :after (inc (last-index pred coll)))]
+    (concat (take i coll)
+            x
+            (drop i coll))))
+
 (defn add-global-viewers!
   "Adds viewers to the global list of viewers, before/after the given viewer-key.
    See builtin-viewers to see what viewer-keys can be referred to"
   [ctx where viewer-key added-viewers]
   {:pre [(#{:before :after} where)]}
-  (let [!viewers (:!viewers ctx)
-        viewers (or @!viewers builtin-viewers)
-        i (reduce (fn [not-found i]
-                    (if (contains? (::keys (meta (nth viewers i))) viewer-key)
-                      (reduced i)
-                      not-found))
-                  ::not-found
-                  (range (count viewers)))
-        i (case where :before i :after (inc i))]
-    (if (= ::not-found i)
-      (js/console.warn (str "Viewer not found: " viewer-key))
-      (reset! !viewers (concat (take i viewers)
-                               added-viewers
-                               (drop i viewers))))
+  (let [!viewers (:!viewers ctx)]
+    (->> (insert where
+                 (comp viewer-key ::keys meta)
+                 (or @!viewers builtin-viewers)
+                 added-viewers)
+         (reset! !viewers))
     ctx))
+
+(comment
+
+  (for [where [:before :after]]
+    (insert where
+            (comp :foo ::keys meta)
+            [nil
+             nil
+             (handles-keys #{:foo} (fn []))
+             nil
+             (handles-keys #{:foo} (fn []))]
+            [:X]))
+
+  (= [2 4] ((juxt first-index last-index) :foo [#{:bar}
+                                                #{:bar}
+                                                #{:foo}
+                                                #{:bar}
+                                                #{:foo}
+                                                #{:bar}]))
+
+  (= [0 0]
+     ;; not-found
+     ((juxt first-index last-index) :foo [#{:bar}]))
+
+  (= [0 0]
+     ;; first entry
+     ((juxt first-index last-index) :foo [#{:foo}]))
+
+  (= [1 1]
+     ;; midpoint
+     ((juxt first-index last-index) :foo [#{:bar} #{:foo} #{:bar}]))
+
+  (= [2 2]
+     ;; does not matter how many are trailing
+     ((juxt first-index last-index) :foo [#{:bar} #{:bar}
+                                          #{:foo}
+                                          #{:bar} #{:bar}])
+     ((juxt first-index last-index) :foo [#{:bar} #{:bar}
+                                          #{:foo}])
+     ((juxt first-index last-index) :foo [#{:bar} #{:bar}
+                                          #{:foo}
+                                          #{:bar} #{:bar} #{:bar}]))
+  (= [2 5]
+     ;; selects last occurrence
+     ((juxt first-index last-index) :foo [#{:bar} #{:bar}
+                                          #{:foo}
+                                          #{:bar} #{:bar}
+                                          #{:foo}])))
+
+

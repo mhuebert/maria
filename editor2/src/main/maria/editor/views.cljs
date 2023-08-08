@@ -1,5 +1,6 @@
 (ns maria.editor.views
   (:require ["@radix-ui/react-tooltip" :as Tooltip]
+            ["@radix-ui/react-hover-card" :as HoverCard]
             [clojure.string :as str]
             [maria.cloud.markdown :as markdown]
             [maria.ui :as ui]
@@ -40,11 +41,15 @@
 
 (ui/defview doc-tooltip [m trigger]
   (when m
-    [:> Tooltip/Provider
-     [:> Tooltip/Root {:delayDuration 300}
-      [:> Tooltip/Trigger {:asChild true} trigger]
-      [:> Tooltip/Portal
-       [:> Tooltip/Content
-        [:> Tooltip/Arrow {:class "fill-white"}]
-        [:div.bg-white.rounded.shadow-md.p-3 {:class "max-w-[400px]"}
-         (show-doc m)]]]]]))
+    [:> HoverCard/Root {:openDelay 0
+                        :closeDelay 100}
+     [:> HoverCard/Trigger {:asChild true} trigger]
+     [:el HoverCard/Portal
+      [:el.z-50.relative.overflow-y-auto.bg-white.rounded.shadow-lg.p-4 HoverCard/Content
+       {:avoid-collisions true
+        :collision-padding 10
+        :style {:max-height "var(--radix-hover-card-content-available-height)"
+                :max-width "var(--radix-hover-card-content-available-width)"}}
+       [:> HoverCard/Arrow {:class "fill-white"}]
+       [:div #_{:class "max-w-[600px]"}
+        (show-doc m)]]]]))
