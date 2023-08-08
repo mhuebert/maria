@@ -26,8 +26,8 @@
         io.github.mhuebert/yawn {:git/sha "4fee46087eb907b1e2cd62aea9f05549d08e11a8"}
 
         ;; emmy / clerk
-        org.mentat/emmy {:git/url "https://github.com/mhuebert/emmy"
-                         :git/sha "f452bbb9714be25fa141a7e9a39c4e48d1164bf3"}
+        io.github.mhuebert/emmy #_org.mentat/emmy {:git/url "https://github.com/mhuebert/emmy"
+                                                   :git/sha "f452bbb9714be25fa141a7e9a39c4e48d1164bf3"}
         org.mentat/emmy-viewers {:mvn/version "0.2.0"}
         io.github.nextjournal/clerk {:git/sha "d80187013d7b7b96db3d8b114b8d99f687170668"}
         io.github.nextjournal/clerk.render {:git/url "https://github.com/nextjournal/clerk"
