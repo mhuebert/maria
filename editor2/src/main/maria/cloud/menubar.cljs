@@ -172,9 +172,6 @@
   (when (= :file.provider/gist provider)
     [icons/github "w-4 h-5 mr-2"]))
 
-(defn popover [trigger content]
-  )
-
 (ui/defview menubar []
   (let [menubar-content @(ui/use-context ::!content)]
     [:<>
@@ -190,12 +187,14 @@
        menubar-content
        [:div.flex-grow]
        (let [cmd (keymaps/resolve-command :file/new)]
-         [ui/tooltip
-          [:div.cursor-pointer.p-1
-           {:class [trigger-classes
-                    "text-zinc-500 hover:text-zinc-700"]
-            :on-click #(keymaps/run-command cmd)}
-           [icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
+         [:div.cursor-pointer.p-1
+          {:class [trigger-classes
+                   "text-zinc-500 hover:text-zinc-700"]
+           :on-click #(keymaps/run-command cmd)}
+          "New"
+          #_[icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
+         #_[ui/tooltip
+          ...
           (:title (keymaps/resolve-command :file/new))])
        [command-bar/input]
        (if-let [{:keys [photo-url display-name]} (gh/get-user)]
