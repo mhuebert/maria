@@ -186,6 +186,8 @@
        [:div.flex-grow]
        menubar-content
        [:div.flex-grow]
+       #_[:a.text-black.inline-flex.items-center {:class trigger-classes
+                                                :href "/"} [icons/home "w-4 h-4"]]
        (let [cmd (keymaps/resolve-command :file/new)]
          [:div.cursor-pointer.p-1
           {:class [trigger-classes
@@ -194,8 +196,8 @@
           "New"
           #_[icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
          #_[ui/tooltip
-          ...
-          (:title (keymaps/resolve-command :file/new))])
+            ...
+            (:title (keymaps/resolve-command :file/new))])
        [command-bar/input]
        (if-let [{:keys [photo-url display-name]} (gh/get-user)]
          [menu [:el menu/Trigger {:class [trigger-classes
