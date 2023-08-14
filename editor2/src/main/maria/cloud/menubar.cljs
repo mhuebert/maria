@@ -46,6 +46,7 @@
 
 (def trigger-classes (v/classes ["px-1 h-7 bg-transparent rounded"
                                  "hover:bg-zinc-200"
+                                 "text-zinc-500 visited:text-zinc-500 hover:text-zinc-700 "
                                  "data-[highlighted]:bg-zinc-200"
                                  "data-[delayed-open]:bg-zinc-200"
                                  "data-[state*=open]:bg-zinc-200"]))
@@ -187,7 +188,11 @@
        menubar-content
        [:div.flex-grow]
        #_[:a.text-black.inline-flex.items-center {:class trigger-classes
-                                                :href "/"} [icons/home "w-4 h-4"]]
+                                                  :href "/"} [icons/home "w-4 h-4"]]
+       [:a.cursor-pointer.p-1.no-underline
+        {:href "https://github.com/mhuebert/maria/issues"
+         :target "_blank"
+         :class trigger-classes} "Bug Report"]
        (let [cmd (keymaps/resolve-command :file/new)]
          [:div.cursor-pointer.p-1
           {:class [trigger-classes

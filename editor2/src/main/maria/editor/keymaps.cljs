@@ -375,12 +375,12 @@
                                 false)}
    :editor/toggle-command-bar {:bindings [:Mod-k]
                                :kind :global
+                               :hidden? true
                                :prepare (fn [cmd ctx]
-                                          (merge cmd (if (command-bar-open? ctx)
-                                                       {:title "Hide command bar"
-                                                        :f hide-command-bar!}
-                                                       {:title "Show command bar"
-                                                        :f show-command-bar!})))}
+                                          (assoc cmd :f
+                                                     (if (command-bar-open? ctx)
+                                                       hide-command-bar!
+                                                       show-command-bar!)))}
    :prose/toggle-prose-visibility {:kind :global
                                    :when :ProseView
                                    :prepare (fn [cmd {:keys [ProseView]}]
@@ -478,8 +478,9 @@
    (let [cmd (if (keyword? cmd)
                (@!command-registry cmd)
                cmd)
-         cmd (assoc cmd :active? (active? context cmd))
-         cmd (if-let [prepare (:prepare cmd)]
+         is-active (active? context cmd)
+         cmd (assoc cmd :active? is-active)
+         cmd (if-let [prepare (and is-active (:prepare cmd))]
                (prepare cmd context)
                cmd)]
      (assoc cmd :context context))))

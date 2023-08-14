@@ -122,16 +122,16 @@
            second))
 
 (defn truncate-segmented [s n ellipsis]
-  (let [segments (str/split s #"\s+")
-        segments-truncated (reduce (fn [out segment]
-                                     (if (>= (count out) n)
-                                       (reduced out)
-                                       (str out " " segment)))
-                                   (first segments)
-                                   (rest segments))]
-    (if (< (count segments-truncated) (count s))
-      (str segments-truncated ellipsis)
-      segments-truncated)))
+  (let [segments (str/split s #"[\s\n]+")
+        [truncated? s] (reduce (fn [[_ out] segment]
+                                 (if (>= (count out) n)
+                                   (reduced [true out])
+                                   [false (str out " " segment)]))
+                               [false (first segments)]
+                               (rest segments))]
+    (if truncated?
+      (str s ellipsis)
+      s)))
 
 (defn slug [title]
   (-> title

@@ -20,8 +20,13 @@
     .prose code::before, .prose code::after {
         content: none;
     }
+    a {
+        @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-700
+    }
 }
+@layer components {
 
+}
 @layer utilities {
 
     ::placeholder, .placeholder {
@@ -199,9 +204,7 @@ h5 {
     align-self: end;
 }
 
-a {
-    @apply underline text-blue-600 hover:text-blue-800 visited:text-purple-700
-}
+
 
 /* Radix UI */
 

@@ -53,8 +53,8 @@
                        (reset! !search "")
                        (keymaps/hide-command-bar! {:command-bar/element @!input}))
          :onValueChange #(reset! !search %)
-         :ref #(do (keymaps/add-context :command-bar/element %)
-                   (reset! !input %))}]]
+         :ref #(do (reset! !input %)
+                   (keymaps/add-context :command-bar/element %))}]]
       [:div.absolute.h7.flex.items-center.right-2.top-0.bottom-0.placeholder
        {:class (when (and @!open (not (str/blank? @!search))) "opacity-0")}
        (-> (:editor/toggle-command-bar keymaps/commands:global)

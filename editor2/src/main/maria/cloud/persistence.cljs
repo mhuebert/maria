@@ -183,7 +183,7 @@
 (keymaps/register-commands!
   {:file/new {:bindings [:Shift-Mod-b]
               :f (fn [_] (new-blank-file!))}
-   :file/duplicate {:when (every-pred :ProseView :file/id)
+   :file/duplicate {:when (every-pred :file/id :ProseView)
                     ;; create a new gist with contents of current doc.
                     :f (fn [{:keys [ProseView file/id]}]
                          (let [source (state-source (j/get ProseView :state))]
@@ -197,7 +197,8 @@
                         (commands/prose:replace-doc ProseView source)))}
    :file/save {:bindings [:Ctrl-s]
                :when (fn [{:keys [file/id]}]
-                       (and (gh/get-token)
+                       (and id
+                            (gh/get-token)
                             (writable? id)))
                ;; if local, create a new gist and then navigate there.
                ;; if gist, save a new revision of that gist.
