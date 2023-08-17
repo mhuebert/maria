@@ -9,7 +9,7 @@
                     "/index.html" (maria.cloud.build/index-html)})]
    :dev {:build-hooks [(maria.cloud.build/tailwind-watch!)
                        (maria.cloud.build/copy-curriculum!)]}
-   #_#_:release {:build-hooks [(shadow.cljs.build-report/hook {:output-to "public/report.html"})]}
+   :release {:build-hooks [(shadow.cljs.build-report/hook {:output-to "public/build-report.html"})]}
    :devtools {:http-root "public"
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}
