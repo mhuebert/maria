@@ -27,31 +27,34 @@
   (->> source
        parse-clj
        program-nodes
+       (map (fn [^js x] (j/!set x :source (subs source (.-from x) (.-to x)))))
 
-       ;; lezer does not represent the space between nodes, eg. empty lines,
-       ;; so add a ::line-gap marker in these cases
        (partition 2 1 nil)
-       (mapcat (fn [[^js a ^js b]]
-                 (if (and b (pos? (- (.-from b) (.-to a) 1)))
-                   [a ::line-gap]
-                   [a])))
 
        (eduction
-        (map (fn [node]
-               (if (= node ::line-gap)
-                 ";"
-                 (subs source (j/get node :from) (j/get node :to)))))
-        (partition-by comment?)
-        (mapcat
-         (fn [sources]
-           (if (comment? (first sources))
-             [{:type :prose
-               :source (->> sources
-                            (map #(str/replace % #"^;+\s*" ""))
-                            (str/join \newline))}]
-             (map (fn [source]
-                    {:type :code
-                     :source source}) sources)))))))
+         ;; preserve newlines between prose blocks
+         (mapcat (fn [[^js a ^js b]]
+                   (cond-> [(.-source a)]
+                           (and b
+                                (comment? (.-source a))
+                                (comment? (.-source b)))
+                           (into
+                             (take (->> (subs source (.-to a) (.-from b))
+                                        (re-seq #"\n")
+                                        count
+                                        dec)
+                                   (repeat ";"))))))
+         (partition-by comment?)
+         (mapcat
+           (fn [sources]
+             (if (comment? (first sources))
+               [{:type :prose
+                 :source (->> sources
+                              (map #(str/replace % #"^;+\s*" ""))
+                              (str/join \newline))}]
+               (map (fn [source]
+                      {:type :code
+                       :source source}) sources)))))))
 
 (defn blocks->md [blocks]
   (->> blocks
@@ -69,6 +72,10 @@
 
 (def clojure->markdown (comp blocks->md clj->blocks))
 
+
+;; - code blocks maintain a 1-line gap above & below
+;; - consecutive prose blocks are separated by ;;-prefixed lines
+
 (def sample-source
   "(ns my.app)
 
@@ -81,30 +88,37 @@
 ;; Another paragraph.")
 
 (comment
- (= (vec (clj->blocks sample-source))
-    [{:type :code
-      :source "(ns my.app)"}
-     {:type :prose
-      :source "# Hello, world.\n\nThis is a paragraph."}
-     {:type :code
-      :source "(+ 1 2)"}
-     {:type :prose
-      :source "Another paragraph."}]))
+  (= (vec (clj->blocks sample-source))
+     [{:type :code
+       :source "(ns my.app)"}
+      {:type :prose
+       :source "# Hello, world.\n\nThis is a paragraph."}
+      {:type :code
+       :source "(+ 1 2)"}
+      {:type :prose
+       :source "Another paragraph."}]))
 
 (comment
- (= (-> sample-source
-        clj->blocks
-        blocks->md)
-    "```clj
-(ns my.app)
-```
+  (= (-> sample-source
+         clj->blocks
+         blocks->md)
+     "
+ ```clj
+ (ns my.app)
+ ```
 
-# Hello, world.
+ # Hello, world.
 
-This is a paragraph.
+ This is a paragraph.
 
-```clj
-(+ 1 2)
-```
+ ```clj
+ (+ 1 2)
+ ```
 
-Another paragraph."))
+ Another paragraph."))
+
+(comment
+  (assert
+    (= (vec (clj->blocks ";; hello\n\n;; world"))
+       (vec (clj->blocks ";; hello\n;;\n;; world")))
+    "prose blocks are joined even if separated by non-;; lines"))
