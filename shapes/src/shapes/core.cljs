@@ -1,4 +1,5 @@
-(ns shapes.core)
+(ns shapes.core
+  (:require [clojure.string :as string]))
 
 ;; TODO add spec annotations!
 ;; TODO re-implement this mess using a transform matrix
@@ -38,10 +39,27 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; helpers for param checks
 
+(defn type-to-name
+  "Return a string representation of the type indicated by the symbol `thing`."
+  [thing]
+  ;; (println (str "thing is a type of " (type thing)))
+  ;; (println (str "thing printed out as-is is " thing))
+  (cond
+    (string? thing) "string"
+    (number? thing) "number"
+    (list? thing) "list"
+    (vector? thing) "vector"
+    (keyword? thing) "keyword"
+    (map? thing) "map"
+    (string/includes? (str thing) "function") "function"
+    :else thing))
+
 (defn assert-number [message x]
-  (if (js/isNaN x)
+  (if (nil? x)
     (throw (js/Error. message))
-    (js/parseFloat x)))
+    (if (js/isNaN x)
+      (throw (js/Error. message))
+      (js/parseFloat x))))
 
 (defn assert-number-range [message x-min x-max x]
   (let [x-parsed (assert-number message x)]
@@ -49,12 +67,31 @@
       x-parsed
       (throw (js/Error. message)))))
 
+(defn assert-positive [message x]
+  (let [x-parsed (assert-number message x)]
+    (if (pos? x)
+      x-parsed
+      (throw (js/Error. message)))))
+
+(defn say-why-not-num
+  ;; note: This function still does not gracefully handle functions as bad-input, e.g (circle odd?)
+  [fname bad-input]
+  (if (nil? bad-input)
+    (str " The function `" fname "` can't use `nil`"
+         " because `nil` is not a number.")
+    (str " The function `" fname "` can't use '" bad-input
+         "' because '" bad-input "' is a " (type-to-name bad-input) ".")))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; basic types
 
 (defn circle
   "Returns a circle of `radius`."
   [radius]
-  (assert-number "radius must be a number!" radius)
+  (assert-number (str "Argument `radius` has to be a number."
+                      (say-why-not-num "circle" radius)) radius)
+  (assert-positive (str "Argument `radius` has to be a positive number."
+                        " The function `circle` can't use '" radius
+                        "' because it is not positive.") radius)
   (map->Shape {:kind   :circle
                :r      radius
                :cx     radius
@@ -92,7 +129,11 @@
 (defn square
   "Returns a square of dimension `side`."
   [side]
-  (assert-number "side must be a number!" side)
+  (assert-number (str "Argument `side` has to be a number."
+                      (say-why-not-num "square" side)) side)
+  (assert-positive (str "Argument `side` has to be a positive number."
+                        " The function `square` can't use '" side
+                        "' because it is not positive.") side)
   (rectangle side side))
 
 (defn text
