@@ -42,8 +42,6 @@
 (defn type-to-name
   "Return a string representation of the type indicated by the symbol `thing`."
   [thing]
-  ;; (println (str "thing is a type of " (type thing)))
-  ;; (println (str "thing printed out as-is is " thing))
   (cond
     (string? thing) "string"
     (number? thing) "number"
