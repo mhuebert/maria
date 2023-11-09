@@ -13,7 +13,7 @@
                                timeout
                                fetch
                                geo-location]]
-            [shapes.core :as shapes :refer [listen
+            [shapes.core :as shapes :refer [listen grid
                                             circle ellipse square rectangle triangle polygon polyline text image
                                             position opacity rotate scale
                                             colorize stroke stroke-width no-stroke fill no-fill

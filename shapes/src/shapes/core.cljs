@@ -309,7 +309,7 @@
 (defn layer
   "Returns a new shape with these `shapes` layered over each other."
   [& shapes]
-  (let [kids (remove nil? shapes)
+  (let [kids (->> shapes flatten (remove nil?))
         bbox (max-bbox (mapv bbox kids))]
     (map->Shape {:kind     :svg
                  :x        0
@@ -634,6 +634,26 @@
       (swap! the-cell (if cell-path
                         #(assoc-in % cell-path v)
                         #(identity v))))))
+
+(defn grid 
+ "Draws a grid to help with coordinates, you can specify height width and grid spacing"
+ [x y space]
+ (layer
+  (polyline [0 0 x 0])
+  (polyline [0 0 0 y])
+
+  (for [x (range 0 (inc x) space)]
+   (stroke "lightgray" (polyline [x 0 x y] )))
+
+  (for [y (range 0 (inc y) space)]
+   (stroke "lightgray" (polyline [0 y x y] )))
+  (for [x (range 0 x space)]
+   [(polyline [x 0 x 5])
+   (position x 16 (text (str x)))])
+
+  (for [y (range 0 y space)]
+   [(polyline [0 y 5 y])
+   (position 5 (+ 5 y) (text (str y)))])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; pre-cooked SVG shapes
