@@ -10,6 +10,7 @@
             [maria.editor.command-bar :as command-bar]
             [maria.editor.icons :as icons]
             [maria.editor.keymaps :as keymaps]
+            [maria.editor.util :as u]
             [maria.ui :as ui]
             [yawn.hooks :as h]
             [yawn.view :as v]))
@@ -17,7 +18,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Components
 
-(def item-classes (v/classes ["flex items-center h-7 px-2 text-sm cursor-pointer rounded text-inherit visited:text-inherit no-underline"
+(def item-classes (v/classes ["flex items-center h-7 px-2 text-sm rounded text-inherit visited:text-inherit no-underline"
                               "data-[disabled]:cursor-default data-[disabled]:text-zinc-400"
                               "data-[highlighted]:outline-none data-[highlighted]:bg-sky-500 data-[highlighted]:text-white"]))
 
@@ -25,7 +26,7 @@
   (v/from-element menu/Item {:class item-classes}))
 
 (def icon-btn
-  (v/from-element :div.cursor-pointer.p-1.flex.items-center.m-1))
+  (v/from-element :div.p-1.flex.items-center.m-1))
 
 (def shortcut
   (v/from-element :div.ml-auto.pl-3.tracking-widest.text-menu-muted))
@@ -44,15 +45,8 @@
           (when (:bindings cmd)
             [shortcut (keymaps/show-binding (first (:bindings cmd)))])])))
 
-(def trigger-classes (v/classes ["px-1 h-7 bg-transparent rounded"
-                                 "hover:bg-zinc-200"
-                                 "text-zinc-500 visited:text-zinc-500 hover:text-zinc-700 "
-                                 "data-[highlighted]:bg-zinc-200"
-                                 "data-[delayed-open]:bg-zinc-200"
-                                 "data-[state*=open]:bg-zinc-200"]))
 (def trigger
-  (v/from-element menu/Trigger
-                  {:class trigger-classes}))
+  (v/from-element :el.menu-trigger menu/Trigger))
 
 (def content
   (v/from-element menu/Content
@@ -76,80 +70,85 @@
                       (take 2)
                       str/join)]
     [:el ava/Root {:class ["inline-flex items-center justify-center align-middle"
-                           "overflow-hidden select-none w-6 h-6 rounded-full bg-zinc-300"]}
+                           "overflow-hidden select-none w-5 h-5 rounded bg-zinc-300"]}
      [:el ava/Image {:src photo-url}]
      [:el ava/Fallback {:delayMs 600
                         :class "text-xs font-bold text-zinc-700"} initials]]))
 
 (def button-small-med
-  (v/from-element :a
-                  {:class ["rounded flex items-center px-2 py-1 shadow cursor-pointer text-sm"
-                           ui/c:button-med]}))
+  (v/from-element :a.menu-trigger.rounded.flex.items-center.px-2.py-1.text-sm.no-underline))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Menubar
 
-(ui/defview doc-menu [id]
-  (let [current (persist/current-file id)
-        title (or (:file/name current) "untitled.cljs")
-        !initial-title (h/use-ref title)
-        !editing? (h/use-state false)
-        stop-editing! (fn [& _]
-                        (reset! !editing? false))
-        start-editing! (fn [& _]
-                         (reset! !initial-title title)
-                         (reset! !editing? true))
-        on-value #(swap! (persist/local-ratom id) assoc :file/name %)
+(ui/defview title-editor
+  {:key :initial-title}
+  [{:keys [id
+           !editing-title?
+           icon
+           initial-title]}]
+  (let [!title (h/use-state-with-deps initial-title [initial-title])
+        done! (fn [& _]
+                (swap! (persist/local-ratom id) assoc :file/name @!title)
+                (reset! !editing-title? false))
         cancel-editing! (fn [& _]
-                          (on-value @!initial-title)
-                          (stop-editing!))
+                          (reset! !editing-title? false))
         select-name! (fn [^js el]
                        (doto el
                          (.focus)
                          (.setSelectionRange 0
-                                             (if-let [ext (re-find #"\..*$" title)]
-                                               (- (count title) (count ext))
-                                               (count title)))))
+                                             (if-let [ext (re-find #"\..*$" initial-title)]
+                                               (- (count initial-title) (count ext))
+                                               (count initial-title)))))
 
-        on-keydown (h/use-memo #(ui/keydown-handler {:Escape cancel-editing!
-                                                     :Meta-. cancel-editing!
-                                                     :Enter stop-editing!}))
-        provider (:file/provider current)]
-    [:<>
+        on-keydown (ui/keydown-handler {:Escape cancel-editing!
+                                        :Meta-. cancel-editing!
+                                        :Enter done!})]
+    (when @!editing-title?
+      [:input.inset-0.absolute.z-20.p-2.pr-6.border-none
+       {:class (when icon "pl-7")
+        :value @!title
+        :ref #(when (and @!editing-title? % (not (identical? % (j/get js/document :activeElement))))
+                (select-name! %))
+        :on-blur done!
+        :on-key-down on-keydown
+        :on-change (fn [e]
+                     (reset! !title (.. ^js e -target -value)))}])))
+
+(ui/defview doc-menu [id]
+  (let [file (persist/current-file id)
+        _ (prn :current-file file)
+        initial-title (or (:file/name file) "Untitled")
+        provider (:file/provider file)
+        !editing-title? (h/use-state false)]
+    [:div.flex.items-center.gap-1
      [:div.w-2.h-2.rounded-full.transition-all
       {:class (if (or (= provider :file.provider/local)
                       (seq (persist/changes id)))
                 "bg-yellow-500"
                 "bg-transparent")}]
-
      (let [icon (when (= :file.provider/gist provider)
                   [:div.inset-0.flex.items-center.justify-center.w-7.absolute.z-30
                    [icons/github "w-4 h-4 mx-auto"]])]
        [:el menu/Menu
         [:div.relative.flex.bg-zinc-100.border.border-zinc-200.hover:border-zinc-300.rounded.h-7
-         (when @!editing?
-           [:input.inset-0.absolute.z-20.p-2.pr-6.border-none
-            {:class (when icon "pl-7")
-             :value title
-             :ref #(when (and @!editing? % (not (identical? % (j/get js/document :activeElement))))
-                     (select-name! %))
-             :on-blur stop-editing!
-             :on-key-down on-keydown
-             :on-change #(on-value (.. ^js % -target -value))}])
+         [title-editor {:id id
+                        :initial-title initial-title
+                        :!editing-title? !editing-title?}]
          [:el menu/Trigger
           [:<>
            (when icon
              [:div.absolute.top-0.left-0.bottom-0 icon])
            [:span.p-2.pr-6
-            {:class [(when @!editing? "opacity-0 overflow-hidden z-10 relative min-w-8")
+            {:class [(when @!editing-title? "opacity-0 overflow-hidden z-10 relative min-w-8")
                      (when icon "pl-7")]}
-            title]]
+            initial-title]]
           [:div.px-1.rounded.flex.items-center.justify-center.absolute.top-0.right-0.bottom-0.z-30
            [icons/chevron-down:mini "w-4 h-4"]]]]
         [:el menu/Portal
-         [:el menu/Content {:class "MenubarContent mt-2"}
+         [:el menu/Content {:class "MenubarContent mt-2 z-[60] relative"}
           (when (persist/writable? id)
-            [item {:on-click start-editing!} "Rename"])
+            [item {:on-click #(reset! !editing-title? true)} "Rename"])
           [command-item :file/revert]
           [command-item :file/save]
           (when (= :file.provider/gist provider)
@@ -157,7 +156,7 @@
              separator
              [:el menu/Item {:as-child true}
               [:a
-               {:href (str "https://gist.github.com/" (:gist/id current))
+               {:href (str "https://gist.github.com/" (:gist/id file))
                 :target "_blank"
                 :class item-classes}
                "View on GitHub"
@@ -176,41 +175,32 @@
 (ui/defview menubar []
   (let [menubar-content @(ui/use-context ::!content)]
     [:<>
-     [:div {:style {:height 40}}]
-     [:div.w-100.fixed.top-0.right-0.flex.items-center.shadow.px-2.text-sm.z-50.bg-neutral-50
-      {:style {:height 40
-               :left (sidebar/sidebar-width)}}
+     [:div.h-12]
+     [:div.w-100.fixed.top-0.right-0.flex.items-stretch.shadow.px-2.text-sm.z-20.bg-neutral-50.h-12.gap-2.overflow-x-auto
+      {:style {:left (sidebar/sidebar-width)}}
       (when-not (:sidebar/visible? @ui/!state)
-        [icon-btn {:on-click #(swap! ui/!state update :sidebar/visible? not)}
+        [:div.menu-trigger.-mr-1 {:on-click #(swap! ui/!state update :sidebar/visible? not)}
          [icons/bars3 "w-4 h-4"]])
-      [:el Root {:class "flex flex-row w-full items-center gap-1"}
-       [:div.flex-grow]
-       menubar-content
-       [:div.flex-grow]
-       #_[:a.text-black.inline-flex.items-center {:class trigger-classes
-                                                  :href "/"} [icons/home "w-4 h-4"]]
-       [:a.cursor-pointer.p-1.no-underline
-        {:href "https://github.com/mhuebert/maria/issues"
-         :target "_blank"
-         :class trigger-classes} "Bug Report"]
-       (let [cmd (keymaps/resolve-command :file/new)]
-         [:div.cursor-pointer.p-1
-          {:class [trigger-classes
-                   "text-zinc-500 hover:text-zinc-700"]
-           :on-click #(keymaps/run-command cmd)}
-          "New"
-          #_[icons/document-plus:mini "w-5 h-5 -mt-[2px]"]]
-         #_[ui/tooltip
-            ...
-            (:title (keymaps/resolve-command :file/new))])
+      [:el.contents Root
+       [:a.menu-trigger.flex.items-center {:href "/"} [icons/home "w-5 h-5"]]
+       [:div.menu-trigger.items-center.flex.bg-zinc-500.text-white.hover:text-white.hover:bg-zinc-700.gap-1.h-7.place-self-center.mr-1
+        {:on-click #(keymaps/run-command (keymaps/resolve-command :file/new))}
+        [icons/document-plus:mini "w-5 h-5"]
+        "New"]
+       (or menubar-content [:div.flex-auto])
+       [menu [:el.menu-trigger menu/Trigger
+              [icons/question-mark "w-4 h-4"]]
+        [item {:as-child true}
+         [:a {:href "https://github.com/mhuebert/maria/issues"
+              :on-click #(j/call (j/get js/window :open))
+              :target "_blank"} "Report an issue"]]]
+
        [command-bar/input]
        (if-let [{:keys [photo-url display-name]} (gh/get-user)]
-         [menu [:el menu/Trigger {:class [trigger-classes
-                                          "rounded-full"]} [avatar photo-url display-name]]
+         [menu [:el.menu-trigger menu/Trigger [avatar photo-url display-name]]
           [command-item :account/sign-out]]
          (if (gh/pending?)
            [icons/loading "w-5 h-5 opacity-30"]
            [button-small-med
             {:on-click #(gh/sign-in-with-popup!)}
-            [icons/github "w-4 h-4 mr-2"]
-            "Sign In " [:span.hidden.md:inline.pl-1 " with GitHub"]]))]]]))
+            [icons/github "w-4 h-4 mr-2"] "Sign in"]))]]]))

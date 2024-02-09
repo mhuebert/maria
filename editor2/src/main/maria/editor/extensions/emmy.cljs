@@ -11,11 +11,9 @@
             [emmy.portal.css :refer [inject!] :rename {inject! inject-css!}]
             [emmy.viewer.css :refer [css-map]]
             [emmy.mafs]
-            [maria.editor.extensions.reagent :as ext.reagent]
             [maria.editor.code.show-values :as show :refer [show]]
             [sci.ctx-store :refer [get-ctx]]
-            [yawn.view :as v]
-            #_[maria.editor.extensions.katex :as katex]))
+            [yawn.view :as v]))
 
 (defn show-frozen [opts x]
   (show opts (emmy.value/freeze x)))
@@ -65,7 +63,6 @@
 
 (defn install! []
   (show/add-global-viewers! (get-ctx) :before :vector [show-emmy])
-  (ext.reagent/install!)
   (doseq [href (apply concat (vals css-map))]
     (if (= href "https://unpkg.com/mafs@0.17.0/font.css")
       (inject-css-source!

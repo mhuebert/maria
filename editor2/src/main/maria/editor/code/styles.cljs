@@ -49,12 +49,11 @@
 
 (def code-theme
   (j/lit {".cm-content" {:padding "1rem 0"
-                         :background-color "white"
+                         :background-color "transparent"
                          :margin-left 0
-                         :border-radius "4px"
                          :white-space "pre-wrap"
                          :max-width "100%"}
-          ".cm-line" {:padding "0 1rem"}
+          ".cm-line" {:padding "0 0 0 1rem"}
           ".cm-scroller" {:overflow-x "hidden"}
           ".cm-matchingBracket" {:color "black"}
           "&.cm-editor, &.cm-editor.cm-focused" {:outline "1px solid transparent"}}))

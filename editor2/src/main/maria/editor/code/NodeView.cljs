@@ -37,12 +37,6 @@
 
 (defonce !focused-view (atom nil))
 
-(defn set-focus! [^js view _]
-  (if (.-hasFocus view)
-    (reset! !focused-view view)
-    (when (identical? view @!focused-view)
-      (reset! !focused-view nil))))
-
 (js
   (defn focus! [{:as this :keys [CodeView]}]
     (if (j/get this :mounted?)
@@ -66,13 +60,17 @@
 
 (js
   (defn code:forward-update
-    "Forward events from CodeMirror to ProseMirror (shen the code-editor is focused)"
+    "Forward events from CodeMirror to ProseMirror (when the code-editor is focused)"
     [{:keys [CodeView ProseView getPos code-updating?]} code-update]
     (let [{prose-state :state} ProseView
           focus-changed? (.-focusChanged code-update)
           has-focus? (.-hasFocus CodeView)]
+
       (when focus-changed?
-        (set-focus! CodeView (.-hasFocus CodeView)))
+        (if (.-hasFocus CodeView)
+          (reset! !focused-view CodeView)
+          (when (identical? CodeView @!focused-view)
+            (reset! !focused-view nil))))
 
       (when (and has-focus? (not code-updating?))
         (let [start-pos (inc (getPos))
@@ -83,10 +81,10 @@
               selection-changed? (not (.eq (.. code-update -startState -selection)
                                            (.. code-update -state -selection)))
               #_(not (.eq (.. prose-state -selection)
-                                           (.create TextSelection
-                                                    doc
-                                                    (+ start-pos from')
-                                                    (+ start-pos to'))))]
+                          (.create TextSelection
+                                   doc
+                                   (+ start-pos from')
+                                   (+ start-pos to'))))]
           (comment
             ;; or we could compare the selection inside codemirror?
             (not (.eq (.. code-update -startState -selection)
@@ -225,41 +223,65 @@
                                         (show opts x))
                               :value value}]))]))
 
+(defn temporarily-disable-contenteditable [start-event end-event]
+  ;; Ugly hack: temporarily disable contenteditable when users interact with ".value-viewer" regions,
+  ;; to prevent iOS keyboard from showing up & scrolling to unwanted regions of the document.
+  ;; (I tried using `stopPropagation` on value-viewer nodes and that did not seem to work;
+  ;;  maybe there's still a better way.)
+  (.addEventListener js/window start-event
+                     (fn [^js e]
+                       (when-let [value-viewer (.. e -target (closest ".value-viewer"))]
+                         (let [notebook (.closest value-viewer ".notebook")]
+                           (j/!set notebook :contentEditable "false")
+                           (.addEventListener js/window end-event
+                                              (fn listener [e]
+                                                (j/!set notebook :contentEditable "true")
+                                                (.removeEventListener js/window start-event listener))
+                                              true))))
+                     true))
+
+(defonce _
+         (do
+           (temporarily-disable-contenteditable "touchstart" "touchend")
+           (temporarily-disable-contenteditable "mousedown" "mouseup")))
+
 (v/defview code-row [^js {:as this :keys [!result !ui-state id CodeView]}]
-  (let [ref (h/use-callback (fn [el] (when el (mount-code-view! el this))))
+  (let [ref (h/use-callback (fn [el]
+                              (when el (mount-code-view! el this))))
         {:keys [hide-source node-selected?]} (h/use-deref !ui-state)
         hide-source? (if (some? hide-source)
                        hide-source
                        (str/includes? (.. CodeView -state -doc (line 1) -text) "^:hide-source"))
-        classes (v/classes ["absolute top-0 right-1 z-10"
-                            "w-6 h-6"
-                            "inline-flex items-center justify-center"
-                            "text-zinc-400 hover:text-zinc-700"
-                            "cursor-pointer"
-                            "rounded-full bg-white"
-                            "focus:ring"])
-        toggle (if hide-source?
-                 (v/x
-                   [:button
-                    {:on-click #(swap! !ui-state assoc :hide-source false)
-                     :class [classes "shadow"]}
-                    (icons/code-bracket:mini "w-4 h-4")])
-                 (v/x
-                   [:div
-                    {:on-click #(swap! !ui-state assoc :hide-source true)
-                     :class [classes "opacity-0 focus:opacity-100 hover:opacity-100 transition-opacity"]}
-                    (icons/minus-small:mini "w-5 h-5")]))]
+        toggle-classes (v/classes ["z-10 w-6 h-6"
+                                   "inline-flex items-center justify-center"
+                                   "text-zinc-400 hover:text-zinc-700"
+                                   "cursor-pointer"
+                                   "rounded-full bg-white"
+                                   "focus:ring"])]
     [:<>
-     [:div {:class "w-full md:w-1/2 relative text-base"}
+     [:div {:class ["w-full md:w-1/2 relative text-base flex rounded-none sm:rounded"
+                    (when-not hide-source? "bg-white")]}
       (when-not hide-source?
-        [:div {:class ["w-full text-base relative text-brackets"
+        [:div {:class ["flex-auto text-base relative text-brackets"
                        (when node-selected? "ring ring-2 ring-selection rounded-r ring-l-none")]
                :ref ref
                :id id}])
-      toggle]
-     [:div
-      {:class "w-full md:w-1/2 font-mono text-sm md:ml-3 mt-3 md:mt-0 max-h-screen overflow-auto"}
-      [value-viewer this]]]))
+      [:div.flex.flex-col.w-6.items-center.gap-1.ml-auto
+       (if hide-source?
+         [:button
+          {:on-click #(swap! !ui-state assoc :hide-source false)
+           :class [toggle-classes "mr-[6px] shadow"]}
+          (icons/code-bracket:mini "w-4 h-4")]
+         [:div
+          {:on-click #(swap! !ui-state assoc :hide-source true)
+           :class [toggle-classes "opacity-70 focus:opacity-100 hover:opacity-100 transition-opacity"]}
+          (icons/minus-small:mini "w-5 h-5")])]]
+     [:div.value-viewer
+      [value-viewer this]
+      [:div.ml-auto.flex.flex-col.items-center
+       [:div.text-slate-300.hover:text-slate-600.z-5.mr-1
+        {:on-click #(commands/code:eval-NodeView! this)}
+        [icons/play-circle "w-8 h-8 sm:hidden sm:hidden"]]]]]))
 
 (j/defn select-node [^js {:keys [!ui-state ProseView CodeView]}]
   (when-not *selecting-node*
@@ -328,9 +350,9 @@
                                   (swap! !ui-state assoc :node-selected? false))
                   :setSelection (partial prose:set-CodeView-selection this)
                   :stopEvent (fn [e]
-                               ;; keyboard events that are handled by a keymap are already stopped;
-                               ;; not sure what events should be stopped here.
-                               (instance? js/MouseEvent e))
+                               ;; keyboard events that are handled by a keymap are already stopped
+                               (or #_(instance? js/MouseEvent e)
+                                 (.. e -target (closest ".value-viewer"))))
                   :destroy #(let [{:keys [CodeView !result]} this]
                               (.destroy CodeView)
                               (root/unmount-soon root)

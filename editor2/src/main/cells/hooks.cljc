@@ -79,10 +79,9 @@
                                                                        (parse))]
                                            (v! formatted-value)
                                            (a/complete! self))
-
                                          :else
                                          (if-let [error-message (xhrio-error-message XhrIo)]
-                                           (a/error! self (ex-info error-message {:cell self}))
+                                           (a/error! self (js/Error. error-message))
                                            (v! "No error message")))))]
              #(j/call XhrIo :abort)))
          [url])

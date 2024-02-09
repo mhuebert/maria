@@ -1,20 +1,21 @@
 (ns cells.async
   (:require [re-db.reactive :as r]))
 
-(defn init [] {`status (r/atom nil)})
+(defn init [] {`loading? (r/atom nil)})
 
-(defn !status
-  "Async metadata is stored in a ratom containing `true` for loading-state,
-   or an instance of js/Error."
-  [x]
-  (get (meta x) `status))
+(defn !loading? [x]
+  (get (meta x) `loading?))
 
-(defn error! [cell e] (reset! cell (cond-> e
-                                           (string? e)
-                                           (ex-info {:cell cell}))))
-(defn loading! [cell] (reset! (!status cell) {:loading true}))
+(defn error! [cell e]
+  (reset! cell (cond-> e
+                 (string? e)
+                 (ex-info {}))))
+
+(defn loading! [cell]
+  (reset! (!loading? cell) true))
+
 (defn complete!
-  ([cell] (reset! (!status cell) nil))
+  ([cell] (reset! (!loading? cell) nil))
   ([cell value]
    (reset! cell value)
    (complete! cell)))

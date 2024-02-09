@@ -7,11 +7,13 @@
             ["prosemirror-schema-list" :as cmd-list]
             ["react" :as react]
             ["react-dom" :as react-dom]
+            ["lodash.debounce" :as debounce]
             [applied-science.js-interop :as j]
             [applied-science.js-interop.alpha :refer [js]]
-            [maria.cloud.markdown :as markdown]
-            [maria.cloud.persistence :as persist]
+            [clojure.string :as str]
             [maria.cloud.menubar :as menu]
+            [maria.cloud.persistence :as persist]
+            [maria.cloud.routes :as routes]
             [maria.editor.code.NodeView :as NodeView]
             [maria.editor.code.commands :as commands]
             [maria.editor.code.parse-clj :as parse-clj :refer [clojure->markdown]]
@@ -23,8 +25,7 @@
             [maria.editor.util :as u]
             [maria.ui :as ui]
             [yawn.hooks :as h]
-            [yawn.view :as v]
-            [maria.cloud.routes :as routes]))
+            [yawn.view :as v]))
 
 (defonce focused-state-key (new p.state/PluginKey "focused-state"))
 
@@ -84,38 +85,66 @@
               (map (j/get :textContent)))
         (j/get-in doc [:content :content])))
 
-(defn use-menubar-title-dropdown! [id]
+
+(defn use-doc-menu-content [doc-id]
   (let [!content (ui/use-context ::menu/!content)]
     (h/use-effect
       (fn []
-        (let [content (v/x [menu/doc-menu id])]
+        (let [content (v/x
+                        [:<>
+                         [menu/doc-menu doc-id]
+                         [:div.flex-auto]])]
           (reset! !content content)
           #(swap! !content (fn [x]
                              (if (identical? x content)
                                nil
                                x)))))
-      [id])))
+      [doc-id])))
 
-(defn use-prose-view [{:keys [default-value on-change-state]} deps]
+(defn autosave-local
+  "Returns a callback that will save the current doc to local storage"
+  [id ^js prev-state ^js next-state]
+  (when-not (.eq (.-doc prev-state) (.-doc next-state))
+    (swap! (persist/local-ratom id) assoc
+           :file/source
+           (persist/state-source next-state))
+    ;; maybe: store the hash of the original source to detect changes
+    #_(when-let [source (:file/source @(persist/$doc id))]
+        {:file/source-hash (md5/hash source)})
+    ))
+
+(defn use-prose-view [{:keys [file/id
+                              default-value]} deps]
   (let [!ref (h/use-state nil)
         ref-fn (h/use-callback #(when % (reset! !ref %)))
         !prose-view (h/use-state nil)
+        autosave! (h/use-memo #(debounce autosave-local 1000 #js{:leading true :trailing true}))
         make-prose-view (fn [element]
                           (js (-> (p.view/EditorView. {:mount element}
                                                       {:state (js (.create p.state/EditorState
                                                                            {:doc (clj->doc default-value)
                                                                             :plugins (plugins)}))
                                                        :nodeViews {:code_block NodeView/editor}
-                                                       #_#_:handleDOMEvents {:blur #(js/console.log "blur" %1 %2)}
-                                                       ;; no-op tx for debugging
                                                        :dispatchTransaction (fn [tx]
                                                                               (this-as ^js view
                                                                                 (let [prev-state (.-state view)
                                                                                       next-state (.apply prev-state tx)]
                                                                                   (.updateState view next-state)
-                                                                                  (when on-change-state
-                                                                                    (on-change-state prev-state next-state)))))})
+                                                                                  (autosave! id prev-state next-state))))})
                                   (j/assoc! :!sci-ctx (atom (sci/initial-context))))))]
+
+    (h/use-effect
+      ;; save local state immediately when tab is hidden
+      (fn []
+        (let [cb (fn []
+                   (when (j/get js/document :hidden)
+                     (j/call autosave! :flush)))]
+          (when @!prose-view
+            (js/document.addEventListener "visibilitychange" cb)
+            #(do (j/call autosave! :flush)
+                 (js/document.removeEventListener "visibilitychange" cb)))))
+      [@!prose-view])
+
     (h/use-effect
       (fn []
         (if-let [element (and default-value @!ref)]
@@ -130,24 +159,22 @@
   "Returns a ref for the element where the editor is to be mounted."
 
   (persist/use-persisted-file file)
-  (use-menubar-title-dropdown! id)
+  (use-doc-menu-content id)
   (persist/use-recents! (::routes/path params) file)
 
-  (let [autosave! (h/use-memo persist/autosave-local-fn)
-        [ProseView ref-fn] (use-prose-view {:default-value (or (:file/source @(persist/local-ratom id))
+  (let [[ProseView ref-fn] (use-prose-view {:file/id id
+                                            :default-value (or (:file/source @(persist/local-ratom id))
                                                                (:file/source file)
-                                                               "")
-                                            :on-change-state (fn [prev-state next-state]
-                                                               (autosave! id prev-state next-state))}
+                                                               "")}
                                            [])]
 
     ;; initialize new editors
     (h/use-effect
       (fn []
         (when (some-> ProseView (u/guard (complement (j/get :isDestroyed))))
-
           (keymaps/add-context :ProseView ProseView)
-          (commands/prose:eval-prose-view! ProseView)
+          (when-not (str/includes? js/window.location.href "eval=false")
+            (commands/prose:eval-prose-view! ProseView))
           (j/call ProseView :focus)))
       [ProseView])
 
@@ -162,4 +189,4 @@
   [params file]
   (if file
     [editor* params file]
-    "Loading..."))
+    [:div.circle-loading.m-2 [:div] [:div]]))

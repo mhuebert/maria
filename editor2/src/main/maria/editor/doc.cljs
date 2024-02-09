@@ -1,7 +1,5 @@
 (ns maria.editor.doc
   (:require ["prosemirror-markdown" :as md]
-            [applied-science.js-interop :as j]
-            [applied-science.js-interop.alpha :refer [js]]
             [clojure.string :as str]
             [maria.editor.prosemirror.schema :as markdown]))
 
@@ -9,38 +7,11 @@
 ;; 2. for each line, strip the prefix from code lines, add `;; ` to prose lines.
 ;; 3. normalize spacing to 1 empty line between blocks.
 
-(def prefix "¡Ⓜ")
-(defn prefix-lines [s]
-  (str prefix
-       (str/replace-all s #"[\n\r]" (str "\n" prefix))))
-
-(defn clojure-block? [lang]
-  (re-matches #"(?i)clj\w?|clojure|clojurescript" lang))
-
-(def clj-serializer (js
-                      (let [{:keys                  [nodes marks]
-                             {original :code_block} :nodes} md/defaultMarkdownSerializer]
-                        (new md/MarkdownSerializer
-                             (j/extend! {}
-                                        nodes
-                                        {:code_block
-                                         (fn [{:as state :keys [delim]}
-                                              {:as node :keys [textContent] {lang :params} :attrs}]
-                                           (if (and (str/blank? delim)
-                                                    (or (clojure-block? lang)
-                                                        (str/blank? lang)))
-                                             (do
-                                               (when-not (str/blank? textContent)
-                                                 (.text state (-> textContent str/trim prefix-lines) false))
-                                               (.closeBlock state node))
-                                             (original state node)))})
-                             marks))))
-
 (defn doc->clj
   "Returns a Clojure string from a ProseMirror markdown doc."
   [md-doc]
-  (let [md (.serialize clj-serializer md-doc)
-        code? #(str/starts-with? % prefix)]
+  (let [md (markdown/serialize md-doc)
+        code? #(str/starts-with? % markdown/code-prefix)]
     (->> (str/split-lines md)
          (partition-by code?)
          (keep (fn [ss]
@@ -54,7 +25,8 @@
          (str/join "\n\n"))))
 
 (comment
-  (-> "```\n(+ 1 2)\n```" markdown/markdown->doc doc->clj))
+  (-> "```\n(+ 1 2)\n```" markdown/markdown->doc doc->clj)
+  (-> "- hello\n- there" markdown/markdown->doc doc->clj))
 
 (defn md->clj
   "Given a Markdown string, returns Clojure source.

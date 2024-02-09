@@ -256,7 +256,7 @@
                                       :clojure.core/eval-file file}
                                      source)
                     (catch js/Error e ^:clj {:error e}))]
-    (if (a/await? result)
+    (if (sci/await? result)
       (do (on-result {:value :maria.editor.code.show-values/loading})
           (a/await
             (-> result
@@ -288,7 +288,7 @@
        (when-not (j/get ProseView :isDestroyed)
          (when-let [NodeView (nth NodeViews i nil)]
            (let [value (code:eval-NodeView! NodeView)]
-             (if (a/await? value)
+             (if (sci/await? value)
                (p/do value (continue (inc i)))
                (continue (inc i))))))
        nil) 0)))

@@ -50,7 +50,7 @@
 #?(:cljs
    (defn interval
      "Calls `f` on interval of n milliseconds, with previous value, starting with optional init value."
-     ([n f] (interval n f nil))
+     ([n f] (interval n f (f nil)))
      ([n f init]
       (hooks/use-interval n f init))))
 
@@ -60,7 +60,7 @@
      []
      (hooks/use-geo-location)))
 
-(def loading? (comp async/loading? deref async/!status))
+(def loading? (comp async/loading? deref async/!loading?))
 (def message (comp first r/deref-result))
 (def error? (comp some? message))
 

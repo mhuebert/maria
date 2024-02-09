@@ -6,10 +6,11 @@
    :asset-path "/js"
    :build-hooks [(cljs-static.shadow/write-assets!
                    {:public-path "public"
-                    "/index.html" (maria.cloud.build/index-html)})]
-   :dev {:build-hooks [(maria.cloud.build/tailwind-watch!)
-                       (maria.cloud.build/copy-curriculum!)]}
-   :release {:build-hooks [(shadow.cljs.build-report/hook {:output-to "public/build-report.html"})]}
+                    "/index.html" (build/index-html)})]
+   :dev {:build-hooks [(build/tailwind-watch!)
+                       (build/copy-curriculum!)
+                       (build/browse! "http://localhost:8000")]}
+   :release {:build-hooks [#_(shadow.cljs.build-report/hook {:output-to "public/build-report.html"})]}
    :devtools {:http-root "public"
               :http-port 8000
               :preloads [yawn.view.refresh-preload]}

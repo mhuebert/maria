@@ -5,7 +5,7 @@
             [maria.clerkify]
             [maria.cloud.github :as gh]
             [maria.cloud.menubar :as menu]
-            [maria.cloud.persistence]
+            [maria.cloud.github]
             [maria.cloud.routes :as routes]
             [maria.cloud.sidebar :as sidebar]
             [maria.cloud.views]

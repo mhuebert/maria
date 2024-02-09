@@ -159,9 +159,9 @@
      :prose/backspace {:bindings [:Backspace]
                        :hidden? true
                        :f (chain links/open-link-on-backspace
+                                 pm.cmd/joinTextblockBackward
                                  pm.cmd/selectNodeBackward
-                                 pm.cmd/deleteSelection
-                                 pm.cmd/joinBackward)
+                                 pm.cmd/deleteSelection)
                        :kind :prose}
      :prose/join-up {:bindings [:Alt-ArrowUp]
                      :hidden? true
@@ -183,6 +183,7 @@
      :prose/enter {:bindings [:Enter]
                    :hidden? true
                    :f (chain (pm.schema-list/splitListItem list_item)
+                             pm.cmd/liftEmptyBlock
                              code.commands/prose:convert-to-code)
                    :kind :prose}
      :prose/arrow-left {:bindings [:ArrowLeft]
@@ -486,13 +487,13 @@
      (assoc cmd :context context))))
 
 (defn run-command
-  ([cmd] (run-command (get-context) cmd))
+  ([cmd] (run-command (or (:context cmd) (get-context)) cmd))
   ([context cmd]
    (let [{:keys [f kind active?]} (resolve-command context cmd)]
      (when active?
        (case kind
-         :prose (run-prosemirror f context)
-         :code (run-codemirror f context)
+         :prose (run-prosemirror context f)
+         :code (run-codemirror context f)
          (f context))))))
 
 (defn use-global-keymap []

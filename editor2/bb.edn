@@ -1,12 +1,15 @@
 {:deps {}
  :tasks
- {dev (shell "yarn shadow-cljs -A:local watch editor")
+ {dev (shell "yarn shadow-cljs -A:build clj-run build/watch")
+  ;; use dev-local to test local versions of libs, as specified in deps.edn
+  dev-local (shell "yarn shadow-cljs -A:local:build clj-run build/watch")
+
   server (shell "yarn shadow-cljs -A:local server")
   copy-curriculum (do
                     (shell "mkdir -p public/curriculum")
                     (shell "rsync -av src/main/maria/curriculum/ public/curriculum"))
-  css (shell "npx tailwindcss -i src/maria.cloud.css -o public/maria.cloud.css")
+  css (shell "npx tailwindcss -i src/editor.css -o public/editor.css")
   release (do (run 'copy-curriculum)
-              (shell "yarn shadow-cljs release editor")
+              (shell "yarn shadow-cljs -A:build release editor")
               (run 'css))
   debug (shell "yarn shadow-cljs release editor --debug")}}

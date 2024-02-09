@@ -110,4 +110,3 @@
     (cond special-form "a special form: a primitive which is evaluated in a special way"
           macro "a macro: a function that transforms source code before it is evaluated."
           :else `(what-is* ~thing))))
-

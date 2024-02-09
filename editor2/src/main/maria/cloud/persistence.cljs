@@ -114,14 +114,6 @@
               [:file/name
                :file/source])))))
 
-(defn autosave-local-fn
-  "Returns a callback that will save the current doc to local storage after a 1s debounce."
-  []
-  (-> (fn [id ^js prev-state ^js next-state]
-        (when-not (.eq (.-doc prev-state) (.-doc next-state))
-          (swap! (local-ratom id) assoc :file/source (state-source next-state))))
-      (gf/debounce 100)))
-
 (defn swap-name [n f & args]
   (let [ext (re-find #"\..*$" n)
         pre (subs n 0 (- (count n) (count ext)))]
@@ -162,9 +154,10 @@
         local @!local
         !persisted (persisted-ratom id)
         source (:file/source local)
-        filename (or (:file/name local)
-                     (extract-filename source)
-                     "untitled.cljs")
+        filename (u/ensure-suffix (or (:file/name local)
+                                      (extract-filename source)
+                                      "untitled.cljs")
+                                  ".cljs")
         body {:files {filename {:content source}}}]
     (when (seq body)
       (remove-from-recents! id)

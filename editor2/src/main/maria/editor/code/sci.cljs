@@ -23,34 +23,13 @@
             [sci.impl.resolve]
             [sci.lang]
             [sci.pprint]
-            [shadow.lazy :as lazy]
             [shapes.core]
             [yawn.sci-config]
             [maria.editor.extensions.config :as config]))
 
-(def prefix->loadable
-  (->> config/loadables
-       (reduce-kv (fn [out k {:keys [loadable provides]}]
-                    (reduce (fn [out lib-prefix]
-                              (assoc out lib-prefix loadable))
-                            out provides)) {})))
-
-(defn lib-prefix [libname]
-  (symbol (first (str/split (str libname) #"\."))))
-
-(def install-loadable!
-  (memoize (fn [ctx loadable]
-             (p/let [install! (lazy/load loadable)]
-               (ctx/with-ctx ctx (install!))))))
-
-(defn lazy-load [{:keys [libname ctx]}]
-  (when-let [loadable (get prefix->loadable (lib-prefix libname))]
-    (install-loadable! ctx loadable)))
-
-(defn async-load-fn [{:as opts :keys [libname ctx]}]
-  (or (lazy-load opts)
-      (throw (js/Error. (str "Module not found for lib: " libname)))))
-
+(defn async-load-fn [opts]
+  (or (config/load-lib+ opts)
+      (throw (js/Error. (str "Module not found for lib: " (:libname opts))))))
 
 (defn await? [x] (and (instance? js/Promise x) (a/await? x)))
 
@@ -162,7 +141,8 @@
       (intern-core 'clojure.core '[maria.editor.code.repl/doc
                                    maria.editor.code.repl/dir
                                    maria.editor.code.repl/await
-                                   maria.editor.code.repl/what-is])
+                                   maria.editor.code.repl/what-is
+                                   maria.editor.code.repl/html])
       (refer-all! '{cells.core user
                     maria.editor.code.repl user
                     shapes.core user})

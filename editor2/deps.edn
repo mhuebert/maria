@@ -1,12 +1,12 @@
 {:paths ["src/main"]
- :deps {thheller/shadow-cljs {:mvn/version "2.24.1"}
+ :deps {thheller/shadow-cljs {:mvn/version "2.27.1"}
         org.clojure/clojure {:mvn/version "1.12.0-alpha3"}
         applied-science/js-interop {#_#_:mvn/version "0.4.1"
                                     :git/url "https://github.com/applied-science/js-interop"
                                     :git/sha "e29e17b2a647006ac0e96307bbc893b01b99c3e9"}
         nextjournal/clojure-mode {:git/url "https://github.com/nextjournal/clojure-mode"
                                   :git/sha "8248736f7afb12fcd8e03439ff02703174dd0de6"}
-        org.babashka/sci {:mvn/version "0.8.40"}
+        org.babashka/sci {:mvn/version "0.8.41"}
         babashka/fs {:mvn/version "0.3.17"}
         babashka/process {:mvn/version "0.4.16"}
         io.github.babashka/sci.configs {:git/sha "bf8d209e4aeabb92cb1be04e3d8f789583d5f449"}
@@ -20,10 +20,11 @@
         maria/tools {:local/root "../tools"}
         maria/shapes {:local/root "../shapes"}
         maria/friendly {:local/root "../friendly"}
+        com.lambdaisland/glogi {:mvn/version "1.3.169"}
 
         io.github.applied-science/shapes {:git/sha "da44031cf79a649932cb502f17388db23f2b8ace"}
-        io.github.mhuebert/re-db {:git/sha "066439e228ae4a48383055970af74b2600b48050"}
-        io.github.mhuebert/yawn {:git/sha "4fee46087eb907b1e2cd62aea9f05549d08e11a8"}
+        io.github.mhuebert/re-db {:git/sha "ede6df195088a70217a07c5f6a04b36692ea8842"}
+        io.github.mhuebert/yawn {:git/sha "68285f6c132f26a2ff3cc2f7dffc3fe68c9856d9"}
 
         ;; emmy / clerk
         io.github.mhuebert/emmy #_org.mentat/emmy {:git/url "https://github.com/mhuebert/emmy"
@@ -44,4 +45,5 @@
                        #_#_applied-science/js-interop {:local/root "../../js-interop"}
                        #_#_nextjournal/clojure-mode {:local/root "../../clojure-mode"}
                        #_#_io.github.mhuebert/yawn {:local/root "../../yawn"}
-                       #_#_io.github.mhuebert/re-db {:local/root "../../re-db"}}}}}
+                       #_#_io.github.mhuebert/re-db {:local/root "../../re-db"}}}
+  :build {:extra-paths ["dev"]}}}

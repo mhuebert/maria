@@ -29,6 +29,10 @@
   (cond->> s
            (not (str/starts-with? s pfx)) (str pfx)))
 
+(defn ensure-suffix [s sfx]
+  (cond-> s
+          (not (str/ends-with? s sfx)) (str sfx)))
+
 (defn strip-prefix [s pfx]
   (cond-> s
           (str/starts-with? s pfx)
@@ -140,6 +144,10 @@
       (truncate-segmented 35 "")
       (str/replace #"[\s_]+" "_")))
 
+#?(:cljs
+   (defn prevent-default!
+     ([] (some-> js/window.event (j/call :preventDefault)))
+     ([e] (j/call e :preventDefault))))
 
 (comment
   (truncate-segmented "This is a long string" 7 "...")
