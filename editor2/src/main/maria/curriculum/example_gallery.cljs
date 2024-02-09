@@ -147,7 +147,7 @@
 
 ;; #### Snake!
 
-;; [Move the snake with your arrow keys! 🐍](https://www.maria.editor.cloud/gist/bba60540e714b31dcac02eb7cdf02fbc?eval=true)
+;; [Move the snake with your arrow keys! 🐍](https://www.maria.editor.cloud/gist/33d3a88ae35d8b5698c84d1672dd13a9?eval=true)
 
 ;; #### Music!
 
