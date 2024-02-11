@@ -61,7 +61,7 @@
   (->> (-> s
            string/lower-case
            sanitize-js-error
-           (string/split #"[^a-z%0-9%\.%:%_]"))
+           (string/split #"[^a-z%0-9%\.%:%_%-]"))
        (map #(string/replace % "_" "-")) ;; this must happen in post-processing so we don't split on underscores-turned-to-dashes
        (remove empty?)
        (into [])))
